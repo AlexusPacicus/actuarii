@@ -10,6 +10,14 @@ venv/
 *.db-shm
 *.db-wal
 
+# Build Artifacts
+traianus.egg-info/
+repomix-output.xml
+
+# Internal Dev (not uploaded)
+developer/
+docs/development/
+
 # OS / Editors
 .DS_Store
 .idea/
