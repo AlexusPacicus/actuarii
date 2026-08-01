@@ -16,7 +16,12 @@ repomix-output.xml
 
 # Internal Dev (not uploaded)
 developer/
-docs/development/
+
+# Development internals (not uploaded); SPECs + METHODOLOGY ARE versioned (R1)
+docs/development/bitacora.md
+docs/development/working_tree.md
+docs/development/SYNC_PLAN.md
+docs/development/tests/TEST_OVERVIEW.md
 
 # OS / Editors
 .DS_Store
