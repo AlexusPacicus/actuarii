@@ -18,7 +18,22 @@
   "permission": {
     "webfetch": "deny",
     "websearch": "deny",
-    "bash": { "git *": "allow", "rm *": "deny", "*": "ask" }
+    "bash": {
+      "*": "ask",
+      "rm *": "deny",
+      "git status": "allow", "git status *": "allow",
+      "git diff": "allow",   "git diff *": "allow",
+      "git log *": "allow",  "git show *": "allow",
+      "git rev-parse *": "allow", "git grep *": "allow",
+      "git blame *": "allow", "git ls-files *": "allow",
+      "git add *": "allow",
+      "git commit *": "ask", "git checkout *": "ask", "git branch *": "ask",
+      "git stash *": "ask",  "git tag *": "ask",      "git remote *": "ask",
+      "git fetch *": "ask",  "git pull *": "ask",     "git push *": "ask",
+      "git config *": "ask", "git merge *": "ask",    "git rebase *": "ask",
+      "git reset *": "ask",  "git clean *": "ask",    "git submodule *": "ask",
+      "git rm *": "ask",     "git worktree *": "ask"
+    }
   },
   "enabled_providers": ["opencode"],
   "experimental": { "mcp_timeout": 10000 }

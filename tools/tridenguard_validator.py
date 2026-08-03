@@ -4,7 +4,19 @@ import uuid
 from pathlib import Path
 
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _grounding_failure() -> dict:
+    # Silent Denial: no reason (no path leakage)
+    return {"status": "QUARANTINED", "final_decision": "ABORTED_GROUNDING_FAILED",
+            "case_id": str(uuid.uuid4())}
+
+
 def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dict:
+    # Memory sanitization BEFORE processing (SEC-M-09): raw NUL.
+    if "\x00" in proposal_json_str or "\x00" in target_file_path:
+        return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": str(uuid.uuid4())}
     try:
         proposal = json.loads(proposal_json_str)
     except Exception as e:
@@ -12,48 +24,48 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
         # `final_decision` so every gate outcome has the same schema.
         return {"status": "QUARANTINED", "final_decision": "INVALID_JSON", "reason": str(e)}
 
+    try:
+        # Post-parse sanitization (SEC-M-09): JSON-escaped NUL \u0000, invisible in the raw string.
+        if any("\x00" in str(proposal.get(k, "")) for k in proposal):
+            return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": str(uuid.uuid4())}
 
-    safety_abort = proposal.get("Safety_Abort", "NONE")
-    block = proposal.get("Implementation_Block", "")
-    intent = proposal.get("Intent_Class", "NONE")
-    grounding = proposal.get("Topological_Grounding", "")
+        safety_abort = proposal.get("Safety_Abort", "NONE")
+        block = proposal.get("Implementation_Block", "")
+        intent = proposal.get("Intent_Class", "NONE")
+        grounding = proposal.get("Topological_Grounding", "")
 
+        if safety_abort != "NONE":
+            return {"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE", "case_id": str(uuid.uuid4())}
 
-    if safety_abort != "NONE":
-        return {"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE", "case_id": str(uuid.uuid4())}
+        forbidden = [
+            "fetch(", "axios", "urllib.request", "import requests", "httpx",
+            "socket", "urllib3", "subprocess", "curl", "wget", "aiohttp",
+            "importlib", "os.system", "os.popen", "requests.", "http.client",
+            "webbrowser", "telnet", "nc ", "ftp", "xmlrpc",
+        ]
+        if any(token in block for token in forbidden):
+            return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": str(uuid.uuid4())}
 
+        # SEC-M-07 (no fail-open): REFACTOR/FIX/AUDIT are mutating intents, so
+        # literal grounding against a target file is MANDATORY. Omitting
+        # `target_file_path` is a grounding failure, not a pass.
+        if intent in ["REFACTOR", "FIX", "AUDIT"]:
+            if not target_file_path:
+                return _grounding_failure()
+            # Dual Boundary: canonicalization + physical containment within the repo.
+            resolved = Path(target_file_path).expanduser().resolve(strict=True)
+            if not resolved.is_relative_to(REPO_ROOT):
+                return _grounding_failure()
+            # BINARY UTF-8 subsequence matching over read_bytes().
+            quote_bytes = grounding.encode("utf-8")
+            file_bytes = resolved.read_bytes()
+            if not grounding or quote_bytes not in file_bytes:
+                return _grounding_failure()
 
-    forbidden = ["fetch(", "axios", "urllib.request", "import requests"]
-    if any(token in block for token in forbidden):
-        return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": str(uuid.uuid4())}
-
-
-    # SEC-M-07 (no fail-open): REFACTOR/FIX/AUDIT are mutating intents, so
-    # literal grounding against a target file is MANDATORY. Omitting
-    # `target_file_path` is a grounding failure, not a pass. A proposal that
-    # mutates state without grounding evidence must never reach EXECUTE_SAFE.
-    if intent in ["REFACTOR", "FIX", "AUDIT"]:
-        if not target_file_path:
-            return {
-                "status": "QUARANTINED",
-                "final_decision": "ABORTED_GROUNDING_FAILED",
-                "case_id": str(uuid.uuid4()),
-                "reason": "target_file is required for mutating intents (REFACTOR/FIX/AUDIT)",
-            }
-        try:
-            file_content = Path(target_file_path).read_text(encoding="utf-8")
-        except OSError as e:
-            return {
-                "status": "QUARANTINED",
-                "final_decision": "ABORTED_GROUNDING_FAILED",
-                "case_id": str(uuid.uuid4()),
-                "reason": f"target_file not readable: {e}",
-            }
-        if not grounding or grounding not in file_content:
-            return {"status": "QUARANTINED", "final_decision": "ABORTED_GROUNDING_FAILED", "case_id": str(uuid.uuid4())}
-
-
-    return {"status": "VALIDATED", "final_decision": "EXECUTE_SAFE", "case_id": str(uuid.uuid4()), "and_gate_ok": True}
+        return {"status": "VALIDATED", "final_decision": "EXECUTE_SAFE", "case_id": str(uuid.uuid4()), "and_gate_ok": True}
+    except Exception:
+        # Total function: the validator NEVER raises exceptions (fail-closed).
+        return _grounding_failure()
 
 
 # ---------------------------------------------------------------------------
@@ -64,7 +76,7 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
 # ---------------------------------------------------------------------------
 
 SERVER_NAME = "tridenguard-validator"
-SERVER_VERSION = "1.1.0"
+SERVER_VERSION = "1.2.0"
 PROTOCOL_VERSION = "2024-11-05"
 
 TOOL_DEFINITION = {
