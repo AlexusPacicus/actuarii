@@ -3,7 +3,7 @@ This file verifies MUST/MUST NOT requirements from the SPEC (RFC 2119).
 TridenGuard Zero-Trust gate (SEC-M-01..06): validate_proposal and its
 MCP server over stdio JSON-RPC.
 Normative: docs/development/tests/SPEC-security.md
-Coverage: SEC-M-01, SEC-M-02, SEC-M-03, SEC-M-04, SEC-M-05, SEC-M-06"""
+Coverage: SEC-M-01, SEC-M-02, SEC-M-03, SEC-M-04, SEC-M-05, SEC-M-06, SEC-M-07"""
 import json
 import subprocess
 import sys
@@ -26,7 +26,7 @@ def _grounded_proposal() -> str:
 def test_security_SEC_M_01_invalid_json_rejected():
     decision = validate_proposal("{not valid json")
     assert decision["status"] == "QUARANTINED"
-    assert decision["decision"] == "INVALID_JSON"
+    assert decision["final_decision"] == "INVALID_JSON"
 
 
 def test_security_SEC_M_02_safety_abort_blocks():
@@ -76,6 +76,31 @@ def test_security_SEC_M_05_valid_grounding_approved():
     assert decision["status"] == "VALIDATED"
     assert decision["final_decision"] == "EXECUTE_SAFE"
     assert decision["and_gate_ok"] is True
+
+
+def test_security_SEC_M_07_mutating_intent_requires_target_file():
+    """SEC-M-07: REFACTOR/FIX/AUDIT without a target_file must NOT pass
+    (no fail-open). The tool schema documents target_file as 'required for
+    REFACTOR/FIX/AUDIT'; omitting it is a grounding failure."""
+    for intent in ("REFACTOR", "FIX", "AUDIT"):
+        proposal = json.dumps({
+            "Intent_Class": intent,
+            "Implementation_Block": "update threshold",
+            "Topological_Grounding": "auto_calibrate_critical_threshold()",
+            "Safety_Abort": "NONE",
+        })
+        decision = validate_proposal(proposal)
+        assert decision["status"] == "QUARANTINED", intent
+        assert decision["final_decision"] == "ABORTED_GROUNDING_FAILED", intent
+
+
+def test_security_SEC_M_07_unreadable_target_file_is_grounding_failure():
+    """SEC-M-07: a mutating intent whose target_file does not exist is also
+    a grounding failure (the file cannot be verified)."""
+    proposal = _grounded_proposal()
+    decision = validate_proposal(proposal, "/nonexistent/path/to/app.py")
+    assert decision["status"] == "QUARANTINED"
+    assert decision["final_decision"] == "ABORTED_GROUNDING_FAILED"
 
 
 def test_security_SEC_M_06_mcp_stdio_jsonrpc():

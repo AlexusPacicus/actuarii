@@ -8,7 +8,9 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
     try:
         proposal = json.loads(proposal_json_str)
     except Exception as e:
-        return {"status": "QUARANTINED", "decision": "INVALID_JSON", "reason": str(e)}
+        # Unified decision key (SEC-M-01): INVALID_JSON also uses
+        # `final_decision` so every gate outcome has the same schema.
+        return {"status": "QUARANTINED", "final_decision": "INVALID_JSON", "reason": str(e)}
 
 
     safety_abort = proposal.get("Safety_Abort", "NONE")
@@ -26,8 +28,27 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
         return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": str(uuid.uuid4())}
 
 
-    if intent in ["REFACTOR", "FIX", "AUDIT"] and target_file_path:
-        file_content = Path(target_file_path).read_text(encoding="utf-8")
+    # SEC-M-07 (no fail-open): REFACTOR/FIX/AUDIT are mutating intents, so
+    # literal grounding against a target file is MANDATORY. Omitting
+    # `target_file_path` is a grounding failure, not a pass. A proposal that
+    # mutates state without grounding evidence must never reach EXECUTE_SAFE.
+    if intent in ["REFACTOR", "FIX", "AUDIT"]:
+        if not target_file_path:
+            return {
+                "status": "QUARANTINED",
+                "final_decision": "ABORTED_GROUNDING_FAILED",
+                "case_id": str(uuid.uuid4()),
+                "reason": "target_file is required for mutating intents (REFACTOR/FIX/AUDIT)",
+            }
+        try:
+            file_content = Path(target_file_path).read_text(encoding="utf-8")
+        except OSError as e:
+            return {
+                "status": "QUARANTINED",
+                "final_decision": "ABORTED_GROUNDING_FAILED",
+                "case_id": str(uuid.uuid4()),
+                "reason": f"target_file not readable: {e}",
+            }
         if not grounding or grounding not in file_content:
             return {"status": "QUARANTINED", "final_decision": "ABORTED_GROUNDING_FAILED", "case_id": str(uuid.uuid4())}
 

@@ -75,6 +75,8 @@ def _hermetic_model(request, monkeypatch):
         yield
         return
     fake = FakeSentenceTransformer()
-    monkeypatch.setattr(main, "model", fake)
-    monkeypatch.setattr(bootstrap, "model", fake)
+    monkeypatch.setattr(main, "_model", fake)
+    monkeypatch.setattr(main, "get_model", lambda: fake)
+    monkeypatch.setattr(bootstrap, "_model", fake)
+    monkeypatch.setattr(bootstrap, "get_model", lambda: fake)
     yield
