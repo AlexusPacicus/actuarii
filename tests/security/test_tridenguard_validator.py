@@ -56,14 +56,14 @@ def test_security_SEC_M_03_external_network_blocked():
 
 def test_security_SEC_M_04_literal_grounding_required():
     src = (ROOT / "traianus" / "app.py").read_text(encoding="utf-8")
-    assert "auto_calibrate_critical_threshold()" in src  # cita existe literal
+    assert "auto_calibrate_critical_threshold()" in src  # citation exists literally
 
     proposal = _grounded_proposal()
-    # Grounding que NO existe literalmente en el archivo objetivo
+    # Grounding that does NOT exist literally in the target file
     proposal_bad = json.dumps({
         "Intent_Class": "FIX",
         "Implementation_Block": "update threshold",
-        "Topological_Grounding": "esta_cita_no_existe_en_el_codigo_xyz",
+        "Topological_Grounding": "this_citation_does_not_exist_in_the_code_xyz",
         "Safety_Abort": "NONE",
     })
     decision = validate_proposal(proposal_bad, str(ROOT / "traianus" / "app.py"))
