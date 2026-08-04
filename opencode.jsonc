@@ -12,7 +12,7 @@
       "type": "local",
       "command": [
         "python3",
-        "tools/tridenguard_validator.py"
+        "traianus/security/validator.py"
       ]
     },
     "spectral-math-engine": {

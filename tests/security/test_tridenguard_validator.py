@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tools.tridenguard_validator import validate_proposal
+from traianus.security.validator import validate_proposal
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -104,7 +104,7 @@ def test_security_SEC_M_07_unreadable_target_file_is_grounding_failure():
 
 
 def test_security_SEC_M_06_mcp_stdio_jsonrpc():
-    script = str(ROOT / "tools" / "tridenguard_validator.py")
+    script = str(ROOT / "traianus" / "security" / "validator.py")
     messages = [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize",
          "params": {"clientInfo": {"name": "test", "version": "0"}}},

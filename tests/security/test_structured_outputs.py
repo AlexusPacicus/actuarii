@@ -14,9 +14,9 @@ import json
 
 import pytest
 
-from tools.schemas.parser import JSONParsingError, parse_proposal, parse_proposal_json
-from tools.schemas.proposals import AgentMutationProposal, build_response_format
-from tools.tridenguard_validator import validate_proposal
+from traianus.security.schemas.parser import JSONParsingError, parse_proposal, parse_proposal_json
+from traianus.security.schemas.proposals import AgentMutationProposal, build_response_format
+from traianus.security.validator import validate_proposal
 
 
 # ---------------------------------------------------------------------------

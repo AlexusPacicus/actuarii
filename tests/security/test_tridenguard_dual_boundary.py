@@ -5,14 +5,14 @@ traversal / symlinks resolved), `\x00` sanitization, expanded network-token
 denylist, UTF-8 binary subsequence grounding over `read_bytes()`, and silent
 denial (no target path / OS details leaked). RED phase: every test asserts
 the NEW behavior that the current validator does NOT yet implement; the
-validator (`tools/tridenguard_validator.py`) is intentionally untouched here
+validator (`traianus/security/validator.py`) is intentionally untouched here
 and will be refactored in Phase 4.
 Normative: docs/development/tests/SPEC-security.md
 Coverage: SEC-M-08, SEC-M-09, SEC-M-10, SEC-M-11, SEC-M-12"""
 import json
 from pathlib import Path
 
-from tools.tridenguard_validator import validate_proposal
+from traianus.security.validator import validate_proposal
 
 GROUNDING_MARKER = "dual_boundary_victim_marker"
 
