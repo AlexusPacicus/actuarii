@@ -3,8 +3,11 @@ import json
 import uuid
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.schemas.parser import JSONParsingError, parse_proposal_json
 
 
 def _grounding_failure() -> dict:
@@ -18,8 +21,8 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
     if "\x00" in proposal_json_str or "\x00" in target_file_path:
         return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": str(uuid.uuid4())}
     try:
-        proposal = json.loads(proposal_json_str)
-    except Exception as e:
+        proposal, _used_repair = parse_proposal_json(proposal_json_str)
+    except JSONParsingError as e:
         # Unified decision key (SEC-M-01): INVALID_JSON also uses
         # `final_decision` so every gate outcome has the same schema.
         return {"status": "QUARANTINED", "final_decision": "INVALID_JSON", "reason": str(e)}

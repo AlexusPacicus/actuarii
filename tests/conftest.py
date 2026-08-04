@@ -14,6 +14,8 @@ existed in the 34 pre-Phase 0 tests (two byte-for-byte copies of the same schema
 import os
 import sys
 
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
 import pytest
 from fastapi.testclient import TestClient
 
