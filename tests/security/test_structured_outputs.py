@@ -1,7 +1,7 @@
 """
 Structured Outputs contract (SEC-M-14..SEC-M-18).
 
-Normative: docs/development/tests/SPEC-security.md
+Normative: docs/archive/legacy_docs/development/tests/SPEC-security.md
 Coverage: SEC-M-14, SEC-M-15, SEC-M-16, SEC-M-17, SEC-M-18
 
 RFC 2119: build_response_format MUST emit a strict json_schema response
@@ -14,9 +14,9 @@ import json
 
 import pytest
 
-from tools.schemas.parser import JSONParsingError, parse_proposal, parse_proposal_json
-from tools.schemas.proposals import AgentMutationProposal, build_response_format
-from tools.tridenguard_validator import validate_proposal
+from traianus.security.schemas.parser import JSONParsingError, parse_proposal, parse_proposal_json
+from traianus.security.schemas.proposals import AgentMutationProposal, build_response_format
+from traianus.security.validator import validate_proposal
 
 
 # ---------------------------------------------------------------------------

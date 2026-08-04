@@ -2,14 +2,14 @@
 This file verifies MUST/MUST NOT requirements from the SPEC (RFC 2119).
 TridenGuard Zero-Trust gate (SEC-M-01..06): validate_proposal and its
 MCP server over stdio JSON-RPC.
-Normative: docs/development/tests/SPEC-security.md
+Normative: docs/archive/legacy_docs/development/tests/SPEC-security.md
 Coverage: SEC-M-01, SEC-M-02, SEC-M-03, SEC-M-04, SEC-M-05, SEC-M-06, SEC-M-07"""
 import json
 import subprocess
 import sys
 from pathlib import Path
 
-from tools.tridenguard_validator import validate_proposal
+from traianus.security.validator import validate_proposal
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -104,7 +104,7 @@ def test_security_SEC_M_07_unreadable_target_file_is_grounding_failure():
 
 
 def test_security_SEC_M_06_mcp_stdio_jsonrpc():
-    script = str(ROOT / "tools" / "tridenguard_validator.py")
+    script = str(ROOT / "traianus" / "security" / "validator.py")
     messages = [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize",
          "params": {"clientInfo": {"name": "test", "version": "0"}}},

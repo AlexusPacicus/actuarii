@@ -3,7 +3,7 @@
   "model": "opencode/big-pickle",
   "small_model": "opencode/ling-3.0-flash-free",
   "instructions": [
-    "TRAIANUS_AUDIT.md",
+    "docs/archive/root_clutter/TRAIANUS_AUDIT.md",
     "docs/LOGOGRAPHY.md",
     "AGENTS.md"
   ],
@@ -12,7 +12,7 @@
       "type": "local",
       "command": [
         "python3",
-        "tools/tridenguard_validator.py"
+        "traianus/security/validator.py"
       ]
     },
     "spectral-math-engine": {

@@ -15,9 +15,9 @@ import json
 import logging
 import re
 
-from tools.schemas.proposals import AgentMutationProposal
+from traianus.security.schemas.proposals import AgentMutationProposal
 
-logger = logging.getLogger("tools.schemas.parser")
+logger = logging.getLogger("traianus.security.schemas.parser")
 
 
 class JSONParsingError(ValueError):

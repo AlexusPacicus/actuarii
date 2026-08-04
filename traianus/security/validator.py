@@ -3,11 +3,11 @@ import json
 import uuid
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.schemas.parser import JSONParsingError, parse_proposal_json
+from traianus.security.schemas.parser import JSONParsingError, parse_proposal_json
 
 
 def _grounding_failure() -> dict:
