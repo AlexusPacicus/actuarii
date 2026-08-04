@@ -2,9 +2,11 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode/big-pickle",
   "small_model": "opencode/ling-3.0-flash-free",
-
-  "instructions": ["TRAIANUS_AUDIT.md", "docs/LOGOGRAPHY.md"],
-
+  "instructions": [
+    "TRAIANUS_AUDIT.md",
+    "docs/LOGOGRAPHY.md",
+    "AGENTS.md"
+  ],
   "mcp": {
     "tridenguard-validator": {
       "type": "local",
@@ -12,29 +14,61 @@
         "python3",
         "tools/tridenguard_validator.py"
       ]
+    },
+    "spectral-math-engine": {
+      "type": "local",
+      "command": [
+        "python3",
+        "tools/spectral_math_mcp.py"
+      ]
     }
   },
-
   "permission": {
     "webfetch": "deny",
     "websearch": "deny",
     "bash": {
       "*": "ask",
       "rm *": "deny",
-      "git status": "allow", "git status *": "allow",
-      "git diff": "allow",   "git diff *": "allow",
-      "git log *": "allow",  "git show *": "allow",
-      "git rev-parse *": "allow", "git grep *": "allow",
-      "git blame *": "allow", "git ls-files *": "allow",
+      // Safe read-only Git inspection
+      "git status": "allow",
+      "git status *": "allow",
+      "git diff": "allow",
+      "git diff *": "allow",
+      "git log *": "allow",
+      "git show *": "allow",
+      "git rev-parse *": "allow",
+      "git grep *": "allow",
+      "git blame *": "allow",
+      "git ls-files *": "allow",
       "git add *": "allow",
-      "git commit *": "ask", "git checkout *": "ask", "git branch *": "ask",
-      "git stash *": "ask",  "git tag *": "ask",      "git remote *": "ask",
-      "git fetch *": "ask",  "git pull *": "ask",     "git push *": "ask",
-      "git config *": "ask", "git merge *": "ask",    "git rebase *": "ask",
-      "git reset *": "ask",  "git clean *": "ask",    "git submodule *": "ask",
-      "git rm *": "ask",     "git worktree *": "ask"
+      // Branch management and GitHub CLI interaction
+      "git checkout -b *": "ask",
+      "gh issue *": "ask",
+      "gh pr *": "ask",
+      // Git mutations and advanced management
+      "git commit *": "ask",
+      "git checkout *": "ask",
+      "git branch *": "ask",
+      "git stash *": "ask",
+      "git tag *": "ask",
+      "git remote *": "ask",
+      "git fetch *": "ask",
+      "git pull *": "ask",
+      "git push *": "ask",
+      "git config *": "ask",
+      "git merge *": "ask",
+      "git rebase *": "ask",
+      "git reset *": "ask",
+      "git clean *": "ask",
+      "git submodule *": "ask",
+      "git rm *": "ask",
+      "git worktree *": "ask"
     }
   },
-  "enabled_providers": ["opencode"],
-  "experimental": { "mcp_timeout": 10000 }
+  "enabled_providers": [
+    "opencode"
+  ],
+  "experimental": {
+    "mcp_timeout": 10000
+  }
 }
