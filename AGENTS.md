@@ -13,7 +13,7 @@
 - Execution **MUST** comply with local edge hardware limits (≤ 8 GB RAM).
 
 ### Audit & Domain Logic Invariants
-- Agents **MUST** consult `TRAIANUS_AUDIT.md` before applying refactorings to `traianus/app.py`.
+- Agents **MUST** consult `docs/archive/root_clutter/TRAIANUS_AUDIT.md` before applying refactorings to `traianus/app.py`.
 - Calibrations in `auto_calibrate_critical_threshold()` **MUST** exclude self-projection (`i = j`) to prevent variance inflation (Correction C1).
 
 ### Network Zero-Trust
