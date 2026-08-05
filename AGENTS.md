@@ -90,10 +90,10 @@
 ## 7. Mandatory Proposal Schema (Pydantic / 5 Radicals)
 
 All agent mutation proposals **MUST** conform strictly to the Pydantic schema in
-`tools/schemas/proposals.py` (`AgentMutationProposal`) with `strict: true`, and
+`traianus/security/schemas/proposals.py` (`AgentMutationProposal`) with `strict: true`, and
 **MUST** be emitted through the structured outputs contract
 `build_response_format(AgentMutationProposal)` (normative SEC-M-14..SEC-M-18,
-parsed via `tools/schemas/parser.py`):
+parsed via `traianus/security/schemas/parser.py`):
 
 1. `Intent_Class`: strict classification (`FIX`, `REFACTOR`, `TEST`, `DOC`, `SPEC`).
 2. `Target_File`: target path relative to repository root.
