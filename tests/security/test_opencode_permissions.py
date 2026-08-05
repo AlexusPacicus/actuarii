@@ -4,7 +4,7 @@ Config perimeter (SEC-M-13): the opencode.jsonc bash permission matrix must
 not grant a 'git *' wildcard allow; only the explicit read/inspection git
 subcommands (status, diff, log, show, rev-parse, grep, blame, ls-files, add)
 may be allowed, and the deny primitives (webfetch, websearch, rm *) persist.
-Normative: docs/archive/legacy_docs/development/tests/SPEC-security.md
+Normative: docs/exploring/legacy_docs/development/tests/SPEC-security.md
 Coverage: SEC-M-13"""
 import re
 from pathlib import Path

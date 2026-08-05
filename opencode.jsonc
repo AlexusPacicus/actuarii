@@ -3,7 +3,7 @@
   "model": "opencode/big-pickle",
   "small_model": "opencode/ling-3.0-flash-free",
   "instructions": [
-    "docs/archive/root_clutter/TRAIANUS_AUDIT.md",
+    "docs/exploring/root_clutter/TRAIANUS_AUDIT.md",
     "docs/LOGOGRAPHY.md",
     "AGENTS.md"
   ],
