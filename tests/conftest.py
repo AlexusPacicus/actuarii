@@ -66,6 +66,31 @@ def auth_headers():
     return {"X-Traianus-Token": AUTH_TOKEN}
 
 
+@pytest.fixture
+def ingesta(client, auth_headers):
+    """
+    Shared raw `text/plain` ingestion helper (SPEC-REFACTOR-v0.2 §3.4).
+
+    Migrates the repeated `client.post("/ingesta", json={"type": ...})`
+    call sites to the v0.2 contract: raw UTF-8 body + `Content-Type` header
+    (the MIME allowlist moved from the JSON `type` field to the header) +
+    optional `X-Idempotency-Key`.
+    """
+    def _ingesta(
+        text: str,
+        content_type: str = "text/plain",
+        idempotency_key: str | None = None,
+        use_auth: bool = True,
+    ):
+        headers = {"Content-Type": content_type}
+        if use_auth:
+            headers.update(auth_headers)
+        if idempotency_key is not None:
+            headers["X-Idempotency-Key"] = idempotency_key
+        return client.post("/ingesta", content=text.encode("utf-8"), headers=headers)
+    return _ingesta
+
+
 @pytest.fixture(autouse=True)
 def _hermetic_model(request, monkeypatch):
     """

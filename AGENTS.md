@@ -54,7 +54,7 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 
 4.1 The agent **MUST NOT** execute SQL `UPDATE` or `DELETE` statements on `geodesic_axes` or node history. All updates are append-only, recorded via increasing sequence numbers (`seq`).
 
-4.2 Lifecycle states **MUST** be restricted to `pending_approval`, `incubating`, and `consolidated`. The `archived` state **MUST NOT** be used or defined in schemas or DDLs.
+4.2 Lifecycle states **MUST** be restricted to `pending_approval`, `incubating`, `consolidated`, and the append-only error-log state `telemetry_error` (persisted by the spectral processor and read by `/telemetry`). The `archived` state **MUST NOT** be used or defined in schemas or DDLs. The SQLite `CHECK` constraint mirrors this set.
 
 4.3 Local adjacency $E_n$ ($\epsilon = 0.8$, L2) **MUST** remain a purely observational metric in `/relations` and **MUST NOT** alter lifecycle states.
 
