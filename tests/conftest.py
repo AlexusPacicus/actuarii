@@ -5,7 +5,7 @@ Shared fixtures that ELIMINATE the DDL and isolation duplication that
 existed in the 34 pre-Phase 0 tests (two byte-for-byte copies of the same schema):
 - `operator_token_env` (autouse): TRAIANUS_TOKEN for protected routes (H3).
 - `isolate_db` (autouse): ephemeral SQLite DB per test, single DDL via
-  `helpers/db_factory.create_test_db`, monkeypatch of `main.DB_PATH`.
+  `helpers/db_factory.create_test_db`, monkeypatch of `traianus.storage.DB_PATH`.
 - `client`: TestClient of FastAPI over the real app.
 - `auth_headers`: valid operator header.
 - `_hermetic_model` (autouse): injects a fake encoder (L1) into all
@@ -27,6 +27,7 @@ for _p in (ROOT, TESTS_DIR):
 
 import traianus.app as main  # noqa: E402
 import traianus.bootstrap as bootstrap  # noqa: E402
+import traianus.storage as storage  # noqa: E402
 from helpers.db_factory import create_test_db  # noqa: E402
 from helpers.fake_encoder import FakeSentenceTransformer  # noqa: E402
 
@@ -49,7 +50,7 @@ def isolate_db(tmp_path, monkeypatch):
     test_append_only_log.isolate_append_only_db).
     """
     test_db_path = str(tmp_path / "test_traianus.db")
-    monkeypatch.setattr(main, "DB_PATH", test_db_path)
+    monkeypatch.setattr(storage, "DB_PATH", test_db_path)
     create_test_db(test_db_path, seed="onehot")
     return test_db_path
 
