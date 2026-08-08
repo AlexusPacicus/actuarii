@@ -40,7 +40,7 @@
       "git grep *": "allow",
       "git blame *": "allow",
       "git ls-files *": "allow",
-      "git add *": "allow",
+      "git add *": "ask",
       // Branch management and GitHub CLI interaction
       "git checkout -b *": "ask",
       "gh issue *": "ask",
