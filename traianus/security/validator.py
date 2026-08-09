@@ -1,13 +1,36 @@
 import sys
 import json
 import uuid
+import sqlite3
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from traianus.storage import DB_PATH
 from traianus.security.schemas.parser import JSONParsingError, parse_proposal_json
+
+
+def _persist_audit(case_id: str, decision: str, intent_class: str = "",
+                   target_file: str = "", safety_abort: str = "") -> None:
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute("PRAGMA journal_mode=WAL;")
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS audit_log ("
+                "case_id TEXT PRIMARY KEY, timestamp TEXT DEFAULT (datetime('now')),"
+                "intent_class TEXT, target_file TEXT, decision TEXT NOT NULL,"
+                "safety_abort TEXT)"
+            )
+            conn.execute(
+                "INSERT OR IGNORE INTO audit_log "
+                "(case_id, intent_class, target_file, decision, safety_abort) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (case_id, intent_class, target_file, decision, safety_abort),
+            )
+    except sqlite3.Error:
+        pass  # Fail-open on logging: never block the gate due to audit failure
 
 
 def _grounding_failure() -> dict:
@@ -16,21 +39,30 @@ def _grounding_failure() -> dict:
             "case_id": str(uuid.uuid4())}
 
 
+def _finalize(decision: dict, intent: str = "", target_file: str = "",
+              safety_abort: str = "") -> dict:
+    case_id = decision.get("case_id", str(uuid.uuid4()))
+    _persist_audit(case_id, decision.get("final_decision", ""), intent,
+                   target_file, safety_abort)
+    return decision
+
+
 def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dict:
     # Memory sanitization BEFORE processing (SEC-M-09): raw NUL.
     if "\x00" in proposal_json_str or "\x00" in target_file_path:
-        return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": str(uuid.uuid4())}
+        return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST",
+                         "case_id": str(uuid.uuid4())})
     try:
         proposal, _used_repair = parse_proposal_json(proposal_json_str)
     except JSONParsingError as e:
-        # Unified decision key (SEC-M-01): INVALID_JSON also uses
-        # `final_decision` so every gate outcome has the same schema.
-        return {"status": "QUARANTINED", "final_decision": "INVALID_JSON", "reason": str(e)}
+        return _finalize({"status": "QUARANTINED", "final_decision": "INVALID_JSON",
+                          "reason": str(e)})
 
     try:
         # Post-parse sanitization (SEC-M-09): JSON-escaped NUL \u0000, invisible in the raw string.
         if any("\x00" in str(proposal.get(k, "")) for k in proposal):
-            return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": str(uuid.uuid4())}
+            return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST",
+                              "case_id": str(uuid.uuid4())})
 
         safety_abort = proposal.get("Safety_Abort", "NONE")
         block = proposal.get("Implementation_Block", "")
@@ -38,7 +70,8 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
         grounding = proposal.get("Topological_Grounding", "")
 
         if safety_abort != "NONE":
-            return {"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE", "case_id": str(uuid.uuid4())}
+            return _finalize({"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE",
+                              "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort)
 
         forbidden = [
             "fetch(", "axios", "urllib.request", "import requests", "httpx",
@@ -47,28 +80,31 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
             "webbrowser", "telnet", "nc ", "ftp", "xmlrpc",
         ]
         if any(token in block for token in forbidden):
-            return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": str(uuid.uuid4())}
+            return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST",
+                              "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort)
 
         # SEC-M-07 (no fail-open): REFACTOR/FIX/AUDIT are mutating intents, so
         # literal grounding against a target file is MANDATORY. Omitting
         # `target_file_path` is a grounding failure, not a pass.
         if intent in ["REFACTOR", "FIX", "AUDIT"]:
             if not target_file_path:
-                return _grounding_failure()
+                return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
             # Dual Boundary: canonicalization + physical containment within the repo.
             resolved = Path(target_file_path).expanduser().resolve(strict=True)
             if not resolved.is_relative_to(REPO_ROOT):
-                return _grounding_failure()
+                return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
             # BINARY UTF-8 subsequence matching over read_bytes().
             quote_bytes = grounding.encode("utf-8")
             file_bytes = resolved.read_bytes()
             if not grounding or quote_bytes not in file_bytes:
-                return _grounding_failure()
+                return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
 
-        return {"status": "VALIDATED", "final_decision": "EXECUTE_SAFE", "case_id": str(uuid.uuid4()), "and_gate_ok": True}
+        return _finalize({"status": "VALIDATED", "final_decision": "EXECUTE_SAFE",
+                          "case_id": str(uuid.uuid4()), "and_gate_ok": True},
+                         intent, target_file_path, safety_abort)
     except Exception:
         # Total function: the validator NEVER raises exceptions (fail-closed).
-        return _grounding_failure()
+        return _finalize(_grounding_failure())
 
 
 # ---------------------------------------------------------------------------
