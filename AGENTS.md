@@ -31,6 +31,8 @@
 
 2.4 Ingress verification **MUST** execute at the byte level: reject null bytes (`\x00`) and strict UTF-8 decoding failures (`errors="strict"`) with HTTP 400.
 
+2.5 The agent **MUST NOT** execute inline Python (`python3 -c`, `python3 -m`). Python execution is restricted to committed scripts under `tools/` or `traianus/`. Any Python script not previously committed requires explicit user approval before execution. This rule is enforced by the `opencode.jsonc` permission matrix (deny `python3 -c *`, deny `python3 -m *`).
+
 ---
 
 ## 3. Substrate Domain & Mathematical Invariants (384D)
