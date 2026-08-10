@@ -19,7 +19,7 @@
       "type": "local",
       "command": [
         "python3",
-        "tools/spectral_math_mcp.py"
+        "tools/mcp/spectral_math_mcp.py"
       ]
     }
   },
@@ -33,9 +33,10 @@
       "python3 -c *": "deny",
       "python3 -m *": "deny",
       "python3 tools/*": "allow",
+      "python3 tools/mcp/*": "allow",
+      "python3 tools/audit/*": "allow",
+      "python3 tools/experiments/*": "allow",
       "python3 traianus/security/validator.py": "allow",
-      "python3 tools/audit_harness.py": "allow",
-      "python3 tools/spectral_math_mcp.py": "allow",
       // Safe read-only Git inspection
       "git status": "allow",
       "git status *": "allow",

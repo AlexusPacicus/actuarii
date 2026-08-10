@@ -23,7 +23,7 @@
 
 2.1 Code proposals and mutations **MUST NOT** introduce external network primitives (`fetch`, `axios`, `urllib`, `requests`, `httpx`, `socket`, `subprocess`, `curl`, `wget`, `aiohttp`, `importlib`, `os.system`, `os.popen`).
 
-> Scope note: this ban applies to the `Implementation_Block` of mutation proposals. Local repository tooling (e.g. `tools/check_impact.py`, which shells out to `git grep`) is not subject to it.
+> Scope note: this ban applies to the `Implementation_Block` of mutation proposals. Local repository tooling (e.g. `tools/audit/check_impact.py`, which shells out to `git grep`) is not subject to it.
 
 2.2 Endpoints **MUST** bind exclusively to `127.0.0.1`. Wildcard CORS policies (`allow_origins=["*"]`) combined with credentials **MUST NOT** be introduced.
 

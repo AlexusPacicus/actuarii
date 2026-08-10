@@ -2,7 +2,7 @@
 
 Before moving a file, run:
 
-    python tools/check_impact.py traianus/security/validator.py
+    python tools/audit/check_impact.py traianus/security/validator.py
 
 It reports, via `git grep`, every tracked reference to (a) the exact path,
 (b) the basename and (c) the stem of the target file, so the atomic move can
