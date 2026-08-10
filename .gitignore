@@ -23,6 +23,9 @@ docs/development/working_tree.md
 docs/development/SYNC_PLAN.md
 docs/development/tests/TEST_OVERVIEW.md
 
+# Local runtime data
+.data/
+
 # OS / Editors
 .DS_Store
 .idea/
