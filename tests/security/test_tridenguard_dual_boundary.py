@@ -7,7 +7,7 @@ denial (no target path / OS details leaked). RED phase: every test asserts
 the NEW behavior that the current validator does NOT yet implement; the
 validator (`traianus/security/validator.py`) is intentionally untouched here
 and will be refactored in Phase 4.
-Normative: docs/exploring/legacy_docs/development/tests/SPEC-security.md
+Normative: AGENTS.md §5, SEC-M-08..12
 Coverage: SEC-M-08, SEC-M-09, SEC-M-10, SEC-M-11, SEC-M-12"""
 import json
 from pathlib import Path

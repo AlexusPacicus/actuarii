@@ -3,7 +3,7 @@
   "model": "opencode/longcat-2.0-free",
   "small_model": "opencode/deepseek-v4-flash-free",
   "instructions": [
-    "docs/exploring/root_clutter/TRAIANUS_AUDIT.md",
+    "docs/audit/TRAIANUS_AUDIT.md",
     "docs/LOGOGRAPHY.md",
     "AGENTS.md"
   ],

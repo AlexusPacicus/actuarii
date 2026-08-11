@@ -1,7 +1,7 @@
 """
 Structured Outputs contract (SEC-M-14..SEC-M-18).
 
-Normative: docs/exploring/legacy_docs/development/tests/SPEC-security.md
+Normative: traianus/security/schemas/proposals.py (AgentMutationProposal)
 Coverage: SEC-M-14, SEC-M-15, SEC-M-16, SEC-M-17, SEC-M-18
 
 RFC 2119: build_response_format MUST emit a strict json_schema response

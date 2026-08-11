@@ -26,6 +26,9 @@ docs/development/tests/TEST_OVERVIEW.md
 # Local runtime data
 .data/
 
+# Archived documentation (preserved in git history, not in working tree)
+docs/exploring/
+
 # OS / Editors
 .DS_Store
 .idea/

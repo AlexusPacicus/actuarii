@@ -48,7 +48,7 @@
 3.5 State consolidation **MUST** require the simultaneous satisfaction of both keys in `traianus/core.py`:
 $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{EthicalKey} == \text{True})$$
 
-3.6 Agents **MUST** consult `docs/exploring/root_clutter/TRAIANUS_AUDIT.md` before applying refactorings to `traianus/app.py`.
+3.6 Agents **MUST** consult `docs/audit/TRAIANUS_AUDIT.md` before applying refactorings to `traianus/app.py`.
 
 ---
 
@@ -82,7 +82,7 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 
 ## 6. Governance & Role Taxonomy
 
-6.1 Traianus is governed by a **single executing agent**; there are no live subagents. The former role taxonomy (planning, orchestration, code RED/GREEN, docs, github, traceability) is retained **conceptually** for documentation and process traceability, and the detailed role definitions are archived at `docs/exploring/legacy_docs/opencode/agents/`.
+6.1 Traianus is governed by a **single executing agent**; there are no live subagents. The former role taxonomy (planning, orchestration, code RED/GREEN, docs, github, traceability) is retained **conceptually** for documentation and process traceability, and the detailed role definitions are archived in git history.
 
 6.2 Enforcement is centralized, not per-role:
 - `opencode.jsonc` global permission matrix (git read-only allowlist; `rm *`, webfetch, websearch deny; mutations `ask`).
