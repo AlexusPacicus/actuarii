@@ -39,6 +39,8 @@ def operator_token_env(monkeypatch):
     """Sets TRAIANUS_TOKEN for protected routes (H3). Fail-closed:
     without this env, require_token rejects with 401."""
     monkeypatch.setenv("TRAIANUS_TOKEN", AUTH_TOKEN)
+    yield
+    monkeypatch.undo()
 
 
 @pytest.fixture(autouse=True)
@@ -103,8 +105,17 @@ def _hermetic_model(request, monkeypatch):
         yield
         return
     fake = FakeSentenceTransformer()
-    monkeypatch.setattr(main, "_model", fake)
-    monkeypatch.setattr(main, "get_model", lambda: fake)
-    monkeypatch.setattr(bootstrap, "_model", fake)
-    monkeypatch.setattr(bootstrap, "get_model", lambda: fake)
-    yield
+    # Store originals for cleanup
+    orig_model = main._model
+    orig_get_model = main.get_model
+    orig_bootstrap_model = bootstrap._model
+    orig_bootstrap_get_model = bootstrap.get_model
+    try:
+        monkeypatch.setattr(main, "_model", fake)
+        monkeypatch.setattr(main, "get_model", lambda: fake)
+        monkeypatch.setattr(bootstrap, "_model", fake)
+        monkeypatch.setattr(bootstrap, "get_model", lambda: fake)
+        yield
+    finally:
+        # Restore originals to prevent state leakage between tests
+        monkeypatch.undo()
