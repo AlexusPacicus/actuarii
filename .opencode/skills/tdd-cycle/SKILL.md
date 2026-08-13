@@ -13,4 +13,4 @@ Rules:
 - Process one phase at a time; do not advance until the executor reports success.
 - Empirical validation: `python3 -m pytest tests/ -q` and `python3 tools/audit/audit_harness.py` (C1 GUARD).
 - C1 invariant: exclude the self-projection (i=j, value 1.0) when calibrating `auto_calibrate_critical_threshold()`.
-- Consult `TRAIANUS_AUDIT.md` before refactoring `traianus/app.py`.
+- Consult `AUDIT.md` before refactoring `traianus/app.py`.

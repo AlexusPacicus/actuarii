@@ -15,7 +15,7 @@ class DocState(BaseModel):
     )
     finding_id: str = Field(
         ...,
-        description="Audit finding ID from TRAIANUS_AUDIT.md (e.g. 'M1').",
+        description="Audit finding ID from AUDIT.md (e.g. 'M1').",
     )
     normative_spec: str = Field(
         ...,
