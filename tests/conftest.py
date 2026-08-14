@@ -106,15 +106,15 @@ def _hermetic_model(request, monkeypatch):
         return
     fake = FakeSentenceTransformer()
     # Store originals for cleanup
-    orig_model = main._model
-    orig_get_model = main.get_model
-    orig_bootstrap_model = bootstrap._model
-    orig_bootstrap_get_model = bootstrap.get_model
+    orig_main = main._provider
+    orig_main_get = main.get_provider
+    orig_bootstrap = bootstrap._provider
+    orig_bootstrap_get = bootstrap.get_provider
     try:
-        monkeypatch.setattr(main, "_model", fake)
-        monkeypatch.setattr(main, "get_model", lambda: fake)
-        monkeypatch.setattr(bootstrap, "_model", fake)
-        monkeypatch.setattr(bootstrap, "get_model", lambda: fake)
+        monkeypatch.setattr(main, "_provider", fake)
+        monkeypatch.setattr(main, "get_provider", lambda: fake)
+        monkeypatch.setattr(bootstrap, "_provider", fake)
+        monkeypatch.setattr(bootstrap, "get_provider", lambda: fake)
         yield
     finally:
         # Restore originals to prevent state leakage between tests
