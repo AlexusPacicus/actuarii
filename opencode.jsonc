@@ -8,7 +8,7 @@
     "AGENTS.md"
   ],
   "mcp": {
-    "tridenguard-validator": {
+    "boundary-validator": {
       "type": "local",
       "command": [
         "python3",

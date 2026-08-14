@@ -1,6 +1,6 @@
 """
 This file verifies MUST/MUST NOT requirements from the SPEC (RFC 2119).
-TridenGuard Zero-Trust gate (SEC-M-01..06): validate_proposal and its
+BoundaryValidator Zero-Trust gate (SEC-M-01..06): validate_proposal and its
 MCP server over stdio JSON-RPC.
 Normative: AGENTS.md §5 (5 Radicals), traianus/security/schemas/proposals.py
 Coverage: SEC-M-01, SEC-M-02, SEC-M-03, SEC-M-04, SEC-M-05, SEC-M-06, SEC-M-07"""
@@ -131,7 +131,7 @@ def test_security_SEC_M_06_mcp_stdio_jsonrpc():
         assert resp["id"] == expected_id
         assert "result" in resp and "error" not in resp
     init_result = json.loads(lines[0])["result"]
-    assert init_result["serverInfo"]["name"] == "tridenguard-validator"
+    assert init_result["serverInfo"]["name"] == "boundary-validator"
     tools = json.loads(lines[1])["result"]["tools"]
     assert tools[0]["name"] == "validate_proposal"
     call_result = json.loads(lines[2])["result"]["content"][0]["text"]

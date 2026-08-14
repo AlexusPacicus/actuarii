@@ -114,14 +114,14 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
 # Stdlib only (sys, json, uuid, pathlib); no external dependencies.
 # ---------------------------------------------------------------------------
 
-SERVER_NAME = "tridenguard-validator"
+SERVER_NAME = "boundary-validator"
 SERVER_VERSION = "1.2.0"
 PROTOCOL_VERSION = "2024-11-05"
 
 TOOL_DEFINITION = {
     "name": "validate_proposal",
     "description": (
-        "TridenGuard Zero-Trust Gate: evaluates a neuro-symbolic proposal "
+        "BoundaryValidator Zero-Trust Gate: evaluates a neuro-symbolic proposal "
         "(5 Radicals) and returns the deterministic gate decision "
         "(EXECUTE_SAFE | ABORTED_GROUNDING_FAILED | ABORTED_VIOLATES_ZERO_TRUST | "
         "BLOCKED_BY_SAFETY_GATE | INVALID_JSON)."
@@ -173,7 +173,7 @@ def handle_request(req: dict):
             "capabilities": {"tools": {"listChanged": False}},
             "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
             "instructions": (
-                "The validate_proposal tool is the TridenGuard Zero-Trust Gate: "
+                "The validate_proposal tool is the BoundaryValidator Zero-Trust Gate: "
                 "neurons propose, rules dispose."
             ),
             "_client": client_info,
@@ -216,11 +216,11 @@ def main():
         try:
             request = json.loads(line)
         except json.JSONDecodeError as e:
-            sys.stderr.write(f"[tridenguard-validator] invalid JSON-RPC: {e}\n")
+            sys.stderr.write(f"[boundary-validator] invalid JSON-RPC: {e}\n")
             sys.stderr.flush()
             continue
         if not isinstance(request, dict):
-            sys.stderr.write("[tridenguard-validator] invalid JSON-RPC: not an object\n")
+            sys.stderr.write("[boundary-validator] invalid JSON-RPC: not an object\n")
             sys.stderr.flush()
             continue
         response = handle_request(request)

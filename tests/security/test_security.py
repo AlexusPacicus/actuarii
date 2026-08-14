@@ -1,6 +1,6 @@
 """
-Perímetro Zero-Trust y Validador TridenGuard.
-Cubre: Autenticación por token, CORS enumerado, Ingress Allowlist y Compuerta TridenGuard.
+Zero-Trust Perimeter and Boundary-Validator Gateway.
+Covers: Token authentication, enumerated CORS, ingress allowlist, and Boundary-Validator gateway.
 """
 import json
 import pytest
@@ -53,7 +53,7 @@ def test_protected_routes_require_token(client):
     )
     assert res.status_code == 401
 
-def test_tridenguard_validator_gate():
+def test_boundary_validator_gate():
     """Validación Zero-Trust de propuestas (5 Radicales)."""
     valid_prop = json.dumps({
         "Intent_Class": "FIX",

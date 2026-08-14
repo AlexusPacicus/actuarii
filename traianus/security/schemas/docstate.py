@@ -35,7 +35,7 @@ class DocState(BaseModel):
     )
     mcp_verdict: Literal["EXECUTE_SAFE", "QUARANTINED"] = Field(
         ...,
-        description="TridenGuard MCP Gate verdict.",
+        description="BoundaryValidator MCP verdict.",
     )
     pr_url: str = Field(
         default="",

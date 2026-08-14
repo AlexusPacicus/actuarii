@@ -86,7 +86,7 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 
 6.2 Enforcement is centralized, not per-role:
 - `opencode.jsonc` global permission matrix (git read-only allowlist; `rm *`, webfetch, websearch deny; mutations `ask`).
-- The tridenguard validator MCP (Zero-Trust gate, SEC-M-01..12) gating mutation proposals.
+- The boundary-validator MCP (Zero-Trust gate, SEC-M-01..12) gating mutation proposals.
 - The security test suite (`tests/security/`, incl. SEC-M-13 config perimeter).
 
 6.3 Domain boundaries from the taxonomy remain normative for the single agent: edits to `tests/` vs `traianus/` vs `docs/` follow the same separation the roles once enforced (tests are not altered to mask failures; source is not edited to chase the test).
