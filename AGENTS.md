@@ -15,7 +15,7 @@
 
 1.4 The agent MUST follow a TDD workflow (write and verify failing tests first) and MUST run the test suite (`pytest tests/`) to verify passing status before declaring any task completed.
 
-1.5 The agent **MUST NOT** add external dependencies in `pyproject.toml` or `flake.nix` without explicit approval.
+1.5 The agent **MUST NOT** add external dependencies in `pyproject.toml` without explicit approval (v1.0.0 release freeze: the Nix `flake.nix` devshell is out of scope — reproducibility is anchored in pinned `pyproject.toml` + green CI).
 
 ---
 
