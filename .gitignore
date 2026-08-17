@@ -33,3 +33,11 @@ docs/exploring/
 .DS_Store
 .idea/
 .vscode/
+
+# Binaries / Manuscripts
+*.pdf
+
+# OpenCode dev scaffolding (skills are tracked; npm artifacts are not)
+.opencode/node_modules/
+.opencode/package.json
+.opencode/package-lock.json
