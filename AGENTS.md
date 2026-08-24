@@ -9,7 +9,7 @@
 
 1.1 The agent **MUST** be concise and **MUST NOT** include dead code, superfluous comments, explanatory over-justifications, or modify files outside the direct scope of the task.
 
-1.2 The agent **MUST NOT** leave temporary test scripts, single-use auxiliary files, or data dumps (`.json`, `.log`) in the repository tree.
+1.2 The agent **MUST NOT** leave temporary test scripts, single-use auxiliary files, or data dumps (`.json`, `.log`) in the repository tree. *(Deliberate exception: frozen research datasets under `data/**`, incl. the `{label -> chunk}` manifests in `data/spinoza/` — see `data/spinoza/PROVENANCE.md`.)*
 
 1.3 The agent **MUST NOT** silence errors with empty `try-except` blocks, unconditional generic catches, or null returns that mask failures.
 
