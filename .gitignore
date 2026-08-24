@@ -32,6 +32,9 @@ tools/experiments/exp_kinetic_resonance.py
 # Archived documentation (preserved in git history, not in working tree)
 docs/exploring/
 
+# Manuscript drafts (not published yet)
+docs/manifesto/
+
 # OS / Editors
 .DS_Store
 .idea/
@@ -42,6 +45,7 @@ docs/exploring/
 
 # OpenCode dev scaffolding (skills are tracked; npm artifacts are not)
 .opencode/node_modules/
+frontend/node_modules/
 .opencode/package.json
 .opencode/package-lock.json
 
