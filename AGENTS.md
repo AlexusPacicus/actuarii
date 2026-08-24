@@ -9,7 +9,7 @@
 
 1.1 The agent **MUST** be concise and **MUST NOT** include dead code, superfluous comments, explanatory over-justifications, or modify files outside the direct scope of the task.
 
-1.2 The agent **MUST NOT** leave temporary test scripts, single-use auxiliary files, or data dumps (`.json`, `.log`) in the repository tree.
+1.2 The agent **MUST NOT** leave temporary test scripts, single-use auxiliary files, or data dumps (`.json`, `.log`) in the repository tree. *(Deliberate exception: frozen research datasets under `data/**`, incl. the `{label -> chunk}` manifests in `data/spinoza/` — see `data/spinoza/PROVENANCE.md`.)*
 
 1.3 The agent **MUST NOT** silence errors with empty `try-except` blocks, unconditional generic catches, or null returns that mask failures.
 
@@ -92,3 +92,8 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 6.3 Domain boundaries from the taxonomy remain normative for the single agent: edits to `tests/` vs `traianus/` vs `docs/` follow the same separation the roles once enforced (tests are not altered to mask failures; source is not edited to chase the test).
 
 6.4 **Logographic Rules:** every directory under `docs/` **MUST** contain exactly one primary markdown document defining that domain node; component sub-documentation **MUST** be placed in isolated sub-folders matching the taxonomy.
+
+6.5 **Skills Registry:** available agent skills live under `.opencode/skills/<name>/SKILL.md`:
+- `boundary-validator` — Zero-Trust gating of 5-Radicals mutation proposals.
+- `tdd-cycle` — Red-Green-Refactor workflow with pytest + C1 audit harness.
+- `lab-analyst` — chromatic transmission analyst over corpus manifolds (collision rescue, Sammon stress, falsifiable ontological alignment); operates read-only on `.data/` artifacts via committed tooling in `tools/experiments/tooling/`.
