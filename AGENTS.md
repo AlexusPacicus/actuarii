@@ -92,3 +92,8 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 6.3 Domain boundaries from the taxonomy remain normative for the single agent: edits to `tests/` vs `traianus/` vs `docs/` follow the same separation the roles once enforced (tests are not altered to mask failures; source is not edited to chase the test).
 
 6.4 **Logographic Rules:** every directory under `docs/` **MUST** contain exactly one primary markdown document defining that domain node; component sub-documentation **MUST** be placed in isolated sub-folders matching the taxonomy.
+
+6.5 **Skills Registry:** available agent skills live under `.opencode/skills/<name>/SKILL.md`:
+- `boundary-validator` — Zero-Trust gating of 5-Radicals mutation proposals.
+- `tdd-cycle` — Red-Green-Refactor workflow with pytest + C1 audit harness.
+- `lab-analyst` — chromatic transmission analyst over corpus manifolds (collision rescue, Sammon stress, falsifiable ontological alignment); operates read-only on `.data/` artifacts via committed tooling in `tools/experiments/tooling/`.
