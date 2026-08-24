@@ -60,4 +60,6 @@ dist/
 /tools/export_dual_instantaneity.py
 /tools/export_triangular_spiral_gif.py
 /docs/manifesto/TOMO_0.md
-/Ethics_1.md
+
+# Research datasets (versioned): data/spinoza/ holds the frozen corpus.
+# Only ephemeral SQLite work artifacts live under .data/ (ignored above).
