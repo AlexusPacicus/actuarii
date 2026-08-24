@@ -52,5 +52,8 @@ dist/
 
 # RefApp-01 PoC working materials (operator-local; NOT part of the substrate)
 /tools/results/
+/tools/export_chromatic_gif.py
+/tools/export_dual_instantaneity.py
+/tools/export_triangular_spiral_gif.py
 /docs/manifesto/TOMO_0.md
 /Ethics_1.md
