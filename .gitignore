@@ -44,3 +44,13 @@ docs/exploring/
 .opencode/node_modules/
 .opencode/package.json
 .opencode/package-lock.json
+
+# Build/vendor artifacts (global patterns)
+node_modules/
+.vite/
+dist/
+
+# RefApp-01 PoC working materials (operator-local; NOT part of the substrate)
+/tools/results/
+/docs/manifesto/TOMO_0.md
+/Ethics_1.md
