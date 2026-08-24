@@ -103,7 +103,10 @@ def test_security_SEC_M_07_unreadable_target_file_is_grounding_failure():
     assert decision["final_decision"] == "ABORTED_GROUNDING_FAILED"
 
 
-def test_security_SEC_M_06_mcp_stdio_jsonrpc():
+def test_security_SEC_M_06_mcp_stdio_jsonrpc(tmp_path, monkeypatch):
+    # The spawned MCP server persists audit rows relative to CWD; isolate it
+    # in a tmp dir so the integration run never touches the repo-root DB.
+    monkeypatch.chdir(tmp_path)
     script = str(ROOT / "traianus" / "security" / "validator.py")
     messages = [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize",

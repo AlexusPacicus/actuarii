@@ -8,14 +8,21 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from traianus.storage import DB_PATH
+from traianus import storage
+import logging
+
+from pydantic import ValidationError
+
 from traianus.security.schemas.parser import JSONParsingError, parse_proposal_json
+from traianus.security.schemas.proposals import AgentMutationProposal
+
+logger = logging.getLogger("traianus.security.validator")
 
 
 def _persist_audit(case_id: str, decision: str, intent_class: str = "",
                    target_file: str = "", safety_abort: str = "") -> None:
     try:
-        with sqlite3.connect(DB_PATH) as conn:
+        with sqlite3.connect(storage.DB_PATH) as conn:
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS audit_log ("
@@ -58,20 +65,22 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
         return _finalize({"status": "QUARANTINED", "final_decision": "INVALID_JSON",
                           "reason": str(e)})
 
+    if not isinstance(proposal, dict):
+        return _finalize({"status": "QUARANTINED", "final_decision": "INVALID_JSON",
+                          "case_id": str(uuid.uuid4())})
+
     try:
         # Post-parse sanitization (SEC-M-09): JSON-escaped NUL \u0000, invisible in the raw string.
         if any("\x00" in str(proposal.get(k, "")) for k in proposal):
             return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST",
                               "case_id": str(uuid.uuid4())})
 
-        safety_abort = proposal.get("Safety_Abort", "NONE")
-        block = proposal.get("Implementation_Block", "")
-        intent = proposal.get("Intent_Class", "NONE")
+        # Raw extraction first; content screening (below) precedes protocol
+        # conformance, and the authoritative safety/schema decisions follow.
+        safety_abort_raw = str(proposal.get("Safety_Abort", ""))
+        block = str(proposal.get("Implementation_Block", ""))
+        intent_raw = str(proposal.get("Intent_Class", ""))
         grounding = proposal.get("Topological_Grounding", "")
-
-        if safety_abort != "NONE":
-            return _finalize({"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE",
-                              "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort)
 
         forbidden = [
             "fetch(", "axios", "urllib.request", "import requests", "httpx",
@@ -81,6 +90,31 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
         ]
         if any(token in block for token in forbidden):
             return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST",
+                              "case_id": str(uuid.uuid4())}, intent_raw, target_file_path, safety_abort_raw)
+
+        # Strict 5-Radicals conformance (AGENTS.md 5.1, SEC-M-14..18):
+        # Target_File travels out-of-band (MCP argument) and is merged before
+        # validation; unknown enums and extra fields fail closed.
+        merged = dict(proposal)
+        merged.setdefault("Target_File", target_file_path)
+        try:
+            model = AgentMutationProposal.model_validate(merged)
+        except ValidationError as exc:
+            logger.debug("Proposal schema violation", exc_info=exc)
+            # A MISSING Safety_Abort is malformed input (INVALID_JSON);
+            # only an invalid enum value means the neuron raised a flag.
+            if any(err["loc"] == ("Safety_Abort",) and err["type"] != "missing"
+                   for err in exc.errors()):
+                return _finalize({"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE",
+                                  "case_id": str(uuid.uuid4())})
+            return _finalize({"status": "QUARANTINED", "final_decision": "INVALID_JSON",
+                              "case_id": str(uuid.uuid4())})
+
+        intent = model.Intent_Class.value
+        safety_abort = model.Safety_Abort.value
+
+        if safety_abort != "NONE":
+            return _finalize({"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE",
                               "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort)
 
         # SEC-M-07 (no fail-open): REFACTOR/FIX/AUDIT are mutating intents, so

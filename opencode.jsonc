@@ -4,7 +4,6 @@
   "small_model": "opencode/deepseek-v4-flash-free",
   "instructions": [
     "docs/audit/AUDIT.md",
-    "docs/LOGOGRAPHY.md",
     "AGENTS.md"
   ],
   "mcp": {

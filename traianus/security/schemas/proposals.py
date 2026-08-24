@@ -8,6 +8,9 @@ class IntentClass(str, Enum):
     TEST = "TEST"
     DOC = "DOC"
     SPEC = "SPEC"
+    # AUDIT participates in the mutating-intent grounding gate (validator
+    # SEC-M-07, MCP tool docs); the schema lagged behind its own consumers.
+    AUDIT = "AUDIT"
 
 
 class SafetyAbort(str, Enum):
