@@ -99,3 +99,4 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 - `boundary-validator` — Zero-Trust gating of 5-Radicals mutation proposals.
 - `tdd-cycle` — Red-Green-Refactor workflow with pytest + C1 audit harness.
 - `lab-analyst` — chromatic transmission analyst over corpus manifolds (collision rescue, Sammon stress, falsifiable ontological alignment); operates read-only on `.data/` artifacts via committed tooling in `tools/experiments/tooling/`.
+- `spec-first` — authoring normative specifications under the 5 Radicals SPEC contract and the frozen spec template in `docs/specifications/`.
