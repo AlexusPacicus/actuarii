@@ -52,6 +52,8 @@ def isolate_db(tmp_path, monkeypatch):
     test_append_only_log.isolate_append_only_db).
     """
     test_db_path = str(tmp_path / "test_traianus.db")
+    # ADR-025 §2.1: DB_PATH lives in the storage package; get_db_connection()
+    # resolves it lazily, so a single patch takes effect globally.
     monkeypatch.setattr(storage, "DB_PATH", test_db_path)
     create_test_db(test_db_path, seed="onehot")
     return test_db_path
@@ -92,6 +94,19 @@ def ingesta(client, auth_headers):
             headers["X-Idempotency-Key"] = idempotency_key
         return client.post("/ingesta", content=text.encode("utf-8"), headers=headers)
     return _ingesta
+
+
+@pytest.fixture(autouse=True)
+def _reset_polar_telemetry():
+    """ADR-025: reset the process-global EWMA tracker around each test.
+
+    `_variance_tracker` in traianus.app carries cross-ingestion continuity
+    in production; in tests it must start (and end) clean so EWMA state
+    never leaks between tests.
+    """
+    main._variance_tracker.reset()
+    yield
+    main._variance_tracker.reset()
 
 
 @pytest.fixture(autouse=True)
