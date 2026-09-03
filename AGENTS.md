@@ -17,6 +17,8 @@
 
 1.5 The agent **MUST NOT** add external dependencies in `pyproject.toml` without explicit approval (v1.0.0 release freeze: the Nix `flake.nix` devshell is out of scope — reproducibility is anchored in pinned `pyproject.toml` + green CI).
 
+1.6 When modifying `tests/`, `traianus/`, or `pyproject.toml`, the agent **MUST** verify that `.github/workflows/ci.yml` covers the affected test partitions and新增 dependencies. A missing or stale CI configuration is a **blocking defect** — the task is not complete until CI reflects the current repository structure.
+
 ---
 
 ## 2. Security & Network Zero-Trust
@@ -66,7 +68,7 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 
 5.1 Mutation proposals **MUST** conform strictly to the Pydantic schema in `traianus/security/schemas/proposals.py` (`AgentMutationProposal`) with `strict: true`, and **MUST** be emitted through the structured outputs contract `build_response_format(AgentMutationProposal)` (normative SEC-M-14..SEC-M-18, parsed via `traianus/security/schemas/parser.py`):
 
-1. `Intent_Class`: strict classification (`FIX`, `REFACTOR`, `TEST`, `DOC`, `SPEC`).
+1. `Intent_Class`: strict classification (`FIX`, `REFACTOR`, `TEST`, `DOC`, `SPEC`, `AUDIT`).
 2. `Target_File`: target path relative to repository root.
 3. `Topological_Grounding`: exact UTF-8 quote present in target file.
 4. `Implementation_Block`: exact text or code block to insert/replace.
