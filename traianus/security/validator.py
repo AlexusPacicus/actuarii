@@ -9,6 +9,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from traianus import storage
+from traianus.storage import AUDIT_LOG_DDL
 import logging
 
 from pydantic import ValidationError
@@ -24,12 +25,7 @@ def _persist_audit(case_id: str, decision: str, intent_class: str = "",
     try:
         with sqlite3.connect(storage.DB_PATH) as conn:
             conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute(
-                "CREATE TABLE IF NOT EXISTS audit_log ("
-                "case_id TEXT PRIMARY KEY, timestamp TEXT DEFAULT (datetime('now')),"
-                "intent_class TEXT, target_file TEXT, decision TEXT NOT NULL,"
-                "safety_abort TEXT)"
-            )
+            conn.execute(AUDIT_LOG_DDL)
             conn.execute(
                 "INSERT OR IGNORE INTO audit_log "
                 "(case_id, intent_class, target_file, decision, safety_abort) "
