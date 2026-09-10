@@ -95,8 +95,9 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 
 6.4 **Logographic Rules:** every directory under `docs/` **MUST** contain exactly one primary markdown document defining that domain node; component sub-documentation **MUST** be placed in isolated sub-folders matching the taxonomy.
 
-6.5 **Skills Registry:** available agent skills live under `.opencode/skills/<name>/SKILL.md`:
+6.5 **Skills Registry:** available agent skills are mirrored under `.opencode/skills/<name>/SKILL.md` (OpenCode) and `.claude/skills/<name>/SKILL.md` (Claude Code) — same five skills, kept in sync by hand:
 - `boundary-validator` — Zero-Trust gating of 5-Radicals mutation proposals.
 - `tdd-cycle` — Red-Green-Refactor workflow with pytest + C1 audit harness.
 - `lab-analyst` — chromatic transmission analyst over corpus manifolds (collision rescue, Sammon stress, falsifiable ontological alignment); operates read-only on `.data/` artifacts via committed tooling in `tools/experiments/tooling/`.
 - `spec-first` — authoring normative specifications under the 5 Radicals SPEC contract and the frozen spec template in `docs/specifications/`.
+- `spectral-mathematician` — deterministic verification of C1 threshold calibration, simplex volumes, barycentric coordinates, and float32/64 drift via the `spectral-math-engine` MCP.
