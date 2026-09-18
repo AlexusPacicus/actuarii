@@ -44,6 +44,10 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
    - The code matches the measurement's contract in `frontend/audits/contracts.md` down to the
      data layer: digests checked, dtypes and casts, byte order, draw order, thread settings,
      result format. A mismatch is blocking.
+   - Integrity tests exist and can fail: null elimination rejects NaN, ±Inf, off-norm rows and
+     bad labels; single-bit flips are refused at the file layer (digest) and, for sign and
+     exponent bits, at the memory layer (validation); the low-mantissa blind spot is tested and
+     documented. Missing integrity tests are blocking.
    - Gate: every line mapped; the record's commit precedes any commit containing a result of this
      script (`git log --follow` on both).
 3. **Verdict**
