@@ -13,7 +13,7 @@ with these differences, which come from how you are run:
   committed). Use them; do not ask for others.
 - **You cannot change files.** Do not try to fill the record's `Reviewed by:` line: return the
   line's text at the end of your verdict and the caller writes it.
-- **Read only what the record allows.** First read `frontend/audits/definitions.md` and the
+- **Read only what the record allows.** First read `frontend/audits/definitions.md`, `frontend/audits/derivations.md` and the
   record's code block, then only the files and line ranges they cite, by line range. Never search
   (Grep, Glob) inside `frontend/POC.md` or any record's review history; use Grep and Glob only to
   locate cited source files. If anything you read states the hypothesis or a prior result, say so

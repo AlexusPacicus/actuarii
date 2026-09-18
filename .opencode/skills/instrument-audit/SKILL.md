@@ -28,7 +28,10 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
      one is a CHANGES item.
    - There is a control that must come out one way, and the record says what happens if it does
      not. A control that cannot fail is a CHANGES item.
-   - Gate: all items answered; the record is committed (`git log` shows it).
+   - Every shortcut the record takes (a simplified form standing for a full one) cites an entry
+     in `frontend/audits/derivations.md` whose conditions hold here. A missing entry is blocking.
+   - Gate: all items answered; the record is committed (`git log` shows it). After the third
+     phase-1 round the record freezes: report remaining items for phase 2, verdict stays open.
 2. **Code** — before the first run.
    - Each record line maps to code, cited `path:line`. Unmapped lines, and code the record does not
      describe, are CHANGES items.
@@ -36,6 +39,8 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
      per arm, re-processing earlier state, reflection vs. rotation, skipped work, sequential
      access, unsubtracted harness overhead, labels reused as ground truth.
    - Seeds, data source and frame are the ones the record names.
+   - Every derivation the record uses has a unit test that checks the equality on random inputs
+     satisfying its conditions. A derivation without its test is blocking.
    - Gate: every line mapped; the record's commit precedes any commit containing a result of this
      script (`git log --follow` on both).
 3. **Verdict**
