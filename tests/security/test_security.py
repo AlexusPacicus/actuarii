@@ -3,6 +3,8 @@ Zero-Trust Perimeter and Boundary-Validator Gateway.
 Covers: Token authentication, enumerated CORS, ingress allowlist, and Boundary-Validator gateway.
 """
 import json
+import uuid
+
 import pytest
 from traianus.security.validator import validate_proposal
 
@@ -11,7 +13,7 @@ def test_zero_trust_ingress_allowlist(client, ingesta, auth_headers):
     res_bad = client.post(
         "/ingesta",
         content="{}".encode("utf-8"),
-        headers={**auth_headers, "Content-Type": "application/json"},
+        headers={**auth_headers, "Content-Type": "application/json", "X-Idempotency-Key": uuid.uuid4().hex},
     )
     assert res_bad.status_code == 415
 
@@ -23,7 +25,7 @@ def test_ingesta_rejects_null_bytes(client, auth_headers):
     res = client.post(
         "/ingesta",
         content=b"valid\x00text",
-        headers={**auth_headers, "Content-Type": "text/plain"},
+        headers={**auth_headers, "Content-Type": "text/plain", "X-Idempotency-Key": uuid.uuid4().hex},
     )
     assert res.status_code == 400
 
@@ -32,7 +34,7 @@ def test_ingesta_rejects_invalid_utf8(client, auth_headers):
     res = client.post(
         "/ingesta",
         content=b"\xff\xfe\xfd",
-        headers={**auth_headers, "Content-Type": "text/plain"},
+        headers={**auth_headers, "Content-Type": "text/plain", "X-Idempotency-Key": uuid.uuid4().hex},
     )
     assert res.status_code == 400
 
@@ -70,7 +72,7 @@ def test_ingesta_rejects_overlong_utf8(client, auth_headers):
     res = client.post(
         "/ingesta",
         content=b"\xc0\xaf",
-        headers={**auth_headers, "Content-Type": "text/plain"},
+        headers={**auth_headers, "Content-Type": "text/plain", "X-Idempotency-Key": uuid.uuid4().hex},
     )
     assert res.status_code == 400
 
@@ -79,7 +81,7 @@ def test_ingesta_rejects_utf16_bom(client, auth_headers):
     res = client.post(
         "/ingesta",
         content=b"\xff\xfeH\x00i\x00",
-        headers={**auth_headers, "Content-Type": "text/plain"},
+        headers={**auth_headers, "Content-Type": "text/plain", "X-Idempotency-Key": uuid.uuid4().hex},
     )
     assert res.status_code == 400
 
@@ -88,7 +90,7 @@ def test_ingesta_rejects_null_byte_at_end(client, auth_headers):
     res = client.post(
         "/ingesta",
         content=b"valid\x00",
-        headers={**auth_headers, "Content-Type": "text/plain"},
+        headers={**auth_headers, "Content-Type": "text/plain", "X-Idempotency-Key": uuid.uuid4().hex},
     )
     assert res.status_code == 400
 
