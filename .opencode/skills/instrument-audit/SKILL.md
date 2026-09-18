@@ -51,6 +51,8 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
 
 - **Read-only** except the `Reviewed by:` line. Never fix the instrument yourself: report, the
   author changes it, the review runs again.
+- **As a subagent** (`.claude/agents/instrument-auditor.md`, AGENTS 6.1): the caller supplies the
+  git gate facts and writes the `Reviewed by:` line from the verdict; the reviewer changes nothing.
 - **No code execution** of any kind, including empty or exploratory `python3` calls (AGENTS 2.5).
   The review is done by reading; `git log` / `git status` are the only commands needed.
 - **No judgement of results.** If a result exists already, the review is late; say so in the

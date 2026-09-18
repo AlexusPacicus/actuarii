@@ -63,3 +63,6 @@ dist/
 
 # Research datasets (versioned): data/spinoza/ holds the frozen corpus.
 # Only ephemeral SQLite work artifacts live under .data/ (ignored above).
+# Local run artefacts
+.coverage
+.claude/launch.json
