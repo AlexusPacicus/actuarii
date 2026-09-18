@@ -110,3 +110,47 @@ def test_unreadable_db_raises_for_fail_closed_caller(monkeypatch):
     monkeypatch.setattr(storage, "DB_PATH", "/definitely/not/a/real/dir/x.db")
     with pytest.raises(Exception):
         has_recent_execute_safe(str(REPO_ROOT / "AGENTS.md"))
+
+
+def test_audit_db_path_matches_validator_regardless_of_cwd(tmp_path, monkeypatch):
+    """R1/INV-1 (REMEDIATION-01 Delta1): _persist_audit must resolve a relative
+    DB_PATH against REPO_ROOT the same way hook_gate._db_path() does -- not
+    against whichever directory the process happens to be running in."""
+    from traianus.security import hook_gate
+
+    relative_name = "test_audit_symmetry.db"
+    monkeypatch.setattr(storage, "DB_PATH", relative_name)
+    monkeypatch.chdir(tmp_path)
+
+    expected = hook_gate.REPO_ROOT / relative_name
+    try:
+        decision = validate_proposal(_doc_proposal("docs/x.md"), "docs/x.md")
+        assert decision["final_decision"] == "EXECUTE_SAFE"
+
+        assert expected.exists(), (
+            "_persist_audit wrote relative to cwd instead of REPO_ROOT, "
+            f"diverging from hook_gate._db_path() == {expected}"
+        )
+        assert hook_gate._db_path() == expected
+    finally:
+        expected.unlink(missing_ok=True)
+        (expected.parent / (expected.name + "-wal")).unlink(missing_ok=True)
+        (expected.parent / (expected.name + "-shm")).unlink(missing_ok=True)
+
+
+def test_malformed_stdin_json_blocks(monkeypatch):
+    """R2/INV-2 (REMEDIATION-01 Delta1): malformed JSON on stdin must exit 2
+    (block), not 0 (allow) -- the hook's fail-closed claim (AGENTS.md SS6.2)
+    is total only if every unparseable input blocks too. Loaded as a plain
+    module (not spawned) and driven through a replaced sys.stdin, so no host
+    process primitive is needed to exercise main() end to end."""
+    import io
+    import sys
+
+    hooks_dir = str(REPO_ROOT / "tools" / "hooks")
+    if hooks_dir not in sys.path:
+        sys.path.insert(0, hooks_dir)
+    import require_boundary_validation as hook_script
+
+    monkeypatch.setattr(sys, "stdin", io.StringIO("{not valid json"))
+    assert hook_script.main() == 2

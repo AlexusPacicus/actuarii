@@ -104,8 +104,9 @@ def test_security_SEC_M_07_unreadable_target_file_is_grounding_failure():
 
 
 def test_security_SEC_M_06_mcp_stdio_jsonrpc(tmp_path, monkeypatch):
-    # The spawned MCP server persists audit rows relative to CWD; isolate it
-    # in a tmp dir so the integration run never touches the repo-root DB.
+    # R1/INV-1: the MCP server now anchors its audit DB to REPO_ROOT
+    # regardless of cwd, so chdir alone no longer isolates it; the row this
+    # call writes to the real repo-root DB is deleted by case_id below.
     monkeypatch.chdir(tmp_path)
     script = str(ROOT / "traianus" / "security" / "validator.py")
     messages = [
@@ -128,10 +129,16 @@ def test_security_SEC_M_06_mcp_stdio_jsonrpc(tmp_path, monkeypatch):
     # The stdout channel is not corrupted: one valid JSON-RPC response per line.
     lines = [l for l in proc.stdout.splitlines() if l.strip()]
     assert len(lines) == 3, f"expected 3 responses, got {len(lines)}"
+    case_id = None
     for line, expected_id in zip(lines, (1, 2, 3)):
         resp = json.loads(line)
         assert resp["jsonrpc"] == "2.0"
         assert resp["id"] == expected_id
+        if expected_id == 3:
+            case_id = json.loads(resp["result"]["content"][0]["text"])["case_id"]
+    import sqlite3
+    with sqlite3.connect(ROOT / "traianus.db") as conn:
+        conn.execute("DELETE FROM audit_log WHERE case_id = ?", (case_id,))
         assert "result" in resp and "error" not in resp
     init_result = json.loads(lines[0])["result"]
     assert init_result["serverInfo"]["name"] == "boundary-validator"

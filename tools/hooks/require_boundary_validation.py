@@ -27,7 +27,11 @@ def main() -> int:
     try:
         payload = json.load(sys.stdin)
     except json.JSONDecodeError:
-        return 0  # nothing parseable to gate against
+        sys.stderr.write(
+            "[require_boundary_validation] fail-closed: stdin was not valid "
+            "JSON; cannot verify whether the target is a governed path.\n"
+        )
+        return 2  # R2/INV-2: unparseable input blocks, same as every other unverifiable case
 
     if payload.get("tool_name") not in GATED_TOOLS:
         return 0

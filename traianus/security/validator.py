@@ -56,7 +56,10 @@ FORBIDDEN_MATRIX = tuple(
 def _persist_audit(case_id: str, decision: str, intent_class: str = "",
                    target_file: str = "", safety_abort: str = "") -> None:
     try:
-        with sqlite3.connect(storage.DB_PATH) as conn:
+        db_path = Path(storage.DB_PATH)
+        if not db_path.is_absolute():
+            db_path = REPO_ROOT / db_path
+        with sqlite3.connect(db_path) as conn:
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute(AUDIT_LOG_DDL)
             conn.execute(
