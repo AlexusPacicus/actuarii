@@ -41,12 +41,18 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
 3. **Verdict**
    - `PASS`, or `CHANGES` with a numbered list, each item citing the record line and, in phase 2,
      `path:line`.
+   - Tag every item **blocking** (it would change a result, a threshold, or whether a control can
+     fail) or **non-blocking** (wording, a citation, a clarification). Only blocking items make the
+     verdict `CHANGES`; with none, the verdict is `PASS` and non-blocking items are listed for the
+     author to fix before phase 2.
    - Fill the record's `Reviewed by:` line: reviewer, date, phase, commit reviewed, verdict.
 
 ## Rules
 
 - **Read-only** except the `Reviewed by:` line. Never fix the instrument yourself: report, the
   author changes it, the review runs again.
+- **No code execution** of any kind, including empty or exploratory `python3` calls (AGENTS 2.5).
+  The review is done by reading; `git log` / `git status` are the only commands needed.
 - **No judgement of results.** If a result exists already, the review is late; say so in the
   verdict.
 - **A failed control invalidates the run, not the rule.** Never suggest loosening a rule after a
