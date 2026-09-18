@@ -154,3 +154,24 @@ def test_malformed_stdin_json_blocks(monkeypatch):
 
     monkeypatch.setattr(sys, "stdin", io.StringIO("{not valid json"))
     assert hook_script.main() == 2
+
+
+def test_persist_audit_closes_connection(isolate_db, monkeypatch):
+    """R9/INV-10: _persist_audit must close its connection deterministically;
+    `with conn` commits but leaves the handle to the garbage collector."""
+    from traianus.security import validator
+
+    opened = []
+    real = sqlite3.connect
+
+    def tracking(*args, **kwargs):
+        conn = real(*args, **kwargs)
+        opened.append(conn)
+        return conn
+
+    monkeypatch.setattr(validator.sqlite3, "connect", tracking)
+    validator._persist_audit("close-check", "EXECUTE_SAFE", "DOC", "docs/x.md", "NONE")
+    assert opened
+    for conn in opened:
+        with pytest.raises(sqlite3.ProgrammingError):
+            conn.execute("SELECT 1")

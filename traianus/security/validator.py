@@ -3,6 +3,7 @@ import sys
 import json
 import uuid
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -59,7 +60,7 @@ def _persist_audit(case_id: str, decision: str, intent_class: str = "",
         db_path = Path(storage.DB_PATH)
         if not db_path.is_absolute():
             db_path = REPO_ROOT / db_path
-        with sqlite3.connect(db_path) as conn:
+        with closing(sqlite3.connect(db_path)) as conn, conn:
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute(AUDIT_LOG_DDL)
             conn.execute(
