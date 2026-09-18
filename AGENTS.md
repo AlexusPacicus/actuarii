@@ -97,7 +97,8 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 
 6.4 **Logographic Rules:** every directory under `docs/` **MUST** contain exactly one primary markdown document defining that domain node; component sub-documentation **MUST** be placed in isolated sub-folders matching the taxonomy.
 
-6.5 **Skills Registry:** available agent skills are mirrored under `.opencode/skills/<name>/SKILL.md` (OpenCode) and `.claude/skills/<name>/SKILL.md` (Claude Code) — same five skills, both trees versioned in git and mirrored by hand (no automated parity test yet):
+6.5 **Skills Registry:** available agent skills are mirrored under `.opencode/skills/<name>/SKILL.md` (OpenCode) and `.claude/skills/<name>/SKILL.md` (Claude Code) — same six skills, both trees versioned in git and mirrored by hand (no automated parity test yet):
+- `instrument-audit` — blind review of instrument audit records (step 2(a) of `docs/methodology/METHODOLOGY.md`): specification before the script exists, code before the first run, `file:line` evidence, PASS/CHANGES verdict; read-only except the record's `Reviewed by:` line.
 - `boundary-validator` — Zero-Trust gating of 5-Radicals mutation proposals.
 - `tdd-cycle` — Red-Green-Refactor workflow with pytest + C1 audit harness.
 - `lab-analyst` — chromatic transmission analyst over corpus manifolds (collision rescue, Sammon stress, falsifiable ontological alignment); operates read-only on `.data/` artifacts via committed tooling in `tools/experiments/tooling/`.
