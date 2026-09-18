@@ -41,6 +41,9 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
    - Seeds, data source and frame are the ones the record names.
    - Every derivation the record uses has a unit test that checks the equality on random inputs
      satisfying its conditions. A derivation without its test is blocking.
+   - The code matches the measurement's contract in `frontend/audits/contracts.md` down to the
+     data layer: digests checked, dtypes and casts, byte order, draw order, thread settings,
+     result format. A mismatch is blocking.
    - Gate: every line mapped; the record's commit precedes any commit containing a result of this
      script (`git log --follow` on both).
 3. **Verdict**
