@@ -1,0 +1,33 @@
+{
+  "window_seconds": 14400,
+  "rules": [
+    {
+      "name": "engine-vector-path",
+      "paths": [
+        "traianus/app.py",
+        "traianus/storage/**",
+        "traianus/representation/**",
+        "traianus/geometry/**"
+      ],
+      "requires": [
+        {"path": "frontend/audits/contracts.md", "kind": "paragraph", "value": "Engine path"}
+      ]
+    },
+    {
+      "name": "k6",
+      "paths": ["tools/experiments/k6_*.py", "tests/unit/test_k6_*.py"],
+      "requires": [
+        {"path": "frontend/audits/contracts.md", "kind": "heading", "value": "0. Data layer, bit level (shared)"},
+        {"path": "frontend/audits/contracts.md", "kind": "heading", "value": "1. K6 — colour channel predictability"}
+      ]
+    },
+    {
+      "name": "r4",
+      "paths": ["tools/experiments/r4_*.py", "tests/unit/test_r4_*.py"],
+      "requires": [
+        {"path": "frontend/audits/contracts.md", "kind": "heading", "value": "0. Data layer, bit level (shared)"},
+        {"path": "frontend/audits/contracts.md", "kind": "heading", "value": "2. R4 — neighbourhood kept in a 5D perspective"}
+      ]
+    }
+  ]
+}
