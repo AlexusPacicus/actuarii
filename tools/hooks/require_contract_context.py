@@ -6,15 +6,21 @@ within `window_seconds`, from the contract file as it is now. The receipt is the
 context_pack appends to .data/context_pack.log (path, kind, value, ts, file_sha256). A denial names
 the missing sections and prints the context_pack command that serves them.
 
+A target is decided by what the filesystem says it is, not by how it is spelled: the path is resolved
+(symlinks, `..`) and then re-spelled by `canonical` with the names its directory entries store, found
+by identity. On a case-insensitive filesystem `SRC/VEC.PY` is therefore the registered `src/vec.py`.
+
 Fails closed: a registry that cannot be read or has the wrong shape denies every Edit/Write inside
 the root, except an edit of the registry itself; for a registered target so do an unreadable log and
-an unreadable contract file. A missing log is an empty one: nothing was served.
+an unreadable contract file; so does a path inside the root that the filesystem cannot be asked
+about. A missing log is an empty one: nothing was served.
 
 Declared limits: the receipt proves that context_pack served the sections, not that the agent read
 them nor that the code conforms (conformance is what tests are for). The log is a plain file, so a
 line written through Bash forges a receipt; writes issued through Bash are not gated. The receipt
-names neither agent nor session. tools/hooks/**, the registry included, is not itself gated. Paths
-are matched as resolved, case-sensitively.
+names neither agent nor session. tools/hooks/**, the registry included, is not itself gated. A
+missing file has no identity: a case variant of a registry that no longer exists is not recognised
+as the registry, and stays denied until the exact spelling is used.
 
 Standard library only: an import failure would exit 1, which the harness reads as a broken hook
 rather than a denial; annotations are postponed so a 3.9 system interpreter can import it.
@@ -24,10 +30,13 @@ from __future__ import annotations
 import calendar
 import hashlib
 import json
+import os
 import re
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 LOG_PATH = REPO_ROOT / ".data" / "context_pack.log"
@@ -43,6 +52,54 @@ FAIL_CLOSED = "[require_contract_context] fail-closed:"
 
 class RegistryError(ValueError):
     pass
+
+
+def _same(samefile: Callable[..., bool], first: str | Path, second: Path) -> bool:
+    try:
+        return samefile(first, second)
+    except FileNotFoundError:
+        return False
+
+
+def canonical(
+    target: str | Path,
+    root: Path,
+    samefile: Callable[..., bool] = os.path.samefile,
+    scandir: Callable[..., Any] = os.scandir,
+) -> Path | None:
+    """`target` resolved, then re-spelled with the names the filesystem stores; None outside `root`.
+
+    A case-insensitive filesystem lets `TESTS/x.py` name `tests/x.py`, so names are matched by
+    identity, never by spelling: the ancestor that is the same file as `root` is found with
+    `samefile`, and below it each name becomes the directory entry that is the same file as the
+    spelled one. What does not exist yet (a new file) stays as spelled. An OSError while looking for
+    the root only means "not that ancestor"; past the root it propagates, and so does one on the
+    root itself, so an unreadable root cannot make every path read as outside. Both hooks under
+    tools/hooks carry this function; a test compares the copies.
+    """
+    samefile(root, root)
+    path = Path(target).resolve()
+    for anchor in (path, *path.parents):
+        try:
+            if samefile(anchor, root):
+                break
+        except OSError:
+            continue
+    else:
+        return None
+    real, spelled = Path(root), anchor
+    names = path.relative_to(anchor).parts
+    for index, name in enumerate(names):
+        spelled = spelled / name
+        with scandir(real) as entries:
+            found = sorted(
+                entry.name for entry in entries
+                if not entry.is_symlink() and _same(samefile, entry.path, spelled)
+            )
+        if not found:
+            return real.joinpath(*names[index:])
+        real = real / (name if name in found else found[0])
+    return real
 
 
 def path_matches(pattern: str, rel: str) -> bool:
@@ -159,7 +216,10 @@ def _denial(target: str, rules: list[dict], missing: list[tuple[str, ...]], wind
     return "\n".join(lines)
 
 
-def decide(payload: dict, root: Path, log_path: Path, registry_path: Path, now: float) -> str | None:
+def decide(
+    payload: dict, root: Path, log_path: Path, registry_path: Path, now: float,
+    samefile: Callable[..., bool] = os.path.samefile, scandir: Callable[..., Any] = os.scandir,
+) -> str | None:
     """None allows the edit; a string is the reason it is denied."""
     if payload.get("tool_name") not in GATED_TOOLS:
         return None
@@ -171,11 +231,11 @@ def decide(payload: dict, root: Path, log_path: Path, registry_path: Path, now: 
         return f"{FAIL_CLOSED} malformed tool input; cannot tell what is being edited."
     try:
         base = root.resolve()
-        target = (base / Path(file_path).expanduser()).resolve()
-        registry_target = registry_path.resolve()
+        target = canonical(base / Path(file_path).expanduser(), base, samefile, scandir)
+        registry_target = canonical(registry_path, base, samefile, scandir)
     except (OSError, RuntimeError, ValueError) as exc:
         return f"{FAIL_CLOSED} cannot resolve {file_path!r} ({exc})."
-    if not target.is_relative_to(base):
+    if target is None:
         return None
     try:
         registry = load_registry(registry_path)
@@ -212,6 +272,8 @@ def main(
     log_path: Path = LOG_PATH,
     registry_path: Path = REGISTRY_PATH,
     now: float | None = None,
+    samefile: Callable[..., bool] = os.path.samefile,
+    scandir: Callable[..., Any] = os.scandir,
 ) -> int:
     try:
         payload = json.loads(stdin_text)
@@ -220,7 +282,8 @@ def main(
     if not isinstance(payload, dict):
         sys.stderr.write(f"{FAIL_CLOSED} stdin was not a JSON object; cannot tell what is being edited.\n")
         return 2
-    reason = decide(payload, root, log_path, registry_path, time.time() if now is None else now)
+    reason = decide(
+        payload, root, log_path, registry_path, time.time() if now is None else now, samefile, scandir)
     if reason is None:
         return 0
     sys.stderr.write(reason + "\n")

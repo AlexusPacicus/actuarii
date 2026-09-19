@@ -18,6 +18,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from tests.security.test_hook_case_identity import CaseBlindFs
 from tools.audit import context_pack
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -477,3 +478,121 @@ def test_registration_changes_nothing_else_in_settings():
         {"type": "command", "command": "python3 tools/hooks/confine_review_reads.py"}]}]
     assert current["enableAllProjectMcpServers"] is True
     assert set(current) == {"permissions", "hooks", "enableAllProjectMcpServers"}
+
+
+# T11: the target is what the filesystem says it is, not how it is spelled
+
+FS = CaseBlindFs()
+BLIND = {"samefile": FS.samefile, "scandir": FS.scandir}
+REFUSAL = "denied by the test"
+VARIANTS = [
+    ("src/vec.py", "SRC/VEC.PY"),
+    ("src/store/deep/x.py", "Src/STORE/Deep/X.py"),
+    ("src/store/new.py", "SRC/STORE/new.py"),
+    ("exp/k6_a.py", "EXP/K6_A.PY"),
+    ("exp/other.py", "Exp/Other.py"),
+    ("aux/x.py", "AUX/X.PY"),
+]
+EXISTING_BROKEN = {name: text for name, text in BROKEN_REGISTRIES.items() if text is not None}
+
+
+def refuse(*_args):
+    raise PermissionError(REFUSAL)
+
+
+def run_as(hook, env, target, tool="Edit", **primitives):
+    payload = json.dumps({"tool_name": tool, "tool_input": {"file_path": str(target)}})
+    return hook.main(payload, env.root, env.log, env.registry, NOW, **primitives)
+
+
+@pytest.fixture
+def repo(env):
+    for name in ("src/vec.py", "src/store/deep/x.py", "exp/k6_a.py", "exp/other.py", "aux/x.py", "plain.py"):
+        path = env.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("", encoding="utf-8")
+    return env
+
+
+def spellings(repo, variant):
+    return {"relative": variant, "absolute": repo.root / variant,
+            "root-prefix": Path(str(repo.root).upper()) / variant}
+
+
+@pytest.mark.parametrize("form", ["relative", "absolute", "root-prefix"])
+@pytest.mark.parametrize("exact, variant", VARIANTS)
+def test_a_registered_path_in_other_case_is_denied_like_its_exact_spelling(
+        hook, repo, capsys, exact, variant, form):
+    assert run_as(hook, repo, exact, **BLIND) == 2
+    reference = capsys.readouterr().err
+    assert missing(reference)
+    assert run_as(hook, repo, spellings(repo, variant)[form], **BLIND) == 2
+    assert capsys.readouterr().err == reference
+
+
+@pytest.mark.parametrize("variant", ["PLAIN.PY", "SRC/Other.py", "Docs/Notes.md", "EXP2/x.py"])
+def test_an_unregistered_path_in_other_case_passes(hook, repo, variant):
+    assert run_as(hook, repo, variant, **BLIND) == 0
+    assert not repo.log.exists()
+
+
+@pytest.mark.parametrize("exact, variant", VARIANTS)
+def test_a_receipt_covers_a_registered_path_in_other_case(hook, repo, exact, variant):
+    write_log(repo, receipt(ENGINE), receipt(DATA), receipt(K6), receipt(NOTES))
+    assert run_as(hook, repo, exact, **BLIND) == 0
+    assert run_as(hook, repo, variant, **BLIND) == 0
+
+
+@pytest.mark.parametrize("text", EXISTING_BROKEN.values(), ids=list(EXISTING_BROKEN))
+def test_an_unusable_registry_can_be_repaired_through_a_case_variant_of_its_path(hook, repo, text):
+    break_registry(repo, text)
+    assert run_as(hook, repo, "TOOLS/HOOKS/CONTRACT_REGISTRY.JSON", **BLIND) == 0
+    assert run_as(hook, repo, "TOOLS/HOOKS/OTHER.PY", **BLIND) == 2
+
+
+def test_a_directory_that_cannot_be_listed_inside_the_root_denies(hook, repo, capsys):
+    assert run_as(hook, repo, "SRC/VEC.PY", samefile=FS.samefile, scandir=refuse) == 2
+    err = capsys.readouterr().err
+    assert "SRC/VEC.PY" in err
+    assert REFUSAL in err
+
+
+def test_a_path_the_filesystem_refuses_outside_the_root_passes(hook, repo):
+    def samefile(first, second):
+        if not Path(first).is_relative_to(repo.root):
+            raise PermissionError(REFUSAL)
+        return FS.samefile(first, second)
+
+    assert run_as(hook, repo, repo.outside, samefile=samefile, scandir=FS.scandir) == 0
+
+
+def test_a_path_that_cannot_be_resolved_denies_with_the_path_and_the_cause(hook, repo, capsys):
+    assert run_as(hook, repo, "src/vec\x00.py", **BLIND) == 2
+    err = capsys.readouterr().err
+    assert "cannot resolve" in err
+    assert "null" in err
+
+
+def test_a_symlink_loop_denies(hook, repo, capsys):
+    (repo.root / "loop").symlink_to(repo.root / "loop")
+    assert run_as(hook, repo, "loop/x.py", **BLIND) == 2
+    assert "cannot resolve" in capsys.readouterr().err
+
+
+def test_a_home_relative_path_is_expanded_before_it_is_decided(hook, repo, capsys, monkeypatch):
+    monkeypatch.setenv("HOME", str(repo.root / "src"))
+    assert run_as(hook, repo, "~/vec.py", **BLIND) == 2
+    assert missing(capsys.readouterr().err) == [ENGINE]
+
+
+def test_an_unreadable_root_denies_instead_of_reading_every_path_as_outside(hook, repo, capsys):
+    assert run_as(hook, repo, repo.outside, samefile=refuse, scandir=FS.scandir) == 2
+    assert REFUSAL in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("form", ["relative", "absolute", "root-prefix"])
+def test_on_a_case_insensitive_filesystem_a_real_variant_is_denied(hook, repo, capsys, form):
+    if not (repo.root / "SRC").exists():
+        pytest.skip("the filesystem under tmp_path is case-sensitive: a variant names no file here")
+    assert run_as(hook, repo, spellings(repo, "SRC/VEC.PY")[form]) == 2
+    assert missing(capsys.readouterr().err) == [ENGINE]
