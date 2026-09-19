@@ -1,4 +1,4 @@
-# AGENTS.md — Agent Constitution & Operational Directives (v1.6.0)
+# AGENTS.md — Agent Constitution & Operational Directives (v1.7.0)
 
 **Scope:** Repository-wide (`traianus/`, `tests/`, `tools/`)  
 **Standard:** RFC 2119 (`MUST` / `MUST NOT`)
@@ -84,7 +84,11 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 
 ## 6. Governance & Role Taxonomy
 
-6.1 Traianus is governed by a **single executing agent**. The only live subagent permitted is the read-only instrument reviewer (`.claude/agents/instrument-auditor.md`, Claude Code only): it has no Edit, Write or Bash tools, reports a verdict, and never changes files; the executing agent records the verdict. It exists so that step 2(a) reviews are blind by construction rather than by relaying text between sessions. The former role taxonomy (planning, orchestration, code RED/GREEN, docs, github, traceability) is retained **conceptually** for documentation and process traceability, and the detailed role definitions are archived in git history.
+6.1 Traianus is governed by a **single executing agent**. Two live subagents are permitted, both Claude Code only, and at most one agent executes at a time:
+- the read-only instrument reviewer (`.claude/agents/instrument-auditor.md`): it has no Edit, Write or Bash tools, reports a verdict, and never changes files; the executing agent records the verdict. It exists so that step 2(a) reviews are blind by construction rather than by relaying text between sessions.
+- the instrument implementer (`.claude/agents/instrument-implementer.md`): delegated by the executing agent to implement one measurement whose record passed phase 1, test-first, on one branch named by the caller. It passes the boundary-validator gate for every governed file, never runs the measurement on real data, never pushes, never reviews its own record, and stops at a commit. While it runs the executing agent makes no edits; the phase 2 review, the first run and the results stay with the executing agent.
+
+The former role taxonomy (planning, orchestration, code RED/GREEN, docs, github, traceability) is retained **conceptually** for documentation and process traceability, and the detailed role definitions are archived in git history.
 
 6.2 Enforcement is centralized, not per-role, and spans two harnesses:
 - Permission matrices: `opencode.jsonc` (OpenCode) and `.claude/settings.json` (Claude Code) — one perimeter: git read-only allowlist; `rm *`, `python3 -c *`, `python3 -m *`, webfetch and websearch deny; every other `Bash` invocation and all mutations `ask`. Both files are versioned and **MUST** stay identical in perimeter; today only `opencode.jsonc` is guarded by an automated perimeter test (SEC-M-13).
