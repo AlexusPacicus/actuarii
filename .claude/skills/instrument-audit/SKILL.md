@@ -65,6 +65,11 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
   author changes it, the review runs again.
 - **As a subagent** (`.claude/agents/instrument-auditor.md`, AGENTS 6.1): the caller supplies the
   git gate facts and writes the `Reviewed by:` line from the verdict; the reviewer changes nothing.
+- **Blind by construction** (Claude Code): the reviewer reads only a package built by
+  `tools/audit/build_review_package.py` (this procedure, the three base documents, the record and
+  what they cite, at the reviewed commit); while the review lock is set, the hook
+  `tools/hooks/confine_review_reads.py` denies every Read, Grep and Glob outside it. The caller
+  builds the package with `--lock` and clears the lock (`unlock`) when the verdict is in.
 - **No code execution** of any kind, including empty or exploratory `python3` calls (AGENTS 2.5).
   The review is done by reading; `git log` / `git status` are the only commands needed.
 - **No judgement of results.** If a result exists already, the review is late; say so in the
