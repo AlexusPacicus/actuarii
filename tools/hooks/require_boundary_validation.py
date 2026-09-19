@@ -18,7 +18,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from traianus.security.hook_gate import has_recent_execute_safe, is_governed_path
+try:
+    from traianus.security.hook_gate import has_recent_execute_safe, is_governed_path
+except Exception as exc:  # fail-closed: a gate that cannot start must deny
+    # An unhandled failure here exits 1, which the harness reads as a broken
+    # hook and not as a denial: the edit would proceed ungated.
+    sys.stderr.write(
+        "[require_boundary_validation] fail-closed: the boundary gate could "
+        f"not be imported ({exc}). Denying instead of leaving the edit "
+        "ungated.\n"
+    )
+    sys.exit(2)
 
 GATED_TOOLS = {"Edit", "Write"}
 
