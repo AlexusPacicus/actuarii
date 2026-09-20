@@ -19,14 +19,21 @@ and each rule is applied twice: to the words, and to the words obtained by split
 them once more on whitespace and separators, so `sh -c '/usr/bin/python3 -c ...'` is caught. A
 command shlex cannot tokenize is denied as unverifiable. The body of a heredoc whose delimiter is
 quoted is data, not shell: it is scanned only when a shell (sh, bash, eval, ...) appears elsewhere
-in the command, which may read it. Input that is not a JSON object, or a Bash payload without a
-command string, is denied: exit 1 would read as a broken hook, not as a denial.
+in the command, which may read it, or when the line that opens the heredoc writes to a file (a '>'
+or '>>' redirection other than '>&' to a descriptor, or the word tee), which a shell may run later.
+Input that is not a JSON object, or a Bash payload without a command string, is denied: exit 1
+would read as a broken hook, not as a denial.
 
 Text-level heuristic, not a shell parser. Declared limits: eval and command substitution that
 assemble an interpreter path, login shells (bash -l, zsh -l) that re-read a profile and rebuild
 PATH, xcrun, quoting nested more than one level, env option clusters (-iu), a `<<'TAG'` inside
-quotes that hides the lines up to a line equal to TAG, and any file at */tools/bin/<name> (R1
-trusts the name of the shim). The shim itself trusts the caller's PATH for git.
+quotes that hides the lines up to a line equal to TAG, a heredoc body written to a file by anything
+but the redirections above (dd, cp, a redirect on another line, a group redirected after its
+closing delimiter), a body scanned for that reason that shlex cannot tokenize (an apostrophe in
+prose: denied as unverifiable, write such a file with the Write tool), R2 on a quoted argument that
+only names an interpreter (a commit message or a grep pattern that mentions ipython, pypy or
+python3.12 is denied: rephrase it), and any file at */tools/bin/<name> (R1 trusts the name of the
+shim). The shim itself trusts the caller's PATH for git.
 
 Standard library only: an import failure would exit 1, which the harness reads as a broken hook
 rather than a denial; annotations are postponed so a 3.9 system interpreter can import it.
@@ -44,6 +51,7 @@ COVERED = frozenset({"python", "python3", "python3.11"})
 SHELLS = frozenset({"sh", "bash", "zsh", "dash", "ksh", "ash", "csh", "tcsh", "fish", "eval", "source", ".", "xargs"})
 ENV_RESETS = frozenset({"-i", "--ignore-environment", "-", "-uPATH", "--unset=PATH"})
 QUOTED_HEREDOC = re.compile(r"(?<!<)<<(-?)[ \t]*(?:'([^'\n]*)'|\"([^\"\n]*)\"|\\(\w+))")
+WRITES_A_FILE = re.compile(r">(?!&[0-9-])|\btee\b")
 SPLIT = re.compile(r"[;&|()<>\n]+|[^\s;&|()<>]+")
 
 
@@ -55,8 +63,9 @@ def words(text: str) -> list[str]:
     return list(lexer)
 
 
-def strip_heredocs(command: str) -> tuple[str, list[str]]:
-    """The command without the bodies of its quoted-delimiter heredocs, and those bodies."""
+def strip_heredocs(command: str) -> tuple[str, list[tuple[str, bool]]]:
+    """The command without the bodies of its quoted-delimiter heredocs, and each body with whether
+    the line that opens it writes to a file."""
     kept, bodies, position = [], [], 0
     for marker in QUOTED_HEREDOC.finditer(command):
         newline = command.find("\n", marker.end())
@@ -66,8 +75,10 @@ def strip_heredocs(command: str) -> tuple[str, list[str]]:
         indent = "\t*" if marker.group(1) else ""
         closing = re.compile(f"^{indent}{re.escape(tag)}$", re.MULTILINE).search(command, newline + 1)
         if closing:
+            line = command.rfind("\n", 0, marker.start()) + 1
+            opening = command[line:marker.start()] + command[marker.end():newline]
             kept.append(command[position:newline + 1])
-            bodies.append(command[newline + 1:closing.start()])
+            bodies.append((command[newline + 1:closing.start()], bool(WRITES_A_FILE.search(opening))))
             position = closing.end()
     kept.append(command[position:])
     return "".join(kept), bodies
@@ -112,8 +123,9 @@ def violation(tokens: list[str]) -> str | None:
 def check(command: str) -> str | None:
     text, bodies = strip_heredocs(command)
     first = words(text)
-    if any(word.rsplit("/", 1)[-1] in SHELLS for word in first):
-        for body in bodies:
+    shell = any(word.rsplit("/", 1)[-1] in SHELLS for word in first)
+    for body, written in bodies:
+        if shell or written:
             first += ["\n"] + words(body)
     second = [part for word in first for part in SPLIT.findall(word)]
     return violation(first) or violation(second)

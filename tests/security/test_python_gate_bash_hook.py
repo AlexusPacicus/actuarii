@@ -48,6 +48,34 @@ NEWLINE_SEPARATED = """git status
 /usr/bin/python3 x
 """
 NESTED_QUOTES = """sh -c '/usr/bin/python3 -c "print(1)"'"""
+WRITTEN_TO_FILE = """cat > /tmp/x.sh <<'EOF'
+/usr/bin/python3 -c x
+EOF
+chmod +x /tmp/x.sh
+/tmp/x.sh
+"""
+APPENDED_TO_FILE = WRITTEN_TO_FILE.replace("cat >", "cat >>")
+TEED_TO_FILE = """cat <<'EOF' | tee /tmp/x.sh
+/usr/bin/python3 -c x
+EOF
+"""
+PATH_WRITTEN_TO_FILE = """cat > /tmp/x.sh <<'EOF'
+export PATH=/usr/bin:$PATH
+EOF
+"""
+PROSE_WRITTEN_TO_FILE = """cat > /tmp/notes.md <<'EOF'
+it's prose
+EOF
+"""
+CONTRACT_HEREDOC = """python3 tools/audit/delegation_contract.py contract <<'EOF'
+{"problem": "it's data: export PATH=/x"}
+EOF
+"""
+HARMLESS_FILE_HEREDOC = """cat > /tmp/notes.txt <<'EOF'
+a harmless note about the shim
+EOF
+"""
+CONTRACT_HEREDOC_MERGING_STDERR = CONTRACT_HEREDOC.replace("contract <<'EOF'", "contract <<'EOF' 2>&1")
 
 PERMITTED = [
     "git status",
@@ -68,6 +96,9 @@ PERMITTED = [
     DATA_HEREDOC,
     COMMIT_HEREDOC,
     TAB_HEREDOC,
+    CONTRACT_HEREDOC,
+    CONTRACT_HEREDOC_MERGING_STDERR,
+    HARMLESS_FILE_HEREDOC,
 ]
 
 DENIED = [
@@ -107,6 +138,11 @@ DENIED = [
     (PIPED_HEREDOC, "R1", "/usr/bin/python3"),
     (EXPANDING_HEREDOC, "R1", "/usr/bin/python3"),
     (UNTERMINATED_HEREDOC, "R1", "/usr/bin/python3"),
+    (WRITTEN_TO_FILE, "R1", "/usr/bin/python3"),
+    (APPENDED_TO_FILE, "R1", "/usr/bin/python3"),
+    (TEED_TO_FILE, "R1", "/usr/bin/python3"),
+    (PATH_WRITTEN_TO_FILE, "R4", "PATH=/usr/bin:$PATH"),
+    (PROSE_WRITTEN_TO_FILE, "unverifiable", ""),
     ("echo 'unbalanced", "unverifiable", ""),
     (SHELL_HEREDOC_WITH_APOSTROPHE, "unverifiable", ""),
 ]
@@ -146,6 +182,20 @@ def test_denied_command_exits_2_naming_the_rule_and_the_word(monkeypatch, capsys
     code, out, err = bash(monkeypatch, capsys, command)
     assert (code, out) == (2, "")
     assert rule in err and word in err and "AGENTS 2.5" in err
+
+
+@pytest.mark.parametrize("command, word", [
+    ('git commit -m "docs: mention ipython"', "ipython"),
+    ("grep -e python3.12 file", "python3.12"),
+    ("sh -c 'python3.12 x'", "python3.12"),
+])
+def test_r2_denies_a_mere_mention_of_an_uncovered_interpreter(monkeypatch, capsys, command, word):
+    """Declared limit of the hook: R2 applies to the words of a quoted argument too, so a commit
+    message or a grep pattern that only names such an interpreter is denied. Changing this is a
+    deliberate act; sh -c 'python3.12 x' is caught by the same second pass."""
+    code, out, err = bash(monkeypatch, capsys, command)
+    assert (code, out) == (2, "")
+    assert "R2" in err and word in err
 
 
 # T11: fail closed
