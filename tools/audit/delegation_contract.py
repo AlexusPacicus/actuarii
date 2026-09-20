@@ -31,6 +31,7 @@ from pydantic import (
     ConfigDict,
     Field,
     ValidationError,
+    ValidationInfo,
     field_validator,
     model_validator,
 )
@@ -41,7 +42,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from tools.audit.context_pack import SpecError, parse_spec
 
-Gate = Literal["pytest_full", "pytest_model", "ruff_ci", "mypy", "validate_proposal"]
+Gate = Literal["pytest_full", "pytest_model", "ruff_ci", "mypy", "validate_proposal", "tsc"]
 
 
 def _duplicates(what: str, keys: list[str]) -> None:
@@ -130,7 +131,7 @@ class Behaviour(_Strict):
 class ContractTest(_Strict):
     id: Annotated[str, Field(pattern=r"^T[0-9]{1,2}$")]
     must_catch: str
-    expectation: Literal["red", "guard"]
+    expectation: Literal["red", "guard", "manual"]
     reason: str
 
 
@@ -141,7 +142,7 @@ class DelegationContract(_Strict):
     branch: Annotated[str, Field(pattern=r"^[a-z0-9][a-z0-9._/-]{2,100}$"), AfterValidator(_branch)]
     base_commit: Annotated[str, Field(pattern=r"^[0-9a-f]{7,40}$")]
     attribution: Annotated[str, Field(pattern=r"^Co-Authored-By: .+ <.+@.+>$")]
-    scope: Literal["engine", "tools"]
+    scope: Literal["engine", "tools", "client"]
     context: ContextSpec
     problem: NonEmpty
     decisions: list[str]
@@ -163,6 +164,35 @@ class DelegationContract(_Strict):
     @classmethod
     def _unique_gates(cls, gates: list[str]) -> list[str]:
         _duplicates("gates", gates)
+        return gates
+
+    @field_validator("tests")
+    @classmethod
+    def _manual_tests_are_the_client_tests(cls, tests: list[ContractTest], info: ValidationInfo) -> list[ContractTest]:
+        scope = info.data.get("scope")
+        manual = [test.expectation == "manual" for test in tests]
+        if scope == "client" and not all(manual):
+            raise ValueError("every test of a client contract is manual")
+        if scope is not None and scope != "client" and any(manual):
+            raise ValueError("the expectation manual is valid only when the scope is client")
+        return tests
+
+    @field_validator("files_may_touch")
+    @classmethod
+    def _a_client_touches_only_the_frontend_source(cls, paths: list[str], info: ValidationInfo) -> list[str]:
+        outside = [path for path in paths if not path.startswith("frontend/src/")]
+        if info.data.get("scope") == "client" and outside:
+            raise ValueError(f"a client contract touches only frontend/src/, not {', '.join(outside)}")
+        return paths
+
+    @field_validator("gates")
+    @classmethod
+    def _tsc_is_the_client_gate(cls, gates: list[str], info: ValidationInfo) -> list[str]:
+        scope = info.data.get("scope")
+        if scope == "client" and gates != ["tsc"]:
+            raise ValueError("a client contract has exactly the gate tsc")
+        if scope is not None and scope != "client" and "tsc" in gates:
+            raise ValueError("the gate tsc is valid only when the scope is client")
         return gates
 
     @model_validator(mode="after")
