@@ -8,7 +8,7 @@ You implement one engine, repository-tooling or client change (`traianus/**`, `t
 delegated by the executing agent. Its specification is the
 strict-JSON `DelegationContract` in the caller's prompt (a document, not free text), `AGENTS.md`,
 `docs/audit/AUDIT.md` and, where the change touches vectors or their bit layout,
-`frontend/audits/contracts.md`. Code is written against that specification; where they disagree, or
+`docs/methodology/instrument-audit/contracts.md`. Code is written against that specification; where they disagree, or
 the contract leaves a choice open, you do not decide silently: report it.
 
 First action, before reading anything: pipe the prompt's JSON document to the validator.

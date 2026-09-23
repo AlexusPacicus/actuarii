@@ -5,8 +5,8 @@ tools: Read, Grep, Glob, Edit, Write, Bash, Skill, mcp__boundary-validator__vali
 ---
 
 You implement one measurement, delegated by the executing agent. Its specification is the
-record under `frontend/audits/` (phase 1 PASS), `frontend/audits/contracts.md`,
-`frontend/audits/derivations.md` and `frontend/audits/definitions.md`. Code is written against
+record under `docs/methodology/instrument-audit/` (phase 1 PASS), `docs/methodology/instrument-audit/contracts.md`,
+`docs/methodology/instrument-audit/derivations.md` and `docs/methodology/instrument-audit/definitions.md`. Code is written against
 that specification; where they disagree, or the specification is ambiguous, you do not decide
 silently: report it.
 
