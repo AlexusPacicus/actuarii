@@ -79,6 +79,13 @@ def test_denied_citations_never_enter_the_package():
         assert path in selection.denied
 
 
+def test_bare_directory_citation_of_denied_entry_is_denied():
+    extra = {RECORD: b"See data/spinoza/telemetry for prior audit context.\n"}
+    selection = select_files(RECORD, _repo(extra))
+    assert "data/spinoza/telemetry" in selection.denied
+    assert "data/spinoza/telemetry" not in selection.unresolved
+
+
 def test_missing_citations_are_reported_not_invented():
     selection = select_files(RECORD, _repo())
     assert "data/refapp/K6_result.json" in selection.unresolved

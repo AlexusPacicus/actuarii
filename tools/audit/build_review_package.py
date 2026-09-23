@@ -62,7 +62,7 @@ def cited_paths(text: str) -> list[str]:
 def _is_denied(path: str, docs: tuple[str, ...]) -> bool:
     if path.startswith(AUDITS) and path not in docs:
         return True
-    return any(path.startswith(entry) for entry in DENIED)
+    return any(path.startswith(entry) or path == entry.rstrip("/") for entry in DENIED)
 
 
 def select_files(record: str, read: Reader) -> Selection:
