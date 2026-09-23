@@ -23,3 +23,23 @@ def test_ingesta_vector_enforces_idempotency_key(client, auth_headers):
     assert resp.status_code == 422
     detail = resp.json()["detail"]
     assert any("idempotency" in str(err.get("loc", "")).lower() for err in detail)
+
+
+def test_ingesta_rejects_empty_idempotency_key(client, auth_headers):
+    resp = client.post(
+        "/ingesta",
+        content=b"hola mundo",
+        headers={"Content-Type": "text/plain", "X-Idempotency-Key": "", **auth_headers},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == "X-Idempotency-Key must not be empty."
+
+
+def test_ingesta_rejects_whitespace_idempotency_key(client, auth_headers):
+    resp = client.post(
+        "/ingesta",
+        content=b"hola mundo",
+        headers={"Content-Type": "text/plain", "X-Idempotency-Key": "   ", **auth_headers},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == "X-Idempotency-Key must not be empty."
