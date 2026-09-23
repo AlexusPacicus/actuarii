@@ -129,7 +129,8 @@ WRONG_TYPES = {
     list: ['text', None, 1, {}],
     dict: [['x'], 'text', None, 1],
 }
-TYPED = [(c, p, bad) for c, p in NODES for bad in WRONG_TYPES[type(at(DOCS[c], p))]]
+TYPED = [(c, p, bad) for c, p in NODES for bad in WRONG_TYPES[type(at(DOCS[c], p))]
+         if not (c == 'contract' and p == ('attribution',) and bad is None)]
 
 
 @pytest.fixture
@@ -171,6 +172,11 @@ def accept(cli, command, doc):
 @pytest.mark.parametrize('command', ['contract', 'report'])
 def test_a_valid_document_passes(cli, command):
     assert accept(cli, command, DOCS[command]) == f'{command} OK task_id=delegation-contract' + LF
+
+
+def test_a_null_attribution_is_accepted(cli):
+    doc = replaced('contract', ('attribution',), None)
+    assert accept(cli, 'contract', doc) == 'contract OK task_id=delegation-contract' + LF
 
 
 def test_the_models_carry_every_field_of_the_documents():

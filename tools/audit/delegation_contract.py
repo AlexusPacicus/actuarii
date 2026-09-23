@@ -141,7 +141,7 @@ class DelegationContract(_Strict):
     title: Annotated[str, Field(min_length=1, max_length=120)]
     branch: Annotated[str, Field(pattern=r"^[a-z0-9][a-z0-9._/-]{2,100}$"), AfterValidator(_branch)]
     base_commit: Annotated[str, Field(pattern=r"^[0-9a-f]{7,40}$")]
-    attribution: Annotated[str, Field(pattern=r"^Co-Authored-By: .+ <.+@.+>$")]
+    attribution: Annotated[str, Field(pattern=r"^Co-Authored-By: .+ <.+@.+>$")] | None
     scope: Literal["engine", "tools", "client"]
     context: ContextSpec
     problem: NonEmpty

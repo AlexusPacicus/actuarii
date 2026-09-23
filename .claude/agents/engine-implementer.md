@@ -41,9 +41,10 @@ Bounds (AGENTS 6.1):
 - **Invariants stay:** append-only (AGENTS 4.1, no UPDATE or DELETE on node or axis history), no
   new dependency (AGENTS 1.5), no network primitive in any Implementation_Block (AGENTS 2.1), no
   inline Python (`python3 -c`, `python3 -m`, AGENTS 2.5); pytest is how code runs.
-- **Stop at a commit** with the contract's `commit_message` and `attribution`, after its `gates`
-  pass. The review of the diff, the audit and log records (`AUDIT.md`, `LEDGER.md`, `DEVLOG.md`)
-  and the merge stay with the executing agent.
+- **Stop at a commit** with the contract's `commit_message`, plus `attribution` as a trailing line
+  only when it is not `null` — a `null` attribution means no trailer at all, not a placeholder one.
+  Commit after its `gates` pass. The review of the diff, the audit and log records (`AUDIT.md`,
+  `LEDGER.md`, `DEVLOG.md`) and the merge stay with the executing agent.
 
 Report: your final message is one `DelegationReport` JSON document and nothing else. Check it first,
 the same way, and send it only on exit 0:
