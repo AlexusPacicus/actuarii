@@ -52,7 +52,7 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 
 3.6 Agents **MUST** consult `docs/audit/AUDIT.md` before applying refactorings to `traianus/app.py`.
 
-3.7 Work on vector data, their bit layout, or the K6/R4 measurements **MUST** load the sections of `frontend/audits/contracts.md` that `tools/hooks/contract_registry.json` registers for the paths concerned, through `tools/audit/context_pack.py`, before the edit. This is enforced in code, not by citation: the `PreToolUse` hook `tools/hooks/require_contract_context.py` denies `Edit`/`Write` on a registered path unless `context_pack` logged a `served` receipt for every required section within the registry window, from the contract file as it is now. A mention or a citation of a contract is not evidence. Conformance to a contract is verified by tests, not by the hook.
+3.7 Work on vector data, their bit layout, or the K6/R4 measurements **MUST** load the sections of `docs/methodology/instrument-audit/contracts.md` that `tools/hooks/contract_registry.json` registers for the paths concerned, through `tools/audit/context_pack.py`, before the edit. This is enforced in code, not by citation: the `PreToolUse` hook `tools/hooks/require_contract_context.py` denies `Edit`/`Write` on a registered path unless `context_pack` logged a `served` receipt for every required section within the registry window, from the contract file as it is now. A mention or a citation of a contract is not evidence. Conformance to a contract is verified by tests, not by the hook.
 
 ---
 
