@@ -87,11 +87,14 @@ def ingesta(client, auth_headers):
         idempotency_key: str | None = None,
         use_auth: bool = True,
     ):
+        import uuid
+
         headers = {"Content-Type": content_type}
         if use_auth:
             headers.update(auth_headers)
-        if idempotency_key is not None:
-            headers["X-Idempotency-Key"] = idempotency_key
+        # R3: the header is now required by the endpoint; a caller that does
+        # not care about idempotency still needs a valid, unique key.
+        headers["X-Idempotency-Key"] = idempotency_key or uuid.uuid4().hex
         return client.post("/ingesta", content=text.encode("utf-8"), headers=headers)
     return _ingesta
 

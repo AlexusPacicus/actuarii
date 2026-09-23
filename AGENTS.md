@@ -1,4 +1,4 @@
-# AGENTS.md — Agent Constitution & Operational Directives (v1.5.0)
+# AGENTS.md — Agent Constitution & Operational Directives (v1.10.0)
 
 **Scope:** Repository-wide (`traianus/`, `tests/`, `tools/`)  
 **Standard:** RFC 2119 (`MUST` / `MUST NOT`)
@@ -11,7 +11,7 @@
 
 1.2 The agent **MUST NOT** leave temporary test scripts, single-use auxiliary files, or data dumps (`.json`, `.log`) in the repository tree. *(Deliberate exception: frozen research datasets under `data/**`, incl. the `{label -> chunk}` manifests in `data/spinoza/` — see `data/spinoza/PROVENANCE.md`.)*
 
-1.3 The agent **MUST NOT** silence errors with empty `try-except` blocks, unconditional generic catches, or null returns that mask failures.
+1.3 The agent **MUST NOT** silence errors with empty `try-except` blocks, unconditional generic catches, or null returns that mask failures. *(Deliberate exceptions, both in `traianus/security/validator.py` and both documented in-line: `_persist_audit` fails open on `sqlite3.Error`, so an audit-log write failure can never block the gate; `validate_proposal` closes with a generic catch to stay a total function, mapping any unexpected exception to `ABORTED_GROUNDING_FAILED`. Neither weakens enforcement: a missing `EXECUTE_SAFE` row blocks the edit downstream.)*
 
 1.4 The agent MUST follow a TDD workflow (write and verify failing tests first) and MUST run the test suite (`pytest tests/`) to verify passing status before declaring any task completed.
 
@@ -33,7 +33,7 @@
 
 2.4 Ingress verification **MUST** execute at the byte level: reject null bytes (`\x00`) and strict UTF-8 decoding failures (`errors="strict"`) with HTTP 400.
 
-2.5 The agent **MUST NOT** execute inline Python (`python3 -c`, `python3 -m`). Python execution is restricted to committed scripts under `tools/` or `traianus/`. Any Python script not previously committed requires explicit user approval before execution. This rule is enforced by the `opencode.jsonc` permission matrix (deny `python3 -c *`, deny `python3 -m *`).
+2.5 The agent **MUST NOT** execute inline Python (`python3 -c`, `python3 -m`). Python execution is restricted to committed scripts under `tools/` or `traianus/`. Any Python script not previously committed requires explicit user approval before execution. This rule is enforced by both permission matrices, `opencode.jsonc` and `.claude/settings.json` (deny `python3 -c *`, deny `python3 -m *`).
 
 ---
 
@@ -51,6 +51,8 @@
 $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{EthicalKey} == \text{True})$$
 
 3.6 Agents **MUST** consult `docs/audit/AUDIT.md` before applying refactorings to `traianus/app.py`.
+
+3.7 Work on vector data, their bit layout, or the K6/R4 measurements **MUST** load the sections of `docs/methodology/instrument-audit/contracts.md` that `tools/hooks/contract_registry.json` registers for the paths concerned, through `tools/audit/context_pack.py`, before the edit. This is enforced in code, not by citation: the `PreToolUse` hook `tools/hooks/require_contract_context.py` denies `Edit`/`Write` on a registered path unless `context_pack` logged a `served` receipt for every required section within the registry window, from the contract file as it is now. A mention or a citation of a contract is not evidence. Conformance to a contract is verified by tests, not by the hook.
 
 ---
 
@@ -84,19 +86,30 @@ $$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{Ethic
 
 ## 6. Governance & Role Taxonomy
 
-6.1 Traianus is governed by a **single executing agent**; there are no live subagents. The former role taxonomy (planning, orchestration, code RED/GREEN, docs, github, traceability) is retained **conceptually** for documentation and process traceability, and the detailed role definitions are archived in git history.
+6.1 Traianus is governed by a **single executing agent**. Three live subagents are permitted, all Claude Code only, and at most one agent executes at a time:
+- the read-only instrument reviewer (`.claude/agents/instrument-auditor.md`): it has no Edit, Write or Bash tools, reports a verdict, and never changes files; the executing agent records the verdict. It exists so that step 2(a) reviews are blind by construction rather than by relaying text between sessions.
+- the instrument implementer (`.claude/agents/instrument-implementer.md`): delegated by the executing agent to implement one measurement whose record passed phase 1, test-first, on one branch named by the caller. It passes the boundary-validator gate for every governed file, never runs the measurement on real data, never pushes, never reviews its own record, and stops at a commit. While it runs the executing agent makes no edits; the phase 2 review, the first run and the results stay with the executing agent.
+- the engine implementer (`.claude/agents/engine-implementer.md`): delegated by the executing agent to implement one engine, repository-tooling or client change (`traianus/**`, `tools/**`, `frontend/src/**` and the tests that specify it) from a strict-JSON `DelegationContract` (Pydantic, no extra fields, every field required; `tools/audit/delegation_contract.py`), validated by the executing agent before launch, test-first, on the one branch the contract names. It answers with a `DelegationReport` validated the same way, touches only the files the contract lists, passes the boundary-validator gate for every governed file, runs no inline Python, never pushes, never reviews its own work, and stops at a commit. A client change (`scope: client`) has no test runner behind it: its gate is `tsc` (`npm --prefix frontend run typecheck`), its tests are `manual` checks that the executing agent runs in the browser, and it adds no dependency. While it runs the executing agent makes no edits; the review of the diff, the audit and log records, and the merge stay with the executing agent.
 
-6.2 Enforcement is centralized, not per-role:
-- `opencode.jsonc` global permission matrix (git read-only allowlist; `rm *`, webfetch, websearch deny; mutations `ask`).
-- The boundary-validator MCP (Zero-Trust gate, SEC-M-01..12) gating mutation proposals.
-- The security test suite (`tests/security/`, incl. SEC-M-13 config perimeter).
+The former role taxonomy (planning, orchestration, code RED/GREEN, docs, github, traceability) is retained **conceptually** for documentation and process traceability, and the detailed role definitions are archived in git history.
+
+6.2 Enforcement is centralized, not per-role, and spans two harnesses:
+- Permission matrices: `opencode.jsonc` (OpenCode) and `.claude/settings.json` (Claude Code) — one perimeter: git read-only allowlist; `rm *`, `python3 -c *`, `python3 -m *`, webfetch and websearch deny; every other `Bash` invocation and all mutations `ask`. Both files are versioned and **MUST** stay identical in perimeter; today only `opencode.jsonc` is guarded by an automated perimeter test (SEC-M-13).
+- The boundary-validator MCP (Zero-Trust gate, SEC-M-01..12) gating mutation proposals, declared for both harnesses (`opencode.jsonc` `mcp` block, `.mcp.json`).
+- The `PreToolUse` hook `tools/hooks/require_boundary_validation.py` (Claude Code only): blocks `Edit`/`Write` on governed paths (`traianus/**`, `tests/**`, `AGENTS.md`, `docs/specifications/**`) unless the boundary-validator logged an `EXECUTE_SAFE` for that exact file within 900 s, and fails closed when the audit trail cannot be read. Declared limits: it does not gate writes issued through `Bash`, and the receipt binds a target file, not the content of the edit. The target is decided by filesystem identity (the `canonical` function each path hook carries), not by its spelling, so a case variant of a path on a case-insensitive filesystem is gated like the exact one.
+- The `PreToolUse` hook `tools/hooks/confine_review_reads.py` (Claude Code only): while `.data/review_lock.json` names a review package (built, locked and unlocked by `tools/audit/build_review_package.py`), it denies every `Read`, `Grep` and `Glob` outside that package, so a blind instrument review is blind by construction; it fails closed on a corrupt lock or malformed input and is inert without a lock. Declared limit: it does not gate `Bash`, which the reviewer does not have.
+- The `PreToolUse` hook `tools/hooks/require_contract_context.py` (Claude Code only): blocks `Edit`/`Write` on the paths registered in `tools/hooks/contract_registry.json` (the engine's vector path, the K6 and R4 scripts and tests) unless `tools/audit/context_pack.py` logged a `served` receipt for each contract section the matching rules require, within the registry window (4 h) and from the contract file as it is now; it fails closed on a malformed payload and on an unreadable registry, log or contract file. Declared limits: the receipt proves that `context_pack` served the sections, not that they were read or that the code conforms; the log is a plain file, so a line written through `Bash` forges a receipt, and writes issued through `Bash` are not gated; the receipt names neither agent nor session; `tools/hooks/**`, the registry included, is not itself gated.
+- Instruction loading is mirrored as well: the `opencode.jsonc` `instructions` list and `CLAUDE.md` (`@AGENTS.md`, `@docs/audit/AUDIT.md`) load the same two normative documents.
+- The security test suite (`tests/security/`, incl. SEC-M-13 config perimeter and the hook-gate partition `tests/security/test_hook_gate.py`).
 
 6.3 Domain boundaries from the taxonomy remain normative for the single agent: edits to `tests/` vs `traianus/` vs `docs/` follow the same separation the roles once enforced (tests are not altered to mask failures; source is not edited to chase the test).
 
 6.4 **Logographic Rules:** every directory under `docs/` **MUST** contain exactly one primary markdown document defining that domain node; component sub-documentation **MUST** be placed in isolated sub-folders matching the taxonomy.
 
-6.5 **Skills Registry:** available agent skills live under `.opencode/skills/<name>/SKILL.md`:
+6.5 **Skills Registry:** available agent skills are mirrored under `.opencode/skills/<name>/SKILL.md` (OpenCode) and `.claude/skills/<name>/SKILL.md` (Claude Code) — same six skills, both trees versioned in git and mirrored by hand (no automated parity test yet):
+- `instrument-audit` — blind review of instrument audit records (step 2(a) of `docs/methodology/METHODOLOGY.md`): specification before the script exists, code before the first run, `file:line` evidence, PASS/CHANGES verdict; read-only except the record's `Reviewed by:` line.
 - `boundary-validator` — Zero-Trust gating of 5-Radicals mutation proposals.
 - `tdd-cycle` — Red-Green-Refactor workflow with pytest + C1 audit harness.
 - `lab-analyst` — chromatic transmission analyst over corpus manifolds (collision rescue, Sammon stress, falsifiable ontological alignment); operates read-only on `.data/` artifacts via committed tooling in `tools/experiments/tooling/`.
 - `spec-first` — authoring normative specifications under the 5 Radicals SPEC contract and the frozen spec template in `docs/specifications/`.
+- `spectral-mathematician` — deterministic verification of C1 threshold calibration, simplex volumes, barycentric coordinates, and float32/64 drift via the `spectral-math-engine` MCP.

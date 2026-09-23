@@ -1,0 +1,82 @@
+{
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Bash(python3 tools/*)",
+      "Bash(python3 tools/*.py)",
+      "Bash(python3 tools/mcp/*)",
+      "Bash(python3 tools/audit/*)",
+      "Bash(python3 tools/experiments/*)",
+      "Bash(python3 tools/hooks/*)",
+      "Bash(python3 traianus/security/validator.py)",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git diff)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git rev-parse *)",
+      "Bash(git grep *)",
+      "Bash(git blame *)",
+      "Bash(git ls-files *)"
+    ],
+    "deny": [
+      "WebFetch",
+      "WebSearch",
+      "Bash(rm *)",
+      "Bash(python3 -c *)",
+      "Bash(python3 -m *)"
+    ],
+    "ask": [
+      "Bash",
+      "Bash(git add *)",
+      "Bash(git checkout -b *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git branch *)",
+      "Bash(git stash *)",
+      "Bash(git tag *)",
+      "Bash(git remote *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git push *)",
+      "Bash(git config *)",
+      "Bash(git merge *)",
+      "Bash(git rebase *)",
+      "Bash(git reset *)",
+      "Bash(git clean *)",
+      "Bash(git submodule *)",
+      "Bash(git rm *)",
+      "Bash(git worktree *)",
+      "Bash(gh issue *)",
+      "Bash(gh pr *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 tools/hooks/require_boundary_validation.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 tools/hooks/require_contract_context.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 tools/hooks/confine_review_reads.py"
+          }
+        ]
+      }
+    ]
+  },
+  "enableAllProjectMcpServers": true
+}

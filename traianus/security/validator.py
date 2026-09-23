@@ -1,7 +1,9 @@
+import re
 import sys
 import json
 import uuid
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -19,11 +21,46 @@ from traianus.security.schemas.proposals import AgentMutationProposal
 
 logger = logging.getLogger("traianus.security.validator")
 
+# Zero-Trust capability matrix (AGENTS.md §2.1): each clause binds a banned
+# host primitive to its physical effect and to the pattern that identifies it.
+# Boundary anchoring is normative, not cosmetic — a naked substring test
+# quarantines prose ("kept in sync by hand" contains "nc "), which trains the
+# agent to reword until the gate passes and voids the signal of a real
+# rejection.
+FORBIDDEN_MATRIX = tuple(
+    (primitive, effect, re.compile(pattern, re.IGNORECASE))
+    for primitive, effect, pattern in (
+        # primitive      physical_effect  boundary_pattern
+        ("fetch",        "NETWORK",       r"\bfetch\s*\("),
+        ("axios",        "NETWORK",       r"\baxios\b"),
+        ("urllib",       "NETWORK",       r"\burllib3?\b"),
+        ("requests",     "NETWORK",       r"\b(?:import\s+requests|from\s+requests|requests\s*\.)"),
+        ("httpx",        "NETWORK",       r"\bhttpx\b"),
+        ("aiohttp",      "NETWORK",       r"\baiohttp\b"),
+        ("http.client",  "NETWORK",       r"\bhttp\s*\.\s*client\b"),
+        ("socket",       "NETWORK",       r"\bsockets?\b"),
+        ("curl",         "NETWORK",       r"\bcurl\b"),
+        ("wget",         "NETWORK",       r"\bwget\b"),
+        ("netcat",       "NETWORK",       r"\b(?:nc|ncat|netcat)\b\s+(?:-\w|[\w.-]+\s+\d)"),
+        ("telnet",       "NETWORK",       r"\btelnet\b"),
+        ("ftp",          "NETWORK",       r"\b(?:s?ftp|ftplib)\b"),
+        ("xmlrpc",       "NETWORK",       r"\bxmlrpc\b"),
+        ("webbrowser",   "NETWORK",       r"\bwebbrowser\b"),
+        ("subprocess",   "PROCESS",       r"\bsubprocess\b"),
+        ("os.system",    "PROCESS",       r"\bos\s*\.\s*system\b"),
+        ("os.popen",     "PROCESS",       r"\bos\s*\.\s*popen\b"),
+        ("importlib",    "CODE_LOADING",  r"\bimportlib\b"),
+    )
+)
+
 
 def _persist_audit(case_id: str, decision: str, intent_class: str = "",
                    target_file: str = "", safety_abort: str = "") -> None:
     try:
-        with sqlite3.connect(storage.DB_PATH) as conn:
+        db_path = Path(storage.DB_PATH)
+        if not db_path.is_absolute():
+            db_path = REPO_ROOT / db_path
+        with closing(sqlite3.connect(db_path)) as conn, conn:
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute(AUDIT_LOG_DDL)
             conn.execute(
@@ -78,13 +115,7 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
         intent_raw = str(proposal.get("Intent_Class", ""))
         grounding = proposal.get("Topological_Grounding", "")
 
-        forbidden = [
-            "fetch(", "axios", "urllib.request", "import requests", "httpx",
-            "socket", "urllib3", "subprocess", "curl", "wget", "aiohttp",
-            "importlib", "os.system", "os.popen", "requests.", "http.client",
-            "webbrowser", "telnet", "nc ", "ftp", "xmlrpc",
-        ]
-        if any(token in block for token in forbidden):
+        if any(pattern.search(block) for _primitive, _effect, pattern in FORBIDDEN_MATRIX):
             return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST",
                               "case_id": str(uuid.uuid4())}, intent_raw, target_file_path, safety_abort_raw)
 

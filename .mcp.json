@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "boundary-validator": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["traianus/security/validator.py"]
+    },
+    "spectral-math-engine": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["tools/mcp/spectral_math_mcp.py"]
+    }
+  }
+}

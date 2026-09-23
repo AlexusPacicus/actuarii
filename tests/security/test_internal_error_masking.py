@@ -93,3 +93,22 @@ def test_mutate_masks_internal_error(client, auth_headers, monkeypatch):
     assert r.status_code == 500
     assert MARKER not in r.text
     assert r.json()["detail"] == GENERIC
+
+
+def test_error_log_persistence_failure_is_logged_not_swallowed(monkeypatch, capsys):
+    """R10/INV-11: when ingestion fails AND persisting its error log fails too,
+    the second failure must leave a trace; a bare `pass` would erase the only
+    evidence that the failure handler itself failed."""
+    import traianus.app as main
+
+    def primary(*_args, **_kwargs):
+        raise RuntimeError("primary failure")
+
+    def secondary(*_args, **_kwargs):
+        raise RuntimeError("error log unavailable")
+
+    monkeypatch.setattr(main, "_encode_vector", primary)
+    monkeypatch.setattr(storage, "insert_error_log", secondary)
+    main.async_spectral_processor(7, "text")
+    captured = capsys.readouterr()
+    assert "ingestion_error_log_failed" in captured.out + captured.err

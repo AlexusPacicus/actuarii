@@ -38,6 +38,7 @@
       "python3 tools/mcp/*": "allow",
       "python3 tools/audit/*": "allow",
       "python3 tools/experiments/*": "allow",
+      "python3 tools/hooks/*": "allow",
       "python3 traianus/security/validator.py": "allow",
       // Safe read-only Git inspection
       "git status": "allow",
