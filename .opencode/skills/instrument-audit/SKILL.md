@@ -29,7 +29,7 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
    - There is a control that must come out one way, and the record says what happens if it does
      not. A control that cannot fail is a CHANGES item.
    - Every shortcut the record takes (a simplified form standing for a full one) cites an entry
-     in `frontend/audits/derivations.md` whose conditions hold here. A missing entry is blocking.
+     in `docs/methodology/instrument-audit/derivations.md` whose conditions hold here. A missing entry is blocking.
    - Gate: all items answered; the record is committed (`git log` shows it). After the third
      phase-1 round the record freezes: report remaining items for phase 2, verdict stays open.
 2. **Code** — before the first run.
@@ -41,7 +41,7 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
    - Seeds, data source and frame are the ones the record names.
    - Every derivation the record uses has a unit test that checks the equality on random inputs
      satisfying its conditions. A derivation without its test is blocking.
-   - The code matches the measurement's contract in `frontend/audits/contracts.md` down to the
+   - The code matches the measurement's contract in `docs/methodology/instrument-audit/contracts.md` down to the
      data layer: digests checked, dtypes and casts, byte order, draw order, thread settings,
      result format. A mismatch is blocking.
    - Integrity tests exist and can fail: null elimination rejects NaN, ±Inf, off-norm rows and

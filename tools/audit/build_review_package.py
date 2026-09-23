@@ -1,17 +1,18 @@
 """Build the package a blind instrument review reads, and hold the review lock.
 
 The package holds the review procedure (the instrument-audit skill, whose citations are not
-followed) and exactly what frontend/audits/definitions.md allows: the three base documents, the
-record under review, and the repository files they cite (one level, never the citations of
-cited files), read from one commit with `git show`. Denied paths never enter it: the entries of
-definitions.md "Not allowed", the dev log, and every other record under frontend/audits/.
+followed) and exactly what docs/methodology/instrument-audit/definitions.md allows: the three base
+documents, the record under review, and the repository files they cite (one level, never the
+citations of cited files), read from one commit with `git show`. Denied paths never enter it: the
+entries of definitions.md "Not allowed", the dev log, and every other record under
+docs/methodology/instrument-audit/.
 Citations that do not resolve at the commit are listed, not invented. MANIFEST.json records the
 commit, the record, each file's sha256, and the denied and unresolved citations.
 
 While the lock exists, tools/hooks/confine_review_reads.py confines Read, Grep and Glob to the
 package, so blindness holds by construction.
 
-    build_review_package.py build --record frontend/audits/K6.md --commit <sha> --out <dir> --lock
+    build_review_package.py build --record docs/methodology/instrument-audit/K6.md --commit <sha> --out <dir> --lock
     build_review_package.py unlock
 """
 import argparse
@@ -26,12 +27,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 LOCK_PATH = REPO_ROOT / ".data" / "review_lock.json"
-AUDITS = "frontend/audits/"
+AUDITS = "docs/methodology/instrument-audit/"
 PROCEDURE = ".claude/skills/instrument-audit/SKILL.md"
 BASE_DOCS = (
-    "frontend/audits/definitions.md",
-    "frontend/audits/derivations.md",
-    "frontend/audits/contracts.md",
+    "docs/methodology/instrument-audit/definitions.md",
+    "docs/methodology/instrument-audit/derivations.md",
+    "docs/methodology/instrument-audit/contracts.md",
 )
 DENIED = (
     "frontend/POC.md",

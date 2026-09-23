@@ -22,15 +22,16 @@ from tools.audit.build_review_package import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-RECORD = "frontend/audits/K6.md"
+RECORD = "docs/methodology/instrument-audit/K6.md"
 
 
 def _repo(extra=None):
     files = {
-        "frontend/audits/definitions.md": b"Operator traianus/geometry/polar_projector.py (:235-237)\n"
-                                          b"Not allowed frontend/POC.md; docs/adrs/ADR-026-*\n",
-        "frontend/audits/derivations.md": b"verified by tests/unit/test_audit_derivations.py\n",
-        "frontend/audits/contracts.md": b"see frontend/audits/R4.md and data/refapp/K6_result.json\n",
+        "docs/methodology/instrument-audit/definitions.md":
+            b"Operator traianus/geometry/polar_projector.py (:235-237)\n"
+            b"Not allowed frontend/POC.md; docs/adrs/ADR-026-*\n",
+        "docs/methodology/instrument-audit/derivations.md": b"verified by tests/unit/test_audit_derivations.py\n",
+        "docs/methodology/instrument-audit/contracts.md": b"see docs/methodology/instrument-audit/R4.md and data/refapp/K6_result.json\n",
         RECORD: b"Script: tools/experiments/k6.py; tests/unit/test_k6.py.\n"
                 b"Also traianus/geometry/spatial_observables.py and docs/development/DEVLOG.md\n",
         "traianus/geometry/polar_projector.py": b"operator\n",
@@ -38,7 +39,7 @@ def _repo(extra=None):
         "tools/experiments/k6.py": b"script\n",
         "tests/unit/test_k6.py": b"tests\n",
         "frontend/POC.md": b"hypothesis\n",
-        "frontend/audits/R4.md": b"other record\n",
+        "docs/methodology/instrument-audit/R4.md": b"other record\n",
         "traianus/geometry/spatial_observables.py": b"prior result\n",
         "docs/development/DEVLOG.md": b"log\n",
         PROCEDURE: b"procedure, cites tools/hooks/anything.py\n",
@@ -72,7 +73,7 @@ def test_select_files_includes_base_record_and_one_level_of_citations():
 
 def test_denied_citations_never_enter_the_package():
     selection = select_files(RECORD, _repo())
-    for path in ("frontend/POC.md", "frontend/audits/R4.md", "docs/adrs/ADR-026-*",
+    for path in ("frontend/POC.md", "docs/methodology/instrument-audit/R4.md", "docs/adrs/ADR-026-*",
                  "traianus/geometry/spatial_observables.py", "docs/development/DEVLOG.md"):
         assert path not in selection.files
         assert path in selection.denied
@@ -91,7 +92,7 @@ def test_citations_of_cited_files_are_not_followed():
 
 
 def test_missing_base_document_raises():
-    reader = _repo({"frontend/audits/contracts.md": None})
+    reader = _repo({"docs/methodology/instrument-audit/contracts.md": None})
     with pytest.raises(FileNotFoundError, match="contracts.md"):
         select_files(RECORD, reader)
 
@@ -102,7 +103,7 @@ def test_missing_procedure_raises():
 
 
 def test_record_must_be_under_audits():
-    with pytest.raises(ValueError, match="frontend/audits/"):
+    with pytest.raises(ValueError, match="docs/methodology/instrument-audit/"):
         select_files("frontend/POC.md", _repo())
 
 
@@ -137,7 +138,7 @@ def test_lock_round_trip(tmp_path):
 
 
 def test_denylist_covers_every_entry_of_definitions_not_allowed():
-    text = (REPO_ROOT / "frontend/audits/definitions.md").read_text()
+    text = (REPO_ROOT / "docs/methodology/instrument-audit/definitions.md").read_text()
     not_allowed = text.split("Not allowed", 1)[1]
     for entry in ("frontend/POC.md", "docs/adrs/ADR-026-",
                   "traianus/geometry/spatial_observables.py", "data/spinoza/telemetry/",

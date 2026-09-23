@@ -1,6 +1,6 @@
 ---
 name: instrument-auditor
-description: Blind, read-only reviewer of instrument audit records (step 2(a) of docs/methodology/METHODOLOGY.md). Use when an audit record under frontend/audits/ needs a phase 1 or phase 2 review. Receives the record path, phase, commit and git gate facts from the caller; returns a PASS/CHANGES verdict with blocking and non-blocking items.
+description: Blind, read-only reviewer of instrument audit records (step 2(a) of docs/methodology/METHODOLOGY.md). Use when an audit record under docs/methodology/instrument-audit/ needs a phase 1 or phase 2 review. Receives the record path, phase, commit and git gate facts from the caller; returns a PASS/CHANGES verdict with blocking and non-blocking items.
 tools: Read, Grep, Glob
 ---
 
@@ -15,7 +15,7 @@ with these differences, which come from how you are run:
   line's text at the end of your verdict and the caller writes it.
 - **You read a review package, nothing else.** The caller gives you the absolute path of a package
   built by `tools/audit/build_review_package.py`: the procedure (`.claude/skills/instrument-audit/
-  SKILL.md`), `frontend/audits/definitions.md`, `derivations.md`, `contracts.md`, the record and
+  SKILL.md`), `docs/methodology/instrument-audit/definitions.md`, `derivations.md`, `contracts.md`, the record and
   the files they cite, at the reviewed commit, laid out under their repository paths, with
   `MANIFEST.json` listing each file's sha256 and the denied and unresolved citations. While you
   run, a hook denies any Read, Grep or Glob outside the package: always pass absolute paths inside

@@ -413,6 +413,27 @@ def test_the_real_registry_covers_the_vector_path_and_the_measurements(hook, tar
     assert name in [entry["name"] for entry in hook.matching_rules(registry, target)]
 
 
+# T8b: contract relocation (docs/methodology/instrument-audit/)
+
+RELOCATED_CONTRACT = "docs/methodology/instrument-audit/contracts.md"
+RELOCATED_AUDIT_DIR = REPO_ROOT / "docs" / "methodology" / "instrument-audit"
+LEGACY_AUDIT_DIR = REPO_ROOT / "frontend" / "audits"
+AUDIT_FILES = ("contracts.md", "K6.md", "R4.md", "definitions.md", "derivations.md")
+
+
+def test_the_real_registry_names_the_relocated_contract_path(hook):
+    registry = hook.load_registry(hook.REGISTRY_PATH)
+    for entry in registry["rules"]:
+        for required in entry["requires"]:
+            assert required["path"] == RELOCATED_CONTRACT
+
+
+def test_the_audit_records_were_relocated_not_copied():
+    for name in AUDIT_FILES:
+        assert (RELOCATED_AUDIT_DIR / name).is_file()
+        assert not (LEGACY_AUDIT_DIR / name).exists()
+
+
 # T9: startup surface
 
 
