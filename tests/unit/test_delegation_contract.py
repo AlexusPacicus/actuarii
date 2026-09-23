@@ -24,6 +24,7 @@ from traianus.security.schemas.proposals import build_response_format
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOL = REPO_ROOT / 'tools' / 'audit' / 'delegation_contract.py'
 AGENT = REPO_ROOT / '.claude' / 'agents' / 'engine-implementer.md'
+AGENTS_MD = REPO_ROOT / 'AGENTS.md'
 ALLOWED_IMPORTS = {'__future__', 'argparse', 'json', 'pathlib', 're', 'sys', 'typing', 'pydantic', 'tools'}
 FORBIDDEN_CALLS = {'open', 'write_text', 'write_bytes', 'mkdir', 'touch', 'unlink', 'eval', 'exec'}
 LF = chr(10)
@@ -129,7 +130,8 @@ WRONG_TYPES = {
     list: ['text', None, 1, {}],
     dict: [['x'], 'text', None, 1],
 }
-TYPED = [(c, p, bad) for c, p in NODES for bad in WRONG_TYPES[type(at(DOCS[c], p))]]
+TYPED = [(c, p, bad) for c, p in NODES for bad in WRONG_TYPES[type(at(DOCS[c], p))]
+         if not (c == 'contract' and p == ('attribution',) and bad is None)]
 
 
 @pytest.fixture
@@ -171,6 +173,11 @@ def accept(cli, command, doc):
 @pytest.mark.parametrize('command', ['contract', 'report'])
 def test_a_valid_document_passes(cli, command):
     assert accept(cli, command, DOCS[command]) == f'{command} OK task_id=delegation-contract' + LF
+
+
+def test_a_null_attribution_is_accepted(cli):
+    doc = replaced('contract', ('attribution',), None)
+    assert accept(cli, 'contract', doc) == 'contract OK task_id=delegation-contract' + LF
 
 
 def test_the_models_carry_every_field_of_the_documents():
@@ -218,9 +225,9 @@ BAD_VALUES = [
     ('contract', ('tests', 0, 'id'), ['', 'T', 't1', 'T100', 'X1', 'B1']),
     ('contract', ('schema_version',), ['', 'delegation/2', 'delegation-report/1']),
     ('contract', ('report_schema',), ['', 'delegation-report/2', 'delegation/1']),
-    ('contract', ('scope',), ['', 'docs', 'Tools', 'Client', 'client ']),
-    ('contract', ('tests', 0, 'expectation'), ['', 'green', 'RED', 'Manual', 'manual ']),
-    ('contract', ('gates', 0), ['', 'ruff', 'pytest', 'MYPY', 'TSC', 'tsc ']),
+    ('contract', ('scope',), ['', 'docs', 'Tools', 'Client', 'client', 'client ']),
+    ('contract', ('tests', 0, 'expectation'), ['', 'green', 'RED', 'Manual', 'manual', 'manual ']),
+    ('contract', ('gates', 0), ['', 'ruff', 'pytest', 'MYPY', 'TSC', 'tsc', 'tsc ']),
     ('contract', ('title',), ['', 'x' * 121]),
     ('contract', ('problem',), ['']),
     ('contract', ('commit_message',), ['', 'x' * 101, 'x' * 101 + LF + 'body']),
@@ -228,7 +235,7 @@ BAD_VALUES = [
     ('report', ('task_id',), ['', 'ab', 'Abc', 'a' * 65]),
     ('report', ('commit',), ['', 'a' * 39, 'a' * 41, 'A' * 40, 'g' * 40, '651bdf4']),
     ('report', ('tests', 0, 'id'), ['', 'T', 'Y1', 'x1', 'T100', 'B1']),
-    ('report', ('gates', 0, 'gate'), ['', 'ruff', 'pytest', 'TSC', 'tsc ']),
+    ('report', ('gates', 0, 'gate'), ['', 'ruff', 'pytest', 'TSC', 'tsc', 'tsc ']),
     ('report', ('gates', 0, 'status'), ['', 'ok', 'PASS']),
 ]
 GOOD_VALUES = [
@@ -243,7 +250,7 @@ GOOD_VALUES = [
     ('contract', ('title',), ['x', 'x' * 120]),
     ('contract', ('commit_message',), ['x', 'x' * 100, 'subject' + LF + 'y' * 500]),
     ('report', ('commit',), ['a' * 40]),
-    ('report', ('gates', 0, 'gate'), ['tsc', 'validate_proposal']),
+    ('report', ('gates', 0, 'gate'), ['pytest_model', 'validate_proposal']),
     ('report', ('tests', 0, 'id'), ['T1', 'X12']),
     ('report', ('gates', 0, 'status'), ['fail', 'not_run']),
 ]
@@ -574,55 +581,12 @@ def test_the_agent_definition_names_the_two_commands_and_the_json_contract(cli):
         assert cli(DOCS.get(argv[0], ''), *argv)[0] == 0, command
 
 
-# T14 scope client: the gate tsc and manual tests
+# T14 scope client is retired: no reachable scope, gate or expectation names it
 
-MANUAL = {**TEST, 'expectation': 'manual'}
 SECOND = {**TEST, 'id': 'T2'}
-SRC = 'only frontend/src/, not '
-ALL_MANUAL = 'every test of a client contract is manual'
-ONLY_TSC = 'has exactly the gate tsc'
-MANUAL_NEEDS_CLIENT = 'the expectation manual is valid only when the scope is client'
-TSC_NEEDS_CLIENT = 'the gate tsc is valid only when the scope is client'
-CLIENT_ACCEPTED = [
-    {},
-    {'files_may_touch': ['frontend/src/a.ts']},
-    {'files_may_touch': ['frontend/src/**']},
-    {'files_may_touch': ['frontend/src/a/b.tsx', 'frontend/src/c.css']},
-    {'tests': [MANUAL, {**SECOND, 'expectation': 'manual'}]},
-    {'files_must_not_touch': ['frontend/package.json', 'traianus/**']},
-]
-CLIENT_BREACHES = [
-    ({'files_may_touch': ['frontend/package.json']}, 'files_may_touch', SRC + 'frontend/package.json'),
-    ({'files_may_touch': ['frontend/srcx/a.ts']}, 'files_may_touch', SRC + 'frontend/srcx/a.ts'),
-    ({'files_may_touch': ['frontend/src']}, 'files_may_touch', SRC + 'frontend/src'),
-    ({'files_may_touch': ['traianus/a.py']}, 'files_may_touch', SRC + 'traianus/a.py'),
-    ({'files_may_touch': ['frontend/src/a.ts', 'tools/x.py']}, 'files_may_touch', SRC + 'tools/x.py'),
-    ({'gates': ['tsc', 'mypy']}, 'gates', ONLY_TSC),
-    ({'gates': ['mypy', 'tsc']}, 'gates', ONLY_TSC),
-    ({'gates': ['pytest_full']}, 'gates', ONLY_TSC),
-    ({'gates': ['ruff_ci', 'mypy']}, 'gates', ONLY_TSC),
-    ({'tests': [{**MANUAL, 'expectation': 'red'}]}, 'tests', ALL_MANUAL),
-    ({'tests': [{**MANUAL, 'expectation': 'guard'}]}, 'tests', ALL_MANUAL),
-    ({'tests': [MANUAL, {**SECOND, 'expectation': 'red'}]}, 'tests', ALL_MANUAL),
-]
-NOT_CLIENT_BREACHES = [
-    ({'tests': [MANUAL]}, 'tests', MANUAL_NEEDS_CLIENT),
-    ({'tests': [TEST, {**SECOND, 'expectation': 'manual'}]}, 'tests', MANUAL_NEEDS_CLIENT),
-    ({'gates': ['tsc']}, 'gates', TSC_NEEDS_CLIENT),
-    ({'gates': ['pytest_full', 'tsc']}, 'gates', TSC_NEEDS_CLIENT),
-    ({'gates': ['tsc', 'mypy']}, 'gates', TSC_NEEDS_CLIENT),
-]
 
 
-def client(**fields):
-    doc = copy.deepcopy(CONTRACT)
-    doc.update(scope='client', tests=[MANUAL], files_may_touch=['frontend/src/map.ts', 'frontend/src/**'],
-               gates=['tsc'])
-    doc.update(fields)
-    return doc
-
-
-def not_client(scope, **fields):
+def scoped(scope, **fields):
     return {**copy.deepcopy(CONTRACT), 'scope': scope, **fields}
 
 
@@ -630,66 +594,30 @@ def error_locations(err):
     return [line.split(': ', 1)[0] for line in err.splitlines()]
 
 
-def test_a_client_contract_is_accepted_and_survives_the_model(cli):
-    accept(cli, 'contract', client())
-    assert dc.DelegationContract.model_validate(client()).model_dump() == client()
-
-
-@pytest.mark.parametrize('fields', CLIENT_ACCEPTED, ids=repr)
-def test_a_client_contract_within_its_couplings_is_accepted(cli, fields):
-    accept(cli, 'contract', client(**fields))
-
-
-def test_a_report_may_carry_the_tsc_gate_and_a_manual_test_entry(cli):
-    report = replaced('report', ('gates',), [{'gate': 'tsc', 'status': 'pass', 'detail': 'no type errors'}])
-    report['tests'] = [{'id': 'T1', 'red_reason': 'manual: the executing agent runs it', 'catches': 'a blank map'}]
-    accept(cli, 'report', report)
-
-
-@pytest.mark.parametrize('fields, where, message', CLIENT_BREACHES, ids=[repr(b[0]) for b in CLIENT_BREACHES])
-def test_a_client_contract_outside_its_couplings_is_rejected_at_the_field(cli, fields, where, message):
-    err = reject(cli, 'contract', client(**fields))
-    assert error_locations(err) == [where]
-    assert message in err
-
-
-@pytest.mark.parametrize('path', ['frontend/src/../package.json', '../frontend/src/a.ts', 'frontend/src/a/../../b.ts'],
-                         ids=repr)
-def test_a_client_path_that_climbs_out_is_rejected_by_the_path_rule(cli, path):
-    err = reject(cli, 'contract', client(files_may_touch=[path]))
-    assert error_locations(err) == ['files_may_touch.0']
-
-
-@pytest.mark.parametrize('scope', ['engine', 'tools'])
-@pytest.mark.parametrize('fields, where, message', NOT_CLIENT_BREACHES, ids=[repr(b[0]) for b in NOT_CLIENT_BREACHES])
-def test_manual_and_tsc_are_rejected_with_scope_engine_or_tools(cli, scope, fields, where, message):
-    err = reject(cli, 'contract', not_client(scope, **fields))
-    assert error_locations(err) == [where]
-    assert message in err
-
-
 def test_each_coupling_is_reported_at_its_own_field(cli):
-    broken = client(files_may_touch=['tools/x.py'], gates=['mypy'], tests=[TEST])
-    assert sorted(error_locations(reject(cli, 'contract', broken))) == ['files_may_touch', 'gates', 'tests']
-    mixed = not_client('tools', gates=['tsc'], tests=[MANUAL])
-    assert sorted(error_locations(reject(cli, 'contract', mixed))) == ['gates', 'tests']
+    broken = scoped('tools', gates=['ruff_ci', 'ruff_ci'], tests=[TEST, {**TEST, 'must_catch': 'other'}])
+    assert sorted(error_locations(reject(cli, 'contract', broken))) == ['gates', 'tests']
 
 
 @pytest.mark.parametrize('scope', ['engine', 'tools'])
 def test_an_engine_or_tools_contract_keeps_red_and_guard_tests_and_every_earlier_gate(cli, scope):
     gates = ['pytest_full', 'pytest_model', 'ruff_ci', 'mypy', 'validate_proposal']
-    accept(cli, 'contract', not_client(scope, tests=[TEST, {**SECOND, 'expectation': 'guard'}], gates=gates))
+    accept(cli, 'contract', scoped(scope, tests=[TEST, {**SECOND, 'expectation': 'guard'}], gates=gates))
 
 
-def test_the_agent_definition_states_the_client_scope():
+def test_the_agent_definition_no_longer_states_a_client_scope():
     text = AGENT.read_text(encoding='utf-8')
     _, front, body = text.split('---' + LF, 2)
     description = next(line for line in front.splitlines() if line.startswith('description: '))
     opening = body.split('First action', 1)[0]
     for part in (description, opening):
-        assert 'engine, repository-tooling or client change' in part
-        assert 'frontend/src/**' in part
-    bullet = body[body.index('- **Client scope**'):].split(LF + '- ', 1)[0]
-    for needle in ('`tsc`', 'npm --prefix frontend run typecheck', 'npm install', 'package.json', 'manual',
-                   'browser', 'test-first', 'pytest'):
-        assert needle in bullet
+        assert 'client change' not in part
+        assert 'frontend/src/**' not in part
+    assert '- **Client scope**' not in body
+
+    agents_md = AGENTS_MD.read_text(encoding='utf-8')
+    bullet = next(line for line in agents_md.splitlines() if line.startswith('- the engine implementer'))
+    assert 'frontend/src/**' not in bullet
+    assert 'scope: `client`' not in bullet
+    assert '`tsc`' not in bullet
+    assert '`manual`' not in bullet

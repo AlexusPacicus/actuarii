@@ -24,8 +24,8 @@ Bounds (AGENTS 6.1):
   after its phase 1 PASS except by the executing agent.
 - **Never run the measurement on real data.** Tests use synthetic inputs only; CI has no `.data/`.
   No inline Python (`python3 -c`, `python3 -m`, AGENTS 2.5); pytest is how code runs.
-- **Stop at a commit** with the attribution line the caller gives. The phase 2 review, the first
-  run, the result file and every claim stay with the executing agent.
+- **Stop at a commit.** Add the attribution line the caller gives, if any; add none otherwise. The
+  phase 2 review, the first run, the result file and every claim stay with the executing agent.
 
 Report: the commit hash; tests added and what each can catch; every place code and specification
 disagree or the specification left a choice, with the choice you made; anything not done.
