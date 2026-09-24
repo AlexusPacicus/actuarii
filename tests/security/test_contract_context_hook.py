@@ -492,13 +492,19 @@ def test_hook_follows_the_boundary_hook_under_edit_write():
 
 
 def test_registration_changes_nothing_else_in_settings():
-    """Pinned at the commit that added the hook; a deliberate perimeter change updates it."""
+    """Pinned at the commit that added the hook; a deliberate perimeter change updates it
+    (the python gate wiring, 54c7f8c, is the second such change)."""
     current = settings()
     assert current["permissions"] == PERMISSIONS
-    assert current["hooks"]["PreToolUse"][1:] == [{"matcher": "Read|Grep|Glob", "hooks": [
-        {"type": "command", "command": "python3 tools/hooks/confine_review_reads.py"}]}]
+    assert current["hooks"]["PreToolUse"][1:] == [
+        {"matcher": "Read|Grep|Glob", "hooks": [
+            {"type": "command", "command": "python3 tools/hooks/confine_review_reads.py"}]},
+        {"matcher": "Bash", "hooks": [
+            {"type": "command", "command": "python3 tools/hooks/deny_python_escapes.py"}]},
+    ]
     assert current["enableAllProjectMcpServers"] is True
     assert set(current) == {"permissions", "hooks", "enableAllProjectMcpServers"}
+    assert set(current["hooks"]) == {"PreToolUse", "SessionStart"}
 
 
 # T11: the target is what the filesystem says it is, not how it is spelled
