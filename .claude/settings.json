@@ -53,27 +53,31 @@
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "sh tools/hooks/session_python_gate.sh" }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 tools/hooks/require_boundary_validation.py"
-          },
-          {
-            "type": "command",
-            "command": "python3 tools/hooks/require_contract_context.py"
-          }
+          { "type": "command", "command": "python3 tools/hooks/require_boundary_validation.py" },
+          { "type": "command", "command": "python3 tools/hooks/require_contract_context.py" }
         ]
       },
       {
         "matcher": "Read|Grep|Glob",
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 tools/hooks/confine_review_reads.py"
-          }
+          { "type": "command", "command": "python3 tools/hooks/confine_review_reads.py" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "python3 tools/hooks/deny_python_escapes.py" }
         ]
       }
     ]
