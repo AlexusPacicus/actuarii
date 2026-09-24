@@ -30,8 +30,10 @@ Identify the phase first: a record whose script does not exist yet is reviewed i
      not. A control that cannot fail is a CHANGES item.
    - Every shortcut the record takes (a simplified form standing for a full one) cites an entry
      in `docs/methodology/instrument-audit/derivations.md` whose conditions hold here. A missing entry is blocking.
-   - Gate: all items answered; the record is committed (`git log` shows it). After the third
-     phase-1 round the record freezes: report remaining items for phase 2, verdict stays open.
+   - Gate: all items answered; the record is committed (`git log` shows it). Rounds count per
+     design (a revision that changes an arm's design starts a new count); after the third round
+     on one design, report the remaining non-blocking items for phase 2. A blocking item never
+     passes to phase 2: with one, the verdict is CHANGES and the record stays in phase 1.
 2. **Code** — before the first run.
    - Each record line maps to code, cited `path:line`. Unmapped lines, and code the record does not
      describe, are CHANGES items.
