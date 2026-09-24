@@ -1,0 +1,101 @@
+#!/bin/sh
+# Python gate (AGENTS 2.5): Python runs only as a committed script under tools/ or traianus/.
+#
+# First on the PATH (tools/hooks/session_python_gate.sh), this shim stands in for python, python3 and
+# python3.11 (the two other names are links to this file). It decides by argv alone. Permitted:
+#   --version, -V or -VV as the only argument;
+#   options from the closed set -B -E -I -O -OO -q -s -S -u, each a separate argument, then a script,
+#   then any arguments (the script's own, never inspected). The script must be a regular file and not
+#   a symbolic link, physically under tools/ or traianus/ of THIS repository (the one holding this
+#   file, two directories above it, whatever the cwd), and recorded in HEAD as a regular file.
+# Everything else is denied: -c, -m, -, no arguments, any other option, stdin and device paths.
+# A denial is exit status 126, empty stdout and one stderr line starting "python gate:". A permitted
+# argv replaces this process with the real interpreter: the first file of the invoked name on the
+# PATH outside this directory (none: exit 127), with every PYTHON* variable removed except
+# PYTHONDONTWRITEBYTECODE, PYTHONHASHSEED, PYTHONIOENCODING, PYTHONUNBUFFERED and PYTHONUTF8.
+#
+# Declared limits: the gate binds the identity of the script, not its content, so a committed script
+# edited in the working tree still runs. git and this shell's utilities come from the caller's PATH.
+# A script may start Python by other means; other names and paths of an interpreter bypass the shim
+# (tools/hooks/deny_python_escapes.py denies them at the text level).
+
+set -f
+
+deny() {
+  printf 'python gate: %s; use a committed script under tools/ or traianus/, or ask the user (AGENTS 2.5)\n' "$1" >&2
+  exit 126
+}
+
+physical() { (cd -P -- "$1" 2>/dev/null && pwd -P); }
+
+gitc() (
+  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_COMMON_DIR
+  exec git -C "$ROOT" "$@"
+)
+
+real_interpreter() {
+  IFS=:
+  for entry in $PATH; do
+    [ -n "$entry" ] || continue
+    [ "$(physical "$entry")" != "$SHIMDIR" ] || continue
+    candidate=$entry/$name
+    [ -f "$candidate" ] && [ -x "$candidate" ] || continue
+    [ "$candidate" -ef "$0" ] && continue
+    printf '%s\n' "$candidate"
+    return 0
+  done
+  return 1
+}
+
+launch() {
+  real=$(real_interpreter) || { printf 'python gate: no real %s on PATH\n' "$name" >&2; exit 127; }
+  IFS='
+'
+  for line in $(set); do
+    case $line in PYTHON*=*) variable=${line%%=*} ;; *) continue ;; esac
+    case $variable in
+      PYTHONDONTWRITEBYTECODE|PYTHONHASHSEED|PYTHONIOENCODING|PYTHONUNBUFFERED|PYTHONUTF8|*[!A-Za-z0-9_]*) ;;
+      *) unset "$variable" ;;
+    esac
+  done
+  exec "$real" "$@"
+}
+
+script_of() {
+  while [ $# -gt 0 ]; do
+    case $1 in
+      -B|-E|-I|-O|-OO|-q|-s|-S|-u) shift ;;
+      -) deny "the program would be read from stdin" ;;
+      -*) deny "option not permitted before the script (inline code, modules and interpreter switches)" ;;
+      *) SCRIPT=$1; return ;;
+    esac
+  done
+  deny "no script"
+}
+
+here=${0%/*}
+[ "$here" != "$0" ] || here=.
+SHIMDIR=$(physical "$here") || deny "cannot locate the shim"
+ROOT=$(physical "$SHIMDIR/../..") || deny "cannot locate the repository"
+name=${0##*/}
+
+[ $# -gt 0 ] || deny "no script: an interactive interpreter is not permitted"
+if [ $# -eq 1 ]; then
+  case $1 in --version|-V|-VV) launch "$@" ;; esac
+fi
+
+script_of "$@"
+case $SCRIPT in /dev/*|/proc/*) deny "stdin and device paths are not scripts" ;; esac
+[ ! -L "$SCRIPT" ] || deny "the script is a symbolic link"
+[ -f "$SCRIPT" ] || deny "the script is not a regular file"
+case $SCRIPT in */*) directory=${SCRIPT%/*} ;; *) directory=. ;; esac
+directory=$(physical "${directory:-/}") || deny "cannot locate the script"
+case $directory in
+  "$ROOT/tools"|"$ROOT/tools/"*|"$ROOT/traianus"|"$ROOT/traianus/"*) ;;
+  *) deny "the script is outside tools/ and traianus/ of this repository" ;;
+esac
+
+[ "$(gitc rev-parse --show-toplevel 2>/dev/null)" = "$ROOT" ] || deny "the repository of the shim cannot be read"
+entry=$(gitc ls-tree HEAD -- "${directory#"$ROOT"/}/${SCRIPT##*/}" 2>/dev/null) || deny "HEAD cannot be read"
+case $entry in "100644 blob "*|"100755 blob "*) launch "$@" ;; esac
+deny "the script is not recorded in HEAD as a regular file (committed scripts only)"
