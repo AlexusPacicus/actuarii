@@ -35,6 +35,14 @@
         {"path": "docs/methodology/instrument-audit/contracts.md", "kind": "heading", "value": "0. Data layer, bit level (shared)"},
         {"path": "docs/methodology/instrument-audit/contracts.md", "kind": "heading", "value": "2. R4 — neighbourhood kept in a 5D perspective"}
       ]
+    },
+    {
+      "name": "z",
+      "paths": ["tools/experiments/zoom_*.py", "tests/unit/test_zoom_*.py"],
+      "requires": [
+        {"path": "docs/methodology/instrument-audit/contracts.md", "kind": "heading", "value": "0. Data layer, bit level (shared)"},
+        {"path": "docs/methodology/instrument-audit/contracts.md", "kind": "heading", "value": "4. Z — three-point zoom against a two-point benchmark"}
+      ]
     }
   ]
 }
