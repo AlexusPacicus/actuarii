@@ -409,6 +409,8 @@ def test_every_requirement_of_the_real_registry_resolves(hook):
     ("tests/unit/test_r4_neighbourhood.py", "r4"),
     ("tools/experiments/zoom_three_point.py", "z"),
     ("tests/unit/test_zoom_three_point.py", "z"),
+    ("tools/experiments/tension_gate.py", "tg"),
+    ("tests/unit/test_tension_gate.py", "tg"),
 ])
 def test_the_real_registry_covers_the_vector_path_and_the_measurements(hook, target, name):
     registry = hook.load_registry(hook.REGISTRY_PATH)

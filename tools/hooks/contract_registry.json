@@ -43,6 +43,14 @@
         {"path": "docs/methodology/instrument-audit/contracts.md", "kind": "heading", "value": "0. Data layer, bit level (shared)"},
         {"path": "docs/methodology/instrument-audit/contracts.md", "kind": "heading", "value": "4. Z — three-point zoom against a two-point benchmark"}
       ]
+    },
+    {
+      "name": "tg",
+      "paths": ["tools/experiments/tension_gate*.py", "tests/unit/test_tension_gate*.py"],
+      "requires": [
+        {"path": "docs/methodology/instrument-audit/contracts.md", "kind": "heading", "value": "0. Data layer, bit level (shared)"},
+        {"path": "docs/methodology/instrument-audit/contracts.md", "kind": "heading", "value": "5. TG — tension gate on cross-label relations"}
+      ]
     }
   ]
 }
