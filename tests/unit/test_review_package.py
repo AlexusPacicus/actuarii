@@ -86,6 +86,16 @@ def test_bare_directory_citation_of_denied_entry_is_denied():
     assert "data/spinoza/telemetry" not in selection.unresolved
 
 
+def test_relational_bridges_citation_never_enters_the_package():
+    extra = {
+        RECORD: b"See docs/relational-bridges/RELATIONAL_BRIDGES.md for background.\n",
+        "docs/relational-bridges/RELATIONAL_BRIDGES.md": b"tension gate question\n",
+    }
+    selection = select_files(RECORD, _repo(extra))
+    assert "docs/relational-bridges/RELATIONAL_BRIDGES.md" not in selection.files
+    assert "docs/relational-bridges/RELATIONAL_BRIDGES.md" in selection.denied
+
+
 def test_missing_citations_are_reported_not_invented():
     selection = select_files(RECORD, _repo())
     assert "data/refapp/K6_result.json" in selection.unresolved
@@ -146,9 +156,12 @@ def test_lock_round_trip(tmp_path):
 
 def test_denylist_covers_every_entry_of_definitions_not_allowed():
     text = (REPO_ROOT / "docs/methodology/instrument-audit/definitions.md").read_text()
-    not_allowed = text.split("Not allowed", 1)[1]
-    for entry in ("frontend/POC.md", "docs/adrs/ADR-026-",
-                  "traianus/geometry/spatial_observables.py", "data/spinoza/telemetry/",
-                  "docs/LEDGER.md"):
-        assert entry in not_allowed
-        assert any(entry.startswith(d) or d.startswith(entry) for d in DENIED)
+    not_allowed = text.split("Not allowed", 1)[1].split("```", 1)[0]
+    entries = cited_paths(not_allowed)
+    known = ("frontend/POC.md", "docs/adrs/ADR-026-*",
+             "traianus/geometry/spatial_observables.py", "data/spinoza/telemetry/",
+             "docs/LEDGER.md", "docs/relational-bridges/")
+    for entry in known:
+        assert entry in entries or entry.rstrip("/") in entries
+    for path in entries:
+        assert any(path.startswith(d) or d.startswith(path) for d in DENIED)

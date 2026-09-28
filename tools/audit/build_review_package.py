@@ -40,6 +40,7 @@ DENIED = (
     "traianus/geometry/spatial_observables.py",
     "data/spinoza/telemetry/",
     "docs/LEDGER.md",
+    "docs/relational-bridges/",
     "docs/development/",
     ".data/",
 )
