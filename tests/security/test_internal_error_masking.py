@@ -51,6 +51,17 @@ def test_relations_get_masks_internal_error(client, auth_headers, monkeypatch):
     assert r.json()["detail"] == GENERIC
 
 
+def test_relations_tree_masks_internal_error(client, auth_headers, monkeypatch):
+    def boom():
+        raise RuntimeError(MARKER)
+
+    monkeypatch.setattr(storage, "rebuild_tree_edges", boom)
+    r = client.get("/relations/tree", headers=auth_headers)
+    assert r.status_code == 500
+    assert MARKER not in r.text
+    assert r.json()["detail"] == GENERIC
+
+
 def test_consolidar_masks_internal_error(client, auth_headers, monkeypatch):
     def boom(*a, **k):
         raise RuntimeError(MARKER)
