@@ -12,7 +12,7 @@ import json
 
 import pytest
 
-from tools.governance.validator import validate_proposal
+from tools.boundary_validator.validator import validate_proposal
 
 
 def _doc_proposal(block: str) -> str:

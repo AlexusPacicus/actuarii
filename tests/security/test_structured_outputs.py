@@ -1,7 +1,7 @@
 """
 Structured Outputs contract (SEC-M-14..SEC-M-18).
 
-Normative: tools/governance/schemas/proposals.py (AgentMutationProposal)
+Normative: tools/boundary_validator/schemas/proposals.py (AgentMutationProposal)
 Coverage: SEC-M-14, SEC-M-15, SEC-M-16, SEC-M-17, SEC-M-18
 
 RFC 2119: build_response_format MUST emit a strict json_schema response
@@ -14,9 +14,9 @@ import json
 
 import pytest
 
-from tools.governance.schemas.parser import JSONParsingError, parse_proposal, parse_proposal_json
-from tools.governance.schemas.proposals import AgentMutationProposal, build_response_format
-from tools.governance.validator import validate_proposal
+from tools.boundary_validator.schemas.parser import JSONParsingError, parse_proposal, parse_proposal_json
+from tools.boundary_validator.schemas.proposals import AgentMutationProposal, build_response_format
+from tools.boundary_validator.validator import validate_proposal
 
 
 # ---------------------------------------------------------------------------

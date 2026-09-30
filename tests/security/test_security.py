@@ -6,7 +6,7 @@ import json
 import uuid
 
 import pytest
-from tools.governance.validator import validate_proposal
+from tools.boundary_validator.validator import validate_proposal
 
 def test_zero_trust_ingress_allowlist(client, ingesta, auth_headers):
     """Rechaza payloads cuyo Content-Type no sea text/plain con HTTP 415."""

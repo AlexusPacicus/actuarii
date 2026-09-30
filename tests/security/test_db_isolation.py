@@ -2,7 +2,7 @@
 
 Two independent defects are pinned here:
 
-1. DB isolation: `tools.governance.validator` must resolve the database
+1. DB isolation: `tools.boundary_validator.validator` must resolve the database
    path LAZILY (via `storage.DB_PATH` at call time). An import-time binding
    (`from traianus.storage import DB_PATH`) copies the default value before
    the autouse `isolate_db` fixture can monkeypatch it, redirecting every
@@ -18,7 +18,7 @@ import sqlite3
 
 # Module-level import mirrors the committed security suites: the validator
 # binds DB state at collection time, before any autouse fixture can patch it.
-from tools.governance.validator import validate_proposal
+from tools.boundary_validator.validator import validate_proposal
 
 
 def test_audit_persists_to_isolated_db(isolate_db):
@@ -33,7 +33,7 @@ def test_audit_persists_to_isolated_db(isolate_db):
 
 
 def test_empty_payload_rejected_as_invalid_json():
-    from tools.governance.validator import validate_proposal
+    from tools.boundary_validator.validator import validate_proposal
 
     decision = validate_proposal("{}")
     assert decision["status"] == "QUARANTINED"
@@ -43,7 +43,7 @@ def test_empty_payload_rejected_as_invalid_json():
 def test_unknown_intent_class_cannot_skip_grounding():
     """An Intent_Class outside the canonical enum MUST be rejected even when
     the block carries no forbidden token and the grounding quote is absent."""
-    from tools.governance.validator import validate_proposal
+    from tools.boundary_validator.validator import validate_proposal
 
     decision = validate_proposal(json.dumps({
         "Intent_Class": "HACK",
@@ -58,7 +58,7 @@ def test_unknown_intent_class_cannot_skip_grounding():
 
 def test_extra_fields_rejected_strict_schema():
     """extra="forbid": payloads outside the 5 Radicals are quarantined."""
-    from tools.governance.validator import validate_proposal
+    from tools.boundary_validator.validator import validate_proposal
 
     decision = validate_proposal(json.dumps({
         "Intent_Class": "DOC",
@@ -73,7 +73,7 @@ def test_extra_fields_rejected_strict_schema():
 
 
 def test_non_dict_payload_rejected_as_invalid_json():
-    from tools.governance.validator import validate_proposal
+    from tools.boundary_validator.validator import validate_proposal
 
     decision = validate_proposal("[1, 2, 3]")
     assert decision["status"] == "QUARANTINED"
@@ -83,7 +83,7 @@ def test_non_dict_payload_rejected_as_invalid_json():
 def test_denylist_still_precedes_schema_for_malformed_payloads():
     """Content screening keeps priority: forbidden tokens quarantine even
     when the payload also violates the strict schema."""
-    from tools.governance.validator import validate_proposal
+    from tools.boundary_validator.validator import validate_proposal
 
     decision = validate_proposal(json.dumps({
         "Intent_Class": "NONE",

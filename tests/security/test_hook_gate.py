@@ -9,8 +9,8 @@ import sqlite3
 import pytest
 
 import traianus.storage as storage
-from tools.governance.hook_gate import REPO_ROOT, has_recent_execute_safe, is_governed_path
-from tools.governance.validator import validate_proposal
+from tools.boundary_validator.hook_gate import REPO_ROOT, has_recent_execute_safe, is_governed_path
+from tools.boundary_validator.validator import validate_proposal
 
 
 def _doc_proposal(target_file: str) -> str:
@@ -31,8 +31,8 @@ def _doc_proposal(target_file: str) -> str:
     "tests/security/test_boundary_validator.py",
     "AGENTS.md",
     "docs/specifications/simplex_control_spec.md",
-    "tools/governance/validator.py",
-    "tools/governance/schemas/proposals.py",
+    "tools/boundary_validator/validator.py",
+    "tools/boundary_validator/schemas/proposals.py",
 ])
 def test_is_governed_path_includes(path):
     assert is_governed_path(str(REPO_ROOT / path)) is True
@@ -41,7 +41,7 @@ def test_is_governed_path_includes(path):
 @pytest.mark.parametrize("path", [
     "tools/hooks/require_boundary_validation.py",
     "tools/audit/context_pack.py",
-    "tools/governance_notes.md",
+    "tools/boundary_validator_notes.md",
     "tools/experiments/decompose_polar_latency.py",
     "docs/roadmap/NEXT_RESEARCH.md",
     ".claude/settings.json",
@@ -120,7 +120,7 @@ def test_audit_db_path_matches_validator_regardless_of_cwd(tmp_path, monkeypatch
     """R1/INV-1 (REMEDIATION-01 Delta1): _persist_audit must resolve a relative
     DB_PATH against REPO_ROOT the same way hook_gate._db_path() does -- not
     against whichever directory the process happens to be running in."""
-    from tools.governance import hook_gate
+    from tools.boundary_validator import hook_gate
 
     relative_name = "test_audit_symmetry.db"
     monkeypatch.setattr(storage, "DB_PATH", relative_name)
@@ -163,7 +163,7 @@ def test_malformed_stdin_json_blocks(monkeypatch):
 def test_persist_audit_closes_connection(isolate_db, monkeypatch):
     """R9/INV-10: _persist_audit must close its connection deterministically;
     `with conn` commits but leaves the handle to the garbage collector."""
-    from tools.governance import validator
+    from tools.boundary_validator import validator
 
     opened = []
     real = sqlite3.connect

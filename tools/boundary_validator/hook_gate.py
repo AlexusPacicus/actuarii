@@ -10,7 +10,7 @@ here exits 1, which the harness reads as a broken hook rather than as a
 denial -- the gate would fail OPEN. Hence no import of traianus.storage, and
 hence the database name copied below instead of imported.
 
-Reuses the audit trail tools.governance.validator._persist_audit already
+Reuses the audit trail tools.boundary_validator.validator._persist_audit already
 writes to the audit_log table (traianus/storage/_storage.py) instead of
 introducing a second receipt mechanism.
 """
@@ -27,14 +27,14 @@ DEFAULT_DB_NAME = "traianus.db"
 
 GOVERNED_TOP_LEVEL = {"traianus", "tests"}
 GOVERNED_SINGLE_FILES = {"AGENTS.md"}
-GOVERNED_SUBTREES = {("docs", "specifications"), ("tools", "governance")}
+GOVERNED_SUBTREES = {("docs", "specifications"), ("tools", "boundary_validator")}
 
 
 def is_governed_path(file_path: str) -> bool:
     """True if `file_path` falls under a path governed by AGENTS.md SS5.
 
     Governed: traianus/**, tests/**, AGENTS.md, docs/specifications/**,
-    tools/governance/**. Everything else (the rest of tools/, docs/roadmap/,
+    tools/boundary_validator/**. Everything else (the rest of tools/, docs/roadmap/,
     .claude/, .opencode/, ...) is deliberately left ungoverned.
     """
     try:

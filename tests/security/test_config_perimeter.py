@@ -150,7 +150,7 @@ def test_line_comment_stripper_preserves_urls_inside_strings():
 
 
 MCP_CONFIG = ROOT / ".mcp.json"
-GATE_SERVER = "tools/governance/validator.py"
+GATE_SERVER = "tools/boundary_validator/validator.py"
 
 
 def _launched_server_script():
@@ -163,7 +163,7 @@ def _launched_server_script():
     }
 
 
-def test_security_boundary_validator_server_launches_from_tools_governance():
+def test_security_boundary_validator_server_launches_from_tools_boundary_validator():
     """AGENTS.md 6.2: both harnesses MUST launch the gate from its current path."""
     assert _launched_server_script() == {".mcp.json": GATE_SERVER, "opencode.jsonc": GATE_SERVER}
     assert (ROOT / GATE_SERVER).is_file()
@@ -176,4 +176,6 @@ def test_security_permission_matrices_allow_the_gate_where_it_lives(matrix):
 
 @pytest.mark.parametrize("config", [MCP_CONFIG, OPENCODE, CLAUDE], ids=lambda p: p.name)
 def test_security_no_config_names_the_former_gate_location(config):
-    assert "traianus/" + "security" not in config.read_text(encoding="utf-8")
+    text = config.read_text(encoding="utf-8")
+    assert "traianus/" + "security" not in text
+    assert "tools/" + "governance" not in text

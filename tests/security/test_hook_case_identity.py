@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pytest
 
-from tools.governance.hook_gate import REPO_ROOT
-from tools.governance.validator import validate_proposal
+from tools.boundary_validator.hook_gate import REPO_ROOT
+from tools.boundary_validator.validator import validate_proposal
 from tools.hooks import require_boundary_validation, require_contract_context
 
 HOOKS = pytest.mark.parametrize(
@@ -240,7 +240,7 @@ GOVERNED = [
     ("AGENTS.md", f"{REPO_ROOT}/agents.md"),
     ("traianus/app.py", f"{REPO_ROOT}/TRAIANUS/app.py"),
     ("docs/specifications/x.md", f"{REPO_ROOT}/Docs/SPECIFICATIONS/x.md"),
-    ("tools/governance/hook_gate.py", f"{REPO_ROOT}/Tools/Governance/Hook_Gate.py"),
+    ("tools/boundary_validator/hook_gate.py", f"{REPO_ROOT}/Tools/Boundary_Validator/Hook_Gate.py"),
     ("tests/x.py", f"{SHOUT}/tests/x.py"),
     ("tests/x.py", f"{SWAP}/Tests/x.py"),
 ]

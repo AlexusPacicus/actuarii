@@ -15,9 +15,9 @@ import json
 import logging
 import re
 
-from tools.governance.schemas.proposals import AgentMutationProposal
+from tools.boundary_validator.schemas.proposals import AgentMutationProposal
 
-logger = logging.getLogger("tools.governance.schemas.parser")
+logger = logging.getLogger("tools.boundary_validator.schemas.parser")
 
 
 class JSONParsingError(ValueError):

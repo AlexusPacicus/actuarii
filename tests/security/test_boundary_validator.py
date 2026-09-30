@@ -2,14 +2,14 @@
 This file verifies MUST/MUST NOT requirements from the SPEC (RFC 2119).
 BoundaryValidator Zero-Trust gate (SEC-M-01..06): validate_proposal and its
 MCP server over stdio JSON-RPC.
-Normative: AGENTS.md §5 (5 Radicals), tools/governance/schemas/proposals.py
+Normative: AGENTS.md §5 (5 Radicals), tools/boundary_validator/schemas/proposals.py
 Coverage: SEC-M-01, SEC-M-02, SEC-M-03, SEC-M-04, SEC-M-05, SEC-M-06, SEC-M-07"""
 import json
 import subprocess
 import sys
 from pathlib import Path
 
-from tools.governance.validator import validate_proposal
+from tools.boundary_validator.validator import validate_proposal
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -108,7 +108,7 @@ def test_security_SEC_M_06_mcp_stdio_jsonrpc(tmp_path, monkeypatch):
     # regardless of cwd, so chdir alone no longer isolates it; the row this
     # call writes to the real repo-root DB is deleted by case_id below.
     monkeypatch.chdir(tmp_path)
-    script = str(ROOT / "tools" / "governance" / "validator.py")
+    script = str(ROOT / "tools" / "boundary_validator" / "validator.py")
     messages = [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize",
          "params": {"clientInfo": {"name": "test", "version": "0"}}},
