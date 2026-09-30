@@ -21,9 +21,9 @@ from pathlib import Path
 
 import pytest
 
+from tools.boundary_validator.hook_gate import REPO_ROOT
+from tools.boundary_validator.validator import validate_proposal
 from tools.hooks import require_boundary_validation, require_contract_context
-from traianus.security.hook_gate import REPO_ROOT
-from traianus.security.validator import validate_proposal
 
 HOOKS = pytest.mark.parametrize(
     "hook", [require_boundary_validation, require_contract_context], ids=["boundary", "contract"])
@@ -230,7 +230,7 @@ def test_the_boundary_hook_imports_only_the_standard_library_and_the_gate_at_any
             roots |= {alias.name.split(".")[0] for alias in node.names}
         elif isinstance(node, ast.ImportFrom):
             roots.add("." * node.level + (node.module or "").split(".")[0])
-    assert roots <= set(sys.stdlib_module_names) | {"traianus"}, roots
+    assert roots <= set(sys.stdlib_module_names) | {"tools"}, roots
 
 
 # T2: the boundary hook, end to end
@@ -240,13 +240,14 @@ GOVERNED = [
     ("AGENTS.md", f"{REPO_ROOT}/agents.md"),
     ("traianus/app.py", f"{REPO_ROOT}/TRAIANUS/app.py"),
     ("docs/specifications/x.md", f"{REPO_ROOT}/Docs/SPECIFICATIONS/x.md"),
-    ("traianus/security/hook_gate.py", f"{REPO_ROOT}/Traianus/Security/Hook_Gate.py"),
+    ("tools/boundary_validator/hook_gate.py", f"{REPO_ROOT}/Tools/Boundary_Validator/Hook_Gate.py"),
     ("tests/x.py", f"{SHOUT}/tests/x.py"),
     ("tests/x.py", f"{SWAP}/Tests/x.py"),
 ]
 UNGOVERNED = [
     f"{REPO_ROOT}/tools/x.py",
     f"{REPO_ROOT}/Tools/x.py",
+    f"{REPO_ROOT}/Tools/Audit/Context_Pack.py",
     f"{REPO_ROOT}/DOCS/roadmap/x.md",
     f"{REPO_ROOT}/Docs/Roadmap/NEXT_RESEARCH.md",
     f"{REPO_ROOT}/.CLAUDE/settings.json",

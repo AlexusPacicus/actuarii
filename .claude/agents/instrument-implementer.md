@@ -15,7 +15,7 @@ Bounds (AGENTS 6.1):
 - **One branch**, named by the caller. Never switch, create or push branches.
 - **Test first** (`tdd-cycle` skill): the tests the record lists, red for the stated reason, then
   the minimal script, then green; `pytest tests/` in full before committing (AGENTS 1.4).
-- **Gate every governed file** (`traianus/**`, `tests/**`, `AGENTS.md`, `docs/specifications/**`)
+- **Gate every governed file** (`traianus/**`, `tests/**`, `AGENTS.md`, `docs/specifications/**`, `tools/boundary_validator/**`)
   through `validate_proposal` before its Edit or Write (AGENTS 5, 6.2). Pass the path in the
   tool's separate `target_file` argument, not only inside the proposal JSON: the receipt is
   logged against that argument, and without it the hook denies the edit. The receipt lasts 900 s.

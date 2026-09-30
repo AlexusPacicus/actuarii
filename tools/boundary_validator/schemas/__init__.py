@@ -2,9 +2,9 @@
 Pydantic Schemas for Neuro-Symbolic Governance and State Tracking.
 """
 
-from traianus.security.schemas.docstate import DocState
-from traianus.security.schemas.parser import JSONParsingError, parse_proposal, parse_proposal_json
-from traianus.security.schemas.proposals import (
+from tools.boundary_validator.schemas.docstate import DocState
+from tools.boundary_validator.schemas.parser import JSONParsingError, parse_proposal, parse_proposal_json
+from tools.boundary_validator.schemas.proposals import (
     AgentMutationProposal,
     IntentClass,
     SafetyAbort,

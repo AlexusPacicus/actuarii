@@ -35,7 +35,7 @@ Bounds (AGENTS 6.1):
   `npm run typecheck` and `npm run build`, and no pytest runs because nothing in Traianus changes.
   `validate_proposal` does not apply (no governed Traianus path). Add no dependency and leave
   `package-lock.json` unchanged. The client files you read go in `ranges_read_beyond_context`.
-- **Gate every governed file** (`traianus/**`, `tests/**`, `AGENTS.md`, `docs/specifications/**`)
+- **Gate every governed file** (`traianus/**`, `tests/**`, `AGENTS.md`, `docs/specifications/**`, `tools/boundary_validator/**`)
   through `validate_proposal` before its Edit or Write (AGENTS 5, 6.2). Pass the path in the
   tool's separate `target_file` argument, not only inside the proposal JSON: the receipt is
   logged against that argument, and without it the hook denies the edit. The receipt lasts 900 s.

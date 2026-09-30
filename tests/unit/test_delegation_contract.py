@@ -19,7 +19,7 @@ from pydantic import BaseModel, ValidationError
 
 from tools.audit import context_pack
 from tools.audit import delegation_contract as dc
-from traianus.security.schemas.proposals import build_response_format
+from tools.boundary_validator.schemas.proposals import build_response_format
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOL = REPO_ROOT / 'tools' / 'audit' / 'delegation_contract.py'

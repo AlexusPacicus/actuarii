@@ -8,7 +8,7 @@
       "Bash(python3 tools/audit/*)",
       "Bash(python3 tools/experiments/*)",
       "Bash(python3 tools/hooks/*)",
-      "Bash(python3 traianus/security/validator.py)",
+      "Bash(python3 tools/boundary_validator/validator.py)",
       "Bash(git status)",
       "Bash(git status *)",
       "Bash(git diff)",
