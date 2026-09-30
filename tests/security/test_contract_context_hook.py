@@ -469,7 +469,7 @@ PERMISSIONS = {
     "allow": [
         "Bash(python3 tools/*)", "Bash(python3 tools/*.py)", "Bash(python3 tools/mcp/*)",
         "Bash(python3 tools/audit/*)", "Bash(python3 tools/experiments/*)",
-        "Bash(python3 tools/hooks/*)", "Bash(python3 traianus/security/validator.py)",
+        "Bash(python3 tools/hooks/*)", "Bash(python3 tools/governance/validator.py)",
         "Bash(git status)", "Bash(git status *)", "Bash(git diff)", "Bash(git diff *)",
         "Bash(git log *)", "Bash(git show *)", "Bash(git rev-parse *)", "Bash(git grep *)",
         "Bash(git blame *)", "Bash(git ls-files *)",

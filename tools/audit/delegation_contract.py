@@ -2,7 +2,7 @@
 
 The executing agent hands a subagent a DelegationContract instead of a free-text prompt; the subagent
 answers with a DelegationReport. "Strict" has the meaning it has in `build_response_format`
-(traianus/security/schemas/proposals.py): every object forbids extra keys, every property is required,
+(tools/governance/schemas/proposals.py): every object forbids extra keys, every property is required,
 no field has a default, and types are not coerced.
 
     python3 tools/audit/delegation_contract.py contract [--emit-context] < contract.json

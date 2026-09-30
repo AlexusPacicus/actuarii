@@ -147,3 +147,33 @@ def test_line_comment_stripper_preserves_urls_inside_strings():
         "$schema": "https://opencode.ai/config.json",
         "a": 1,
     }
+
+
+MCP_CONFIG = ROOT / ".mcp.json"
+GATE_SERVER = "tools/governance/validator.py"
+
+
+def _launched_server_script():
+    """Script each harness launches as the boundary-validator MCP server."""
+    mcp = json.loads(MCP_CONFIG.read_text(encoding="utf-8"))
+    opencode = json.loads(_strip_line_comments(OPENCODE.read_text(encoding="utf-8")))
+    return {
+        ".mcp.json": mcp["mcpServers"]["boundary-validator"]["args"][-1],
+        "opencode.jsonc": opencode["mcp"]["boundary-validator"]["command"][-1],
+    }
+
+
+def test_security_boundary_validator_server_launches_from_tools_governance():
+    """AGENTS.md 6.2: both harnesses MUST launch the gate from its current path."""
+    assert _launched_server_script() == {".mcp.json": GATE_SERVER, "opencode.jsonc": GATE_SERVER}
+    assert (ROOT / GATE_SERVER).is_file()
+
+
+def test_security_permission_matrices_allow_the_gate_where_it_lives(matrix):
+    name, rules = matrix
+    assert rules.get(f"python3 {GATE_SERVER}") == ALLOW, f"{name}: the gate script is not allowed"
+
+
+@pytest.mark.parametrize("config", [MCP_CONFIG, OPENCODE, CLAUDE], ids=lambda p: p.name)
+def test_security_no_config_names_the_former_gate_location(config):
+    assert "traianus/" + "security" not in config.read_text(encoding="utf-8")

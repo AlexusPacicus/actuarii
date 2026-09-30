@@ -4,7 +4,7 @@ Startup surface of the PreToolUse gate (AGENTS.md 6.2): the harness spawns
 the hook in an ambient environment we do not control -- PATH, cwd and
 installed packages all differ from a developer shell. An interpreter without
 the substrate's third-party dependencies MUST still reach the gate logic, so
-`traianus/security/hook_gate.py` MUST import nothing outside the standard
+`tools/governance/hook_gate.py` MUST import nothing outside the standard
 library, and the hook script MUST turn an unusable gate into exit code 2
 (block) instead of an unhandled traceback -- exit 1 reads to the harness as a
 failed hook, not as a denial, and the edit goes through.
@@ -23,15 +23,15 @@ from pathlib import Path
 
 import pytest
 
+from tools.governance import hook_gate
 from traianus import storage
-from traianus.security import hook_gate
 
 ROOT = Path(__file__).resolve().parents[2]
-GATE = ROOT / "traianus" / "security" / "hook_gate.py"
+GATE = ROOT / "tools" / "governance" / "hook_gate.py"
 HOOK = ROOT / "tools" / "hooks" / "require_boundary_validation.py"
 STORAGE_INIT = ROOT / "traianus" / "storage" / "__init__.py"
 
-GATE_MODULE = "traianus.security.hook_gate"
+GATE_MODULE = "tools.governance.hook_gate"
 
 
 def _import_time_statements(body):
@@ -98,7 +98,7 @@ def test_security_gate_imports_only_the_standard_library():
 
 
 def test_security_hook_script_imports_only_stdlib_and_the_gate():
-    foreign = _imported_roots(HOOK) - set(sys.stdlib_module_names) - {"traianus"}
+    foreign = _imported_roots(HOOK) - set(sys.stdlib_module_names) - {"tools"}
     assert not foreign, f"the hook script imports {sorted(foreign)}"
 
 

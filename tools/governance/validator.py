@@ -16,10 +16,10 @@ import logging
 
 from pydantic import ValidationError
 
-from traianus.security.schemas.parser import JSONParsingError, parse_proposal_json
-from traianus.security.schemas.proposals import AgentMutationProposal
+from tools.governance.schemas.parser import JSONParsingError, parse_proposal_json
+from tools.governance.schemas.proposals import AgentMutationProposal
 
-logger = logging.getLogger("traianus.security.validator")
+logger = logging.getLogger("tools.governance.validator")
 
 # Zero-Trust capability matrix (AGENTS.md §2.1): each clause binds a banned
 # host primitive to its physical effect and to the pattern that identifies it.
