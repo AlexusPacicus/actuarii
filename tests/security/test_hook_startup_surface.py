@@ -24,12 +24,10 @@ from pathlib import Path
 import pytest
 
 from tools.boundary_validator import hook_gate
-from traianus import storage
 
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "tools" / "boundary_validator" / "hook_gate.py"
 HOOK = ROOT / "tools" / "hooks" / "require_boundary_validation.py"
-STORAGE_INIT = ROOT / "traianus" / "storage" / "__init__.py"
 
 GATE_MODULE = "tools.boundary_validator.hook_gate"
 
@@ -58,17 +56,6 @@ def _imported_roots(path: Path) -> set:
         elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
             roots.add(node.module.split(".")[0])
     return roots
-
-
-def _declared_db_name() -> str:
-    tree = ast.parse(STORAGE_INIT.read_text(encoding="utf-8"))
-    for node in tree.body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "DB_PATH"
-            for target in node.targets
-        ):
-            return ast.literal_eval(node.value)
-    raise AssertionError("traianus/storage/__init__.py declares no DB_PATH")
 
 
 def _handler_exits_with_two(node: ast.Try) -> bool:
@@ -122,31 +109,18 @@ def test_security_hook_script_turns_an_unusable_gate_into_a_block():
     )
 
 
-def test_security_gate_default_db_name_matches_the_substrate():
-    """The gate cannot import the storage package, so it carries its own copy
-    of the database name; the copy MUST agree with the declaration."""
-    assert hook_gate.DEFAULT_DB_NAME == _declared_db_name()
-
-
 def test_security_gate_db_path_is_absolute():
     """A relative path would make the decision depend on the cwd the harness
     happens to spawn the hook with."""
+    assert hook_gate.DEFAULT_AUDIT_DB.is_absolute()
     assert hook_gate._db_path().is_absolute()
-
-
-def test_security_gate_follows_the_active_substrate_db_path(tmp_path, monkeypatch):
-    """When the substrate is already imported (tests, tools), the gate MUST
-    read the same database the validator writes to."""
-    active = tmp_path / "active.db"
-    monkeypatch.setattr(storage, "DB_PATH", str(active))
-    assert hook_gate._db_path() == active
 
 
 def test_security_gate_never_creates_a_database(tmp_path, monkeypatch):
     """A missing audit trail is an unverifiable one: the gate MUST fail so the
     caller blocks, and MUST NOT leave an empty database behind."""
     missing = tmp_path / "absent.db"
-    monkeypatch.setattr(storage, "DB_PATH", str(missing))
+    monkeypatch.setattr(hook_gate, "AUDIT_DB_PATH", missing)
     with pytest.raises(sqlite3.Error):
         hook_gate.has_recent_execute_safe(str(ROOT / "AGENTS.md"))
     assert not missing.exists()

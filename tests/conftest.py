@@ -30,6 +30,7 @@ import traianus.bootstrap as bootstrap  # noqa: E402
 import traianus.storage as storage  # noqa: E402
 from helpers.db_factory import create_test_db  # noqa: E402
 from helpers.fake_encoder import FakeSentenceTransformer  # noqa: E402
+from tools.boundary_validator import hook_gate  # noqa: E402
 
 AUTH_TOKEN = "test-operator-token"
 
@@ -57,6 +58,18 @@ def isolate_db(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, "DB_PATH", test_db_path)
     create_test_db(test_db_path, seed="onehot")
     return test_db_path
+
+
+@pytest.fixture(autouse=True)
+def isolate_audit_db(tmp_path, monkeypatch):
+    """
+    The boundary validator's audit database per test under tmp_path: its
+    location is a hook_gate attribute, so no test touches the real
+    .data/boundary_validator_audit.db nor the engine database.
+    """
+    audit_db = tmp_path / "boundary_validator_audit.db"
+    monkeypatch.setattr(hook_gate, "AUDIT_DB_PATH", audit_db)
+    return audit_db
 
 
 @pytest.fixture

@@ -668,9 +668,9 @@ def test_the_agent_definition_states_the_client_scope():
     assert 'frontend/src/**' not in text
 
 
-def test_agents_6_1_states_the_client_scope_and_the_title_is_v1_12_0():
+def test_agents_6_1_states_the_client_scope_and_the_title_is_v1_13_0():
     agents_md = AGENTS_MD.read_text(encoding='utf-8')
-    assert agents_md.splitlines()[0].endswith('(v1.12.0)')
+    assert agents_md.splitlines()[0].endswith('(v1.13.0)')
     bullet = next(line for line in agents_md.splitlines() if line.startswith('- the engine implementer'))
     for needle in ('`scope: client`', '`../refapp-01`', '`node --test`', '`npm test`', '`npm run typecheck`',
                    '`npm run build`'):
