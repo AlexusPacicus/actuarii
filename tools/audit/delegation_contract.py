@@ -31,6 +31,7 @@ from pydantic import (
     ConfigDict,
     Field,
     ValidationError,
+    ValidationInfo,
     field_validator,
     model_validator,
 )
@@ -41,7 +42,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from tools.audit.context_pack import SpecError, parse_spec
 
-Gate = Literal["pytest_full", "pytest_model", "ruff_ci", "mypy", "validate_proposal"]
+NPM_GATES = ["npm_test", "npm_typecheck", "npm_build"]
+Gate = Literal["pytest_full", "pytest_model", "ruff_ci", "mypy", "validate_proposal", "npm_test", "npm_typecheck", "npm_build"]
 
 
 def _duplicates(what: str, keys: list[str]) -> None:
@@ -141,7 +143,7 @@ class DelegationContract(_Strict):
     branch: Annotated[str, Field(pattern=r"^[a-z0-9][a-z0-9._/-]{2,100}$"), AfterValidator(_branch)]
     base_commit: Annotated[str, Field(pattern=r"^[0-9a-f]{7,40}$")]
     attribution: Annotated[str, Field(pattern=r"^Co-Authored-By: .+ <.+@.+>$")] | None
-    scope: Literal["engine", "tools"]
+    scope: Literal["engine", "tools", "client"]
     context: ContextSpec
     problem: NonEmpty
     decisions: list[str]
@@ -163,6 +165,16 @@ class DelegationContract(_Strict):
     @classmethod
     def _unique_gates(cls, gates: list[str]) -> list[str]:
         _duplicates("gates", gates)
+        return gates
+
+    @field_validator("gates")
+    @classmethod
+    def _npm_gates_are_the_client_gates(cls, gates: list[str], info: ValidationInfo) -> list[str]:
+        scope = info.data.get("scope")
+        if scope == "client" and sorted(gates) != sorted(NPM_GATES):
+            raise ValueError(f"a client contract has exactly the gates {', '.join(NPM_GATES)}")
+        if scope is not None and scope != "client" and set(gates) & set(NPM_GATES):
+            raise ValueError("the npm gates are valid only when the scope is client")
         return gates
 
     @model_validator(mode="after")
