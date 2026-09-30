@@ -225,7 +225,7 @@ BAD_VALUES = [
     ('contract', ('tests', 0, 'id'), ['', 'T', 't1', 'T100', 'X1', 'B1']),
     ('contract', ('schema_version',), ['', 'delegation/2', 'delegation-report/1']),
     ('contract', ('report_schema',), ['', 'delegation-report/2', 'delegation/1']),
-    ('contract', ('scope',), ['', 'docs', 'Tools', 'Client', 'client', 'client ']),
+    ('contract', ('scope',), ['', 'docs', 'Tools', 'Client', 'client ']),
     ('contract', ('tests', 0, 'expectation'), ['', 'green', 'RED', 'Manual', 'manual', 'manual ']),
     ('contract', ('gates', 0), ['', 'ruff', 'pytest', 'MYPY', 'TSC', 'tsc', 'tsc ']),
     ('contract', ('title',), ['', 'x' * 121]),
@@ -581,13 +581,19 @@ def test_the_agent_definition_names_the_two_commands_and_the_json_contract(cli):
         assert cli(DOCS.get(argv[0], ''), *argv)[0] == 0, command
 
 
-# T14 scope client is retired: no reachable scope, gate or expectation names it
+# T14 scope client: the RefApp-01 client in ../refapp-01, gated by npm test, typecheck and build
 
 SECOND = {**TEST, 'id': 'T2'}
+NPM = ['npm_test', 'npm_typecheck', 'npm_build']
+PYTHON_GATES = ['pytest_full', 'pytest_model', 'ruff_ci', 'mypy', 'validate_proposal']
 
 
 def scoped(scope, **fields):
     return {**copy.deepcopy(CONTRACT), 'scope': scope, **fields}
+
+
+def client(**fields):
+    return scoped('client', **{'gates': list(NPM), **fields})
 
 
 def error_locations(err):
@@ -605,19 +611,68 @@ def test_an_engine_or_tools_contract_keeps_red_and_guard_tests_and_every_earlier
     accept(cli, 'contract', scoped(scope, tests=[TEST, {**SECOND, 'expectation': 'guard'}], gates=gates))
 
 
-def test_the_agent_definition_no_longer_states_a_client_scope():
+@pytest.mark.parametrize('gates', [NPM, NPM[::-1], [NPM[1], NPM[2], NPM[0]]], ids=lambda gates: '+'.join(gates))
+@pytest.mark.parametrize('tests', [[TEST], [TEST, {**SECOND, 'expectation': 'guard'}]], ids=['red', 'red+guard'])
+def test_a_client_contract_with_the_three_npm_gates_in_any_order_is_accepted(cli, gates, tests):
+    accept(cli, 'contract', client(gates=gates, tests=tests))
+
+
+WRONG_CLIENT_GATES = (
+    [[gate for gate in NPM if gate != missing] for missing in NPM]
+    + [NPM + [extra] for extra in PYTHON_GATES]
+    + [PYTHON_GATES[:1]]
+)
+
+
+@pytest.mark.parametrize('gates', WRONG_CLIENT_GATES, ids=lambda gates: '+'.join(gates))
+def test_a_client_contract_whose_gates_are_not_the_three_npm_gates_is_rejected_at_gates(cli, gates):
+    assert error_locations(reject(cli, 'contract', client(gates=gates))) == ['gates']
+
+
+@pytest.mark.parametrize('scope', ['engine', 'tools'])
+@pytest.mark.parametrize('npm', NPM)
+@pytest.mark.parametrize('base', [['pytest_full', 'ruff_ci'], []], ids=['with-python-gates', 'alone'])
+def test_an_engine_or_tools_contract_with_an_npm_gate_is_rejected_at_gates(cli, scope, npm, base):
+    err = reject(cli, 'contract', scoped(scope, gates=base + [npm]))
+    assert error_locations(err) == ['gates']
+    assert 'npm' in err
+
+
+def test_a_report_may_carry_the_three_npm_gates(cli):
+    gates = [{'gate': gate, 'status': 'pass', 'detail': 'ok'} for gate in NPM]
+    accept(cli, 'report', replaced('report', ('gates',), gates))
+
+
+def markdown_bullet(text, start):
+    lines = text.splitlines()
+    first = next(index for index, line in enumerate(lines) if line.startswith(start))
+    end = next((index for index in range(first + 1, len(lines)) if lines[index].startswith('- ') or not lines[index]),
+               len(lines))
+    return ' '.join(lines[first:end])
+
+
+def test_the_agent_definition_states_the_client_scope():
     text = AGENT.read_text(encoding='utf-8')
     _, front, body = text.split('---' + LF, 2)
     description = next(line for line in front.splitlines() if line.startswith('description: '))
     opening = body.split('First action', 1)[0]
     for part in (description, opening):
-        assert 'client change' not in part
-        assert 'frontend/src/**' not in part
-    assert '- **Client scope**' not in body
+        assert 'client change' in part
+    assert 'refapp-01' in description
+    assert '../refapp-01' in opening
+    assert '- **Client scope**' in body
+    bullet = markdown_bullet(body, '- **Client scope**')
+    for needle in ('`scope: client`', '`npm test`', '`npm run typecheck`', '`npm run build`', '`node --test`',
+                   '`git -C ../refapp-01`', 'never `cd`', 'ranges_read_beyond_context'):
+        assert needle in bullet, needle
+    assert 'frontend/src/**' not in text
 
+
+def test_agents_6_1_states_the_client_scope_and_the_title_is_v1_12_0():
     agents_md = AGENTS_MD.read_text(encoding='utf-8')
+    assert agents_md.splitlines()[0].endswith('(v1.12.0)')
     bullet = next(line for line in agents_md.splitlines() if line.startswith('- the engine implementer'))
+    for needle in ('`scope: client`', '`../refapp-01`', '`node --test`', '`npm test`', '`npm run typecheck`',
+                   '`npm run build`'):
+        assert needle in bullet, needle
     assert 'frontend/src/**' not in bullet
-    assert 'scope: `client`' not in bullet
-    assert '`tsc`' not in bullet
-    assert '`manual`' not in bullet
