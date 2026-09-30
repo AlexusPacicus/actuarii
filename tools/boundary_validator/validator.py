@@ -10,12 +10,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from traianus import storage
-from traianus.storage import AUDIT_LOG_DDL
 import logging
 
 from pydantic import ValidationError
 
+from tools.boundary_validator import hook_gate
 from tools.boundary_validator.schemas.parser import JSONParsingError, parse_proposal_json
 from tools.boundary_validator.schemas.proposals import AgentMutationProposal
 
@@ -54,12 +53,23 @@ FORBIDDEN_MATRIX = tuple(
 )
 
 
+AUDIT_LOG_DDL = """
+CREATE TABLE IF NOT EXISTS audit_log (
+    case_id TEXT PRIMARY KEY,
+    timestamp TEXT DEFAULT (datetime('now')),
+    intent_class TEXT,
+    target_file TEXT,
+    decision TEXT NOT NULL,
+    safety_abort TEXT
+)
+"""
+
+
 def _persist_audit(case_id: str, decision: str, intent_class: str = "",
                    target_file: str = "", safety_abort: str = "") -> None:
     try:
-        db_path = Path(storage.DB_PATH)
-        if not db_path.is_absolute():
-            db_path = REPO_ROOT / db_path
+        db_path = hook_gate._db_path()
+        db_path.parent.mkdir(parents=True, exist_ok=True)
         with closing(sqlite3.connect(db_path)) as conn, conn:
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute(AUDIT_LOG_DDL)

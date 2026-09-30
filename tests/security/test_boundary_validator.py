@@ -4,11 +4,12 @@ BoundaryValidator Zero-Trust gate (SEC-M-01..06): validate_proposal and its
 MCP server over stdio JSON-RPC.
 Normative: AGENTS.md §5 (5 Radicals), tools/boundary_validator/schemas/proposals.py
 Coverage: SEC-M-01, SEC-M-02, SEC-M-03, SEC-M-04, SEC-M-05, SEC-M-06, SEC-M-07"""
+import io
 import json
-import subprocess
 import sys
 from pathlib import Path
 
+from tools.boundary_validator import validator
 from tools.boundary_validator.validator import validate_proposal
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -103,12 +104,10 @@ def test_security_SEC_M_07_unreadable_target_file_is_grounding_failure():
     assert decision["final_decision"] == "ABORTED_GROUNDING_FAILED"
 
 
-def test_security_SEC_M_06_mcp_stdio_jsonrpc(tmp_path, monkeypatch):
-    # R1/INV-1: the MCP server now anchors its audit DB to REPO_ROOT
-    # regardless of cwd, so chdir alone no longer isolates it; the row this
-    # call writes to the real repo-root DB is deleted by case_id below.
-    monkeypatch.chdir(tmp_path)
-    script = str(ROOT / "tools" / "boundary_validator" / "validator.py")
+def test_security_SEC_M_06_mcp_stdio_jsonrpc(monkeypatch, capsys):
+    # The server loop runs in-process over replaced stdin/stdout, so the
+    # audit database is the test's own (isolate_audit_db) and the real one
+    # is never written.
     messages = [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize",
          "params": {"clientInfo": {"name": "test", "version": "0"}}},
@@ -118,27 +117,15 @@ def test_security_SEC_M_06_mcp_stdio_jsonrpc(tmp_path, monkeypatch):
                     "arguments": {"proposal": _grounded_proposal(),
                                   "target_file": str(ROOT / "traianus" / "app.py")}}},
     ]
-    payload = "".join(json.dumps(m) + "\n" for m in messages)
-    proc = subprocess.run(
-        [sys.executable, script],
-        input=payload,
-        capture_output=True,
-        text=True,
-        timeout=15,
-    )
+    monkeypatch.setattr(sys, "stdin", io.StringIO("".join(json.dumps(m) + "\n" for m in messages)))
+    validator.main()
     # The stdout channel is not corrupted: one valid JSON-RPC response per line.
-    lines = [l for l in proc.stdout.splitlines() if l.strip()]
+    lines = [l for l in capsys.readouterr().out.splitlines() if l.strip()]
     assert len(lines) == 3, f"expected 3 responses, got {len(lines)}"
-    case_id = None
     for line, expected_id in zip(lines, (1, 2, 3)):
         resp = json.loads(line)
         assert resp["jsonrpc"] == "2.0"
         assert resp["id"] == expected_id
-        if expected_id == 3:
-            case_id = json.loads(resp["result"]["content"][0]["text"])["case_id"]
-    import sqlite3
-    with sqlite3.connect(ROOT / "traianus.db") as conn:
-        conn.execute("DELETE FROM audit_log WHERE case_id = ?", (case_id,))
         assert "result" in resp and "error" not in resp
     init_result = json.loads(lines[0])["result"]
     assert init_result["serverInfo"]["name"] == "boundary-validator"

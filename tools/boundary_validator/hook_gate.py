@@ -7,23 +7,23 @@ Standard library only, deliberately: the harness spawns the hook with an
 ambient PATH and cwd, so the interpreter running this may be a bare system
 Python with none of the substrate's dependencies installed. An import error
 here exits 1, which the harness reads as a broken hook rather than as a
-denial -- the gate would fail OPEN. Hence no import of traianus.storage, and
-hence the database name copied below instead of imported.
+denial -- the gate would fail OPEN. Hence no import of traianus.
 
-Reuses the audit trail tools.boundary_validator.validator._persist_audit already
-writes to the audit_log table (traianus/storage/_storage.py) instead of
-introducing a second receipt mechanism.
+The gate owns the location of the audit trail: AUDIT_DB_PATH, read at call
+time, and tools.boundary_validator.validator._persist_audit writes the
+audit_log table (its DDL lives there) to the path _db_path() returns, so the
+writer and the reader cannot diverge. The location is a module attribute,
+never an environment variable or a config file: the hook would trust a path
+an agent can set. Tests repoint the attribute in process.
 """
 import sqlite3
-import sys
 from contextlib import closing
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
-# Copy of traianus.storage.DB_PATH, not an import; see the module docstring.
-# tests/security/test_hook_startup_surface.py keeps the copy honest.
-DEFAULT_DB_NAME = "traianus.db"
+DEFAULT_AUDIT_DB = REPO_ROOT / ".data" / "boundary_validator_audit.db"
+AUDIT_DB_PATH: Path | str = DEFAULT_AUDIT_DB
 
 GOVERNED_TOP_LEVEL = {"traianus", "tests"}
 GOVERNED_SINGLE_FILES = {"AGENTS.md"}
@@ -58,15 +58,10 @@ def is_governed_path(file_path: str) -> bool:
 def _db_path() -> Path:
     """Absolute path of the audit database.
 
-    When the substrate is already imported in this process (tests, tools) its
-    DB_PATH wins, so a repointed database is honoured -- the module is read if
-    present, never imported. A relative path is anchored at the repository
-    root: the harness picks the cwd, and the gate's verdict must not depend on
-    that choice.
+    A relative AUDIT_DB_PATH is anchored at the repository root: the harness
+    picks the cwd, and the gate's verdict must not depend on that choice.
     """
-    storage = sys.modules.get("traianus.storage")
-    configured = getattr(storage, "DB_PATH", DEFAULT_DB_NAME)
-    path = Path(configured)
+    path = Path(AUDIT_DB_PATH)
     return path if path.is_absolute() else REPO_ROOT / path
 
 

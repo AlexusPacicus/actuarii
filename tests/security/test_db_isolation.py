@@ -2,11 +2,12 @@
 
 Two independent defects are pinned here:
 
-1. DB isolation: `tools.boundary_validator.validator` must resolve the database
-   path LAZILY (via `storage.DB_PATH` at call time). An import-time binding
-   (`from traianus.storage import DB_PATH`) copies the default value before
-   the autouse `isolate_db` fixture can monkeypatch it, redirecting every
-   `validate_proposal()` audit write into the real repo-root `traianus.db`.
+1. DB isolation: `tools.boundary_validator.validator` must resolve the audit
+   database path LAZILY (via `hook_gate._db_path()` at call time). An
+   import-time binding would copy the default value before the autouse
+   `isolate_audit_db` fixture can repoint it, redirecting every
+   `validate_proposal()` audit write into the real
+   `.data/boundary_validator_audit.db`.
 
 2. Strict schema conformance (AGENTS.md 5.1): `validate_proposal()` must
    enforce the normative `AgentMutationProposal` contract. Today an empty
@@ -21,13 +22,13 @@ import sqlite3
 from tools.boundary_validator.validator import validate_proposal
 
 
-def test_audit_persists_to_isolated_db(isolate_db):
+def test_audit_persists_to_isolated_db(isolate_audit_db):
     decision = validate_proposal(
         '{"Intent_Class":"DOC","Target_File":"docs/x.md",'
         '"Topological_Grounding":"q","Implementation_Block":"b","Safety_Abort":"NONE"}'
     )
     assert decision["final_decision"] == "EXECUTE_SAFE"
-    with sqlite3.connect(isolate_db) as conn:
+    with sqlite3.connect(isolate_audit_db) as conn:
         count = conn.execute("SELECT COUNT(*) FROM audit_log").fetchone()[0]
     assert count >= 1
 

@@ -8,7 +8,7 @@ import sqlite3
 
 import pytest
 
-import traianus.storage as storage
+from tools.boundary_validator import hook_gate
 from tools.boundary_validator.hook_gate import REPO_ROOT, has_recent_execute_safe, is_governed_path
 from tools.boundary_validator.validator import validate_proposal
 
@@ -97,10 +97,10 @@ def test_non_execute_safe_decision_does_not_count(isolate_db):
     assert has_recent_execute_safe(str(REPO_ROOT / target)) is False
 
 
-def test_stale_execute_safe_outside_window(isolate_db):
+def test_stale_execute_safe_outside_window(isolate_audit_db):
     target = "docs/x.md"
     decision = validate_proposal(_doc_proposal(target), target)
-    with sqlite3.connect(isolate_db) as conn:
+    with sqlite3.connect(isolate_audit_db) as conn:
         conn.execute(
             "UPDATE audit_log SET timestamp = datetime('now', '-3600 seconds') "
             "WHERE case_id = ?",
@@ -111,19 +111,17 @@ def test_stale_execute_safe_outside_window(isolate_db):
 
 
 def test_unreadable_db_raises_for_fail_closed_caller(monkeypatch):
-    monkeypatch.setattr(storage, "DB_PATH", "/definitely/not/a/real/dir/x.db")
+    monkeypatch.setattr(hook_gate, "AUDIT_DB_PATH", "/definitely/not/a/real/dir/x.db")
     with pytest.raises(Exception):
         has_recent_execute_safe(str(REPO_ROOT / "AGENTS.md"))
 
 
 def test_audit_db_path_matches_validator_regardless_of_cwd(tmp_path, monkeypatch):
     """R1/INV-1 (REMEDIATION-01 Delta1): _persist_audit must resolve a relative
-    DB_PATH against REPO_ROOT the same way hook_gate._db_path() does -- not
-    against whichever directory the process happens to be running in."""
-    from tools.boundary_validator import hook_gate
-
+    AUDIT_DB_PATH against REPO_ROOT the same way hook_gate._db_path() does --
+    not against whichever directory the process happens to be running in."""
     relative_name = "test_audit_symmetry.db"
-    monkeypatch.setattr(storage, "DB_PATH", relative_name)
+    monkeypatch.setattr(hook_gate, "AUDIT_DB_PATH", relative_name)
     monkeypatch.chdir(tmp_path)
 
     expected = hook_gate.REPO_ROOT / relative_name
