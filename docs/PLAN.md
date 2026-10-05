@@ -80,6 +80,11 @@ kit se gobierna a sí mismo desde el primer commit.
   * `CLAUDE.md` con `@AGENTS.md` y `@docs/PLAN.md`.
 * **Hecho cuando:** `pytest tests/` está en verde en un entorno virtual sin `traianus`. Se anota el
   número de tests.
+* **Resultado (2026-10-05, `c23f421`):** 1497 pasan y 3 se saltan en un `.venv` con solo
+  `pydantic==2.13.3` y `pytest`. Se quitaron los tests del motor y los que leían documentos de
+  Traianus; los de grounding apuntan a `tools/boundary_validator/validator.py`. Un test nuevo
+  (`tests/unit/test_kit_independence.py`) impide que `tests/` o `tools/` vuelvan a importar
+  `traianus`, `fastapi`, `numpy` o `helpers`.
 
 ### Fase 1 — generalización
 
@@ -93,6 +98,10 @@ Por contrato JSON al implementador, test-first.
   * Sin configuración, el kit gobierna lo mínimo y lo dice; no falla en silencio.
 * **Hooks:** se llaman con `$CLAUDE_PROJECT_DIR` y no dependen del directorio actual. Hace falta un
   test que haga `cd` y compruebe que siguen funcionando.
+* **Los 3 saltados de la fase 0:** en `tests/security/test_hook_case_identity.py`, las variantes de
+  mayúsculas de `traianus/` y `docs/specifications/` se saltan porque esos directorios no existen
+  aquí. Con las rutas gobernadas en la configuración, esas entradas pasan a rutas del kit y el
+  `skipif` se quita.
 * **Mensajes y textos:** sin Traianus ni cláusulas suyas. Cada denegación dice qué regla del
   fichero de configuración la causa.
 * **AGENTS.md:** una plantilla genérica de constitución, con las reglas que el kit hace cumplir y sus
