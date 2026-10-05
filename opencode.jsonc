@@ -14,14 +14,6 @@
         "tools/boundary_validator/validator.py"
       ],
       "cwd": "."
-    },
-    "spectral-math-engine": {
-      "type": "local",
-      "command": [
-        "python3",
-        "tools/mcp/spectral_math_mcp.py"
-      ],
-      "cwd": "."
     }
   },
   "permission": {

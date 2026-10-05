@@ -169,6 +169,17 @@ def test_security_boundary_validator_server_launches_from_tools_boundary_validat
     assert (ROOT / GATE_SERVER).is_file()
 
 
+def test_every_declared_mcp_server_launches_a_script_that_exists():
+    mcp = json.loads(MCP_CONFIG.read_text(encoding="utf-8"))
+    opencode = json.loads(_strip_line_comments(OPENCODE.read_text(encoding="utf-8")))
+    launched = {
+        (".mcp.json", name): server["args"][-1] for name, server in mcp["mcpServers"].items()
+    } | {
+        ("opencode.jsonc", name): server["command"][-1] for name, server in opencode["mcp"].items()
+    }
+    assert [key for key, script in launched.items() if not (ROOT / script).is_file()] == []
+
+
 def test_security_permission_matrices_allow_the_gate_where_it_lives(matrix):
     name, rules = matrix
     assert rules.get(f"python3 {GATE_SERVER}") == ALLOW, f"{name}: the gate script is not allowed"
