@@ -1,13 +1,19 @@
 """The project configuration: `.actuarii.json` at the repository root.
 
 It tells the write gate (tools/boundary_validator/hook_gate.py) which paths it governs and how long a
-boundary-validator receipt counts:
+boundary-validator receipt counts, and the Python gate (tools/bin/python3) where Python may run:
 
-    {"schema": "actuarii-config/1", "governed_paths": [<patterns>], "receipt_window_seconds": <1..86400>}
+    {"schema": "actuarii-config/1", "governed_paths": [<patterns>], "python_script_dirs": [<directories>],
+     "receipt_window_seconds": <1..86400>}
 
 A pattern is a path relative to the root: `*` stays inside one segment, `**` crosses segments, the rest is
-literal. The file is read strictly: every deviation is a ConfigError naming its cause, never a default. Without
-the file the gate governs a built-in minimum and its verdicts say so. The file itself is always governed.
+literal. A script directory is `.` (the whole root) or a plain path relative to the root, without wildcards; the
+list may be empty. The file is read strictly: every deviation is a ConfigError naming its cause, never a default.
+Without the file the gate governs a built-in minimum and scripts may run from the whole root, and the verdicts say
+so. The file itself is always governed.
+
+Run as `project_config.py --python-script-dirs` it prints the effective script directories, one per line, and
+exits 0; with an invalid configuration it prints the error on stderr and exits 1; any other argv exits 2.
 
 Standard library only, JSON and not TOML, and importable by a Python 3.9 interpreter: the gate imports this
 module, and an import error exits 1, which the harness reads as a broken hook and not as a denial, so the gate
@@ -18,6 +24,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,15 +32,18 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_NAME = ".actuarii.json"
 CONFIG_PATH = ROOT / CONFIG_NAME
 SCHEMA = "actuarii-config/1"
-KEYS = ("schema", "governed_paths", "receipt_window_seconds")
+KEYS = ("schema", "governed_paths", "python_script_dirs", "receipt_window_seconds")
 DEFAULT_WINDOW = 900
 MAX_WINDOW = 86400
 BUILT_IN_PATHS = (CONFIG_NAME, "AGENTS.md", "CLAUDE.md")
+BUILT_IN_SCRIPT_DIRS = (".",)
 BUILT_IN_SOURCE = "built-in minimum (no .actuarii.json)"
 OWN_RULE = "always governed: the project configuration"
 WILDCARDS = re.compile(r"(\*\*/|\*\*|\*)")
 GLOB_REGEX = {"**/": "(?:.*/)?", "**": ".*", "*": "[^/]*"}
 UNSUPPORTED = re.compile(r"[?\[\]{}]|\*{3,}")
+DIR_WILDCARDS = re.compile(r"[*?\[\]{}]")
+USAGE = "usage: project_config.py --python-script-dirs"
 
 
 class ConfigError(ValueError):
@@ -43,6 +53,7 @@ class ConfigError(ValueError):
 @dataclass(frozen=True)
 class ProjectConfig:
     governed_paths: tuple[str, ...]
+    python_script_dirs: tuple[str, ...]
     receipt_window_seconds: int
     source: str
 
@@ -83,12 +94,32 @@ def _check_pattern(pattern: str) -> None:
         raise _error(f"governed_paths entry {pattern!r}: wildcards other than * and ** are not allowed")
 
 
+def _check_dir(entry: str) -> None:
+    if entry == ".":
+        return
+    where = f"python_script_dirs entry {entry!r}"
+    if entry.startswith("/"):
+        raise _error(f"{where}: absolute paths are not allowed")
+    if ".." in entry:
+        raise _error(f"{where}: '..' is not allowed")
+    if "\\" in entry:
+        raise _error(f"{where}: a backslash is not allowed")
+    if any(ord(char) < 32 or ord(char) == 127 for char in entry):
+        raise _error(f"{where}: control characters are not allowed")
+    if DIR_WILDCARDS.search(entry):
+        raise _error(f"{where}: wildcards are not allowed")
+    if entry.endswith("/"):
+        raise _error(f"{where}: a trailing slash is not allowed")
+    if any(segment in ("", ".") for segment in entry.split("/")):
+        raise _error(f"{where}: empty or '.' path segments are not allowed")
+
+
 def load() -> ProjectConfig:
     """The configuration at CONFIG_PATH, validated; the built-in minimum when the file does not exist."""
     try:
         raw = CONFIG_PATH.read_text(encoding="utf-8")
     except FileNotFoundError:
-        return ProjectConfig(BUILT_IN_PATHS, DEFAULT_WINDOW, BUILT_IN_SOURCE)
+        return ProjectConfig(BUILT_IN_PATHS, BUILT_IN_SCRIPT_DIRS, DEFAULT_WINDOW, BUILT_IN_SOURCE)
     except UnicodeDecodeError as exc:
         raise _error(f"not valid UTF-8 ({exc})") from exc
     except OSError as exc:
@@ -114,10 +145,17 @@ def load() -> ProjectConfig:
         raise _error("governed_paths has duplicate entries")
     for pattern in paths:
         _check_pattern(pattern)
+    dirs = data["python_script_dirs"]
+    if not isinstance(dirs, list) or not all(isinstance(entry, str) and entry for entry in dirs):
+        raise _error("python_script_dirs must be a list of non-empty strings")
+    if len(set(dirs)) != len(dirs):
+        raise _error("python_script_dirs has duplicate entries")
+    for entry in dirs:
+        _check_dir(entry)
     window = data["receipt_window_seconds"]
     if isinstance(window, bool) or not isinstance(window, int) or not 1 <= window <= MAX_WINDOW:
         raise _error(f"receipt_window_seconds must be an integer from 1 to {MAX_WINDOW}, got {window!r}")
-    return ProjectConfig(tuple(paths), window, CONFIG_NAME)
+    return ProjectConfig(tuple(paths), tuple(dirs), window, CONFIG_NAME)
 
 
 def path_matches(pattern: str, rel: str) -> bool:
@@ -145,3 +183,21 @@ def governance(rel: str) -> Governance | None:
         if path_matches(pattern, rel):
             return Governance(f'governed_paths entry "{pattern}"', config.source, config.receipt_window_seconds)
     return None
+
+
+def main(argv: list[str]) -> int:
+    """The script directories for the Python gate, one per line; the error on stderr when the file is invalid."""
+    if argv != ["--python-script-dirs"]:
+        sys.stderr.write(f"{USAGE}\n")
+        return 2
+    try:
+        config = load()
+    except ConfigError as exc:
+        sys.stderr.write(f"{exc}\n")
+        return 1
+    sys.stdout.write("".join(f"{entry}\n" for entry in config.python_script_dirs))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

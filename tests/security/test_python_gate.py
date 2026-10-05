@@ -1,12 +1,19 @@
 """Python gate (AGENTS 2.5): the PATH shim tools/bin/python3 and the session hook that puts it
 first on the PATH of every Bash call. Static properties of the files, then their behaviour: each
 runs from a temporary git repository against stub interpreters, through tools.audit.run_process.
+The directories where Python may run come from python_script_dirs in .actuarii.json, which the shim
+asks tools/project_config.py for with the real interpreter; the stubs hand that one call to the
+interpreter that runs pytest and log it.
 
 Normative: AGENTS.md 2.5, 6.2
 """
+import itertools
+import json
 import os
+import re
 import shlex
 import shutil
+import sys
 from collections import namedtuple
 from dataclasses import FrozenInstanceError
 from pathlib import Path
@@ -38,8 +45,14 @@ def test_the_other_interpreter_names_are_links_to_the_shim(name):
 SESSION_HOOK = SCRIPTS[1]
 
 # A stand-in interpreter: it records which one started, then reports its argv, the environment
-# variables that matter here and its stdin, and exits with $STUB_EXIT.
+# variables that matter here and its stdin, and exits with $STUB_EXIT. The one call that reads the
+# configuration (-I .../project_config.py) is logged to a file of its own and handed to the real
+# interpreter, without touching the marker.
 STUB = r"""#!/bin/sh
+if [ "$1" = -I ] && [ "${{2##*/}}" = project_config.py ]; then
+  printf '%s\n' "$*" >> '{reader_log}'
+  exec '{python}' "$@"
+fi
 echo {name} > '{marker}'
 echo 'STUB {name}'
 for argument in "$@"; do printf 'ARG %s\n' "$argument"; done
@@ -63,6 +76,15 @@ SHELLS = [
 ]
 
 
+def configuration(dirs):
+    return {
+        "schema": "actuarii-config/1",
+        "governed_paths": ["AGENTS.md"],
+        "python_script_dirs": dirs,
+        "receipt_window_seconds": 900,
+    }
+
+
 class Gate:
     """A temporary world for the shim: git repositories holding copies of it, stub interpreters that
     report what they were given, and a git that no user configuration reaches."""
@@ -70,6 +92,8 @@ class Gate:
     def __init__(self, base):
         self.base = base
         self.marker = base / "marker"
+        self.reader_log = base / "reader.log"
+        self.names = itertools.count()
         self.stubs = base / "stubs"
         self.gitbin = base / "gitbin"
         self.base_env = {"HOME": str(base), "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
@@ -80,7 +104,9 @@ class Gate:
         wrapper = self.gitbin / "git"
         wrapper.write_text(f'#!/bin/sh\nexec {shlex.quote(shutil.which("git") or "git")} "$@"\n')
         wrapper.chmod(0o755)
-        self.repo = self.make_repo("repo", ["tools/x.py", "tools/sub/s.py", "traianus/y.py", "tests/z.py", "root.py"])
+        self.repo = self.make_repo(
+            "repo", ["tools/x.py", "tools/sub/s.py", "traianus/y.py", "tests/z.py", "root.py"], config=configuration(["traianus"])
+        )
         self.shim_dir = self.repo / "tools" / "bin"
         self.write("tools/untracked.py")
         self.write("tools/untracked2.py")
@@ -90,7 +116,9 @@ class Gate:
 
     def stub(self, directory, name, label=None):
         directory.mkdir(exist_ok=True)
-        (directory / name).write_text(STUB.format(name=label or name, marker=self.marker))
+        (directory / name).write_text(
+            STUB.format(name=label or name, marker=self.marker, reader_log=self.reader_log, python=sys.executable)
+        )
         (directory / name).chmod(0o755)
 
     def write(self, relative, root=None, text="print(1)\n"):
@@ -117,18 +145,28 @@ class Gate:
         shutil.copy2(BIN / "python3", target / "python3")
         for name in ("python", "python3.11"):
             (target / name).symlink_to("python3")
+        shutil.copy2(ROOT / "tools" / "project_config.py", root / "tools" / "project_config.py")
 
-    def make_repo(self, name, scripts, shim=True):
+    def make_repo(self, name, scripts, shim=True, config=None):
         root = self.base / name
         root.mkdir()
         for script in scripts:
             self.write(script, root)
+        if config is not None:
+            self.write(".actuarii.json", root, config if isinstance(config, str) else json.dumps(config))
         if shim:
             self.copy_shim(root)
         self.git("init", "-q", cwd=root)
         self.git("add", "-A", cwd=root)
         self.git("commit", "-q", "-m", "init", cwd=root)
         return root
+
+    def fresh(self, scripts, config=None):
+        """A repository of its own, so that a test can set its configuration without touching the shared one."""
+        return self.make_repo(f"fresh{next(self.names)}", scripts, config=config)
+
+    def readers(self):
+        return self.reader_log.read_text().splitlines() if self.reader_log.exists() else []
 
     def path(self, first):
         return f"{first}:{self.stubs}:{self.gitbin}"
@@ -139,6 +177,7 @@ class Gate:
         argv = [shutil.which(shell), str(target), *args] if shell else [str(target), *args]
         environment = {**self.base_env, "PATH": self.path(target.parent) if path is None else path, **(env or {})}
         self.marker.unlink(missing_ok=True)
+        self.reader_log.unlink(missing_ok=True)
         done = run(argv, cwd=cwd or root, env=environment, stdin=stdin, timeout=10)
         if not self.marker.exists():
             return Ran(done.returncode, done.stdout, done.stderr, None, [], {}, "")
@@ -464,6 +503,205 @@ def test_without_another_interpreter_on_the_path_answers_127(gate, args):
     ran = gate.shim(*args, path=f"{gate.shim_dir}:{gate.gitbin}")
     assert (ran.returncode, ran.stdout, ran.stderr) == (127, "", "python gate: no real python3 on PATH\n")
     assert ran.stub is None
+
+
+# T16: the directories where Python may run come from .actuarii.json
+
+KIT = "tools"
+UNTRACKED_IN_A_DIR = "scripts/untracked.py"
+
+
+def permitted(ran):
+    return (ran.returncode, ran.stub, ran.stderr) == (0, "python3", "")
+
+
+def test_a_configured_directory_permits_its_committed_scripts_and_not_the_rest_of_the_root(gate):
+    root = gate.fresh(["scripts/a.py", "scripts/sub/b.py", "other.py", "scripts2/c.py"], configuration(["scripts"]))
+    assert permitted(gate.shim("scripts/a.py", at=root))
+    assert permitted(gate.shim("scripts/sub/b.py", at=root))
+    for denied in ("other.py", "scripts2/c.py"):
+        ran = gate.shim(denied, at=root)
+        assert_gate_denies(ran)
+        assert "python_script_dirs" in ran.stderr and ".actuarii.json" in ran.stderr
+        assert "otherwise ask the user" in ran.stderr
+
+
+def test_a_nested_entry_permits_only_that_directory_and_below(gate):
+    root = gate.fresh(["a/b/x.py", "a/b/c/y.py", "a/z.py"], configuration(["a/b"]))
+    assert permitted(gate.shim("a/b/x.py", at=root))
+    assert permitted(gate.shim("a/b/c/y.py", at=root))
+    assert_gate_denies(gate.shim("a/z.py", at=root))
+
+
+def test_the_dot_entry_permits_every_committed_script_of_the_repository(gate):
+    root = gate.fresh(["root.py", "deep/er/d.py"], configuration(["."]))
+    assert permitted(gate.shim("root.py", at=root))
+    assert permitted(gate.shim("deep/er/d.py", at=root))
+
+
+def test_an_empty_list_permits_only_the_directory_of_the_kit(gate):
+    root = gate.fresh(["tools/x.py", "scripts/a.py", "root.py"], configuration([]))
+    assert permitted(gate.shim("tools/x.py", at=root))
+    assert_gate_denies(gate.shim("scripts/a.py", at=root))
+    assert_gate_denies(gate.shim("root.py", at=root))
+
+
+def test_the_directory_of_the_kit_is_permitted_whatever_the_configuration_lists(gate):
+    root = gate.fresh(["tools/x.py", "scripts/a.py"], configuration(["scripts"]))
+    assert permitted(gate.shim("tools/x.py", at=root))
+
+
+def test_without_a_file_every_committed_script_of_the_repository_is_permitted(gate):
+    root = gate.fresh(["root.py", "deep/d.py"])
+    assert permitted(gate.shim("root.py", at=root))
+    assert permitted(gate.shim("deep/d.py", at=root))
+
+
+def test_without_a_file_a_script_outside_the_repository_is_denied_naming_the_built_in_minimum(gate):
+    root = gate.fresh(["root.py"])
+    ran = gate.shim(str(gate.second / "tools" / "evil.py"), at=root)
+    assert_gate_denies(ran)
+    assert "built-in minimum" in ran.stderr and ".actuarii.json" in ran.stderr
+
+
+def test_an_uncommitted_script_in_a_permitted_directory_is_still_denied(gate):
+    root = gate.fresh(["scripts/a.py"], configuration(["scripts"]))
+    gate.write(UNTRACKED_IN_A_DIR, root)
+    assert_gate_denies(gate.shim(UNTRACKED_IN_A_DIR, at=root))
+
+
+def test_the_shim_asks_the_real_interpreter_isolated_for_the_configuration_of_its_own_kit(gate):
+    root = gate.fresh(["scripts/a.py"], configuration(["scripts"]))
+    assert permitted(gate.shim("scripts/a.py", at=root))
+    assert gate.readers() == [f"-I {root / 'tools' / 'project_config.py'} --python-script-dirs"]
+
+
+def test_the_name_invoked_is_the_interpreter_that_reads_the_configuration(gate):
+    root = gate.fresh(["scripts/a.py"], configuration(["scripts"]))
+    ran = gate.shim("scripts/a.py", at=root, name="python3.11")
+    assert (ran.returncode, ran.stub) == (0, "python3.11")
+    assert len(gate.readers()) == 1
+
+
+INVALID_CONFIGURATIONS = [
+    pytest.param("{", "not valid JSON", id="not-json"),
+    pytest.param(configuration(["a/../b"]), "python_script_dirs", id="bad-entry"),
+    pytest.param({**configuration(["scripts"]), "extra": 1}, "unknown keys", id="unknown-key"),
+]
+
+
+@pytest.mark.parametrize("content, cause", INVALID_CONFIGURATIONS)
+def test_an_invalid_configuration_permits_only_the_kit_and_the_denial_carries_the_error(gate, content, cause):
+    root = gate.fresh(["tools/x.py", "scripts/a.py", "root.py"], content)
+    assert permitted(gate.shim("tools/x.py", at=root))
+    for denied in ("scripts/a.py", "root.py"):
+        ran = gate.shim(denied, at=root)
+        assert_gate_denies(ran)
+        assert ".actuarii.json" in ran.stderr and cause in ran.stderr
+
+
+def test_a_missing_key_makes_the_configuration_invalid(gate):
+    content = {key: value for key, value in configuration(["scripts"]).items() if key != "python_script_dirs"}
+    root = gate.fresh(["scripts/a.py"], content)
+    ran = gate.shim("scripts/a.py", at=root)
+    assert_gate_denies(ran)
+    assert "python_script_dirs" in ran.stderr
+
+
+@pytest.mark.parametrize("code, error", [(3, "boom"), (1, "first line\nsecond line")])
+def test_a_reader_that_fails_permits_only_the_kit_and_the_denial_carries_its_first_line(gate, code, error):
+    root = gate.fresh(["tools/x.py", "root.py"], configuration(["."]))
+    reader = root / "tools" / "project_config.py"
+    reader.write_text(f"import sys\nsys.stderr.write({error + chr(10)!r})\nsys.exit({code})\n")
+    assert permitted(gate.shim("tools/x.py", at=root))
+    ran = gate.shim("root.py", at=root)
+    assert_gate_denies(ran)
+    assert error.splitlines()[0] in ran.stderr
+    assert "second line" not in ran.stderr
+
+
+def test_a_reader_that_prints_nothing_and_succeeds_permits_only_the_kit(gate):
+    root = gate.fresh(["tools/x.py", "root.py"], configuration(["."]))
+    (root / "tools" / "project_config.py").write_text("")
+    assert permitted(gate.shim("tools/x.py", at=root))
+    assert_gate_denies(gate.shim("root.py", at=root))
+
+
+@pytest.mark.parametrize("noise", ["scripts\n", ".\n", "scripts\n.\nscripts/sub\n"])
+def test_what_a_successful_reader_writes_on_stderr_never_becomes_an_allowed_directory(gate, noise):
+    root = gate.fresh(["tools/x.py", "scripts/a.py", "root.py"], configuration([]))
+    (root / "tools" / "project_config.py").write_text(f"import sys\nsys.stderr.write({noise!r})\n")
+    assert permitted(gate.shim("tools/x.py", at=root))
+    for denied in ("scripts/a.py", "root.py"):
+        assert_gate_denies(gate.shim(denied, at=root))
+
+
+def test_a_missing_reader_permits_only_the_kit(gate):
+    root = gate.fresh(["tools/x.py", "root.py"], configuration(["."]))
+    (root / "tools" / "project_config.py").unlink()
+    assert permitted(gate.shim("tools/x.py", at=root))
+    ran = gate.shim("root.py", at=root)
+    assert_gate_denies(ran)
+
+
+def test_pythonpath_cannot_replace_the_reader_nor_the_modules_it_imports(gate, tmp_path):
+    fake = tmp_path / "fake"
+    gate.write("project_config.py", fake, "print('.')\n")
+    gate.write("json.py", fake, "raise SystemExit(0)\n")
+    root = gate.fresh(["tools/x.py", "root.py"], configuration([]))
+    assert permitted(gate.shim("tools/x.py", at=root, env={"PYTHONPATH": str(fake)}))
+    assert_gate_denies(gate.shim("root.py", at=root, env={"PYTHONPATH": str(fake)}))
+    assert gate.readers() == [f"-I {root / 'tools' / 'project_config.py'} --python-script-dirs"]
+
+
+def test_the_cwd_cannot_replace_the_reader_nor_the_modules_it_imports(gate, tmp_path):
+    fake = tmp_path / "fakecwd"
+    gate.write("project_config.py", fake, "print('.')\n")
+    gate.write("json.py", fake, "raise SystemExit(0)\n")
+    root = gate.fresh(["tools/x.py", "root.py"], configuration([]))
+    assert permitted(gate.shim(str(root / "tools" / "x.py"), at=root, cwd=fake))
+    assert_gate_denies(gate.shim(str(root / "root.py"), at=root, cwd=fake))
+
+
+def test_a_configuration_in_the_cwd_does_not_replace_the_one_of_the_repository(gate, tmp_path):
+    other = gate.fresh(["root.py"], configuration(["."]))
+    root = gate.fresh(["root.py"], configuration([]))
+    assert_gate_denies(gate.shim(str(root / "root.py"), at=root, cwd=other))
+
+
+@pytest.mark.parametrize("args", [["-c", "x"], [], ["--version"], ["/dev/stdin"], ["tools/sub"]])
+def test_the_reader_starts_only_for_a_script_that_passed_the_shape_checks(gate, args):
+    gate.shim(*args)
+    assert gate.readers() == []
+
+
+FOREIGN = re.compile(r"AGENTS|(?i:traianus)|tools/")
+
+
+@pytest.mark.parametrize("args", [
+    pytest.param(["-c", "x"], id="inline-code"),
+    pytest.param([], id="no-arguments"),
+    pytest.param(["tools/untracked.py"], id="untracked"),
+    pytest.param(["root.py"], id="outside-the-directories"),
+    pytest.param(["tests/z.py"], id="outside-the-directories-again"),
+])
+def test_a_denial_cites_no_clause_and_names_no_fixed_directory(gate, args):
+    ran = gate.shim(*args)
+    assert_gate_denies(ran)
+    assert not FOREIGN.search(ran.stderr), ran.stderr
+
+
+@pytest.mark.parametrize("content", ["{", configuration(["scripts"])], ids=["invalid", "valid"])
+def test_a_denial_for_the_configuration_cites_no_clause_and_names_no_fixed_directory(gate, content):
+    root = gate.fresh(["root.py"], content)
+    ran = gate.shim("root.py", at=root)
+    assert_gate_denies(ran)
+    assert not FOREIGN.search(ran.stderr), ran.stderr
+
+
+def test_the_shim_text_cites_no_clause_and_names_no_project(gate):
+    text = (BIN / "python3").read_text(encoding="utf-8")
+    assert "AGENTS" not in text and "traianus" not in text.lower()
 
 
 # T8: the session hook
