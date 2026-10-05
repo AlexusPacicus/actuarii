@@ -35,8 +35,11 @@ CONFIG = {
     "schema": "actuarii-config/1",
     "governed_paths": ["src/**", "docs/specs/*.md", "NOTES.md"],
     "python_script_dirs": [],
+    "contract_registry": None,
     "receipt_window_seconds": 60,
 }
+REGISTRY_RULE = "always governed: the contract registry"
+WITH_REGISTRY = {**CONFIG, "contract_registry": "contracts/registry.json"}
 
 
 @pytest.mark.parametrize("path", [
@@ -275,6 +278,38 @@ def test_without_a_file_the_built_in_minimum_governs_and_names_itself(monkeypatc
     assert run_hook(monkeypatch, REPO_ROOT / "tests" / "x.py") == 0
 
 
+# T3b: the configured contract registry is always governed
+
+@pytest.mark.parametrize("governed", [["src/**"], ["src/**", "contracts/**"], ["contracts/registry.json"]])
+def test_the_configured_registry_is_denied_without_a_receipt_whether_or_not_it_is_listed(
+        monkeypatch, capsys, config_file, trail, governed):
+    config_file({**WITH_REGISTRY, "governed_paths": governed})
+    assert run_hook(monkeypatch, REPO_ROOT / "contracts" / "registry.json") == 2
+    err = capsys.readouterr().err
+    assert REGISTRY_RULE in err
+    assert "source: .actuarii.json" in err
+    assert "window: 60 s" in err
+
+
+def test_the_configured_registry_is_allowed_with_a_recent_receipt(monkeypatch, config_file, trail):
+    config_file(WITH_REGISTRY)
+    grant("contracts/registry.json")
+    assert run_hook(monkeypatch, REPO_ROOT / "contracts" / "registry.json") == 0
+
+
+def test_without_a_registry_in_the_configuration_nothing_makes_that_path_governed(
+        monkeypatch, config_file, trail):
+    config_file(CONFIG)
+    assert run_hook(monkeypatch, REPO_ROOT / "contracts" / "registry.json") == 0
+
+
+def test_the_registry_receipt_follows_the_configured_window(monkeypatch, config_file, trail, isolate_audit_db):
+    config_file(WITH_REGISTRY)
+    grant("contracts/registry.json")
+    age(isolate_audit_db, "contracts/registry.json", 120)
+    assert run_hook(monkeypatch, REPO_ROOT / "contracts" / "registry.json") == 2
+
+
 # T4: an invalid configuration never opens the gate
 
 @pytest.mark.parametrize("path", ["src/a.py", "tests/x.py", "README.md"])
@@ -339,6 +374,7 @@ def test_the_configuration_file_is_denied_under_its_own_rule(monkeypatch, capsys
 @pytest.mark.parametrize("content, path", [
     pytest.param(CONFIG, "src/a.py", id="pattern"),
     pytest.param(CONFIG, ".actuarii.json", id="own-file"),
+    pytest.param(WITH_REGISTRY, "contracts/registry.json", id="registry"),
     pytest.param(None, "CLAUDE.md", id="built-in"),
     pytest.param("{", "src/a.py", id="invalid"),
 ])

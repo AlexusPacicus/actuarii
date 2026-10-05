@@ -81,6 +81,7 @@ def configuration(dirs):
         "schema": "actuarii-config/1",
         "governed_paths": ["AGENTS.md"],
         "python_script_dirs": dirs,
+        "contract_registry": None,
         "receipt_window_seconds": 900,
     }
 

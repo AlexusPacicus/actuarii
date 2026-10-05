@@ -1,16 +1,19 @@
 """The project configuration: `.actuarii.json` at the repository root.
 
 It tells the write gate (tools/boundary_validator/hook_gate.py) which paths it governs and how long a
-boundary-validator receipt counts, and the Python gate (tools/bin/python3) where Python may run:
+boundary-validator receipt counts, the Python gate (tools/bin/python3) where Python may run, and the
+contract-context hook (tools/hooks/require_contract_context.py) where its registry lives:
 
     {"schema": "actuarii-config/1", "governed_paths": [<patterns>], "python_script_dirs": [<directories>],
-     "receipt_window_seconds": <1..86400>}
+     "contract_registry": <path or null>, "receipt_window_seconds": <1..86400>}
 
 A pattern is a path relative to the root: `*` stays inside one segment, `**` crosses segments, the rest is
 literal. A script directory is `.` (the whole root) or a plain path relative to the root, without wildcards; the
-list may be empty. The file is read strictly: every deviation is a ConfigError naming its cause, never a default.
-Without the file the gate governs a built-in minimum and scripts may run from the whole root, and the verdicts say
-so. The file itself is always governed.
+list may be empty. The contract registry is null (no registry: no path requires contract context) or a plain path
+relative to the root, which the write gate governs whether or not governed_paths lists it. The file is read
+strictly: every deviation is a ConfigError naming its cause, never a default. Without the file the gate governs a
+built-in minimum, scripts may run from the whole root and there is no contract registry, and the verdicts say so.
+The file itself is always governed.
 
 Run as `project_config.py --python-script-dirs` it prints the effective script directories, one per line, and
 exits 0; with an invalid configuration it prints the error on stderr and exits 1; any other argv exits 2.
@@ -32,13 +35,15 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_NAME = ".actuarii.json"
 CONFIG_PATH = ROOT / CONFIG_NAME
 SCHEMA = "actuarii-config/1"
-KEYS = ("schema", "governed_paths", "python_script_dirs", "receipt_window_seconds")
+KEYS = ("schema", "governed_paths", "python_script_dirs", "contract_registry", "receipt_window_seconds")
 DEFAULT_WINDOW = 900
 MAX_WINDOW = 86400
 BUILT_IN_PATHS = (CONFIG_NAME, "AGENTS.md", "CLAUDE.md")
 BUILT_IN_SCRIPT_DIRS = (".",)
+BUILT_IN_REGISTRY = None
 BUILT_IN_SOURCE = "built-in minimum (no .actuarii.json)"
 OWN_RULE = "always governed: the project configuration"
+REGISTRY_RULE = "always governed: the contract registry"
 WILDCARDS = re.compile(r"(\*\*/|\*\*|\*)")
 GLOB_REGEX = {"**/": "(?:.*/)?", "**": ".*", "*": "[^/]*"}
 UNSUPPORTED = re.compile(r"[?\[\]{}]|\*{3,}")
@@ -54,6 +59,7 @@ class ConfigError(ValueError):
 class ProjectConfig:
     governed_paths: tuple[str, ...]
     python_script_dirs: tuple[str, ...]
+    contract_registry: str | None
     receipt_window_seconds: int
     source: str
 
@@ -94,10 +100,7 @@ def _check_pattern(pattern: str) -> None:
         raise _error(f"governed_paths entry {pattern!r}: wildcards other than * and ** are not allowed")
 
 
-def _check_dir(entry: str) -> None:
-    if entry == ".":
-        return
-    where = f"python_script_dirs entry {entry!r}"
+def _check_plain_path(entry: str, where: str) -> None:
     if entry.startswith("/"):
         raise _error(f"{where}: absolute paths are not allowed")
     if ".." in entry:
@@ -114,12 +117,25 @@ def _check_dir(entry: str) -> None:
         raise _error(f"{where}: empty or '.' path segments are not allowed")
 
 
+def _check_dir(entry: str) -> None:
+    if entry != ".":
+        _check_plain_path(entry, f"python_script_dirs entry {entry!r}")
+
+
+def _check_registry(registry: object) -> None:
+    if registry is None:
+        return
+    if not isinstance(registry, str) or not registry:
+        raise _error("contract_registry must be null or a non-empty string")
+    _check_plain_path(registry, f"contract_registry {registry!r}")
+
+
 def load() -> ProjectConfig:
     """The configuration at CONFIG_PATH, validated; the built-in minimum when the file does not exist."""
     try:
         raw = CONFIG_PATH.read_text(encoding="utf-8")
     except FileNotFoundError:
-        return ProjectConfig(BUILT_IN_PATHS, BUILT_IN_SCRIPT_DIRS, DEFAULT_WINDOW, BUILT_IN_SOURCE)
+        return ProjectConfig(BUILT_IN_PATHS, BUILT_IN_SCRIPT_DIRS, BUILT_IN_REGISTRY, DEFAULT_WINDOW, BUILT_IN_SOURCE)
     except UnicodeDecodeError as exc:
         raise _error(f"not valid UTF-8 ({exc})") from exc
     except OSError as exc:
@@ -152,10 +168,12 @@ def load() -> ProjectConfig:
         raise _error("python_script_dirs has duplicate entries")
     for entry in dirs:
         _check_dir(entry)
+    registry = data["contract_registry"]
+    _check_registry(registry)
     window = data["receipt_window_seconds"]
     if isinstance(window, bool) or not isinstance(window, int) or not 1 <= window <= MAX_WINDOW:
         raise _error(f"receipt_window_seconds must be an integer from 1 to {MAX_WINDOW}, got {window!r}")
-    return ProjectConfig(tuple(paths), tuple(dirs), window, CONFIG_NAME)
+    return ProjectConfig(tuple(paths), tuple(dirs), registry, window, CONFIG_NAME)
 
 
 def path_matches(pattern: str, rel: str) -> bool:
@@ -169,7 +187,8 @@ def governance(rel: str) -> Governance | None:
 
     The configuration file is governed whatever it says and whatever state it is in: when it is invalid it
     stays subject to a receipt with the default window, so the rules can always be repaired under a receipt.
-    Any other path raises ConfigError while the configuration is invalid.
+    The contract registry it names is governed whether or not governed_paths lists it, so that dropping a
+    requirement always leaves a receipt. Any other path raises ConfigError while the configuration is invalid.
     """
     try:
         config = load()
@@ -179,6 +198,8 @@ def governance(rel: str) -> Governance | None:
         raise
     if rel == CONFIG_NAME:
         return Governance(OWN_RULE, config.source, config.receipt_window_seconds)
+    if rel == config.contract_registry:
+        return Governance(REGISTRY_RULE, config.source, config.receipt_window_seconds)
     for pattern in config.governed_paths:
         if path_matches(pattern, rel):
             return Governance(f'governed_paths entry "{pattern}"', config.source, config.receipt_window_seconds)

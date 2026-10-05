@@ -3,9 +3,8 @@
 On a case-insensitive filesystem (APFS by default) `TESTS/x.py` and `tests/x.py` name one file, and a
 gate that compares spellings lets the first through. tools/hooks/require_boundary_validation.py and
 tools/hooks/require_contract_context.py therefore re-spell the target with the names the filesystem
-stores (`canonical`) before they decide. Each hook carries its own copy: the contract hook may import
-only the standard library, so it cannot import a sibling module; `test_the_two_copies_are_the_same_code`
-keeps them equal.
+stores (`canonical`) before they decide. Each hook carries its own copy, since a hook imports nothing of
+the repository but the project configuration; `test_the_two_copies_are_the_same_code` keeps them equal.
 
 CI runs on a case-sensitive filesystem, where the bypass cannot happen. The identity primitives are
 therefore parameters, and CaseBlindFs answers like APFS over a real tree; the tests that touch the real

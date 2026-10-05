@@ -28,8 +28,10 @@ VALID = {
     "schema": "actuarii-config/1",
     "governed_paths": ["src/**", "docs/*.md"],
     "python_script_dirs": ["scripts", "tools/sub", "."],
+    "contract_registry": "contracts/registry.json",
     "receipt_window_seconds": 60,
 }
+REGISTRY_RULE = "always governed: the contract registry"
 
 
 def text(**changes):
@@ -43,7 +45,7 @@ def without(key):
 def window_as(literal):
     return (
         '{"schema": "actuarii-config/1", "governed_paths": ["a"], "python_script_dirs": [], '
-        '"receipt_window_seconds": %s}' % literal
+        '"contract_registry": null, "receipt_window_seconds": %s}' % literal
     )
 
 
@@ -54,7 +56,8 @@ INVALID = [
     pytest.param("", "not valid JSON", id="empty"),
     pytest.param(
         '{"schema": "actuarii-config/1", "schema": "actuarii-config/1", '
-        '"governed_paths": ["a"], "python_script_dirs": [], "receipt_window_seconds": 60}',
+        '"governed_paths": ["a"], "python_script_dirs": [], "contract_registry": null, '
+        '"receipt_window_seconds": 60}',
         "duplicate key 'schema'", id="duplicate-key"),
     pytest.param(window_as("NaN"), "NaN", id="nan"),
     pytest.param(window_as("Infinity"), "Infinity", id="infinity"),
@@ -100,6 +103,27 @@ INVALID = [
     pytest.param(text(python_script_dirs=["a\x7fb"]), "control", id="dirs-delete"),
     pytest.param(text(python_script_dirs=["./a"]), "segment", id="dirs-dot-segment"),
     pytest.param(text(python_script_dirs=["a//b"]), "segment", id="dirs-empty-segment"),
+    pytest.param(text(contract_registry=1), "contract_registry", id="registry-a-number"),
+    pytest.param(text(contract_registry=True), "contract_registry", id="registry-true"),
+    pytest.param(text(contract_registry=[]), "contract_registry", id="registry-a-list"),
+    pytest.param(text(contract_registry={}), "contract_registry", id="registry-an-object"),
+    pytest.param(text(contract_registry=""), "contract_registry", id="registry-empty-string"),
+    pytest.param(text(contract_registry="/etc/r.json"), "absolute", id="registry-absolute"),
+    pytest.param(text(contract_registry="a/r.json/"), "trailing", id="registry-trailing-slash"),
+    pytest.param(text(contract_registry="a/../r.json"), r"\.\.", id="registry-parent"),
+    pytest.param(text(contract_registry=".."), r"\.\.", id="registry-parent-alone"),
+    pytest.param(text(contract_registry="a\\r.json"), "backslash", id="registry-backslash"),
+    pytest.param(text(contract_registry="a/*.json"), "wildcard", id="registry-star"),
+    pytest.param(text(contract_registry="**"), "wildcard", id="registry-double-star"),
+    pytest.param(text(contract_registry="a?.json"), "wildcard", id="registry-question-mark"),
+    pytest.param(text(contract_registry="a[b].json"), "wildcard", id="registry-class"),
+    pytest.param(text(contract_registry="a{b}.json"), "wildcard", id="registry-braces"),
+    pytest.param(text(contract_registry="a\nb.json"), "control", id="registry-newline"),
+    pytest.param(text(contract_registry="a\tb.json"), "control", id="registry-tab"),
+    pytest.param(text(contract_registry="a\x7fb.json"), "control", id="registry-delete"),
+    pytest.param(text(contract_registry="./r.json"), "segment", id="registry-dot-segment"),
+    pytest.param(text(contract_registry="."), "segment", id="registry-dot-alone"),
+    pytest.param(text(contract_registry="a//r.json"), "segment", id="registry-empty-segment"),
     pytest.param(text(receipt_window_seconds="60"), "receipt_window_seconds", id="window-a-string"),
     pytest.param(text(receipt_window_seconds=60.5), "receipt_window_seconds", id="window-a-float"),
     pytest.param(text(receipt_window_seconds=True), "receipt_window_seconds", id="window-true"),
@@ -137,8 +161,20 @@ def test_a_valid_configuration_is_loaded_as_written(config_file):
     config = load()
     assert config.governed_paths == ("src/**", "docs/*.md")
     assert config.python_script_dirs == ("scripts", "tools/sub", ".")
+    assert config.contract_registry == "contracts/registry.json"
     assert config.receipt_window_seconds == 60
     assert config.source == ".actuarii.json"
+
+
+def test_the_contract_registry_may_be_null_and_then_there_is_none(config_file):
+    config_file(text(contract_registry=None))
+    assert load().contract_registry is None
+
+
+@pytest.mark.parametrize("registry", ["r.json", "a/b/registry.json", "dir.d/r"])
+def test_the_contract_registry_is_a_plain_relative_path(config_file, registry):
+    config_file(text(contract_registry=registry))
+    assert load().contract_registry == registry
 
 
 def test_the_script_directories_may_be_an_empty_list(config_file):
@@ -158,6 +194,7 @@ def test_without_a_file_the_built_in_minimum_is_governed_and_says_so(config_file
     config = load()
     assert config.governed_paths == (".actuarii.json", "AGENTS.md", "CLAUDE.md")
     assert config.python_script_dirs == (".",)
+    assert config.contract_registry is None
     assert config.receipt_window_seconds == 900
     assert config.source == BUILT_IN
 
@@ -238,6 +275,38 @@ def test_any_other_path_raises_when_the_configuration_is_invalid(config_file):
         governance("src/a.py")
 
 
+# the contract registry is always governed
+
+@pytest.mark.parametrize("listed", [["src/**"], ["contracts/registry.json", "src/**"], ["contracts/**"]])
+def test_the_configured_registry_is_always_governed_whether_or_not_it_is_listed(config_file, listed):
+    config_file(text(governed_paths=listed))
+    verdict = governance("contracts/registry.json")
+    assert verdict.rule == REGISTRY_RULE
+    assert verdict.source == ".actuarii.json"
+    assert verdict.window_seconds == 60
+
+
+def test_without_a_registry_the_path_that_would_hold_one_is_not_governed(config_file):
+    config_file(text(contract_registry=None))
+    assert governance("contracts/registry.json") is None
+
+
+def test_only_the_configured_registry_path_is_governed_as_the_registry(config_file):
+    config_file(text())
+    assert governance("contracts/other.json") is None
+    assert governance("contracts/registry.json.bak") is None
+
+
+def test_the_registry_is_not_governed_by_the_built_in_minimum(config_file):
+    assert governance("contracts/registry.json") is None
+
+
+def test_the_registry_path_raises_when_the_configuration_is_invalid(config_file):
+    config_file("{")
+    with pytest.raises(ConfigError, match="not valid JSON"):
+        governance("contracts/registry.json")
+
+
 # the real file of this repository
 
 def test_the_location_is_the_file_at_the_repository_root_and_not_the_environment():
@@ -249,6 +318,7 @@ def test_the_real_configuration_loads_and_governs_what_this_repository_governs()
     assert config.source == ".actuarii.json"
     assert config.receipt_window_seconds == 900
     assert config.python_script_dirs == ()
+    assert config.contract_registry is None
     governed = [
         "AGENTS.md", "CLAUDE.md", "tests/x.py", "tools/boundary_validator/x.py", ".actuarii.json",
         "tools/hooks/x.py", "tools/hooks/sub/y.json", "tools/bin/python3", "tools/bin/python",
