@@ -248,7 +248,7 @@ GOVERNED = [
 UNGOVERNED = [
     f"{REPO_ROOT}/tools/x.py",
     f"{REPO_ROOT}/Tools/x.py",
-    f"{REPO_ROOT}/Tools/Hooks/x.py",
+    f"{REPO_ROOT}/Tools/Audit/x.py",
     f"{REPO_ROOT}/Tools/Audit/Context_Pack.py",
     f"{REPO_ROOT}/DOCS/roadmap/x.md",
     f"{REPO_ROOT}/Docs/Roadmap/NEXT_RESEARCH.md",

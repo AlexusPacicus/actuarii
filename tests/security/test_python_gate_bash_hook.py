@@ -181,7 +181,10 @@ def test_other_tools_are_not_looked_at(monkeypatch, capsys, tool):
 def test_denied_command_exits_2_naming_the_rule_and_the_word(monkeypatch, capsys, command, rule, word):
     code, out, err = bash(monkeypatch, capsys, command)
     assert (code, out) == (2, "")
-    assert rule in err and word in err and "AGENTS 2.5" in err
+    assert rule in err and word in err
+    assert err.startswith("[deny_python_escapes]")
+    assert "tools/bin" in err and ".actuarii.json" in err and "ask the user" in err
+    assert "AGENTS" not in err and "traianus" not in err.lower() and "tools/ or" not in err
 
 
 @pytest.mark.parametrize("command, word", [

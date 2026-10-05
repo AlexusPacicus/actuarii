@@ -10,11 +10,14 @@ denial.
 """
 import ast
 import json
+import shutil
+import sys
 from pathlib import Path
 
 import pytest
 
 from tools import project_config
+from tools.audit.run_process import run
 from tools.project_config import ConfigError, governance, load
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,6 +27,7 @@ OWN_RULE = "always governed: the project configuration"
 VALID = {
     "schema": "actuarii-config/1",
     "governed_paths": ["src/**", "docs/*.md"],
+    "python_script_dirs": ["scripts", "tools/sub", "."],
     "receipt_window_seconds": 60,
 }
 
@@ -37,7 +41,10 @@ def without(key):
 
 
 def window_as(literal):
-    return '{"schema": "actuarii-config/1", "governed_paths": ["a"], "receipt_window_seconds": %s}' % literal
+    return (
+        '{"schema": "actuarii-config/1", "governed_paths": ["a"], "python_script_dirs": [], '
+        '"receipt_window_seconds": %s}' % literal
+    )
 
 
 # T1: a case per validation rule
@@ -47,7 +54,7 @@ INVALID = [
     pytest.param("", "not valid JSON", id="empty"),
     pytest.param(
         '{"schema": "actuarii-config/1", "schema": "actuarii-config/1", '
-        '"governed_paths": ["a"], "receipt_window_seconds": 60}',
+        '"governed_paths": ["a"], "python_script_dirs": [], "receipt_window_seconds": 60}',
         "duplicate key 'schema'", id="duplicate-key"),
     pytest.param(window_as("NaN"), "NaN", id="nan"),
     pytest.param(window_as("Infinity"), "Infinity", id="infinity"),
@@ -71,6 +78,28 @@ INVALID = [
     pytest.param(text(governed_paths=["a[b]"]), "wildcard", id="paths-class"),
     pytest.param(text(governed_paths=["a{b}"]), "wildcard", id="paths-braces"),
     pytest.param(text(governed_paths=["***"]), "wildcard", id="paths-three-stars"),
+    pytest.param(text(python_script_dirs="scripts"), "python_script_dirs", id="dirs-a-string"),
+    pytest.param(text(python_script_dirs={}), "python_script_dirs", id="dirs-an-object"),
+    pytest.param(text(python_script_dirs=None), "python_script_dirs", id="dirs-null"),
+    pytest.param(text(python_script_dirs=[1]), "python_script_dirs", id="dirs-not-strings"),
+    pytest.param(text(python_script_dirs=[""]), "python_script_dirs", id="dirs-empty-string"),
+    pytest.param(text(python_script_dirs=["a", "a"]), "duplicate", id="dirs-duplicate"),
+    pytest.param(text(python_script_dirs=[".", "."]), "duplicate", id="dirs-duplicate-root"),
+    pytest.param(text(python_script_dirs=["/etc"]), "absolute", id="dirs-absolute"),
+    pytest.param(text(python_script_dirs=["a/"]), "trailing", id="dirs-trailing-slash"),
+    pytest.param(text(python_script_dirs=["a/../b"]), r"\.\.", id="dirs-parent"),
+    pytest.param(text(python_script_dirs=[".."]), r"\.\.", id="dirs-parent-alone"),
+    pytest.param(text(python_script_dirs=["a\\b"]), "backslash", id="dirs-backslash"),
+    pytest.param(text(python_script_dirs=["a*"]), "wildcard", id="dirs-star"),
+    pytest.param(text(python_script_dirs=["**"]), "wildcard", id="dirs-double-star"),
+    pytest.param(text(python_script_dirs=["a?b"]), "wildcard", id="dirs-question-mark"),
+    pytest.param(text(python_script_dirs=["a[b]"]), "wildcard", id="dirs-class"),
+    pytest.param(text(python_script_dirs=["a{b}"]), "wildcard", id="dirs-braces"),
+    pytest.param(text(python_script_dirs=["a\nb"]), "control", id="dirs-newline"),
+    pytest.param(text(python_script_dirs=["a\tb"]), "control", id="dirs-tab"),
+    pytest.param(text(python_script_dirs=["a\x7fb"]), "control", id="dirs-delete"),
+    pytest.param(text(python_script_dirs=["./a"]), "segment", id="dirs-dot-segment"),
+    pytest.param(text(python_script_dirs=["a//b"]), "segment", id="dirs-empty-segment"),
     pytest.param(text(receipt_window_seconds="60"), "receipt_window_seconds", id="window-a-string"),
     pytest.param(text(receipt_window_seconds=60.5), "receipt_window_seconds", id="window-a-float"),
     pytest.param(text(receipt_window_seconds=True), "receipt_window_seconds", id="window-true"),
@@ -107,8 +136,14 @@ def test_a_valid_configuration_is_loaded_as_written(config_file):
     config_file(VALID)
     config = load()
     assert config.governed_paths == ("src/**", "docs/*.md")
+    assert config.python_script_dirs == ("scripts", "tools/sub", ".")
     assert config.receipt_window_seconds == 60
     assert config.source == ".actuarii.json"
+
+
+def test_the_script_directories_may_be_an_empty_list(config_file):
+    config_file(text(python_script_dirs=[]))
+    assert load().python_script_dirs == ()
 
 
 @pytest.mark.parametrize("seconds", [1, 86400])
@@ -122,6 +157,7 @@ def test_the_window_accepts_its_limits(config_file, seconds):
 def test_without_a_file_the_built_in_minimum_is_governed_and_says_so(config_file):
     config = load()
     assert config.governed_paths == (".actuarii.json", "AGENTS.md", "CLAUDE.md")
+    assert config.python_script_dirs == (".",)
     assert config.receipt_window_seconds == 900
     assert config.source == BUILT_IN
 
@@ -212,10 +248,57 @@ def test_the_real_configuration_loads_and_governs_what_this_repository_governs()
     config = load()
     assert config.source == ".actuarii.json"
     assert config.receipt_window_seconds == 900
-    for rel in ["AGENTS.md", "CLAUDE.md", "tests/x.py", "tools/boundary_validator/x.py", ".actuarii.json"]:
+    assert config.python_script_dirs == ()
+    governed = [
+        "AGENTS.md", "CLAUDE.md", "tests/x.py", "tools/boundary_validator/x.py", ".actuarii.json",
+        "tools/hooks/x.py", "tools/hooks/sub/y.json", "tools/bin/python3", "tools/bin/python",
+    ]
+    for rel in governed:
         assert governance(rel) is not None, rel
-    for rel in ["tools/hooks/x.py", "docs/x.md"]:
-        assert governance(rel) is None, rel
+    assert governance("docs/x.md") is None
+
+
+# the command line: the shim asks for the directories where Python may run
+
+def kit(tmp_path, content=None):
+    """A temporary repository holding a copy of the module, as the shim finds it next to itself."""
+    (tmp_path / "tools").mkdir()
+    shutil.copy2(SOURCE, tmp_path / "tools" / "project_config.py")
+    if content is not None:
+        (tmp_path / ".actuarii.json").write_text(
+            content if isinstance(content, str) else json.dumps(content), encoding="utf-8")
+    return tmp_path / "tools" / "project_config.py"
+
+
+def ask(script, *arguments):
+    return run([sys.executable, "-I", str(script), *arguments])
+
+
+def test_the_command_line_prints_one_effective_entry_per_line(tmp_path):
+    done = ask(kit(tmp_path, VALID), "--python-script-dirs")
+    assert (done.returncode, done.stdout, done.stderr) == (0, "scripts\ntools/sub\n.\n", "")
+
+
+def test_the_command_line_prints_nothing_for_an_empty_list(tmp_path):
+    done = ask(kit(tmp_path, text(python_script_dirs=[])), "--python-script-dirs")
+    assert (done.returncode, done.stdout, done.stderr) == (0, "", "")
+
+
+def test_the_command_line_without_a_file_prints_the_built_in_minimum(tmp_path):
+    done = ask(kit(tmp_path), "--python-script-dirs")
+    assert (done.returncode, done.stdout, done.stderr) == (0, ".\n", "")
+
+
+def test_the_command_line_with_an_invalid_file_exits_1_with_the_error_on_stderr(tmp_path):
+    done = ask(kit(tmp_path, text(python_script_dirs=["a/../b"])), "--python-script-dirs")
+    assert done.returncode == 1 and done.stdout == ""
+    assert ".actuarii.json" in done.stderr and "python_script_dirs" in done.stderr
+
+
+@pytest.mark.parametrize("arguments", [[], ["--other"], ["--python-script-dirs", "x"], ["x", "--python-script-dirs"]])
+def test_any_other_command_line_is_a_usage_error_with_exit_2(tmp_path, arguments):
+    done = ask(kit(tmp_path, VALID), *arguments)
+    assert done.returncode == 2 and done.stdout == "" and done.stderr.strip()
 
 
 def test_project_config_postpones_annotations_and_parses_as_python_3_9():

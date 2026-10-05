@@ -1,9 +1,9 @@
 """PreToolUse hook for Bash: the ways of reaching a Python interpreter around the tools/bin shim.
 
-AGENTS 2.5 lets Python run only as a committed script under tools/ or traianus/. The shim
-tools/bin/python3, first on the PATH of every Bash call (tools/hooks/session_python_gate.sh),
-decides for the names it covers: python, python3, python3.11. This hook denies (exit 2) a command
-whose words reach an interpreter without going through it:
+Python runs only as a committed script in the directories .actuarii.json allows (the kit directory
+and python_script_dirs). The shim tools/bin/python3, first on the PATH of every Bash call
+(tools/hooks/session_python_gate.sh), decides for the names it covers: python, python3, python3.11.
+This hook denies (exit 2) a command whose words reach an interpreter without going through it:
 
 R1  an interpreter named by path (a word with '/' whose last component is python*, pypy* or
     ipython*), except tools/bin/<name>, the shim named by path, which decides for itself.
@@ -133,8 +133,8 @@ def check(command: str) -> str | None:
 
 def deny(reason: str) -> int:
     sys.stderr.write(
-        f"[deny_python_escapes] {reason} (AGENTS 2.5: Python runs only as a committed script "
-        "under tools/ or traianus/, through tools/bin; otherwise ask the user)\n"
+        f"[deny_python_escapes] {reason} (Python runs only through the tools/bin shim, as a committed script "
+        "in the directories .actuarii.json allows; otherwise ask the user)\n"
     )
     return 2
 

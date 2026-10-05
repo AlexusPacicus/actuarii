@@ -34,6 +34,7 @@ def _doc_proposal(target_file: str) -> str:
 CONFIG = {
     "schema": "actuarii-config/1",
     "governed_paths": ["src/**", "docs/specs/*.md", "NOTES.md"],
+    "python_script_dirs": [],
     "receipt_window_seconds": 60,
 }
 

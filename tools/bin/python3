@@ -1,13 +1,20 @@
 #!/bin/sh
-# Python gate (AGENTS 2.5): Python runs only as a committed script under tools/ or traianus/.
+# Python gate: Python runs only as a committed script in the kit directory or in a directory that
+# python_script_dirs of .actuarii.json lists.
 #
 # First on the PATH (tools/hooks/session_python_gate.sh), this shim stands in for python, python3 and
 # python3.11 (the two other names are links to this file). It decides by argv alone. Permitted:
 #   --version, -V or -VV as the only argument;
 #   options from the closed set -B -E -I -O -OO -q -s -S -u, each a separate argument, then a script,
 #   then any arguments (the script's own, never inspected). The script must be a regular file and not
-#   a symbolic link, physically under tools/ or traianus/ of THIS repository (the one holding this
-#   file, two directories above it, whatever the cwd), and recorded in HEAD as a regular file.
+#   a symbolic link, physically in an allowed directory of THIS repository (the one holding this file,
+#   two directories above it, whatever the cwd), and recorded in HEAD as a regular file.
+# The allowed directories are the kit directory (the physical parent of this file's directory, where the
+# hooks and the configuration reader live) and the entries of python_script_dirs ("." is the whole
+# repository). The shim reads them by running the real interpreter, isolated (-I), on project_config.py
+# of the kit with --python-script-dirs; the kit directory stays allowed whatever the configuration, and a
+# reader that fails (invalid configuration, broken interpreter) leaves only the kit directory, never
+# everything. Without .actuarii.json the built-in minimum is the whole repository.
 # Everything else is denied: -c, -m, -, no arguments, any other option, stdin and device paths.
 # A denial is exit status 126, empty stdout and one stderr line starting "python gate:". A permitted
 # argv replaces this process with the real interpreter: the first file of the invoked name on the
@@ -21,12 +28,19 @@
 
 set -f
 
+SOURCE="the project configuration"
+
 deny() {
-  printf 'python gate: %s; use a committed script under tools/ or traianus/, or ask the user (AGENTS 2.5)\n' "$1" >&2
+  printf 'python gate: %s; Python runs only as a committed script in the kit directory or in a python_script_dirs entry (%s); otherwise ask the user\n' "$1" "$SOURCE" >&2
   exit 126
 }
 
 physical() { (cd -P -- "$1" 2>/dev/null && pwd -P); }
+
+under() {
+  case $1 in "$2"|"$2"/*) return 0 ;; esac
+  return 1
+}
 
 gitc() (
   unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_COMMON_DIR
@@ -47,8 +61,11 @@ real_interpreter() {
   return 1
 }
 
-launch() {
+find_real() {
   real=$(real_interpreter) || { printf 'python gate: no real %s on PATH\n' "$name" >&2; exit 127; }
+}
+
+clean_environment() {
   IFS='
 '
   for line in $(set); do
@@ -58,6 +75,11 @@ launch() {
       *) unset "$variable" ;;
     esac
   done
+}
+
+launch() {
+  [ -n "$real" ] || find_real
+  clean_environment
   exec "$real" "$@"
 }
 
@@ -76,8 +98,11 @@ script_of() {
 here=${0%/*}
 [ "$here" != "$0" ] || here=.
 SHIMDIR=$(physical "$here") || deny "cannot locate the shim"
+KIT=$(physical "$SHIMDIR/..") || deny "cannot locate the kit directory"
 ROOT=$(physical "$SHIMDIR/../..") || deny "cannot locate the repository"
 name=${0##*/}
+real=
+if [ -f "$ROOT/.actuarii.json" ]; then SOURCE=.actuarii.json; else SOURCE="the built-in minimum (no .actuarii.json)"; fi
 
 [ $# -gt 0 ] || deny "no script: an interactive interpreter is not permitted"
 if [ $# -eq 1 ]; then
@@ -90,10 +115,33 @@ case $SCRIPT in /dev/*|/proc/*) deny "stdin and device paths are not scripts" ;;
 [ -f "$SCRIPT" ] || deny "the script is not a regular file"
 case $SCRIPT in */*) directory=${SCRIPT%/*} ;; *) directory=. ;; esac
 directory=$(physical "${directory:-/}") || deny "cannot locate the script"
-case $directory in
-  "$ROOT/tools"|"$ROOT/tools/"*|"$ROOT/traianus"|"$ROOT/traianus/"*) ;;
-  *) deny "the script is outside tools/ and traianus/ of this repository" ;;
-esac
+
+find_real
+clean_environment
+if directories=$("$real" -I "$KIT/project_config.py" --python-script-dirs 2>/dev/null); then
+  failure=
+else
+  directories=
+  failure=$("$real" -I "$KIT/project_config.py" --python-script-dirs 2>&1 >/dev/null)
+  failure=${failure%%
+*}
+  [ -n "$failure" ] || failure="the configuration reader failed"
+fi
+
+allowed=
+under "$directory" "$KIT" && allowed=1
+if [ -z "$allowed" ] && [ -z "$failure" ]; then
+  IFS='
+'
+  for item in $directories; do
+    if [ "$item" = . ]; then place=$ROOT; else place=$ROOT/$item; fi
+    if under "$directory" "$place"; then allowed=1; break; fi
+  done
+fi
+if [ -z "$allowed" ]; then
+  [ -z "$failure" ] || deny "the script is outside the kit directory and python_script_dirs cannot be read ($failure)"
+  deny "the script is outside the kit directory and the python_script_dirs entries"
+fi
 
 [ "$(gitc rev-parse --show-toplevel 2>/dev/null)" = "$ROOT" ] || deny "the repository of the shim cannot be read"
 entry=$(gitc ls-tree HEAD -- "${directory#"$ROOT"/}/${SCRIPT##*/}" 2>/dev/null) || deny "HEAD cannot be read"

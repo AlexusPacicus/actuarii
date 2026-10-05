@@ -5,7 +5,10 @@
     "CLAUDE.md",
     "tests/**",
     "tools/boundary_validator/**",
-    "tools/project_config.py"
+    "tools/project_config.py",
+    "tools/hooks/**",
+    "tools/bin/**"
   ],
+  "python_script_dirs": [],
   "receipt_window_seconds": 900
 }
