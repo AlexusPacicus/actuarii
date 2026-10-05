@@ -106,8 +106,12 @@ Por contrato JSON al implementador, test-first.
     `AGENTS.md`, `CLAUDE.md`); con uno inválido se deniega todo dentro de la raíz. El propio fichero
     está siempre gobernado y cada denegación nombra su regla. Los 3 saltados de la fase 0 ya no
     existen: 1614 en verde, 0 saltados.
-  * Pendientes: directorios del shim en la configuración (paso 3); ruta del registro de contratos y
-    registro como ejemplo, con una sola copia de `path_matches` (paso 4); anuncio al abrir sesión de
+  * Paso 3 (`af75004`), con dos decisiones del autor: el kit gobierna también `tools/hooks/**` y
+    `tools/bin/**`; el shim lee `python_script_dirs` pidiéndoselo a `tools/project_config.py` con el
+    intérprete real aislado (`-I`), una sola fuente de verdad. El directorio del kit está siempre
+    permitido (si no, los hooks saldrían 126 y la puerta se abriría); con la configuración inválida
+    solo ese. Sin fichero, todo el repositorio (solo scripts commiteados). 1683 en verde.
+  * Pendientes: ruta del registro de contratos y registro como ejemplo, con una sola copia de `path_matches` (paso 4); anuncio al abrir sesión de
     lo que se gobierna y de dónde sale (paso 5); textos, `AGENTS.md`, subagentes, skills y limpieza
     del perímetro de permisos (paso 6).
 * **Mensajes y textos:** sin Traianus ni cláusulas suyas. Cada denegación dice qué regla del
