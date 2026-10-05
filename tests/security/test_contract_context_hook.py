@@ -1,9 +1,10 @@
-"""Contract-context hook (tools/hooks/require_contract_context.py, AGENTS 6.2).
+"""Contract-context hook (tools/hooks/require_contract_context.py).
 
-Edit and Write on a path registered in contract_registry.json are denied unless every contract
+Edit and Write on a path registered in the contract registry are denied unless every contract
 section its rules require was served by tools/audit/context_pack.py within the window, from the
-contract file as it is now. The hook is driven through `main` and its pure functions on a
-synthetic root with an injected clock; nothing is spawned.
+contract file as it is now. The registry is the file `contract_registry` names in .actuarii.json,
+or none. The hook is driven through `main` and its pure functions on a synthetic root with an
+injected clock; only the import-failure tests spawn it.
 """
 
 import ast
@@ -20,7 +21,8 @@ from types import SimpleNamespace
 import pytest
 
 from tests.security.test_hook_case_identity import CaseBlindFs
-from tools.audit import context_pack
+from tools import project_config
+from tools.audit import context_pack, run_process
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOOK = REPO_ROOT / "tools" / "hooks" / "require_contract_context.py"
@@ -33,6 +35,7 @@ NOW = 1_800_000_000.0
 WINDOW = 14400
 CONTRACT = "frontend/audits/contracts.md"
 NOTES_FILE = "docs/notes.md"
+REGISTRY_REL = "contracts/registry.json"
 CONTRACT_TEXT = (
     "# Contracts\n\n"
     "Engine path (one text at a time)\n  binary32 in, binary64 stored\n\n"
@@ -72,7 +75,7 @@ def hook():
 def env(tmp_path):
     root = tmp_path.resolve() / "repo"
     files = {CONTRACT: CONTRACT_TEXT, NOTES_FILE: NOTES_TEXT,
-             "tools/hooks/contract_registry.json": json.dumps(REGISTRY)}
+             REGISTRY_REL: json.dumps(REGISTRY)}
     for name, text in files.items():
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -81,7 +84,7 @@ def env(tmp_path):
     outside.write_text("", encoding="utf-8")
     return SimpleNamespace(root=root, outside=outside, contract=root / CONTRACT,
                            log=root / ".data" / "context_pack.log",
-                           registry=root / "tools" / "hooks" / "contract_registry.json")
+                           registry=root / REGISTRY_REL)
 
 
 def stamp(seconds):
@@ -236,7 +239,9 @@ def test_only_a_fresh_matching_receipt_counts(hook, env, capsys, entry, granted)
     ("**", "a/b.py", True),
 ])
 def test_glob_star_stays_in_a_segment_and_double_star_crosses(hook, pattern, rel, expected):
-    assert hook.path_matches(pattern, rel) is expected
+    assert project_config.path_matches(pattern, rel) is expected
+    assert hook.matching_rules({"rules": [rule("r", [pattern], ENGINE)]}, rel) == (
+        [rule("r", [pattern], ENGINE)] if expected else [])
 
 
 @pytest.mark.parametrize("form", ["relative", "absolute", "dotdot", "relative-dotdot",
@@ -383,38 +388,215 @@ def test_a_contract_edited_after_serving_must_be_served_again(hook, env, monkeyp
     assert run(hook, env, "aux/x.py", now=time.time()) == 0
 
 
-# T8: registry rot guard on the real repository
+# T8: the registry comes from the configuration, on every call
+
+FOREIGN = re.compile(r"AGENTS|SS\d|(?i:traianus)")
 
 
-@pytest.mark.parametrize("target, name", [
-    ("traianus/app.py", "engine-vector-path"),
-    ("traianus/storage/_storage.py", "engine-vector-path"),
-    ("traianus/representation/provider.py", "engine-vector-path"),
-    ("traianus/geometry/polar_projector.py", "engine-vector-path"),
-    ("tools/experiments/k6_colour_predictability.py", "k6"),
-    ("tests/unit/test_k6_colour_predictability.py", "k6"),
-    ("tools/experiments/r4_neighbourhood.py", "r4"),
-    ("tests/unit/test_r4_neighbourhood.py", "r4"),
-    ("tools/experiments/zoom_three_point.py", "z"),
-    ("tests/unit/test_zoom_three_point.py", "z"),
-    ("tools/experiments/tension_gate.py", "tg"),
-    ("tests/unit/test_tension_gate.py", "tg"),
+def configured(config_file, registry=REGISTRY_REL):
+    config_file({
+        "schema": "actuarii-config/1", "governed_paths": ["AGENTS.md"], "python_script_dirs": [],
+        "contract_registry": registry, "receipt_window_seconds": 900,
+    })
+
+
+def run_configured(hook, env, target, tool="Edit", now=NOW, **primitives):
+    payload = json.dumps({"tool_name": tool, "tool_input": {"file_path": str(target)}})
+    return hook.main(payload, env.root, env.log, now=now, **primitives)
+
+
+def test_the_registry_is_the_file_the_configuration_names(hook, env, config_file, capsys):
+    configured(config_file)
+    assert run_configured(hook, env, "src/vec.py") == 2
+    assert missing(capsys.readouterr().err) == [ENGINE]
+    write_log(env, receipt(ENGINE))
+    assert run_configured(hook, env, "src/vec.py") == 0
+
+
+def test_a_registry_elsewhere_in_the_root_is_the_one_that_is_read(hook, env, config_file):
+    other = env.root / "elsewhere" / "r.json"
+    other.parent.mkdir()
+    other.write_text(json.dumps({"window_seconds": WINDOW, "rules": [rule("only", ["plain.py"], ENGINE)]}),
+                     encoding="utf-8")
+    configured(config_file, "elsewhere/r.json")
+    assert run_configured(hook, env, "plain.py") == 2
+    assert run_configured(hook, env, "src/vec.py") == 0
+
+
+@pytest.mark.parametrize("target", ["src/vec.py", "exp/k6_a.py", "plain.py", REGISTRY_REL])
+def test_with_a_null_registry_every_edit_passes_without_a_log(hook, env, config_file, target):
+    configured(config_file, None)
+    assert run_configured(hook, env, target) == 0
+    assert not env.log.exists()
+
+
+def test_without_a_configuration_file_there_is_no_registry(hook, env, config_file):
+    assert run_configured(hook, env, "src/vec.py") == 0
+
+
+def test_the_configuration_is_read_on_every_call(hook, env, config_file):
+    configured(config_file, None)
+    assert run_configured(hook, env, "src/vec.py") == 0
+    configured(config_file)
+    assert run_configured(hook, env, "src/vec.py") == 2
+    configured(config_file, None)
+    assert run_configured(hook, env, "src/vec.py") == 0
+
+
+def test_an_explicit_registry_path_is_used_instead_of_the_configuration(hook, env, config_file):
+    configured(config_file, None)
+    assert run(hook, env, "src/vec.py") == 2
+
+
+@pytest.mark.parametrize("target", ["src/vec.py", "plain.py", REGISTRY_REL])
+def test_an_invalid_configuration_denies_every_edit_inside_the_root(hook, env, config_file, capsys, target):
+    config_file("{")
+    assert run_configured(hook, env, target) == 2
+    err = capsys.readouterr().err
+    assert ".actuarii.json" in err
+    assert "not valid JSON" in err
+
+
+def test_an_invalid_configuration_can_still_be_repaired_and_outside_the_root_passes(hook, env, config_file):
+    config_file("{")
+    assert run_configured(hook, env, ".actuarii.json") == 0
+    (env.root / ".actuarii.json").write_text("{", encoding="utf-8")
+    assert run_configured(hook, env, env.root / ".actuarii.json") == 0
+    assert run_configured(hook, env, env.outside) == 0
+    assert run_configured(hook, env, "../outside.py") == 0
+
+
+def test_an_invalid_configuration_can_be_repaired_through_a_case_variant_of_its_name(hook, repo, config_file):
+    config_file("{")
+    (repo.root / ".actuarii.json").write_text("{", encoding="utf-8")
+    assert run_configured(hook, repo, ".ACTUARII.JSON", **BLIND) == 0
+    assert run_configured(hook, repo, "PLAIN.PY", **BLIND) == 2
+
+
+@BROKEN
+@pytest.mark.parametrize("target", ["src/vec.py", "plain.py"])
+def test_an_unusable_configured_registry_denies_every_edit_and_names_its_source(
+        hook, env, config_file, capsys, text, target):
+    configured(config_file)
+    break_registry(env, text)
+    assert run_configured(hook, env, target) == 2
+    err = capsys.readouterr().err
+    assert REGISTRY_REL in err
+    assert "contract_registry" in err
+    assert ".actuarii.json" in err
+
+
+@BROKEN
+def test_an_unusable_configured_registry_can_still_be_repaired(hook, env, config_file, text):
+    configured(config_file)
+    break_registry(env, text)
+    assert run_configured(hook, env, env.registry) == 0
+    assert run_configured(hook, env, env.outside) == 0
+
+
+def test_the_denial_for_missing_context_names_the_registry_and_where_it_comes_from(
+        hook, env, config_file, capsys):
+    configured(config_file)
+    assert run_configured(hook, env, "src/vec.py") == 2
+    err = capsys.readouterr().err
+    assert REGISTRY_REL in err
+    assert "contract_registry" in err
+    assert ".actuarii.json" in err
+    assert missing(err) == [ENGINE]
+
+
+SCENARIOS = ["missing-context", "unusable-registry", "invalid-configuration", "missing-contract",
+             "unreadable-log", "malformed-input"]
+
+
+@pytest.mark.parametrize("scenario", SCENARIOS)
+def test_the_denials_are_free_of_foreign_citations(hook, env, config_file, capsys, scenario):
+    configured(config_file)
+    if scenario == "unusable-registry":
+        break_registry(env, "{not json")
+    elif scenario == "invalid-configuration":
+        config_file("{")
+    elif scenario == "missing-contract":
+        write_log(env, receipt(ENGINE))
+        env.contract.unlink()
+    elif scenario == "unreadable-log":
+        env.log.mkdir(parents=True)
+    if scenario == "malformed-input":
+        code = hook.main("[]", env.root, env.log, now=NOW)
+    else:
+        code = run_configured(hook, env, "src/vec.py")
+    err = capsys.readouterr().err
+    assert code == 2
+    assert err
+    assert not FOREIGN.search(err), err
+
+
+# T8b: one copy of the matcher, and an import that cannot exit 1
+
+
+def test_the_hook_carries_no_copy_of_the_matcher_nor_a_fixed_registry():
+    names = set()
+    for node in hook_tree().body:
+        if isinstance(node, ast.FunctionDef):
+            names.add(node.name)
+        elif isinstance(node, ast.Assign):
+            names |= {target.id for target in node.targets if isinstance(target, ast.Name)}
+    assert not names & {"path_matches", "WILDCARDS", "GLOB_REGEX", "REGISTRY_PATH"}
+
+
+def test_the_matcher_of_the_hook_is_the_one_of_the_project_configuration(hook):
+    assert hook.path_matches is project_config.path_matches
+
+
+def spawn_hook(tmp_path, config_source):
+    """The hook, copied into a throwaway repository whose project configuration module is `config_source`
+    (None: absent), run with an isolated interpreter on an Edit of a path inside it."""
+    root = tmp_path / "kit"
+    (root / "tools" / "hooks").mkdir(parents=True)
+    (root / "tools" / "__init__.py").write_text("", encoding="utf-8")
+    copy = root / "tools" / "hooks" / HOOK.name
+    copy.write_text(HOOK.read_text(encoding="utf-8"), encoding="utf-8")
+    if config_source is not None:
+        (root / "tools" / "project_config.py").write_text(config_source, encoding="utf-8")
+    payload = json.dumps({"tool_name": "Edit", "tool_input": {"file_path": str(root / "x.py")}})
+    return run_process.run([sys.executable, "-I", str(copy)], stdin=payload)
+
+
+def test_a_working_project_configuration_lets_the_spawned_hook_allow(tmp_path):
+    done = spawn_hook(tmp_path, (REPO_ROOT / "tools" / "project_config.py").read_text(encoding="utf-8"))
+    assert (done.returncode, done.stderr) == (0, "")
+
+
+@pytest.mark.parametrize("source, cause", [
+    pytest.param(None, "project_config", id="absent"),
+    pytest.param("raise RuntimeError('boom')\n", "boom", id="raises"),
+    pytest.param("def broken(:\n", "SyntaxError", id="syntax-error"),
+    pytest.param("CONFIG_NAME = 1\n", "cannot import name", id="incomplete"),
 ])
-def test_the_real_registry_covers_the_vector_path_and_the_measurements(hook, target, name):
-    registry = hook.load_registry(hook.REGISTRY_PATH)
-    assert name in [entry["name"] for entry in hook.matching_rules(registry, target)]
+def test_a_project_configuration_that_cannot_be_imported_denies_with_exit_2(tmp_path, source, cause):
+    done = spawn_hook(tmp_path, source)
+    assert done.returncode == 2
+    assert done.stdout == ""
+    assert done.stderr.startswith("[require_contract_context] fail-closed:")
+    assert cause in done.stderr
 
 
-# T8b: contract relocation (docs/methodology/instrument-audit/)
+# T8c: the relocated registry of Traianus is an example, unchanged
 
-RELOCATED_CONTRACT = "docs/methodology/instrument-audit/contracts.md"
+EXAMPLE = REPO_ROOT / "examples" / "traianus" / "contract_registry.json"
+EXAMPLE_SHA256 = "c4ee65c6dd021b23e0dab8f74c5af5b8f87235166c55791798cbe4eb7f2fbb4a"
 
 
-def test_the_real_registry_names_the_relocated_contract_path(hook):
-    registry = hook.load_registry(hook.REGISTRY_PATH)
-    for entry in registry["rules"]:
-        for required in entry["requires"]:
-            assert required["path"] == RELOCATED_CONTRACT
+def test_the_example_registry_is_byte_for_byte_the_one_that_was_moved(hook):
+    assert sha256(EXAMPLE.read_bytes()).hexdigest() == EXAMPLE_SHA256
+
+
+def test_the_example_registry_loads_and_has_rules(hook):
+    assert hook.load_registry(EXAMPLE)["rules"]
+
+
+def test_no_registry_remains_under_the_hooks_directory():
+    assert not (REPO_ROOT / "tools" / "hooks" / "contract_registry.json").exists()
 
 
 # T9: startup surface
@@ -424,14 +606,15 @@ def hook_tree():
     return ast.parse(HOOK.read_text(encoding="utf-8"), feature_version=(3, 9))
 
 
-def test_hook_imports_only_the_standard_library():
-    roots = set()
+def test_hook_imports_only_the_standard_library_and_the_project_configuration():
+    names = set()
     for node in ast.walk(hook_tree()):
         if isinstance(node, ast.Import):
-            roots |= {alias.name.split(".")[0] for alias in node.names}
+            names |= {alias.name for alias in node.names}
         elif isinstance(node, ast.ImportFrom):
-            roots.add("." * node.level + (node.module or "").split(".")[0])
-    assert roots <= set(sys.stdlib_module_names), roots - set(sys.stdlib_module_names)
+            names.add("." * node.level + (node.module or ""))
+    foreign = {name for name in names if name.split(".")[0] not in sys.stdlib_module_names}
+    assert foreign == {"tools.project_config"}, foreign
 
 
 def test_hook_postpones_annotations_and_parses_as_python_39():
@@ -560,8 +743,8 @@ def test_a_receipt_covers_a_registered_path_in_other_case(hook, repo, exact, var
 @pytest.mark.parametrize("text", EXISTING_BROKEN.values(), ids=list(EXISTING_BROKEN))
 def test_an_unusable_registry_can_be_repaired_through_a_case_variant_of_its_path(hook, repo, text):
     break_registry(repo, text)
-    assert run_as(hook, repo, "TOOLS/HOOKS/CONTRACT_REGISTRY.JSON", **BLIND) == 0
-    assert run_as(hook, repo, "TOOLS/HOOKS/OTHER.PY", **BLIND) == 2
+    assert run_as(hook, repo, "CONTRACTS/REGISTRY.JSON", **BLIND) == 0
+    assert run_as(hook, repo, "CONTRACTS/OTHER.PY", **BLIND) == 2
 
 
 def test_a_directory_that_cannot_be_listed_inside_the_root_denies(hook, repo, capsys):

@@ -10,5 +10,6 @@
     "tools/bin/**"
   ],
   "python_script_dirs": [],
+  "contract_registry": null,
   "receipt_window_seconds": 900
 }

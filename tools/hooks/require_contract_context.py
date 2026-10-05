@@ -1,29 +1,31 @@
-"""PreToolUse hook: the bit-level contracts are a precondition of the work on the vector path.
+"""PreToolUse hook: the contracts a registry names are a precondition of the work on the paths it registers.
 
-Edit and Write on a path registered in tools/hooks/contract_registry.json are denied (exit 2)
-unless every contract section the matching rules require was served by tools/audit/context_pack.py
-within `window_seconds`, from the contract file as it is now. The receipt is the `served` line
-context_pack appends to .data/context_pack.log (path, kind, value, ts, file_sha256). A denial names
-the missing sections and prints the context_pack command that serves them.
+The registry is the file `contract_registry` names in .actuarii.json (tools/project_config.py), read on every
+call; null, or no configuration file, means there is none and every Edit and Write passes. Edit and Write on a
+path registered there are denied (exit 2) unless every contract section the matching rules require was served by
+tools/audit/context_pack.py within `window_seconds`, from the contract file as it is now. The receipt is the
+`served` line context_pack appends to .data/context_pack.log (path, kind, value, ts, file_sha256). A denial names
+the registry, the missing sections and the context_pack command that serves them.
 
 A target is decided by what the filesystem says it is, not by how it is spelled: the path is resolved
 (symlinks, `..`) and then re-spelled by `canonical` with the names its directory entries store, found
 by identity. On a case-insensitive filesystem `SRC/VEC.PY` is therefore the registered `src/vec.py`.
 
-Fails closed: a registry that cannot be read or has the wrong shape denies every Edit/Write inside
-the root, except an edit of the registry itself; for a registered target so do an unreadable log and
-an unreadable contract file; so does a path inside the root that the filesystem cannot be asked
-about. A missing log is an empty one: nothing was served.
+Fails closed: an invalid configuration denies every Edit/Write inside the root, except an edit of .actuarii.json
+itself; a registry that cannot be read or has the wrong shape does the same, except an edit of the registry
+itself; for a registered target so do an unreadable log and an unreadable contract file; so does a path inside the
+root that the filesystem cannot be asked about. A missing log is an empty one: nothing was served.
 
 Declared limits: the receipt proves that context_pack served the sections, not that the agent read
 them nor that the code conforms (conformance is what tests are for). The log is a plain file, so a
 line written through Bash forges a receipt; writes issued through Bash are not gated. The receipt
-names neither agent nor session. tools/hooks/**, the registry included, is not itself gated. A
-missing file has no identity: a case variant of a registry that no longer exists is not recognised
-as the registry, and stays denied until the exact spelling is used.
+names neither agent nor session. The registry is governed by the write gate whenever the configuration is valid,
+which this hook does not enforce itself. A missing file has no identity: a case variant of a registry or of a
+configuration file that does not exist is not recognised as it, and stays denied until the exact spelling is used.
 
-Standard library only: an import failure would exit 1, which the harness reads as a broken hook
-rather than a denial; annotations are postponed so a 3.9 system interpreter can import it.
+The only repository module imported is tools.project_config, standard library only, and the import is guarded:
+an import failure would exit 1, which the harness reads as a broken hook rather than a denial, so it exits 2.
+Annotations are postponed so a 3.9 system interpreter can import it.
 """
 from __future__ import annotations
 
@@ -31,7 +33,6 @@ import calendar
 import hashlib
 import json
 import os
-import re
 import sys
 import time
 from collections.abc import Callable
@@ -39,14 +40,25 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+try:
+    from tools.project_config import CONFIG_NAME, ConfigError, load, path_matches
+except Exception as exc:  # fail-closed: a hook that cannot start must deny
+    # An unhandled failure here exits 1, which the harness reads as a broken
+    # hook and not as a denial: the edit would proceed ungated.
+    sys.stderr.write(
+        "[require_contract_context] fail-closed: the project configuration could not be imported "
+        f"({type(exc).__name__}: {exc}). Denying instead of leaving the edit ungated.\n"
+    )
+    sys.exit(2)
+
 LOG_PATH = REPO_ROOT / ".data" / "context_pack.log"
-REGISTRY_PATH = Path(__file__).resolve().parent / "contract_registry.json"
 GATED_TOOLS = {"Edit", "Write"}
 STAMP = "%Y-%m-%dT%H:%M:%SZ"
 REQUIREMENT_KEYS = ("path", "kind", "value")
 JSON_ERRORS = (ValueError, RecursionError)
-WILDCARDS = re.compile(r"(\*\*/|\*\*|\*)")
-GLOB_REGEX = {"**/": "(?:.*/)?", "**": ".*", "*": "[^/]*"}
 FAIL_CLOSED = "[require_contract_context] fail-closed:"
 
 
@@ -100,12 +112,6 @@ def canonical(
             return real.joinpath(*names[index:])
         real = real / (name if name in found else found[0])
     return real
-
-
-def path_matches(pattern: str, rel: str) -> bool:
-    """`*` stays inside one path segment, `**` crosses segments; everything else is literal."""
-    regex = "".join(GLOB_REGEX.get(part, re.escape(part)) for part in WILDCARDS.split(pattern))
-    return re.fullmatch(regex, rel) is not None
 
 
 def _text(value: object) -> bool:
@@ -193,7 +199,9 @@ def _served(
     return served
 
 
-def _denial(target: str, rules: list[dict], missing: list[tuple[str, ...]], window: int) -> str:
+def _denial(
+    target: str, rules: list[dict], missing: list[tuple[str, ...]], window: int, registry: str
+) -> str:
     grouped: dict[str, list[dict[str, str]]] = {}
     for path, kind, value in missing:
         grouped.setdefault(path, []).append({kind: value})
@@ -204,7 +212,8 @@ def _denial(target: str, rules: list[dict], missing: list[tuple[str, ...]], wind
     lines = [
         (
             f"[require_contract_context] {target} falls under "
-            f"{', '.join(r['name'] for r in rules)}: its contracts must be served by context_pack "
+            f"{', '.join(r['name'] for r in rules)} in the registry {registry} (named by "
+            f"contract_registry in {CONFIG_NAME}): its contracts must be served by context_pack "
             f"(within {window} s, from the file as it is now) before it is edited. Missing:"
         ),
         *(f"  {path} [{kind}={value}]" for path, kind, value in missing),
@@ -217,10 +226,14 @@ def _denial(target: str, rules: list[dict], missing: list[tuple[str, ...]], wind
 
 
 def decide(
-    payload: dict, root: Path, log_path: Path, registry_path: Path, now: float,
+    payload: dict, root: Path, log_path: Path, registry_path: Path | None, now: float,
     samefile: Callable[..., bool] = os.path.samefile, scandir: Callable[..., Any] = os.scandir,
 ) -> str | None:
-    """None allows the edit; a string is the reason it is denied."""
+    """None allows the edit; a string is the reason it is denied.
+
+    Without an explicit `registry_path` the registry is the one `contract_registry` names in the project
+    configuration, read now; a null there means no registry.
+    """
     if payload.get("tool_name") not in GATED_TOOLS:
         return None
     tool_input = payload.get("tool_input", {})
@@ -232,19 +245,32 @@ def decide(
     try:
         base = root.resolve()
         target = canonical(base / Path(file_path).expanduser(), base, samefile, scandir)
+        if target is None:
+            return None
+        if registry_path is None:
+            try:
+                configured = load().contract_registry
+            except ConfigError as exc:
+                if target == canonical(base / CONFIG_NAME, base, samefile, scandir):
+                    return None
+                return (
+                    f"{FAIL_CLOSED} {exc}. Every Edit/Write inside the repository is denied until "
+                    f"{CONFIG_NAME} is repaired; that file stays editable."
+                )
+            if configured is None:
+                return None
+            registry_path = base / configured
         registry_target = canonical(registry_path, base, samefile, scandir)
     except (OSError, RuntimeError, ValueError) as exc:
         return f"{FAIL_CLOSED} cannot resolve {file_path!r} ({exc})."
-    if target is None:
-        return None
     try:
         registry = load_registry(registry_path)
     except RegistryError as exc:
         if target == registry_target:
             return None
         return (
-            f"{FAIL_CLOSED} {exc}. Every Edit/Write inside the repository is denied until "
-            f"{registry_path.name} is repaired; that file stays editable."
+            f"{FAIL_CLOSED} {exc}. Every Edit/Write inside the repository is denied until the registry "
+            f"named by contract_registry in {CONFIG_NAME} is repaired; that file stays editable."
         )
     rel = target.relative_to(base).as_posix()
     rules = matching_rules(registry, rel)
@@ -263,14 +289,17 @@ def decide(
     except OSError as exc:
         return f"{FAIL_CLOSED} cannot read the context_pack log {log_path} ({exc}); {rel} is unverifiable."
     missing = [item for item in required if item not in served]
-    return _denial(rel, rules, missing, window) if missing else None
+    if not missing:
+        return None
+    label = registry_path.as_posix() if registry_target is None else registry_target.relative_to(base).as_posix()
+    return _denial(rel, rules, missing, window, label)
 
 
 def main(
     stdin_text: str,
     root: Path = REPO_ROOT,
     log_path: Path = LOG_PATH,
-    registry_path: Path = REGISTRY_PATH,
+    registry_path: Path | None = None,
     now: float | None = None,
     samefile: Callable[..., bool] = os.path.samefile,
     scandir: Callable[..., Any] = os.scandir,
