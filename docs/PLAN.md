@@ -98,10 +98,18 @@ Por contrato JSON al implementador, test-first.
   * Sin configuración, el kit gobierna lo mínimo y lo dice; no falla en silencio.
 * **Hooks:** se llaman con `$CLAUDE_PROJECT_DIR` y no dependen del directorio actual. Hace falta un
   test que haga `cd` y compruebe que siguen funcionando.
-* **Los 3 saltados de la fase 0:** en `tests/security/test_hook_case_identity.py`, las variantes de
-  mayúsculas de `traianus/` y `docs/specifications/` se saltan porque esos directorios no existen
-  aquí. Con las rutas gobernadas en la configuración, esas entradas pasan a rutas del kit y el
-  `skipif` se quita.
+* **Avance (2026-10-05):**
+  * Paso 1 (`cc81355`): las órdenes de hook usan `$CLAUDE_PROJECT_DIR`; fuera `spectral-math-engine`.
+  * Paso 2 (`4ec1912`, `151bacc`): `.actuarii.json` (JSON, no TOML: los hooks deben importar con un
+    Python 3.9 de sistema) con `governed_paths` y `receipt_window_seconds`, leído por
+    `tools/project_config.py`. Sin fichero se gobierna un mínimo incorporado (`.actuarii.json`,
+    `AGENTS.md`, `CLAUDE.md`); con uno inválido se deniega todo dentro de la raíz. El propio fichero
+    está siempre gobernado y cada denegación nombra su regla. Los 3 saltados de la fase 0 ya no
+    existen: 1614 en verde, 0 saltados.
+  * Pendientes: directorios del shim en la configuración (paso 3); ruta del registro de contratos y
+    registro como ejemplo, con una sola copia de `path_matches` (paso 4); anuncio al abrir sesión de
+    lo que se gobierna y de dónde sale (paso 5); textos, `AGENTS.md`, subagentes, skills y limpieza
+    del perímetro de permisos (paso 6).
 * **Mensajes y textos:** sin Traianus ni cláusulas suyas. Cada denegación dice qué regla del
   fichero de configuración la causa.
 * **AGENTS.md:** una plantilla genérica de constitución, con las reglas que el kit hace cumplir y sus
