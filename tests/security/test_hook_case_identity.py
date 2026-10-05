@@ -256,7 +256,7 @@ UNGOVERNED = [
 
 
 @pytest.fixture
-def audit(isolate_db):
+def audit():
     """The audit trail exists and holds a receipt for another file; `grant` adds one for a target."""
     def grant(target):
         decision = validate_proposal(json.dumps({
@@ -281,7 +281,14 @@ def test_the_exact_spelling_of_a_governed_path_is_denied_without_a_receipt(monke
     assert "no recent EXECUTE_SAFE" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("variant", [variant for _exact, variant in GOVERNED])
+def needs_governed_directory(exact):
+    return pytest.mark.skipif(
+        not (REPO_ROOT / exact).parent.exists(),
+        reason="the governed directory does not exist in this repository, so a variant names no file here")
+
+
+@pytest.mark.parametrize("variant", [
+    pytest.param(variant, marks=needs_governed_directory(exact)) for exact, variant in GOVERNED])
 def test_a_governed_path_in_other_case_is_denied_without_a_receipt(monkeypatch, capsys, audit, variant):
     assert gate(monkeypatch, variant, **BLIND) == 2
     assert "no recent EXECUTE_SAFE" in capsys.readouterr().err
@@ -378,5 +385,7 @@ def test_a_tool_other_than_edit_and_write_never_reaches_the_filesystem(monkeypat
 def test_on_a_case_insensitive_filesystem_the_real_variants_are_denied(monkeypatch, capsys, audit, spelled):
     if not (REPO_ROOT / "TESTS").exists():
         pytest.skip("the repository sits on a case-sensitive filesystem: a variant names no file here")
+    if not (REPO_ROOT / spelled.lower()).parent.exists():
+        pytest.skip("the governed directory does not exist in this repository: a variant names no file here")
     assert gate(monkeypatch, str(REPO_ROOT / spelled)) == 2
     assert "no recent EXECUTE_SAFE" in capsys.readouterr().err

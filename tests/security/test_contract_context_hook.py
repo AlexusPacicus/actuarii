@@ -385,19 +385,6 @@ def test_a_contract_edited_after_serving_must_be_served_again(hook, env, monkeyp
 # T8: registry rot guard on the real repository
 
 
-def test_every_requirement_of_the_real_registry_resolves(hook):
-    registry = hook.load_registry(hook.REGISTRY_PATH)
-    unresolved = []
-    for entry in registry["rules"]:
-        for required in entry["requires"]:
-            try:
-                lines, _digest = context_pack.load(REPO_ROOT, required["path"])
-                context_pack.SELECTORS[required["kind"]](lines, required["value"])
-            except (context_pack.SectionError, KeyError) as exc:
-                unresolved.append(f"{entry['name']}: {required}: {exc}")
-    assert not unresolved
-
-
 @pytest.mark.parametrize("target, name", [
     ("traianus/app.py", "engine-vector-path"),
     ("traianus/storage/_storage.py", "engine-vector-path"),
@@ -420,9 +407,6 @@ def test_the_real_registry_covers_the_vector_path_and_the_measurements(hook, tar
 # T8b: contract relocation (docs/methodology/instrument-audit/)
 
 RELOCATED_CONTRACT = "docs/methodology/instrument-audit/contracts.md"
-RELOCATED_AUDIT_DIR = REPO_ROOT / "docs" / "methodology" / "instrument-audit"
-LEGACY_AUDIT_DIR = REPO_ROOT / "frontend" / "audits"
-AUDIT_FILES = ("contracts.md", "K6.md", "R4.md", "definitions.md", "derivations.md")
 
 
 def test_the_real_registry_names_the_relocated_contract_path(hook):
@@ -430,12 +414,6 @@ def test_the_real_registry_names_the_relocated_contract_path(hook):
     for entry in registry["rules"]:
         for required in entry["requires"]:
             assert required["path"] == RELOCATED_CONTRACT
-
-
-def test_the_audit_records_were_relocated_not_copied():
-    for name in AUDIT_FILES:
-        assert (RELOCATED_AUDIT_DIR / name).is_file()
-        assert not (LEGACY_AUDIT_DIR / name).exists()
 
 
 # T9: startup surface

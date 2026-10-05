@@ -13,13 +13,15 @@ from tools.boundary_validator import validator
 from tools.boundary_validator.validator import validate_proposal
 
 ROOT = Path(__file__).resolve().parents[2]
+GROUNDED_FILE = ROOT / "tools" / "boundary_validator" / "validator.py"
+GROUNDING_QUOTE = "def validate_proposal("
 
 
 def _grounded_proposal() -> str:
     return json.dumps({
         "Intent_Class": "FIX",
         "Implementation_Block": "update threshold",
-        "Topological_Grounding": "auto_calibrate_critical_threshold()",
+        "Topological_Grounding": GROUNDING_QUOTE,
         "Safety_Abort": "NONE",
     })
 
@@ -56,8 +58,8 @@ def test_security_SEC_M_03_external_network_blocked():
 
 
 def test_security_SEC_M_04_literal_grounding_required():
-    src = (ROOT / "traianus" / "app.py").read_text(encoding="utf-8")
-    assert "auto_calibrate_critical_threshold()" in src  # citation exists literally
+    src = GROUNDED_FILE.read_text(encoding="utf-8")
+    assert GROUNDING_QUOTE in src  # citation exists literally
 
     proposal = _grounded_proposal()
     # Grounding that does NOT exist literally in the target file
@@ -67,13 +69,13 @@ def test_security_SEC_M_04_literal_grounding_required():
         "Topological_Grounding": "this_citation_does_not_exist_in_the_code_xyz",
         "Safety_Abort": "NONE",
     })
-    decision = validate_proposal(proposal_bad, str(ROOT / "traianus" / "app.py"))
+    decision = validate_proposal(proposal_bad, str(GROUNDED_FILE))
     assert decision["status"] == "QUARANTINED"
     assert decision["final_decision"] == "ABORTED_GROUNDING_FAILED"
 
 
 def test_security_SEC_M_05_valid_grounding_approved():
-    decision = validate_proposal(_grounded_proposal(), str(ROOT / "traianus" / "app.py"))
+    decision = validate_proposal(_grounded_proposal(), str(GROUNDED_FILE))
     assert decision["status"] == "VALIDATED"
     assert decision["final_decision"] == "EXECUTE_SAFE"
     assert decision["and_gate_ok"] is True
@@ -115,7 +117,7 @@ def test_security_SEC_M_06_mcp_stdio_jsonrpc(monkeypatch, capsys):
         {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
          "params": {"name": "validate_proposal",
                     "arguments": {"proposal": _grounded_proposal(),
-                                  "target_file": str(ROOT / "traianus" / "app.py")}}},
+                                  "target_file": str(GROUNDED_FILE)}}},
     ]
     monkeypatch.setattr(sys, "stdin", io.StringIO("".join(json.dumps(m) + "\n" for m in messages)))
     validator.main()
