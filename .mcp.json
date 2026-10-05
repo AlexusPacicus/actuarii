@@ -4,11 +4,6 @@
       "type": "stdio",
       "command": "python3",
       "args": ["tools/boundary_validator/validator.py"]
-    },
-    "spectral-math-engine": {
-      "type": "stdio",
-      "command": "python3",
-      "args": ["tools/mcp/spectral_math_mcp.py"]
     }
   }
 }

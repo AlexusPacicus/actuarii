@@ -10,6 +10,7 @@ import ast
 import io
 import json
 import re
+import shlex
 import sys
 import time
 from hashlib import sha256
@@ -24,8 +25,8 @@ from tools.audit import context_pack
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOOK = REPO_ROOT / "tools" / "hooks" / "require_contract_context.py"
 SETTINGS = REPO_ROOT / ".claude" / "settings.json"
-BOUNDARY_HOOK = "python3 tools/hooks/require_boundary_validation.py"
-CONTRACT_HOOK = "python3 tools/hooks/require_contract_context.py"
+BOUNDARY_HOOK = ["python3", "$CLAUDE_PROJECT_DIR/tools/hooks/require_boundary_validation.py"]
+CONTRACT_HOOK = ["python3", "$CLAUDE_PROJECT_DIR/tools/hooks/require_contract_context.py"]
 
 STAMP = "%Y-%m-%dT%H:%M:%SZ"
 NOW = 1_800_000_000.0
@@ -470,7 +471,7 @@ def settings():
 
 def test_hook_follows_the_boundary_hook_under_edit_write():
     [entry] = [item for item in settings()["hooks"]["PreToolUse"] if item["matcher"] == "Edit|Write"]
-    assert [item["command"] for item in entry["hooks"]] == [BOUNDARY_HOOK, CONTRACT_HOOK]
+    assert [shlex.split(item["command"]) for item in entry["hooks"]] == [BOUNDARY_HOOK, CONTRACT_HOOK]
 
 
 def test_registration_changes_nothing_else_in_settings():
@@ -478,11 +479,15 @@ def test_registration_changes_nothing_else_in_settings():
     (the python gate wiring, 54c7f8c, is the second such change)."""
     current = settings()
     assert current["permissions"] == PERMISSIONS
-    assert current["hooks"]["PreToolUse"][1:] == [
+    parsed = [
+        {**group, "hooks": [{**hook, "command": shlex.split(hook["command"])} for hook in group["hooks"]]}
+        for group in current["hooks"]["PreToolUse"][1:]
+    ]
+    assert parsed == [
         {"matcher": "Read|Grep|Glob", "hooks": [
-            {"type": "command", "command": "python3 tools/hooks/confine_review_reads.py"}]},
+            {"type": "command", "command": ["python3", "$CLAUDE_PROJECT_DIR/tools/hooks/confine_review_reads.py"]}]},
         {"matcher": "Bash", "hooks": [
-            {"type": "command", "command": "python3 tools/hooks/deny_python_escapes.py"}]},
+            {"type": "command", "command": ["python3", "$CLAUDE_PROJECT_DIR/tools/hooks/deny_python_escapes.py"]}]},
     ]
     assert current["enableAllProjectMcpServers"] is True
     assert set(current) == {"permissions", "hooks", "enableAllProjectMcpServers"}
