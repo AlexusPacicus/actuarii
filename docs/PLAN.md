@@ -216,8 +216,9 @@ Los *actuarii* levantan las actas; Traianus es el archivo donde quedan.
 
 Vienen de la memoria de la sesión de Traianus y una sesión nueva aquí no las ve:
 
-* **Sin `cd` en Bash:** rompe todos los hooks con ruta relativa hasta la fase 1. Se usan rutas
-  absolutas y `git -C`.
+* **Sin `cd` en Bash:** rompía todos los hooks con ruta relativa. Desde `b29c653` las órdenes usan
+  `$CLAUDE_PROJECT_DIR`; la regla sigue hasta que una sesión abierta después de ese commit lo
+  compruebe. Mientras, rutas absolutas y `git -C`.
 * **Sin atribución a Claude** en commits ni PR: ni `Co-Authored-By` ni «Generated with Claude Code».
 * **El chat principal no escribe código:**
   * El código y los tests van al implementador, con un contrato JSON validado en código.
