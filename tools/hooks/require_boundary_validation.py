@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""Claude Code PreToolUse hook: enforce AGENTS.md SS5.2 ("Agents MUST NOT
-assume direct host OS execution authority") for Edit/Write on governed
-paths.
+"""Claude Code PreToolUse hook: no direct host authority for Edit/Write on
+governed paths.
 
 Reads the PreToolUse JSON payload from stdin ({"tool_name": ...,
 "tool_input": {"file_path": ...}, ...}). Exits 0 (allow) unless the target
@@ -9,6 +8,13 @@ is a governed path with no recent boundary-validator EXECUTE_SAFE, in
 which case it exits 2 (blocking) with an explanatory message on stderr.
 Any failure to verify (bad DB, bad payload shape while a governed path is
 still identifiable) fails closed.
+
+The governed paths and the receipt window come from the project
+configuration (.actuarii.json, tools/project_config.py), and every denial
+names the rule behind it. While that configuration is invalid every Edit or
+Write inside the repository is denied, with the error in the message, except
+for the configuration file itself, which stays subject to a receipt; outside
+the repository nothing is denied.
 
 The target is decided by what the filesystem says it is, not by how it is
 spelled: `canonical` resolves it (symlinks, `..`) and re-spells it with the
@@ -32,7 +38,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 try:
-    from tools.boundary_validator.hook_gate import has_recent_execute_safe, is_governed_path
+    from tools.boundary_validator.hook_gate import governing_rule, has_recent_execute_safe
+    from tools.project_config import CONFIG_NAME, ConfigError
 except Exception as exc:  # fail-closed: a gate that cannot start must deny
     # An unhandled failure here exits 1, which the harness reads as a broken
     # hook and not as a denial: the edit would proceed ungated.
@@ -122,9 +129,20 @@ def main(
                 f"{file_path!r} is inside the repository ({exc}).\n"
             )
             return 2
-        if target is None or not is_governed_path(str(target)):
+        if target is None:
             return 0
-        if has_recent_execute_safe(str(target)):
+        try:
+            verdict = governing_rule(str(target))
+        except ConfigError as exc:
+            sys.stderr.write(
+                f"[require_boundary_validation] {target} is denied: the project "
+                f"configuration is invalid, so no rule can be applied ({exc}). Fix "
+                f"{CONFIG_NAME}; it stays editable under a receipt: call "
+                "mcp__boundary-validator__validate_proposal with "
+                f"target_file={REPO_ROOT / CONFIG_NAME}, then retry.\n"
+            )
+            return 2
+        if verdict is None or has_recent_execute_safe(str(target), verdict.window_seconds):
             return 0
     except Exception as exc:  # fail-closed: an unverifiable audit trail blocks
         sys.stderr.write(
@@ -134,11 +152,11 @@ def main(
         return 2
 
     sys.stderr.write(
-        f"[require_boundary_validation] {target} is a governed path "
-        "(AGENTS.md SS5.1/SS5.2: traianus/, tests/, AGENTS.md, "
-        "docs/specifications/) with no recent EXECUTE_SAFE in audit_log. "
-        "Call mcp__boundary-validator__validate_proposal for this exact "
-        "file first, then retry.\n"
+        f"[require_boundary_validation] {target} is governed by {verdict.rule} "
+        f"(source: {verdict.source}) and has no recent EXECUTE_SAFE in audit_log "
+        f"(window: {verdict.window_seconds} s). Call "
+        f"mcp__boundary-validator__validate_proposal with target_file={target}, "
+        "then retry.\n"
     )
     return 2
 

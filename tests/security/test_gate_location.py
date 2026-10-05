@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.boundary_validator.hook_gate import has_recent_execute_safe, is_governed_path
+from tools.boundary_validator.hook_gate import governing_rule, has_recent_execute_safe
 from tools.boundary_validator.schemas.proposals import (
     AgentMutationProposal,
     build_response_format,
@@ -23,7 +23,7 @@ FORMER_LOCATIONS = (
 
 
 def test_the_gate_is_importable_from_tools_boundary_validator():
-    for name in (validate_proposal, has_recent_execute_safe, is_governed_path,
+    for name in (validate_proposal, has_recent_execute_safe, governing_rule,
                  AgentMutationProposal, build_response_format):
         assert name is not None
 
