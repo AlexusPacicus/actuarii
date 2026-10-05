@@ -1,0 +1,11 @@
+{
+  "schema": "actuarii-config/1",
+  "governed_paths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "tests/**",
+    "tools/boundary_validator/**",
+    "tools/project_config.py"
+  ],
+  "receipt_window_seconds": 900
+}

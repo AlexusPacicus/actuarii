@@ -28,8 +28,10 @@ from tools.boundary_validator import hook_gate
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "tools" / "boundary_validator" / "hook_gate.py"
 HOOK = ROOT / "tools" / "hooks" / "require_boundary_validation.py"
+PROJECT_CONFIG = ROOT / "tools" / "project_config.py"
 
 GATE_MODULE = "tools.boundary_validator.hook_gate"
+GATE_DEPENDENCY = "tools.project_config"
 
 
 def _import_time_statements(body):
@@ -74,14 +76,54 @@ def _handler_exits_with_two(node: ast.Try) -> bool:
     return False
 
 
-def test_security_gate_imports_only_the_standard_library():
+def _foreign_imports(path: Path) -> set:
+    """Dotted names imported at import time from outside the standard library;
+    `from tools import x` counts as `tools.x`."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    foreign = set()
+    for node in _import_time_statements(tree.body):
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            names = [f"{node.module}.{alias.name}" if node.module == "tools" else node.module
+                     for alias in node.names]
+        else:
+            continue
+        foreign.update(name for name in names if name.split(".")[0] not in sys.stdlib_module_names)
+    return foreign
+
+
+def _postpones_annotations(path: Path) -> bool:
+    tree = ast.parse(path.read_text(encoding="utf-8"), feature_version=(3, 9))
+    return any(
+        isinstance(node, ast.ImportFrom) and node.module == "__future__"
+        and any(alias.name == "annotations" for alias in node.names)
+        for node in tree.body
+    )
+
+
+def test_security_gate_imports_only_the_standard_library_and_the_project_configuration():
     """hook_gate MUST start under any interpreter, including one that has
-    never installed the substrate's third-party dependencies."""
-    foreign = _imported_roots(GATE) - set(sys.stdlib_module_names)
+    never installed the substrate's third-party dependencies; the project
+    configuration it reads is the one module it may add."""
+    foreign = _foreign_imports(GATE) - {GATE_DEPENDENCY}
     assert not foreign, (
         f"hook_gate.py imports {sorted(foreign)} at import time; a gate that "
         "needs the substrate installed cannot run where the harness spawns it"
     )
+
+
+def test_security_project_configuration_imports_only_the_standard_library():
+    foreign = _imported_roots(PROJECT_CONFIG) - set(sys.stdlib_module_names)
+    assert not foreign, (
+        f"project_config.py imports {sorted(foreign)} at import time; the gate "
+        "imports it, so a broken import there opens the gate"
+    )
+
+
+@pytest.mark.parametrize("path", [GATE, PROJECT_CONFIG], ids=["gate", "project_config"])
+def test_security_gate_modules_postpone_annotations_for_a_system_python_3_9(path):
+    assert _postpones_annotations(path)
 
 
 def test_security_hook_script_imports_only_stdlib_and_the_gate():

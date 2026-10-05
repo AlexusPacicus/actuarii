@@ -238,8 +238,9 @@ def test_the_boundary_hook_imports_only_the_standard_library_and_the_gate_at_any
 GOVERNED = [
     ("tests/x.py", f"{REPO_ROOT}/TESTS/x.py"),
     ("AGENTS.md", f"{REPO_ROOT}/agents.md"),
-    ("traianus/app.py", f"{REPO_ROOT}/TRAIANUS/app.py"),
-    ("docs/specifications/x.md", f"{REPO_ROOT}/Docs/SPECIFICATIONS/x.md"),
+    ("CLAUDE.md", f"{REPO_ROOT}/claude.md"),
+    ("tools/boundary_validator/schemas/proposals.py",
+     f"{REPO_ROOT}/Tools/Boundary_Validator/Schemas/Proposals.py"),
     ("tools/boundary_validator/hook_gate.py", f"{REPO_ROOT}/Tools/Boundary_Validator/Hook_Gate.py"),
     ("tests/x.py", f"{SHOUT}/tests/x.py"),
     ("tests/x.py", f"{SWAP}/Tests/x.py"),
@@ -247,6 +248,7 @@ GOVERNED = [
 UNGOVERNED = [
     f"{REPO_ROOT}/tools/x.py",
     f"{REPO_ROOT}/Tools/x.py",
+    f"{REPO_ROOT}/Tools/Hooks/x.py",
     f"{REPO_ROOT}/Tools/Audit/Context_Pack.py",
     f"{REPO_ROOT}/DOCS/roadmap/x.md",
     f"{REPO_ROOT}/Docs/Roadmap/NEXT_RESEARCH.md",
@@ -281,14 +283,7 @@ def test_the_exact_spelling_of_a_governed_path_is_denied_without_a_receipt(monke
     assert "no recent EXECUTE_SAFE" in capsys.readouterr().err
 
 
-def needs_governed_directory(exact):
-    return pytest.mark.skipif(
-        not (REPO_ROOT / exact).parent.exists(),
-        reason="the governed directory does not exist in this repository, so a variant names no file here")
-
-
-@pytest.mark.parametrize("variant", [
-    pytest.param(variant, marks=needs_governed_directory(exact)) for exact, variant in GOVERNED])
+@pytest.mark.parametrize("variant", [variant for _exact, variant in GOVERNED])
 def test_a_governed_path_in_other_case_is_denied_without_a_receipt(monkeypatch, capsys, audit, variant):
     assert gate(monkeypatch, variant, **BLIND) == 2
     assert "no recent EXECUTE_SAFE" in capsys.readouterr().err
@@ -381,11 +376,10 @@ def test_a_tool_other_than_edit_and_write_never_reaches_the_filesystem(monkeypat
 # T7: the boundary hook on the real repository, where the filesystem ignores case
 
 
-@pytest.mark.parametrize("spelled", ["TESTS/conftest.py", "agents.md", "Traianus/app.py"])
+@pytest.mark.parametrize("spelled", [
+    "TESTS/conftest.py", "agents.md", "claude.md", "Tools/Boundary_Validator/validator.py"])
 def test_on_a_case_insensitive_filesystem_the_real_variants_are_denied(monkeypatch, capsys, audit, spelled):
     if not (REPO_ROOT / "TESTS").exists():
         pytest.skip("the repository sits on a case-sensitive filesystem: a variant names no file here")
-    if not (REPO_ROOT / spelled.lower()).parent.exists():
-        pytest.skip("the governed directory does not exist in this repository: a variant names no file here")
     assert gate(monkeypatch, str(REPO_ROOT / spelled)) == 2
     assert "no recent EXECUTE_SAFE" in capsys.readouterr().err

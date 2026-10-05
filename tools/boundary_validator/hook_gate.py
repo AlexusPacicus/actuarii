@@ -1,13 +1,19 @@
-"""PreToolUse enforcement gate (AGENTS.md SS5.2, SS6.2): pure, testable
-checks used by tools/hooks/require_boundary_validation.py to block Edit/Write
-on governed paths unless boundary-validator already logged EXECUTE_SAFE for
-that exact file recently.
+"""PreToolUse enforcement gate: pure, testable checks used by
+tools/hooks/require_boundary_validation.py to block Edit/Write on governed
+paths unless boundary-validator already logged EXECUTE_SAFE for that exact
+file recently.
+
+Which paths are governed, and for how long a receipt counts, is not decided
+here: it comes from the project configuration (.actuarii.json, read by
+tools/project_config.py).
 
 Standard library only, deliberately: the harness spawns the hook with an
 ambient PATH and cwd, so the interpreter running this may be a bare system
 Python with none of the substrate's dependencies installed. An import error
 here exits 1, which the harness reads as a broken hook rather than as a
-denial -- the gate would fail OPEN. Hence no import of traianus.
+denial -- the gate would fail OPEN. Hence the only module imported besides
+the standard library is tools.project_config, itself standard library only,
+and annotations are postponed so a Python 3.9 interpreter can import this.
 
 The gate owns the location of the audit trail: AUDIT_DB_PATH, read at call
 time, and tools.boundary_validator.validator._persist_audit writes the
@@ -16,43 +22,37 @@ writer and the reader cannot diverge. The location is a module attribute,
 never an environment variable or a config file: the hook would trust a path
 an agent can set. Tests repoint the attribute in process.
 """
+from __future__ import annotations
+
 import sqlite3
 from contextlib import closing
 from pathlib import Path
+
+from tools import project_config
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 DEFAULT_AUDIT_DB = REPO_ROOT / ".data" / "boundary_validator_audit.db"
 AUDIT_DB_PATH: Path | str = DEFAULT_AUDIT_DB
 
-GOVERNED_TOP_LEVEL = {"traianus", "tests"}
-GOVERNED_SINGLE_FILES = {"AGENTS.md"}
-GOVERNED_SUBTREES = {("docs", "specifications"), ("tools", "boundary_validator")}
 
+def governing_rule(file_path: str) -> project_config.Governance | None:
+    """The project-configuration rule that governs `file_path`, or None.
 
-def is_governed_path(file_path: str) -> bool:
-    """True if `file_path` falls under a path governed by AGENTS.md SS5.
-
-    Governed: traianus/**, tests/**, AGENTS.md, docs/specifications/**,
-    tools/boundary_validator/**. Everything else (the rest of tools/, docs/roadmap/,
-    .claude/, .opencode/, ...) is deliberately left ungoverned.
+    None for a path outside the repository root and for one no rule covers.
+    Raises project_config.ConfigError while the configuration is invalid,
+    except for the configuration file itself, which is always governed.
     """
     try:
         resolved = Path(file_path).expanduser().resolve()
     except OSError:
-        return False
+        return None
     if not resolved.is_relative_to(REPO_ROOT):
-        return False
-    rel_parts = resolved.relative_to(REPO_ROOT).parts
-    if not rel_parts:
-        return False
-    if rel_parts[0] in GOVERNED_SINGLE_FILES:
-        return True
-    if rel_parts[0] in GOVERNED_TOP_LEVEL:
-        return True
-    if rel_parts[:2] in GOVERNED_SUBTREES:
-        return True
-    return False
+        return None
+    rel = resolved.relative_to(REPO_ROOT).as_posix()
+    if rel == ".":
+        return None
+    return project_config.governance(rel)
 
 
 def _db_path() -> Path:
@@ -65,7 +65,7 @@ def _db_path() -> Path:
     return path if path.is_absolute() else REPO_ROOT / path
 
 
-def has_recent_execute_safe(file_path: str, window_seconds: int = 900) -> bool:
+def has_recent_execute_safe(file_path: str, window_seconds: int = project_config.DEFAULT_WINDOW) -> bool:
     """True if audit_log has an EXECUTE_SAFE row for `file_path` within the
     last `window_seconds`.
 
