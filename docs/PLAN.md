@@ -111,9 +111,15 @@ Por contrato JSON al implementador, test-first.
     intérprete real aislado (`-I`), una sola fuente de verdad. El directorio del kit está siempre
     permitido (si no, los hooks saldrían 126 y la puerta se abriría); con la configuración inválida
     solo ese. Sin fichero, todo el repositorio (solo scripts commiteados). 1683 en verde.
-  * Pendientes: ruta del registro de contratos y registro como ejemplo, con una sola copia de `path_matches` (paso 4); anuncio al abrir sesión de
-    lo que se gobierna y de dónde sale (paso 5); textos, `AGENTS.md`, subagentes, skills y limpieza
-    del perímetro de permisos (paso 6).
+  * Paso 4 (`8f49a81`): clave `contract_registry` (`null` o una ruta; aquí `null`), leída por el hook
+    en cada llamada; el registro configurado está siempre gobernado. Una sola copia de
+    `path_matches`, en `tools/project_config.py`. El registro de Traianus pasa intacto a
+    `examples/traianus/contract_registry.json`. 1768 en verde.
+  * Pendientes: anuncio al abrir sesión de lo que se gobierna y de dónde sale (paso 5); textos,
+    `AGENTS.md` (sus cláusulas 3.7 y 6.2 aún citan `tools/hooks/contract_registry.json`),
+    subagentes, skills y limpieza del perímetro de permisos (paso 6).
+  * Lección de los pasos 3 y 4: al cambiar el esquema, el contrato debe listar todos los tests que
+    escriben configuraciones (`grep` de `actuarii-config/1` en `tests/`) antes de lanzarse.
 * **Mensajes y textos:** sin Traianus ni cláusulas suyas. Cada denegación dice qué regla del
   fichero de configuración la causa.
 * **AGENTS.md:** una plantilla genérica de constitución, con las reglas que el kit hace cumplir y sus
