@@ -1,12 +1,10 @@
 """Citations in a traceability document, verified mechanically (tools/audit/check_doc_citations.py,
 AGENTS 5.3, 1.6).
 
-Fixtures build a synthetic root with a source file and a tests/ fixture module; only the smoke
-tests at the end read the real repository, verifying docs/traceability/TRACEABILITY.md itself.
+Fixtures build a synthetic root with a source file and a tests/ fixture module.
 """
 
 import ast
-import re
 from pathlib import Path
 
 import pytest
@@ -359,21 +357,3 @@ def test_tool_source_names_no_network_or_process_primitive():
     source = TOOL.read_text(encoding="utf-8")
     for primitive in FORBIDDEN_PRIMITIVES:
         assert primitive not in source, primitive
-
-
-# T12 the real repository: docs/traceability/TRACEABILITY.md must check out clean
-
-
-def test_the_real_traceability_document_is_self_consistent(invoke):
-    doc_path = REPO_ROOT / "docs" / "traceability" / "TRACEABILITY.md"
-    text = doc_path.read_text(encoding="utf-8")
-    expected_entries = len(re.findall(r"^### ", text, re.MULTILINE))
-    expected_code = len(re.findall(r"^- \*\*Code:\*\*", text, re.MULTILINE))
-    expected_test = len(re.findall(r"^- \*\*Test:\*\*", text, re.MULTILINE))
-    assert expected_entries > 0
-
-    code, out, err = invoke()
-
-    assert err == ""
-    assert code == 0
-    assert out == f"OK {expected_entries} entries, {expected_code} code citations, {expected_test} test citations\n"

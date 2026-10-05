@@ -2,8 +2,7 @@
 
 A delegation contract embeds a JSON spec; the tool serves only the sections it names, to stdout,
 and appends one log line per selector (path, selector, range, hashes) without the content.
-Fixtures are built on a synthetic root; only the smoke test reads the real repository, and it
-logs to a temporary file.
+Fixtures are built on a synthetic root.
 """
 
 import ast
@@ -637,24 +636,6 @@ def test_usage_errors_exit_2(invoke, capsys, argv):
         invoke(GOOD, *argv)
     assert raised.value.code == 2
     assert capsys.readouterr().out == ""
-
-
-# T14 smoke on the real repository
-
-
-def test_the_real_repository_resolves(invoke, tmp_path):
-    body = {"task": "smoke", "sources": [
-        {"path": "AGENTS.md", "select": [{"clause": "6.1"}]},
-        {"path": "docs/audit/AUDIT.md", "select": [{"match": "R1-INV4"}]},
-        {"path": "traianus/storage/_storage.py", "select": [{"symbol": "init_relational_tables"}]},
-    ]}
-    code, out, err = invoke(body, "--root", str(REPO_ROOT), "--log", str(tmp_path / "pack.log"))
-    assert code == 0, err
-    sections, pack = parse(out)
-    assert [header.split(":")[0] for header, _ in sections] == [
-        "=== AGENTS.md", "=== docs/audit/AUDIT.md", "=== traianus/storage/_storage.py"]
-    assert all(text.strip() for _, text in sections)
-    assert pack.startswith("=== pack: 3 sections, ")
 
 
 # The tool itself

@@ -1,0 +1,12 @@
+[project]
+name = "actuarii"
+version = "0.0.0"
+requires-python = "~=3.11"
+dependencies = ["pydantic==2.13.3"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers"]

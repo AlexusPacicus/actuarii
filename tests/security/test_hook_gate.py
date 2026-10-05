@@ -55,7 +55,7 @@ def test_is_governed_path_rejects_outside_repo():
     assert is_governed_path("/tmp/not-in-repo/AGENTS.md") is False
 
 
-def test_recent_execute_safe_detected(isolate_db):
+def test_recent_execute_safe_detected():
     # target_file travels as validate_proposal's own out-of-band argument
     # (mirrors the MCP tool's `target_file` parameter) — that's what
     # _persist_audit logs to audit_log.target_file, independently of
@@ -67,7 +67,7 @@ def test_recent_execute_safe_detected(isolate_db):
     assert has_recent_execute_safe(str(REPO_ROOT / target)) is True
 
 
-def test_matches_absolute_target_against_relative_proposal(isolate_db):
+def test_matches_absolute_target_against_relative_proposal():
     """validate_proposal was called with a relative target_file ('AGENTS.md',
     as an interactive caller naturally would); the hook receives an absolute
     tool_input.file_path from Claude Code. Both must resolve to the same
@@ -78,12 +78,12 @@ def test_matches_absolute_target_against_relative_proposal(isolate_db):
     assert has_recent_execute_safe(str(REPO_ROOT / "AGENTS.md")) is True
 
 
-def test_no_matching_row_is_not_recent(isolate_db):
+def test_no_matching_row_is_not_recent():
     validate_proposal(_doc_proposal("docs/other.md"), "docs/other.md")
     assert has_recent_execute_safe(str(REPO_ROOT / "docs/unrelated.md")) is False
 
 
-def test_non_execute_safe_decision_does_not_count(isolate_db):
+def test_non_execute_safe_decision_does_not_count():
     target = "docs/x.md"
     decision = validate_proposal(json.dumps({
         "Intent_Class": "DOC",
@@ -158,7 +158,7 @@ def test_malformed_stdin_json_blocks(monkeypatch):
     assert hook_script.main() == 2
 
 
-def test_persist_audit_closes_connection(isolate_db, monkeypatch):
+def test_persist_audit_closes_connection(monkeypatch):
     """R9/INV-10: _persist_audit must close its connection deterministically;
     `with conn` commits but leaves the handle to the garbage collector."""
     from tools.boundary_validator import validator

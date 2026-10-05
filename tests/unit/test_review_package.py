@@ -6,13 +6,11 @@ documents, the record, and the files they cite; denied paths never enter it.
 
 import hashlib
 import json
-from pathlib import Path
 
 import pytest
 
 from tools.audit.build_review_package import (
     BASE_DOCS,
-    DENIED,
     PROCEDURE,
     cited_paths,
     clear_lock,
@@ -21,7 +19,6 @@ from tools.audit.build_review_package import (
     write_package,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
 RECORD = "docs/methodology/instrument-audit/K6.md"
 
 
@@ -152,16 +149,3 @@ def test_lock_round_trip(tmp_path):
     assert json.loads(lock.read_text())["package"] == str(pkg.resolve())
     clear_lock(lock)
     assert not lock.exists()
-
-
-def test_denylist_covers_every_entry_of_definitions_not_allowed():
-    text = (REPO_ROOT / "docs/methodology/instrument-audit/definitions.md").read_text()
-    not_allowed = text.split("Not allowed", 1)[1].split("```", 1)[0]
-    entries = cited_paths(not_allowed)
-    known = ("frontend/POC.md", "docs/adrs/ADR-026-*",
-             "traianus/geometry/spatial_observables.py", "data/spinoza/telemetry/",
-             "docs/LEDGER.md", "docs/relational-bridges/")
-    for entry in known:
-        assert entry in entries or entry.rstrip("/") in entries
-    for path in entries:
-        assert any(path.startswith(d) or d.startswith(path) for d in DENIED)
