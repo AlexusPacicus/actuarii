@@ -20,8 +20,10 @@ VALID = {
     "governed_paths": ["docs/**", "src/*.py", "NOTES.md"],
     "python_script_dirs": [],
     "contract_registry": None,
+    "review": None,
     "receipt_window_seconds": 120,
 }
+REVIEW = {"procedure": "skills/review.md", "base_docs": [], "records": "audit/records", "denied": []}
 
 
 def announce(capsys) -> str:
@@ -69,6 +71,18 @@ def test_a_configured_registry_is_named_and_listed_among_the_receipts(config_fil
 def test_without_a_registry_the_announcement_says_none(config_file, capsys):
     config_file(VALID)
     assert "  Contract registry: none" in announce(capsys).splitlines()
+
+
+def test_a_configured_blind_review_names_its_procedure_and_records(config_file, capsys):
+    config_file({**VALID, "review": REVIEW})
+    assert "  Blind review: procedure skills/review.md, records in audit/records" in announce(capsys).splitlines()
+
+
+@pytest.mark.parametrize("configured", [True, False])
+def test_without_a_blind_review_the_announcement_says_none(config_file, capsys, configured):
+    if configured:
+        config_file(VALID)
+    assert "  Blind review: none" in announce(capsys).splitlines()
 
 
 @pytest.mark.parametrize("dirs, expected", [

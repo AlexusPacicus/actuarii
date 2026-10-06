@@ -1,0 +1,34 @@
+{
+  "schema": "actuarii-config/1",
+  "governed_paths": [
+    "traianus/**",
+    "tests/**",
+    "AGENTS.md",
+    "docs/specifications/**",
+    "tools/boundary_validator/**"
+  ],
+  "python_script_dirs": [
+    "tools",
+    "traianus"
+  ],
+  "contract_registry": "tools/hooks/contract_registry.json",
+  "review": {
+    "procedure": ".claude/skills/instrument-audit/SKILL.md",
+    "base_docs": [
+      "docs/methodology/instrument-audit/definitions.md",
+      "docs/methodology/instrument-audit/derivations.md",
+      "docs/methodology/instrument-audit/contracts.md"
+    ],
+    "records": "docs/methodology/instrument-audit",
+    "denied": [
+      "frontend/POC.md",
+      "docs/adrs/ADR-026-",
+      "traianus/geometry/spatial_observables.py",
+      "data/spinoza/telemetry/",
+      "docs/LEDGER.md",
+      "docs/relational-bridges/",
+      "docs/development/"
+    ]
+  },
+  "receipt_window_seconds": 900
+}

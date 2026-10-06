@@ -82,6 +82,7 @@ def configuration(dirs):
         "governed_paths": ["AGENTS.md"],
         "python_script_dirs": dirs,
         "contract_registry": None,
+        "review": None,
         "receipt_window_seconds": 900,
     }
 

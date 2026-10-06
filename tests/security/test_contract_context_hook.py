@@ -396,7 +396,7 @@ FOREIGN = re.compile(r"AGENTS|SS\d|(?i:traianus)")
 def configured(config_file, registry=REGISTRY_REL):
     config_file({
         "schema": "actuarii-config/1", "governed_paths": ["AGENTS.md"], "python_script_dirs": [],
-        "contract_registry": registry, "receipt_window_seconds": 900,
+        "contract_registry": registry, "review": None, "receipt_window_seconds": 900,
     })
 
 

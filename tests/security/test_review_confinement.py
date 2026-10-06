@@ -1,4 +1,4 @@
-"""Review confinement hook (tools/hooks/confine_review_reads.py, AGENTS 6.1).
+"""Review confinement hook (tools/hooks/confine_review_reads.py).
 
 While a review lock names a package directory, Read, Grep and Glob may only reach paths inside
 it; without a lock the hook is inert. Blindness then holds by construction, not by instruction.

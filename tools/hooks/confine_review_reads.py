@@ -1,4 +1,4 @@
-"""PreToolUse hook: confine Read, Grep and Glob to a review package (AGENTS 6.1).
+"""PreToolUse hook: confine Read, Grep and Glob to a review package.
 
 While `.data/review_lock.json` names a package directory, every path those tools would reach
 must resolve (symlinks followed) inside it; anything else is denied with exit 2. Without a lock

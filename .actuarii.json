@@ -11,5 +11,6 @@
   ],
   "python_script_dirs": [],
   "contract_registry": null,
+  "review": null,
   "receipt_window_seconds": 900
 }
