@@ -233,6 +233,16 @@ y `git -c core.pager` buscan `python3` en el `PATH` y el shim los recoge (inferi
   flujo de `AUDIT.md` de Traianus que nada usa; solo se exporta.
 * **Clasificación propuesta:** limpieza. Se borra en F3.
 
+### A18 — Unos `arguments` que no son objeto tumban el servidor MCP
+
+* **Garantía:** ninguna se rompe: sin servidor no hay recibos y las escrituras gobernadas se deniegan
+  (falla cerrado).
+* **Encontrado** por el implementador de F3 (2026-10-07): en `tools/call`, un `params.arguments` que no
+  es objeto lanza `AttributeError` y termina el bucle stdio del servidor.
+* **Lectura:** es una denegación de servicio que la sesión no se recupera sola (habría que reiniciar
+  el servidor).
+* **Clasificación propuesta:** C3. Se corrige con F5: error JSON-RPC -32602 y el servidor sigue.
+
 ## Cierre de la auditoría
 
 * **C1, se corrigen antes del lanzamiento:** A01, A03, A04 (decisión del autor el 2026-10-07: se
