@@ -672,8 +672,9 @@ def test_registration_changes_nothing_else_in_settings():
             {"type": "command", "command": ["python3", "$CLAUDE_PROJECT_DIR/tools/hooks/deny_python_escapes.py"]}]},
     ]
     assert current["enableAllProjectMcpServers"] is True
-    assert set(current) == {"permissions", "hooks", "enableAllProjectMcpServers"}
-    assert set(current["hooks"]) == {"PreToolUse", "SessionStart"}
+    assert current["disableAllHooks"] is False
+    assert set(current) == {"permissions", "hooks", "enableAllProjectMcpServers", "disableAllHooks"}
+    assert set(current["hooks"]) == {"PreToolUse", "SessionStart", "ConfigChange"}
 
 
 # T11: the target is what the filesystem says it is, not how it is spelled

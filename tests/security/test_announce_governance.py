@@ -111,6 +111,7 @@ def test_without_a_file_the_built_in_minimum_is_announced_as_such(config_file, c
     assert project_config.BUILT_IN_SOURCE in text.splitlines()[0]
     assert "900 s" in text
     assert receipt_paths(text) == list(dict.fromkeys((project_config.CONFIG_NAME, *project_config.BUILT_IN_PATHS)))
+    assert receipt_paths(text) == [".actuarii.json", "AGENTS.md", "CLAUDE.md", ".claude/**", ".mcp.json", "tools/**"]
     assert "  Contract registry: none" in text.splitlines()
     assert python_line(text).endswith("python_script_dirs: . (the whole repository)")
 
