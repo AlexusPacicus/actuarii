@@ -2,15 +2,22 @@
 """Claude Code PreToolUse hook: no direct host authority over governed paths, whatever tool writes them.
 
 Reads the PreToolUse JSON payload from stdin ({"tool_name": ..., "tool_input": {...}, "cwd": ...}). Exits 0
-(allow) unless the payload names a governed path with no recent boundary-validator EXECUTE_SAFE, in which case
+(allow) unless the payload names a governed path with no recent boundary-validator receipt, in which case
 it exits 2 (blocking) with an explanatory message on stderr. Any failure to verify (bad DB, bad payload shape,
 a path the filesystem cannot be asked about) fails closed.
 
 The gate does not keep a list of the tools that write; it knows three classes of tool and denies by default:
 
 1. Known writers, each with its path field: Edit, MultiEdit and Write (`file_path`) and NotebookEdit
-   (`notebook_path`). A governed path in that field needs a receipt. A writer without that field, or with one
-   that is not a non-empty string, is denied: the gate cannot tell what it writes.
+   (`notebook_path`). A governed path in that field needs a receipt for the exact change, which is what the
+   tool writes, hashed as the validator hashed the proposal (SHA-256 of the UTF-8 bytes, nothing normalised):
+   Edit needs a receipt whose Topological_Grounding is its `old_string` and whose Implementation_Block is its
+   `new_string`; MultiEdit needs one such receipt for each of its `edits`; Write needs one whose
+   Implementation_Block is its `content`, with any citation; NotebookEdit needs one whose Implementation_Block
+   is its `new_source` (the empty string when it has none, as when it deletes a cell), with any citation. A
+   content field that is not a string, or a MultiEdit without a usable list of edits, is denied. A writer
+   without its path field, or with one that is not a non-empty string, is denied: the gate cannot tell what it
+   writes. A receipt is not consumed: it stays valid for the whole window.
 2. Known tools that write no file, which always pass: Read, Grep, Glob, LS, NotebookRead, Bash (what it writes is
    a declared limit), BashOutput, KillShell, WebFetch, WebSearch, TodoWrite, Task, Agent, Skill, ToolSearch,
    AskUserQuestion, EnterPlanMode, ExitPlanMode, SendMessage and the boundary validator's own
@@ -20,7 +27,8 @@ The gate does not keep a list of the tools that write; it knows three classes of
    lists, is a candidate when it is non-empty, at most 4096 characters, free of NUL and of line breaks, and
    either absolute, or starting with `~`, or containing `/`. A candidate is resolved (a relative one against the
    payload's absolute `cwd`, else against the repository root) and, when it is inside the repository and
-   governed, needs a receipt as a write would. The gate does not know whether such a tool writes, so it asks.
+   governed, needs a receipt for that file, with any content. The gate does not know whether such a tool
+   writes, nor what, so it asks for the receipt per file.
 
 The governed paths and the receipt window come from the project configuration (.actuarii.json,
 tools/project_config.py), and every denial names the rule behind it. While that configuration is invalid every
@@ -36,10 +44,14 @@ spelling, so validate_proposal must be given it (the denial prints it).
 
 Declared limits: a path hidden inside a longer string (a `file://` URL, a command line with spaces) is not
 recognised as a candidate; the class 2 tools are taken as the tools that write no file; Bash does not pass
-through this gate; the contract-context hook does not cover class 3 tools.
+through this gate; the contract-context hook does not cover class 3 tools. The content a receipt binds is
+what the tool input carries: `replace_all` of Edit is not bound (it only decides how many times the approved
+change applies); the citation of NotebookEdit is not bound (its input carries only a `cell_id`, not the text
+it replaces); a class 3 tool keeps the receipt per file, with any content.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
@@ -52,7 +64,12 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 try:
-    from tools.boundary_validator.hook_gate import governing_rule, has_recent_execute_safe
+    from tools.boundary_validator.hook_gate import (
+        governing_rule,
+        has_any_receipt,
+        has_receipt,
+        has_recent_execute_safe,
+    )
     from tools.project_config import CONFIG_NAME, ConfigError
 except Exception as exc:  # fail-closed: a gate that cannot start must deny
     # An unhandled failure here exits 1, which the harness reads as a broken
@@ -152,6 +169,53 @@ def _candidates(tool_input: Any) -> Iterator[tuple[str, str]]:
             pending.extend((f"{location}[{index}]", value) for index, value in reversed(list(enumerate(item))))
 
 
+class ContentError(ValueError):
+    """A content field of a writer that the gate cannot read as text; the message names the field."""
+
+
+def _sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _text(holder: dict[str, Any], key: str, location: str) -> str:
+    value = holder.get(key)
+    if not isinstance(value, str):
+        raise ContentError(f"{location}.{key} must be a string")
+    return value
+
+
+def _edit_receipt(edit: Any, location: str) -> tuple[str | None, str]:
+    if not isinstance(edit, dict):
+        raise ContentError(f"{location} must be an object with a string old_string and a string new_string")
+    return _sha256(_text(edit, "old_string", location)), _sha256(_text(edit, "new_string", location))
+
+
+def required_receipts(tool: str, tool_input: dict[str, Any]) -> list[tuple[str | None, str]]:
+    """The receipts `tool` needs, as (grounding_sha256, block_sha256); a grounding of None is any citation.
+
+    Raises ContentError naming the field when what the tool writes cannot be read as text.
+    """
+    if tool == "Edit":
+        return [_edit_receipt(tool_input, "tool_input")]
+    if tool == "MultiEdit":
+        edits = tool_input.get("edits")
+        if not isinstance(edits, list) or not edits:
+            raise ContentError("tool_input.edits must be a non-empty list of edits")
+        return [_edit_receipt(edit, f"tool_input.edits[{index}]") for index, edit in enumerate(edits)]
+    if tool == "Write":
+        return [(None, _sha256(_text(tool_input, "content", "tool_input")))]
+    source = _text(tool_input, "new_source", "tool_input") if "new_source" in tool_input else ""
+    return [(None, _sha256(source))]
+
+
+OTHER_CONTENT = (
+    "There are recent receipts for this file, but for other content: a receipt covers one exact change. "
+    "The proposal must carry the old_string of an Edit, or of each edit of a MultiEdit, as its "
+    "Topological_Grounding and the new_string as its Implementation_Block; for a Write the content, and "
+    "for a NotebookEdit the new_source, is the Implementation_Block, always byte for byte. "
+)
+
+
 def main(
     samefile: Callable[..., bool] = os.path.samefile, scandir: Callable[..., Any] = os.scandir
 ) -> int:
@@ -217,18 +281,42 @@ def main(
                     f"target_file={REPO_ROOT / CONFIG_NAME}, then retry.\n"
                 )
                 return 2
-            if verdict is None or has_recent_execute_safe(str(target), verdict.window_seconds):
+            if verdict is None:
+                continue
+            if writer:
+                try:
+                    needed = required_receipts(tool, tool_input)
+                except ContentError as exc:
+                    sys.stderr.write(
+                        f"[require_boundary_validation] fail-closed: {target} is governed by {verdict.rule} "
+                        f"(source: {verdict.source}) and {tool} names no usable content: {exc}; "
+                        "the gate cannot tell which receipt covers what it writes.\n"
+                    )
+                    return 2
+                if all(
+                    has_receipt(str(target), block, grounding, verdict.window_seconds)
+                    for grounding, block in needed
+                ):
+                    continue
+                sys.stderr.write(
+                    f"[require_boundary_validation] {target} is governed by {verdict.rule} "
+                    f"(source: {verdict.source}) and has no recent EXECUTE_SAFE receipt for this exact "
+                    f"change in audit_log (window: {verdict.window_seconds} s). "
+                    + (OTHER_CONTENT if has_any_receipt(str(target), verdict.window_seconds) else "")
+                    + "Call "
+                    f"mcp__boundary-validator__validate_proposal with target_file={target}, "
+                    "then retry.\n"
+                )
+                return 2
+            if has_recent_execute_safe(str(target), verdict.window_seconds):
                 continue
             sys.stderr.write(
                 f"[require_boundary_validation] {target} is governed by {verdict.rule} "
                 f"(source: {verdict.source}) and has no recent EXECUTE_SAFE in audit_log "
                 f"(window: {verdict.window_seconds} s). "
-                + (
-                    "" if writer else
-                    f"{tool} names it in {location}, and the gate does not know whether that tool "
-                    "writes files, so it asks for a receipt as for a write. "
-                )
-                + "Call "
+                f"{tool} names it in {location}, and the gate does not know whether that tool "
+                "writes files, nor what, so it asks for a receipt for the file. "
+                "Call "
                 f"mcp__boundary-validator__validate_proposal with target_file={target}, "
                 "then retry.\n"
             )

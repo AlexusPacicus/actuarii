@@ -273,8 +273,18 @@ def audit():
     return grant
 
 
+def quote_of(file_path):
+    """The first 20 characters of the file the path names, found the way a case-blind filesystem would."""
+    try:
+        return FS.real(file_path).read_text(encoding="utf-8")[:20]
+    except (OSError, TypeError, ValueError):
+        return ""
+
+
 def gate(monkeypatch, file_path, tool="Edit", **primitives):
-    payload = json.dumps({"tool_name": tool, "tool_input": {"file_path": file_path}})
+    # the change `audit`'s grant leaves a receipt for: the file's quote as old_string and "b" as new_string
+    tool_input = {"file_path": file_path, "old_string": quote_of(file_path), "new_string": "b"}
+    payload = json.dumps({"tool_name": tool, "tool_input": tool_input})
     monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
     return require_boundary_validation.main(**primitives)
 

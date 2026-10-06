@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import json
+import hashlib
 import uuid
 import sqlite3
 from contextlib import closing
@@ -81,6 +82,37 @@ def _persist_audit(case_id: str, decision: str, intent_class: str = "",
             )
     except sqlite3.Error:
         pass  # Fail-open on logging: never block the gate due to audit failure
+
+
+RECEIPTS_DDL = """
+CREATE TABLE IF NOT EXISTS receipts (
+    case_id TEXT PRIMARY KEY,
+    timestamp TEXT DEFAULT (datetime('now')),
+    target_file TEXT NOT NULL,
+    grounding_sha256 TEXT NOT NULL,
+    block_sha256 TEXT NOT NULL
+)
+"""
+
+
+def _sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _persist_receipt(case_id: str, target_file: str, grounding_sha256: str, block_sha256: str) -> None:
+    try:
+        db_path = hook_gate._db_path()
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        with closing(sqlite3.connect(db_path)) as conn, conn:
+            conn.execute("PRAGMA journal_mode=WAL;")
+            conn.execute(RECEIPTS_DDL)
+            conn.execute(
+                "INSERT OR IGNORE INTO receipts "
+                "(case_id, target_file, grounding_sha256, block_sha256) VALUES (?, ?, ?, ?)",
+                (case_id, target_file, grounding_sha256, block_sha256),
+            )
+    except sqlite3.Error:
+        pass  # No receipt, no write: the hook denies a governed write it finds no receipt for
 
 
 def _grounding_failure() -> dict:
@@ -207,9 +239,16 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
         elif intent in ["REFACTOR", "FIX", "AUDIT"]:
             return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
 
-        return _finalize({"status": "VALIDATED", "final_decision": "EXECUTE_SAFE",
-                          "case_id": str(uuid.uuid4()), "and_gate_ok": True},
-                         intent, target_file_path, safety_abort)
+        # A receipt binds what the proposal says: the hashes come before the decision, so text that cannot
+        # be hashed is never an EXECUTE_SAFE.
+        case_id = str(uuid.uuid4())
+        grounding_sha256 = _sha256(model.Topological_Grounding)
+        block_sha256 = _sha256(model.Implementation_Block)
+        decision = _finalize({"status": "VALIDATED", "final_decision": "EXECUTE_SAFE",
+                              "case_id": case_id, "and_gate_ok": True},
+                             intent, target_file_path, safety_abort)
+        _persist_receipt(case_id, target_file_path, grounding_sha256, block_sha256)
+        return decision
     except Exception:
         # Total function: the validator NEVER raises exceptions (fail-closed).
         return _finalize(_grounding_failure())
