@@ -629,8 +629,7 @@ def test_hook_postpones_annotations_and_parses_as_python_39():
 PERMISSIONS = {
     "defaultMode": "default",
     "allow": [
-        "Bash(python3 tools/*)", "Bash(python3 tools/*.py)", "Bash(python3 tools/mcp/*)",
-        "Bash(python3 tools/audit/*)", "Bash(python3 tools/experiments/*)",
+        "Bash(python3 tools/*)", "Bash(python3 tools/*.py)", "Bash(python3 tools/audit/*)",
         "Bash(python3 tools/hooks/*)", "Bash(python3 tools/boundary_validator/validator.py)",
         "Bash(git status)", "Bash(git status *)", "Bash(git diff)", "Bash(git diff *)",
         "Bash(git log *)", "Bash(git show *)", "Bash(git rev-parse *)", "Bash(git grep *)",

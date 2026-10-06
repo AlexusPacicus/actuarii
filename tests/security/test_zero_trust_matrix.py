@@ -6,7 +6,7 @@ A gate that quarantines ordinary English prose ("kept in sync by hand" ->
 signal value of a real rejection. These tests pin both directions: prose
 passes, primitives still fail.
 
-Normative: AGENTS.md §2.1, SEC-M-03, SEC-M-10
+Normative: no network or process primitive in a proposal, SEC-M-03, SEC-M-10
 """
 import json
 
@@ -67,7 +67,7 @@ PRIMITIVE_BLOCKS = [
 
 @pytest.mark.parametrize("block", PROSE_BLOCKS)
 def test_prose_containing_primitive_substrings_is_not_quarantined(block):
-    """AGENTS.md §2.1 bans network primitives, not English words that happen
+    """The gate bans network primitives, not English words that happen
     to contain their letters."""
     decision = validate_proposal(_doc_proposal(block))
     assert decision["final_decision"] == "EXECUTE_SAFE", block
@@ -77,7 +77,7 @@ def test_prose_containing_primitive_substrings_is_not_quarantined(block):
 @pytest.mark.parametrize("block", PRIMITIVE_BLOCKS)
 def test_genuine_host_primitives_remain_quarantined(block):
     """SEC-M-03/SEC-M-10: tightening the match MUST NOT weaken detection of
-    the primitives enumerated in AGENTS.md §2.1."""
+    the network and process primitives it enumerates."""
     decision = validate_proposal(_doc_proposal(block))
     assert decision["final_decision"] == "ABORTED_VIOLATES_ZERO_TRUST", block
     assert decision["status"] == "QUARANTINED", block

@@ -4,9 +4,7 @@
     "allow": [
       "Bash(python3 tools/*)",
       "Bash(python3 tools/*.py)",
-      "Bash(python3 tools/mcp/*)",
       "Bash(python3 tools/audit/*)",
-      "Bash(python3 tools/experiments/*)",
       "Bash(python3 tools/hooks/*)",
       "Bash(python3 tools/boundary_validator/validator.py)",
       "Bash(git status)",

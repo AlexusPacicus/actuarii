@@ -1,11 +1,11 @@
-"""Python gate (AGENTS 2.5): the PATH shim tools/bin/python3 and the session hook that puts it
+"""Python gate: the PATH shim tools/bin/python3 and the session hook that puts it
 first on the PATH of every Bash call. Static properties of the files, then their behaviour: each
 runs from a temporary git repository against stub interpreters, through tools.audit.run_process.
 The directories where Python may run come from python_script_dirs in .actuarii.json, which the shim
 asks tools/project_config.py for with the real interpreter; the stubs hand that one call to the
 interpreter that runs pytest and log it.
 
-Normative: AGENTS.md 2.5, 6.2
+Normative: no inline Python and no interpreter outside the committed scripts.
 """
 import itertools
 import json

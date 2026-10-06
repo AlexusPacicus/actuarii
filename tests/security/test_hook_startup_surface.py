@@ -1,6 +1,6 @@
 """
 This file verifies MUST/MUST NOT requirements from the SPEC (RFC 2119).
-Startup surface of the PreToolUse gate (AGENTS.md 6.2): the harness spawns
+Startup surface of the PreToolUse gate: the harness spawns
 the hook in an ambient environment we do not control -- PATH, cwd and
 installed packages all differ from a developer shell. An interpreter without
 the substrate's third-party dependencies MUST still reach the gate logic, so
@@ -14,7 +14,7 @@ create one: a relative path makes the decision depend on cwd, and a gate that
 creates its own empty audit trail would litter a stray database wherever the
 harness happened to run it.
 
-Normative: AGENTS.md 1.3, 6.2
+Normative: the fail-closed startup of the PreToolUse gate
 Coverage: SEC-M-13"""
 import ast
 import sqlite3

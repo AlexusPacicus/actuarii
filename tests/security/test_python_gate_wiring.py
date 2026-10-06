@@ -1,10 +1,10 @@
-"""Wiring test: .claude/settings.json actually runs the two hooks of the Python gate (AGENTS
-2.5) -- the SessionStart PATH shim and the PreToolUse Bash deny hook -- asserted as parsed
+"""Wiring test: .claude/settings.json actually runs the two hooks of the Python gate
+-- the SessionStart PATH shim and the PreToolUse Bash deny hook -- asserted as parsed
 structure (the way test_config_perimeter.py asserts the permission matrix), never as text.
 Neither hook script's own behaviour is exercised here; that is test_python_gate.py and
 test_python_gate_bash_hook.py.
 
-Normative: AGENTS.md 2.5, 6.2
+Normative: no inline Python and no interpreter outside the committed scripts.
 """
 import copy
 import json

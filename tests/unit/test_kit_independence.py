@@ -1,4 +1,5 @@
 import ast
+import re
 from pathlib import Path
 
 import pytest
@@ -21,3 +22,33 @@ def _imported_roots(path: Path) -> set:
 @pytest.mark.parametrize("module", MODULES, ids=lambda p: str(p.relative_to(ROOT)))
 def test_no_module_imports_the_engine_or_its_dependencies(module):
     assert _imported_roots(module) & FORBIDDEN == set()
+
+
+CLAUSE_CITATION = re.compile("AGENTS" + r"(?:\.md)?\s*(?:§|SS|\d)")
+ENGINE_NAME = re.compile("traia" + "nus", re.IGNORECASE)
+TOOLS_TEXT = sorted(
+    path for path in (ROOT / "tools").rglob("*") if path.is_file() and path.suffix != ".pyc" and "__pycache__" not in path.parts
+)
+
+
+def _text(path: Path) -> str:
+    return path.read_text(encoding="utf-8", errors="replace")
+
+
+@pytest.mark.parametrize("path", TOOLS_TEXT, ids=lambda p: str(p.relative_to(ROOT)))
+def test_no_tools_file_cites_a_clause_of_the_constitution_or_names_the_engine(path):
+    text = _text(path)
+    assert CLAUSE_CITATION.search(text) is None
+    assert ENGINE_NAME.search(text) is None
+
+
+@pytest.mark.parametrize("path", [p for p in MODULES if p.is_relative_to(ROOT / "tests")], ids=lambda p: str(p.relative_to(ROOT)))
+def test_no_test_file_cites_a_clause_of_the_constitution(path):
+    assert CLAUSE_CITATION.search(_text(path)) is None
+
+
+def test_the_clause_pattern_matches_the_citation_forms():
+    name = "AGEN" + "TS"
+    forms = [f"{name} 2.1", f"{name}.md 6.2", f"{name}.md §5", f"{name}.md SS6.2", f"{name}\n2.5", f"{name} 6"]
+    assert [form for form in forms if CLAUSE_CITATION.search(form) is None] == []
+    assert CLAUSE_CITATION.search(f"{name}.md, the constitution") is None

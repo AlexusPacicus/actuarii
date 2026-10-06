@@ -3,8 +3,8 @@
   "model": "opencode/nemotron-3.5-lightning-free",
   "small_model": "opencode/deepseek-v4-flash-free",
   "instructions": [
-    "docs/audit/AUDIT.md",
-    "AGENTS.md"
+    "AGENTS.md",
+    "docs/PLAN.md"
   ],
   "mcp": {
     "boundary-validator": {
@@ -27,9 +27,7 @@
       "python3 -m *": "deny",
       "python3 tools/*": "allow",
       "python3 tools/*.py": "allow",
-      "python3 tools/mcp/*": "allow",
       "python3 tools/audit/*": "allow",
-      "python3 tools/experiments/*": "allow",
       "python3 tools/hooks/*": "allow",
       "python3 tools/boundary_validator/validator.py": "allow",
       // Safe read-only Git inspection

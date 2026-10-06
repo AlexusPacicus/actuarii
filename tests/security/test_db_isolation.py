@@ -9,7 +9,7 @@ Two independent defects are pinned here:
    `validate_proposal()` audit write into the real
    `.data/boundary_validator_audit.db`.
 
-2. Strict schema conformance (AGENTS.md 5.1): `validate_proposal()` must
+2. Strict schema conformance: `validate_proposal()` must
    enforce the normative `AgentMutationProposal` contract. Today an empty
    payload `{}` or an invented `Intent_Class` (e.g. "HACK") returns
    EXECUTE_SAFE, skipping the mandatory literal-grounding gate.

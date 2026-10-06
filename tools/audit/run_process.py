@@ -1,8 +1,8 @@
 """Runs a program for the tests, without a shell: the one place that starts a process on their behalf.
 
 Tests under tests/ pass through the boundary-validator, whose Zero-Trust matrix refuses a proposal
-that names a process-starting primitive (AGENTS 2.1). The scope note of that clause leaves local
-repository tooling out, so the spawning lives here and the tests import `run`. For tests only.
+that names a process-starting primitive. The gate does not apply to local repository tooling, so
+the spawning lives here and the tests import `run`. For tests only.
 
 Standard library only.
 """
