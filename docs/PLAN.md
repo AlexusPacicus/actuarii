@@ -137,6 +137,30 @@ Por contrato JSON al implementador, test-first.
   menos de 5 minutos, con cronómetro. Se repite en Linux (CI).
 * **CI propio:** GitHub Actions con la suite completa.
 
+### Fase 2b — auditoría adversarial (acordada 2026-10-06)
+
+Va después del empaquetado, para que cubra el instalador (toca el `settings.json` de otro
+repositorio), y antes del README, porque sus resultados son contenido del README. Si sale un fallo de
+diseño, todavía hay margen.
+
+* **Quién:** un subagente nuevo, sin el contexto de las sesiones que construyeron el kit. Recibe solo
+  la lista de garantías y el código, con el encargo de saltárselas. Se presenta como prueba
+  adversarial propia, no como auditoría independiente. La pieza fuerte sigue siendo
+  auditar un repositorio ajeno; esta es la plantilla y la prueba de método.
+* **Reglas, commiteadas antes de empezar:**
+  1. **Alcance:** la lista de garantías que el kit dice cumplir. Lo que ya está en los límites
+     declarados queda fuera: se sabe.
+  2. **Cada intento es un caso reproducible:** qué intenta el agente, qué esperaba el kit y qué pasó.
+     Los que rompen algo pasan a ser tests de regresión.
+  3. **Clasificación de cada hallazgo:**
+     * rompe una garantía declarada: se corrige antes del lanzamiento, con su test;
+     * es un límite no declarado: se declara, y se corrige solo si es barato;
+     * es una idea de mejora: va a la v0.2 (p. ej. el recibo atado al contenido o los recibos
+       firmados de `docs/prior-art/PRIOR_ART.md`).
+  4. **Tiempo cerrado:** dos días. Lo que no entre, no se hace.
+  5. **Resultado:** un informe publicado en inglés con los casos. Alimenta la sección del README «qué
+     intenta un agente y qué pasa».
+
 ### Fase 3 — lanzamiento
 
 * **Búsqueda previa:** buscar herramientas parecidas (colecciones de hooks para Claude Code,
