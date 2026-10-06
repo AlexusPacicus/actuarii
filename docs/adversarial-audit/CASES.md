@@ -211,6 +211,28 @@ y `git -c core.pager` buscan `python3` en el `PATH` y el shim los recoge (inferi
   afirmación.
 * **Clasificación propuesta:** C4. Se trata después de corregir los C1, como propone el autor.
 
+### A16 — La puerta «estricta» repara JSON
+
+* **Garantía:** G4. **Perfil:** A y B.
+* **Encontrado** al preparar F3 (2026-10-07), leyendo `tools/boundary_validator/schemas/parser.py`.
+  Antes de validar, `parse_proposal_json`:
+  * extrae el JSON de bloques con vallas o de texto alrededor (expresiones regulares);
+  * quita comas finales;
+  * cierra las llaves que falten.
+
+  `validator.py` descarta el indicador de reparación (`_used_repair`).
+* **Lectura:** una propuesta que no es JSON válido puede dar `EXECUTE_SAFE`. Es el patrón tolerante
+  de un parser de salidas de modelo, no el de una puerta. Además es búsqueda léxica sobre la
+  propuesta.
+* **Clasificación propuesta:** C1. Se corrige en F3: `json.loads` estricto (sin claves duplicadas ni
+  `NaN`), sin extracción ni reparación.
+
+### A17 — `DocState`, código muerto
+
+* **Encontrado** al preparar F3: `tools/boundary_validator/schemas/docstate.py` es un esquema del
+  flujo de `AUDIT.md` de Traianus que nada usa; solo se exporta.
+* **Clasificación propuesta:** limpieza. Se borra en F3.
+
 ## Cierre de la auditoría
 
 * **C1, se corrigen antes del lanzamiento:** A01, A03, A04 (decisión del autor el 2026-10-07: se
