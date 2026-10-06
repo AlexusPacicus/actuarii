@@ -17,6 +17,7 @@ CONTRACT = "require_contract_context.py"
 CONFINE = "confine_review_reads.py"
 BASH = "deny_python_escapes.py"
 SESSION = "session_python_gate.sh"
+ANNOUNCE = "announce_governance.py"
 
 
 def _commands() -> dict[str, str]:
@@ -40,11 +41,11 @@ def _edit(path: str) -> dict:
     return {"tool_name": "Edit", "tool_input": {"file_path": str(ROOT / path)}}
 
 
-def test_the_five_hooks_are_registered():
-    assert set(_commands()) == {BOUNDARY, CONTRACT, CONFINE, BASH, SESSION}
+def test_the_six_hooks_are_registered():
+    assert set(_commands()) == {BOUNDARY, CONTRACT, CONFINE, BASH, SESSION, ANNOUNCE}
 
 
-@pytest.mark.parametrize("script", [BOUNDARY, CONTRACT, CONFINE, BASH, SESSION])
+@pytest.mark.parametrize("script", [BOUNDARY, CONTRACT, CONFINE, BASH, SESSION, ANNOUNCE])
 def test_command_names_its_script_by_project_dir(script):
     argv = shlex.split(_commands()[script])
     assert len(argv) == 2 and argv[1] == PREFIX + script
@@ -80,3 +81,10 @@ def test_session_hook_puts_tools_bin_first_on_the_path_from_another_directory(tm
     done = _run(SESSION, tmp_path, CLAUDE_ENV_FILE=str(env_file))
     assert (done.returncode, done.stderr) == (0, "")
     assert env_file.read_text(encoding="utf-8") == f"export PATH='{ROOT / 'tools' / 'bin'}':\"$PATH\"\n"
+
+
+def test_announce_hook_runs_from_another_directory_and_names_the_configuration(tmp_path):
+    done = _run(ANNOUNCE, tmp_path)
+    assert (done.returncode, done.stderr) == (0, "")
+    assert done.stdout.startswith("actuarii:")
+    assert ".actuarii.json" in done.stdout

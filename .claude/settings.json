@@ -56,7 +56,8 @@
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR\"/tools/hooks/session_python_gate.sh" }
+          { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR\"/tools/hooks/session_python_gate.sh" },
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR\"/tools/hooks/announce_governance.py" }
         ]
       }
     ],
