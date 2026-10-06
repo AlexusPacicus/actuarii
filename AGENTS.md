@@ -1,116 +1,152 @@
-# AGENTS.md — Agent Constitution & Operational Directives (v1.13.0)
+# AGENTS.md — Agent constitution (v2.0.0)
 
-**Scope:** Repository-wide (`traianus/`, `tests/`, `tools/`)  
-**Standard:** RFC 2119 (`MUST` / `MUST NOT`)
+**Scope:** the whole repository.
+**Standard:** RFC 2119 (`MUST` / `MUST NOT`).
 
----
-
-## 1. Execution Quality & Conciseness
-
-1.1 The agent **MUST** be concise and **MUST NOT** include dead code, superfluous comments, explanatory over-justifications, or modify files outside the direct scope of the task.
-
-1.2 The agent **MUST NOT** leave temporary test scripts, single-use auxiliary files, or data dumps (`.json`, `.log`) in the repository tree. *(Deliberate exception: frozen research datasets under `data/**`, incl. the `{label -> chunk}` manifests in `data/spinoza/` — see `data/spinoza/PROVENANCE.md`.)*
-
-1.3 The agent **MUST NOT** silence errors with empty `try-except` blocks, unconditional generic catches, or null returns that mask failures. *(Deliberate exceptions, both in `tools/boundary_validator/validator.py` and both documented in-line: `_persist_audit` fails open on `sqlite3.Error`, so an audit-log write failure can never block the gate; `validate_proposal` closes with a generic catch to stay a total function, mapping any unexpected exception to `ABORTED_GROUNDING_FAILED`. Neither weakens enforcement: a missing `EXECUTE_SAFE` row blocks the edit downstream.)*
-
-1.4 The agent MUST follow a TDD workflow (write and verify failing tests first) and MUST run the test suite (`pytest tests/`) to verify passing status before declaring any task completed.
-
-1.5 The agent **MUST NOT** add external dependencies in `pyproject.toml` without explicit approval (v1.0.0 release freeze: the Nix `flake.nix` devshell is out of scope — reproducibility is anchored in pinned `pyproject.toml` + green CI).
-
-1.6 When modifying `tests/`, `traianus/`, or `pyproject.toml`, the agent **MUST** verify that `.github/workflows/ci.yml` covers the affected test partitions and新增 dependencies. A missing or stale CI configuration is a **blocking defect** — the task is not complete until CI reflects the current repository structure.
+This file states the rules for every coding agent working here. Rules marked **[enforced]** are
+enforced in code by Actuarii: an agent that breaks them is stopped, whatever it was told. The
+others are conventions that the agent follows and the reviewer checks. Section 9 lists what the
+enforcement does not cover.
 
 ---
 
-## 2. Security & Network Zero-Trust
+## 1. Sources of truth
 
-2.1 Code proposals and mutations **MUST NOT** introduce external network primitives (`fetch`, `axios`, `urllib`, `requests`, `httpx`, `socket`, `subprocess`, `curl`, `wget`, `aiohttp`, `importlib`, `os.system`, `os.popen`).
+1.1 `.actuarii.json` at the repository root is the source of the enforced rules: the governed
+paths, the receipt window, where Python may run, the contract registry and the blind review. The
+agent **MUST NOT** assume a rule this file describes applies to a path; the configuration
+decides. **[enforced]** Without the file, a built-in minimum applies. With an invalid file, every
+`Edit` and `Write` inside the repository is denied except for `.actuarii.json` itself.
 
-> Scope note: this ban applies to the `Implementation_Block` of mutation proposals. Local repository tooling (e.g. `tools/audit/check_impact.py`, which shells out to `git grep`) is not subject to it.
+1.2 At the start of every session the hook `tools/hooks/announce_governance.py` puts the active
+rules and their source into the agent's context. The agent **MUST** read that announcement
+before its first edit.
 
-2.2 Endpoints **MUST** bind exclusively to `127.0.0.1`. Wildcard CORS policies (`allow_origins=["*"]`) combined with credentials **MUST NOT** be introduced.
+1.3 `.actuarii.json` and the configured contract registry are always governed, whatever the
+configuration lists. **[enforced]** Every change to the rules leaves a receipt in the audit
+trail.
 
-2.3 The `/ingesta` endpoint **MUST** receive text as raw `text/plain` in the HTTP body, discard JSON wrappers, and enforce `X-Idempotency-Key`.
+## 2. Governed writes
 
-2.4 Ingress verification **MUST** execute at the byte level: reject null bytes (`\x00`) and strict UTF-8 decoding failures (`errors="strict"`) with HTTP 400.
+2.1 Before an `Edit` or `Write` on a governed path, the agent **MUST** call the boundary-validator
+MCP tool `validate_proposal` with a proposal and with the exact file as its separate `target_file`
+argument. **[enforced]** The hook `tools/hooks/require_boundary_validation.py` denies the edit
+unless the audit trail holds an `EXECUTE_SAFE` for that file within the configured window. The
+denial names the rule, its source and the call that resolves it.
 
-2.5 The agent **MUST NOT** execute inline Python (`python3 -c`, `python3 -m`). Python execution is restricted to committed scripts under `tools/` or `traianus/`. Any Python script not previously committed requires explicit user approval before execution. This rule is enforced by both permission matrices, `opencode.jsonc` and `.claude/settings.json` (deny `python3 -c *`, deny `python3 -m *`), and in Claude Code also in code, at the interpreter (6.2): the shim `tools/bin/python3` (and `python`, `python3.11`) runs only `--version` or a script recorded in `HEAD` under `tools/` or `traianus/` of this repository, and denies everything else (`-c`, `-m`, stdin, no script, an uncommitted script) with exit status 126. Test runners and servers are called by their own entry points (`pytest`, `uvicorn`), not through `python3 -m`.
+2.2 A proposal **MUST** conform to the strict 5 Radicals schema
+(`tools/boundary_validator/schemas/proposals.py`): `Intent_Class` (`FIX`, `REFACTOR`, `TEST`,
+`DOC`, `SPEC`, `AUDIT`), `Target_File`, `Topological_Grounding`, `Implementation_Block` and
+`Safety_Abort`. **[enforced]**
 
----
+2.3 For `FIX`, `REFACTOR` and `AUDIT`, the `Topological_Grounding` **MUST** be a quote present
+character by character in the target file. **[enforced]**
 
-## 3. Substrate Domain & Mathematical Invariants (384D)
+2.4 An `Implementation_Block` **MUST NOT** contain network or process primitives (`fetch`,
+`axios`, `urllib`, `requests`, `httpx`, `aiohttp`, `http.client`, `socket`, `curl`, `wget`,
+`subprocess`, `os.system`, `os.popen`, `importlib` and the rest of the validator's matrix).
+**[enforced]** Repository tooling that must start a process does it in one designated module
+(`tools/audit/run_process.py`), which tests import.
 
-3.1 The agent **MUST** treat `traianus/` strictly as a deterministic state engine operating over 384D float32 L2-normalized vectors ($\|\mathbf{v}\|_2 = 1.0$), spectral projection signatures, and SQLite transitions, within the ≤ 8 GB RAM hardware envelope.
+2.5 A `Safety_Abort` other than `NONE` blocks the proposal. The agent **MUST** set it when it
+sees that the change crosses a boundary it should not cross. **[enforced]**
 
-3.2 The agent **MUST NOT** introduce application domain concepts ("ideas", "thoughts", "hyperfocus") into `traianus/` source or tests. These belong exclusively to the client (RefApp-01).
+## 3. Contract context
 
-3.3 The agent **MUST** tag the active seed as `epoch_provenance = 'PROSTHETIC_NSM_V1'`. Cross-epoch comparisons **MUST NOT** be performed without re-projection.
+3.1 Before editing a path registered in the contract registry, the agent **MUST** have the
+sections the registry requires served by `tools/audit/context_pack.py`, from the contract file as
+it is now and within the registry window. **[enforced]** The hook
+`tools/hooks/require_contract_context.py` denies the edit otherwise, and its denial prints the
+command that serves the missing sections.
 
-3.4 Spectral projections in $C1$ **MUST** exclude self-projection ($i \neq j$) during variance calculation to prevent variance inflation.
+3.2 A receipt proves that the sections were served, not that they were read or that the code
+conforms. Conformance to a contract is verified by tests.
 
-3.5 State consolidation **MUST** require the simultaneous satisfaction of both keys in `traianus/core.py`:
-$$\text{Consolidated} \iff (\sigma^2 \ge \theta_{\text{dyn}}) \land (\text{EthicalKey} == \text{True})$$
+## 4. Python
 
-3.6 Agents **MUST** consult `docs/audit/AUDIT.md` before applying refactorings to `traianus/app.py`.
+4.1 Python runs only as a script committed in `HEAD`, under the kit directory (`tools/`) or a
+`python_script_dirs` entry. **[enforced]** The shim `tools/bin/python3` (also `python` and
+`python3.11`) decides by argv alone, and the hook `tools/hooks/deny_python_escapes.py` denies the
+`Bash` commands that reach an interpreter around it.
 
-3.7 Work on vector data, their bit layout, or the K6/R4 measurements **MUST** load the sections of `docs/methodology/instrument-audit/contracts.md` that `tools/hooks/contract_registry.json` registers for the paths concerned, through `tools/audit/context_pack.py`, before the edit. This is enforced in code, not by citation: the `PreToolUse` hook `tools/hooks/require_contract_context.py` denies `Edit`/`Write` on a registered path unless `context_pack` logged a `served` receipt for every required section within the registry window, from the contract file as it is now. A mention or a citation of a contract is not evidence. Conformance to a contract is verified by tests, not by the hook.
+4.2 The agent **MUST NOT** run inline Python (`python3 -c`, `python3 -m`, stdin). **[enforced]**
+Test runners and servers are called by their own entry points (`pytest`, not `python3 -m
+pytest`).
 
----
+4.3 A script that is not committed yet needs the user's explicit approval before it runs.
 
-## 4. Persistence & Immutability
+## 5. Blind review
 
-4.1 The agent **MUST NOT** execute SQL `UPDATE` or `DELETE` statements on `geodesic_axes` or node history. All updates are append-only, recorded via increasing sequence numbers (`seq`).
+5.1 A review that must not see what the author wants to be true is run by the read-only subagent
+`.claude/agents/blind-reviewer.md` over a package built by `tools/audit/build_review_package.py`
+from the `review` configuration. **[enforced]** While the review lock is set, the hook
+`tools/hooks/confine_review_reads.py` denies every `Read`, `Grep` and `Glob` outside the package.
 
-4.2 Lifecycle states **MUST** be restricted to `pending_approval`, `incubating`, `consolidated`, and the append-only error-log state `telemetry_error` (persisted by the spectral processor and read by `/telemetry`). The `archived` state **MUST NOT** be used or defined in schemas or DDLs. The SQLite `CHECK` constraint mirrors this set.
+5.2 The reviewer changes no file and returns a verdict. The executing agent records it and
+clears the lock (`build_review_package.py unlock`).
 
-4.3 Local adjacency $E_n$ ($\epsilon = 0.8$, L2) **MUST** remain a purely observational metric in `/relations` and **MUST NOT** alter lifecycle states.
+## 6. Delegation
 
----
+6.1 One agent executes at a time. The executing agent writes contracts and reviews diffs; it
+delegates code and tests to the subagent `.claude/agents/implementer.md`.
 
-## 5. Structured Mutation Proposals (Pydantic / 5 Radicals)
+6.2 A delegation is a strict JSON `DelegationContract`, and the answer a `DelegationReport`
+(`tools/audit/delegation_contract.py`). Both **MUST** be validated in code before they are used:
+`delegation_contract.py contract` before the launch and `delegation_contract.py report` before
+the report is accepted.
 
-5.1 Mutation proposals **MUST** conform strictly to the Pydantic schema in `tools/boundary_validator/schemas/proposals.py` (`AgentMutationProposal`) with `strict: true`, and **MUST** be emitted through the structured outputs contract `build_response_format(AgentMutationProposal)` (normative SEC-M-14..SEC-M-18, parsed via `tools/boundary_validator/schemas/parser.py`):
+6.3 The implementer works on the one branch the contract names, touches only the files it lists,
+writes the tests first, passes every gate the contract names, never pushes and stops at a commit.
+The review of the diff, the merge and the records stay with the executing agent.
 
-1. `Intent_Class`: strict classification (`FIX`, `REFACTOR`, `TEST`, `DOC`, `SPEC`, `AUDIT`).
-2. `Target_File`: target path relative to repository root.
-3. `Topological_Grounding`: exact UTF-8 quote present in target file.
-4. `Implementation_Block`: exact text or code block to insert/replace.
-5. `Safety_Abort`: high-level safety status (`NONE`, `BOUNDARY_VIOLATION`, `SYNTAX_ERROR`, `UNAUTHORIZED_SCOPE`).
+6.4 When a contract changes a schema or a shared format, it **MUST** list every test that builds
+that format, so that the implementer does not stop on a file it may not touch.
 
-5.2 **No Direct OS Authority:** Agents **MUST NOT** assume direct host OS execution authority. Intended actions **MUST** be emitted as structured proposal objects.
+## 7. Permission perimeter
 
-5.3 **Literal Grounding Guarantee:** The `Topological_Grounding` quote **MUST** exist exactly (character by character) in the target file.
+7.1 `.claude/settings.json` (Claude Code) and `opencode.jsonc` (OpenCode) **MUST** stay identical
+in perimeter: read-only git commands and the scripts under `tools/` allowed; `rm`, inline Python,
+web fetch and web search denied; every other `Bash` call and every mutation asked. **[enforced by tests]**
 
-5.4 **Single-Step Iteration:** Agents **MUST NOT** attempt multi-command chaining or autonomous un-gatekept execution loops.
+7.2 Both harnesses load the same instructions: `CLAUDE.md` imports and the OpenCode
+`instructions` list name the same files. **[enforced by tests]**
 
----
+## 8. Engineering conventions
 
-## 6. Governance & Role Taxonomy
+8.1 Test first (`tdd-cycle` skill): a test that fails for the stated reason, then the minimal
+change, then the full suite green before a task is declared done.
 
-6.1 Traianus is governed by a **single executing agent**. Three live subagents are permitted, all Claude Code only, and at most one agent executes at a time:
-- the read-only instrument reviewer (`.claude/agents/instrument-auditor.md`): it has no Edit, Write or Bash tools, reports a verdict, and never changes files; the executing agent records the verdict. It exists so that step 2(a) reviews are blind by construction rather than by relaying text between sessions.
-- the instrument implementer (`.claude/agents/instrument-implementer.md`): delegated by the executing agent to implement one measurement whose record passed phase 1, test-first, on one branch named by the caller. It passes the boundary-validator gate for every governed file, never runs the measurement on real data, never pushes, never reviews its own record, and stops at a commit. While it runs the executing agent makes no edits; the phase 2 review, the first run and the results stay with the executing agent.
-- the engine implementer (`.claude/agents/engine-implementer.md`): delegated by the executing agent to implement one engine, repository-tooling or client change (`traianus/**`, `tools/**`, the RefApp-01 client in the sibling repository `../refapp-01`, and the tests that specify it) from a strict-JSON `DelegationContract` (Pydantic, no extra fields, every field required; `tools/audit/delegation_contract.py`), validated by the executing agent before launch, test-first, on the one branch the contract names. A client change (`scope: client`) is test-first under `node --test`; its gates are `npm test`, `npm run typecheck` and `npm run build` in that repository, and it adds no dependency. It answers with a `DelegationReport` validated the same way, touches only the files the contract lists, passes the boundary-validator gate for every governed file, runs no inline Python, never pushes, never reviews its own work, and stops at a commit. While it runs the executing agent makes no edits; the review of the diff, the audit and log records, and the merge stay with the executing agent.
+8.2 Tests are not changed to hide a failure, and source is not changed to chase a broken test.
 
-The former role taxonomy (planning, orchestration, code RED/GREEN, docs, github, traceability) is retained **conceptually** for documentation and process traceability, and the detailed role definitions are archived in git history.
+8.3 No dead code, no superfluous comments, no files outside the task's scope. No temporary
+scripts, logs or data dumps left in the tree.
 
-6.2 Enforcement is centralized, not per-role, and spans two harnesses:
-- Permission matrices: `opencode.jsonc` (OpenCode) and `.claude/settings.json` (Claude Code) — one perimeter: git read-only allowlist; `rm *`, `python3 -c *`, `python3 -m *`, webfetch and websearch deny; every other `Bash` invocation and all mutations `ask`. Both files are versioned and **MUST** stay identical in perimeter; today only `opencode.jsonc` is guarded by an automated perimeter test (SEC-M-13).
-- The boundary-validator MCP (Zero-Trust gate, SEC-M-01..12) gating mutation proposals, declared for both harnesses (`opencode.jsonc` `mcp` block, `.mcp.json`).
-- The `PreToolUse` hook `tools/hooks/require_boundary_validation.py` (Claude Code only): blocks `Edit`/`Write` on governed paths (`traianus/**`, `tests/**`, `AGENTS.md`, `docs/specifications/**`, `tools/boundary_validator/**`) unless the boundary-validator logged an `EXECUTE_SAFE` for that exact file within 900 s, and fails closed when the audit trail cannot be read. Declared limits: it does not gate writes issued through `Bash`, and the receipt binds a target file, not the content of the edit. The target is decided by filesystem identity (the `canonical` function each path hook carries), not by its spelling, so a case variant of a path on a case-insensitive filesystem is gated like the exact one.
-- The `PreToolUse` hook `tools/hooks/confine_review_reads.py` (Claude Code only): while `.data/review_lock.json` names a review package (built, locked and unlocked by `tools/audit/build_review_package.py`), it denies every `Read`, `Grep` and `Glob` outside that package, so a blind instrument review is blind by construction; it fails closed on a corrupt lock or malformed input and is inert without a lock. Declared limit: it does not gate `Bash`, which the reviewer does not have.
-- The `PreToolUse` hook `tools/hooks/require_contract_context.py` (Claude Code only): blocks `Edit`/`Write` on the paths registered in `tools/hooks/contract_registry.json` (the engine's vector path, the K6 and R4 scripts and tests) unless `tools/audit/context_pack.py` logged a `served` receipt for each contract section the matching rules require, within the registry window (4 h) and from the contract file as it is now; it fails closed on a malformed payload and on an unreadable registry, log or contract file. Declared limits: the receipt proves that `context_pack` served the sections, not that they were read or that the code conforms; the log is a plain file, so a line written through `Bash` forges a receipt, and writes issued through `Bash` are not gated; the receipt names neither agent nor session; `tools/hooks/**`, the registry included, is not itself gated.
-- The Python gate of 2.5 (Claude Code only): the `SessionStart` hook `tools/hooks/session_python_gate.sh` puts `tools/bin` first on the `PATH` of every `Bash` call of the session, where the shim `tools/bin/python3` decides by argv alone; the `PreToolUse` hook `tools/hooks/deny_python_escapes.py` denies the `Bash` commands that reach an interpreter around the shim (an interpreter named by path, a name the shim does not cover, `pyenv exec`, a `PATH` reassignment, `env -i` or `env -u PATH`, `command -p`) and fails closed on a malformed payload or a command it cannot tokenize. Declared limits: the shim binds the identity of a committed script, not its content, so a committed script edited in the working tree still runs; the hook is a text-level heuristic, not a shell parser (`eval` and command substitution that assemble an interpreter path, login shells that rebuild `PATH`, quoting nested more than one level pass it); a heredoc body written to a file that it cannot tokenize, such as prose with an apostrophe, is denied, so such files are written with `Write`; without `CLAUDE_ENV_FILE` the gate is not active, which the session hook reports on stderr.
-- Instruction loading is mirrored as well: the `opencode.jsonc` `instructions` list and `CLAUDE.md` (`@AGENTS.md`, `@docs/audit/AUDIT.md`) load the same two normative documents.
-- The security test suite (`tests/security/`, incl. SEC-M-13 config perimeter, the hook-gate partition `tests/security/test_hook_gate.py` and the Python gate partition `tests/security/test_python_gate*.py`).
+8.4 No silenced errors: no empty `except`, no unconditional generic catch, no null return that
+hides a failure. A gate that cannot verify denies; it never fails open.
 
-6.3 Domain boundaries from the taxonomy remain normative for the single agent: edits to `tests/` vs `traianus/` vs `docs/` follow the same separation the roles once enforced (tests are not altered to mask failures; source is not edited to chase the test).
+8.5 No new dependency without the user's explicit approval.
 
-6.4 **Logographic Rules:** every directory under `docs/` **MUST** contain exactly one primary markdown document defining that domain node; component sub-documentation **MUST** be placed in isolated sub-folders matching the taxonomy.
+8.6 Each version that will run, and its comparison rule, is committed before any result exists.
 
-6.5 **Skills Registry:** available agent skills are mirrored under `.opencode/skills/<name>/SKILL.md` (OpenCode) and `.claude/skills/<name>/SKILL.md` (Claude Code) — same six skills, both trees versioned in git and mirrored by hand (no automated parity test yet):
-- `instrument-audit` — blind review of instrument audit records (step 2(a) of `docs/methodology/METHODOLOGY.md`): specification before the script exists, code before the first run, `file:line` evidence, PASS/CHANGES verdict; read-only except the record's `Reviewed by:` line.
-- `boundary-validator` — Zero-Trust gating of 5-Radicals mutation proposals.
-- `tdd-cycle` — Red-Green-Refactor workflow with pytest + C1 audit harness.
-- `lab-analyst` — chromatic transmission analyst over corpus manifolds (collision rescue, Sammon stress, falsifiable ontological alignment); operates read-only on `.data/` artifacts via committed tooling in `tools/experiments/tooling/`.
-- `spec-first` — authoring normative specifications under the 5 Radicals SPEC contract and the frozen spec template in `docs/specifications/`.
-- `spectral-mathematician` — deterministic verification of C1 threshold calibration, simplex volumes, barycentric coordinates, and float32/64 drift via the `spectral-math-engine` MCP.
+## 9. Declared limits
+
+The enforcement above does not cover:
+
+* **Writes through `Bash`.** The hooks gate `Edit` and `Write`; a file written by a shell command
+  is not gated.
+* **Self-issued receipts.** The agent obtains its own `EXECUTE_SAFE`. A receipt proves that a
+  well-formed, grounded proposal without forbidden primitives was recorded before the edit, not
+  that a human approved it.
+* **The content of an edit.** A receipt binds a target file, not what is written to it.
+* **Forged logs.** The audit trail and the `context_pack` log are local files. A line written
+  through `Bash` forges a receipt, and a receipt names neither agent nor session.
+* **Edited scripts.** The shim binds the identity of a committed script, not its content: a
+  committed script edited in the working tree still runs.
+* **Clever shell.** `deny_python_escapes.py` is a text-level heuristic, not a shell parser:
+  `eval`, assembled interpreter paths, login shells that rebuild `PATH` and quoting nested more
+  than one level pass it.
+* **No session gate.** Without `CLAUDE_ENV_FILE` the shim is not put on the `PATH`; the session
+  hook says so on stderr.
+* **The session announcement** informs; it cannot block anything.
+* **Python 3.9.** The hooks are written to import under a Python 3.9 system interpreter, which is
+  checked statically, not by running one.

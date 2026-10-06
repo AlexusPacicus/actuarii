@@ -23,8 +23,7 @@ from tools.boundary_validator.schemas.proposals import build_response_format
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOL = REPO_ROOT / 'tools' / 'audit' / 'delegation_contract.py'
-AGENT = REPO_ROOT / '.claude' / 'agents' / 'engine-implementer.md'
-AGENTS_MD = REPO_ROOT / 'AGENTS.md'
+AGENT = REPO_ROOT / '.claude' / 'agents' / 'implementer.md'
 ALLOWED_IMPORTS = {'__future__', 'argparse', 'json', 'pathlib', 're', 'sys', 'typing', 'pydantic', 'tools'}
 FORBIDDEN_CALLS = {'open', 'write_text', 'write_bytes', 'mkdir', 'touch', 'unlink', 'eval', 'exec'}
 LF = chr(10)
@@ -564,7 +563,7 @@ def test_a_non_finite_constant_is_rejected(cli, command, constant):
 
 def test_the_agent_definition_names_the_two_commands_and_the_json_contract(cli):
     text = AGENT.read_text(encoding='utf-8')
-    assert text.startswith('---' + LF + 'name: engine-implementer' + LF)
+    assert text.startswith('---' + LF + 'name: implementer' + LF)
     assert 'tools: Read, Grep, Glob, Edit, Write, Bash, Skill, mcp__boundary-validator__validate_proposal' in text
     for bound in ('**One branch**', '**Only the files the contract lists.**', '**Test first**',
                   '**Gate every governed file**', '**Invariants stay:**', '**Stop at a commit**'):
@@ -639,38 +638,3 @@ def test_the_two_gate_fields_share_one_pattern():
         dc.GateResult.model_json_schema()['properties']['gate']['pattern'],
     }
     assert patterns == {'^[a-z0-9][a-z0-9_-]{0,39}$'}
-
-
-def markdown_bullet(text, start):
-    lines = text.splitlines()
-    first = next(index for index, line in enumerate(lines) if line.startswith(start))
-    end = next((index for index in range(first + 1, len(lines)) if lines[index].startswith('- ') or not lines[index]),
-               len(lines))
-    return ' '.join(lines[first:end])
-
-
-def test_the_agent_definition_states_the_client_scope():
-    text = AGENT.read_text(encoding='utf-8')
-    _, front, body = text.split('---' + LF, 2)
-    description = next(line for line in front.splitlines() if line.startswith('description: '))
-    opening = body.split('First action', 1)[0]
-    for part in (description, opening):
-        assert 'client change' in part
-    assert 'refapp-01' in description
-    assert '../refapp-01' in opening
-    assert '- **Client scope**' in body
-    bullet = markdown_bullet(body, '- **Client scope**')
-    for needle in ('`scope: client`', '`npm test`', '`npm run typecheck`', '`npm run build`', '`node --test`',
-                   '`git -C ../refapp-01`', 'never `cd`', 'ranges_read_beyond_context'):
-        assert needle in bullet, needle
-    assert 'frontend/src/**' not in text
-
-
-def test_agents_6_1_states_the_client_scope_and_the_title_is_v1_13_0():
-    agents_md = AGENTS_MD.read_text(encoding='utf-8')
-    assert agents_md.splitlines()[0].endswith('(v1.13.0)')
-    bullet = next(line for line in agents_md.splitlines() if line.startswith('- the engine implementer'))
-    for needle in ('`scope: client`', '`../refapp-01`', '`node --test`', '`npm test`', '`npm run typecheck`',
-                   '`npm run build`'):
-        assert needle in bullet, needle
-    assert 'frontend/src/**' not in bullet
