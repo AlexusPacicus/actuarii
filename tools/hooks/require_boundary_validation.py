@@ -1,35 +1,49 @@
 #!/usr/bin/env python3
-"""Claude Code PreToolUse hook: no direct host authority for Edit/Write on
-governed paths.
+"""Claude Code PreToolUse hook: no direct host authority over governed paths, whatever tool writes them.
 
-Reads the PreToolUse JSON payload from stdin ({"tool_name": ...,
-"tool_input": {"file_path": ...}, ...}). Exits 0 (allow) unless the target
-is a governed path with no recent boundary-validator EXECUTE_SAFE, in
-which case it exits 2 (blocking) with an explanatory message on stderr.
-Any failure to verify (bad DB, bad payload shape while a governed path is
-still identifiable) fails closed.
+Reads the PreToolUse JSON payload from stdin ({"tool_name": ..., "tool_input": {...}, "cwd": ...}). Exits 0
+(allow) unless the payload names a governed path with no recent boundary-validator EXECUTE_SAFE, in which case
+it exits 2 (blocking) with an explanatory message on stderr. Any failure to verify (bad DB, bad payload shape,
+a path the filesystem cannot be asked about) fails closed.
 
-The governed paths and the receipt window come from the project
-configuration (.actuarii.json, tools/project_config.py), and every denial
-names the rule behind it. While that configuration is invalid every Edit or
-Write inside the repository is denied, with the error in the message, except
-for the configuration file itself, which stays subject to a receipt; outside
-the repository nothing is denied.
+The gate does not keep a list of the tools that write; it knows three classes of tool and denies by default:
 
-The target is decided by what the filesystem says it is, not by how it is
-spelled: `canonical` resolves it (symlinks, `..`) and re-spells it with the
-names its directory entries store, found by identity, before the gate looks at
-it. On a case-insensitive filesystem `TESTS/x.py` is therefore `tests/x.py`. A
-path inside the repository that the filesystem cannot be asked about is denied.
-A receipt is matched against that stored spelling, so validate_proposal must be
-given it (the denial prints it).
+1. Known writers, each with its path field: Edit, MultiEdit and Write (`file_path`) and NotebookEdit
+   (`notebook_path`). A governed path in that field needs a receipt. A writer without that field, or with one
+   that is not a non-empty string, is denied: the gate cannot tell what it writes.
+2. Known tools that write no file, which always pass: Read, Grep, Glob, LS, NotebookRead, Bash (what it writes is
+   a declared limit), BashOutput, KillShell, WebFetch, WebSearch, TodoWrite, Task, Agent, Skill, ToolSearch,
+   AskUserQuestion, EnterPlanMode, ExitPlanMode, SendMessage and the boundary validator's own
+   mcp__boundary-validator__validate_proposal, which receives a governed path as its target_file and must never
+   be blocked.
+3. Any other tool, a future one or an MCP one: every string in its tool_input, at any depth of dictionaries and
+   lists, is a candidate when it is non-empty, at most 4096 characters, free of NUL and of line breaks, and
+   either absolute, or starting with `~`, or containing `/`. A candidate is resolved (a relative one against the
+   payload's absolute `cwd`, else against the repository root) and, when it is inside the repository and
+   governed, needs a receipt as a write would. The gate does not know whether such a tool writes, so it asks.
+
+The governed paths and the receipt window come from the project configuration (.actuarii.json,
+tools/project_config.py), and every denial names the rule behind it. While that configuration is invalid every
+path inside the repository that a writer or a class 3 tool names is denied, with the error in the message,
+except for the configuration file itself, which stays subject to a receipt; outside the repository nothing is
+denied.
+
+The target is decided by what the filesystem says it is, not by how it is spelled: `canonical` resolves it
+(symlinks, `..`) and re-spells it with the names its directory entries store, found by identity, before the gate
+looks at it. On a case-insensitive filesystem `TESTS/x.py` is therefore `tests/x.py`. A path inside the
+repository that the filesystem cannot be asked about is denied. A receipt is matched against that stored
+spelling, so validate_proposal must be given it (the denial prints it).
+
+Declared limits: a path hidden inside a longer string (a `file://` URL, a command line with spaces) is not
+recognised as a candidate; the class 2 tools are taken as the tools that write no file; Bash does not pass
+through this gate; the contract-context hook does not cover class 3 tools.
 """
 from __future__ import annotations
 
 import json
 import os
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +64,18 @@ except Exception as exc:  # fail-closed: a gate that cannot start must deny
     )
     sys.exit(2)
 
-GATED_TOOLS = {"Edit", "Write"}
+WRITERS = {
+    "Edit": "file_path",
+    "MultiEdit": "file_path",
+    "Write": "file_path",
+    "NotebookEdit": "notebook_path",
+}
+NON_WRITERS = frozenset({
+    "Read", "Grep", "Glob", "LS", "NotebookRead", "Bash", "BashOutput", "KillShell", "WebFetch", "WebSearch",
+    "TodoWrite", "Task", "Agent", "Skill", "ToolSearch", "AskUserQuestion", "EnterPlanMode", "ExitPlanMode",
+    "SendMessage", "mcp__boundary-validator__validate_proposal",
+})
+MAX_CANDIDATE_LENGTH = 4096
 
 
 def _same(samefile: Callable[..., bool], first: str | Path, second: Path) -> bool:
@@ -101,64 +126,120 @@ def canonical(
     return real
 
 
+def _is_candidate(text: str) -> bool:
+    return (
+        0 < len(text) <= MAX_CANDIDATE_LENGTH
+        and "\0" not in text
+        and "\n" not in text
+        and (os.path.isabs(text) or text.startswith("~") or "/" in text)
+    )
+
+
+def _candidates(tool_input: Any) -> Iterator[tuple[str, str]]:
+    """Every path-like string of `tool_input` with where it sits (`tool_input.args[0].path`).
+
+    Iterative, so the depth of the input cannot exhaust the interpreter's stack.
+    """
+    pending = [("tool_input", tool_input)]
+    while pending:
+        location, item = pending.pop()
+        if isinstance(item, str):
+            if _is_candidate(item):
+                yield location, item
+        elif isinstance(item, dict):
+            pending.extend((f"{location}.{key}", value) for key, value in reversed(list(item.items())))
+        elif isinstance(item, list):
+            pending.extend((f"{location}[{index}]", value) for index, value in reversed(list(enumerate(item))))
+
+
 def main(
     samefile: Callable[..., bool] = os.path.samefile, scandir: Callable[..., Any] = os.scandir
 ) -> int:
     try:
         payload = json.load(sys.stdin)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, RecursionError):
         sys.stderr.write(
             "[require_boundary_validation] fail-closed: stdin was not valid "
             "JSON; cannot verify whether the target is a governed path.\n"
         )
         return 2  # R2/INV-2: unparseable input blocks, same as every other unverifiable case
+    if not isinstance(payload, dict):
+        sys.stderr.write(
+            "[require_boundary_validation] fail-closed: stdin was not a JSON "
+            "object; cannot verify whether the target is a governed path.\n"
+        )
+        return 2
 
-    if payload.get("tool_name") not in GATED_TOOLS:
+    tool = payload.get("tool_name")
+    tool_input = payload.get("tool_input")
+    known = isinstance(tool, str)
+    if known and tool in NON_WRITERS:
         return 0
-
-    file_path = (payload.get("tool_input") or {}).get("file_path", "")
-    if not file_path:
-        return 0
+    writer = known and tool in WRITERS
+    if writer:
+        field = WRITERS[tool]
+        value = tool_input.get(field) if isinstance(tool_input, dict) else None
+        if not isinstance(value, str) or not value:
+            sys.stderr.write(
+                f"[require_boundary_validation] fail-closed: {tool} names no usable tool_input.{field} "
+                "(it must be a non-empty string); cannot tell what it writes.\n"
+            )
+            return 2
+        candidates: Iterator[tuple[str, str]] = iter([(f"tool_input.{field}", value)])
+    else:
+        candidates = _candidates(tool_input)
+    cwd = payload.get("cwd")
+    base = Path(cwd) if isinstance(cwd, str) and os.path.isabs(cwd) else REPO_ROOT
 
     try:
-        try:
-            target = canonical(Path(file_path).expanduser(), REPO_ROOT, samefile, scandir)
-        except (OSError, RuntimeError, ValueError) as exc:
+        for location, raw in candidates:
+            try:
+                spelled = Path(raw).expanduser()
+                if not writer and not spelled.is_absolute():
+                    spelled = base / spelled
+                target = canonical(spelled, REPO_ROOT, samefile, scandir)
+            except (OSError, RuntimeError, ValueError) as exc:
+                sys.stderr.write(
+                    "[require_boundary_validation] fail-closed: cannot tell whether "
+                    f"{raw!r} ({tool}, {location}) is inside the repository ({exc}).\n"
+                )
+                return 2
+            if target is None:
+                continue
+            try:
+                verdict = governing_rule(str(target))
+            except ConfigError as exc:
+                sys.stderr.write(
+                    f"[require_boundary_validation] {target} is denied: the project "
+                    f"configuration is invalid, so no rule can be applied ({exc}). Fix "
+                    f"{CONFIG_NAME}; it stays editable under a receipt: call "
+                    "mcp__boundary-validator__validate_proposal with "
+                    f"target_file={REPO_ROOT / CONFIG_NAME}, then retry.\n"
+                )
+                return 2
+            if verdict is None or has_recent_execute_safe(str(target), verdict.window_seconds):
+                continue
             sys.stderr.write(
-                "[require_boundary_validation] fail-closed: cannot tell whether "
-                f"{file_path!r} is inside the repository ({exc}).\n"
+                f"[require_boundary_validation] {target} is governed by {verdict.rule} "
+                f"(source: {verdict.source}) and has no recent EXECUTE_SAFE in audit_log "
+                f"(window: {verdict.window_seconds} s). "
+                + (
+                    "" if writer else
+                    f"{tool} names it in {location}, and the gate does not know whether that tool "
+                    "writes files, so it asks for a receipt as for a write. "
+                )
+                + "Call "
+                f"mcp__boundary-validator__validate_proposal with target_file={target}, "
+                "then retry.\n"
             )
             return 2
-        if target is None:
-            return 0
-        try:
-            verdict = governing_rule(str(target))
-        except ConfigError as exc:
-            sys.stderr.write(
-                f"[require_boundary_validation] {target} is denied: the project "
-                f"configuration is invalid, so no rule can be applied ({exc}). Fix "
-                f"{CONFIG_NAME}; it stays editable under a receipt: call "
-                "mcp__boundary-validator__validate_proposal with "
-                f"target_file={REPO_ROOT / CONFIG_NAME}, then retry.\n"
-            )
-            return 2
-        if verdict is None or has_recent_execute_safe(str(target), verdict.window_seconds):
-            return 0
     except Exception as exc:  # fail-closed: an unverifiable audit trail blocks
         sys.stderr.write(
             "[require_boundary_validation] fail-closed: could not verify "
             f"the boundary-validator audit trail ({exc}).\n"
         )
         return 2
-
-    sys.stderr.write(
-        f"[require_boundary_validation] {target} is governed by {verdict.rule} "
-        f"(source: {verdict.source}) and has no recent EXECUTE_SAFE in audit_log "
-        f"(window: {verdict.window_seconds} s). Call "
-        f"mcp__boundary-validator__validate_proposal with target_file={target}, "
-        "then retry.\n"
-    )
-    return 2
+    return 0
 
 
 if __name__ == "__main__":
