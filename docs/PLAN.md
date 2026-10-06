@@ -344,10 +344,17 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
   `.py` y solo con las primitivas que el cambio introduce (diseño aprobado en
   `docs/design/RECIBO_CONTENIDO.md` §4). Después F5, F6 y F7, y luego medir el coste por escritura
   gobernada y decidir la optimización antes de empaquetar. El verificador en el commit va a la v0.2.
-* **Comprobar al abrir la sesión:** tras reconectar el servidor MCP, la tabla `receipts` ya se crea y
-  guarda el hash. Pero una propuesta enviada como texto se aceptó, y la definición de la herramienta
-  que ve el agente sigue mostrando `proposal` como texto. Hay que averiguar si el harness convierte
-  el texto en objeto o si el rechazo de F3 no se aplica en la llamada real.
+* **Comprobado al abrir la sesión (2026-10-06):** tras reconectar el servidor MCP, la tabla
+  `receipts` se crea y guarda el hash. La propuesta enviada como texto se aceptaba porque Claude Code
+  convierte el texto JSON en objeto cuando el esquema declara un objeto; el rechazo de F3 sí se
+  aplica en la llamada real. Prueba con tres llamadas reales sobre `docs/PLAN.md` (no gobernado):
+  * texto JSON válido: `EXECUTE_SAFE` (llegó como objeto);
+  * texto que no es JSON: `arguments.proposal must be an object`, el error de F3;
+  * objeto: `EXECUTE_SAFE`.
+
+  El servidor sigue siendo estricto con un cliente que no convierte
+  (`test_a_proposal_as_text_is_an_invalid_params_error`). La definición con `proposal` como texto
+  era la de antes de reconectar; en una sesión nueva ya se ve el esquema de F3.
 * **Desde F4a**, cada escritura gobernada necesita una propuesta con el contenido literal: en un
   `Edit`, el `old_string` es `Topological_Grounding` y el `new_string` es `Implementation_Block`.
 
