@@ -18,14 +18,16 @@ from tools.boundary_validator.validator import validate_proposal
 from tools.hooks import require_boundary_validation
 
 
+def _quote_of(target_file: str) -> str:
+    path = REPO_ROOT / target_file
+    return path.read_text(encoding="utf-8")[:20] if path.exists() else ""
+
+
 def _doc_proposal(target_file: str) -> str:
-    # Intent_Class DOC skips the grounding gate (validator.py:119), so any
-    # placeholder quote is enough to isolate the recency/path-matching logic
-    # under test here from grounding behaviour already covered elsewhere.
     return json.dumps({
         "Intent_Class": "DOC",
         "Target_File": target_file,
-        "Topological_Grounding": "q",
+        "Topological_Grounding": _quote_of(target_file),
         "Implementation_Block": "b",
         "Safety_Abort": "NONE",
     })

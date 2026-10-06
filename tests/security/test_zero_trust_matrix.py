@@ -15,9 +15,13 @@ import pytest
 from tools.boundary_validator.validator import validate_proposal
 
 
+NEW_FILE = "docs/zero-trust-probe.md"
+
+
 def _doc_proposal(block: str) -> str:
     return json.dumps({
         "Intent_Class": "DOC",
+        "Target_File": NEW_FILE,
         "Implementation_Block": block,
         "Topological_Grounding": "docs",
         "Safety_Abort": "NONE",
@@ -69,7 +73,7 @@ PRIMITIVE_BLOCKS = [
 def test_prose_containing_primitive_substrings_is_not_quarantined(block):
     """The gate bans network primitives, not English words that happen
     to contain their letters."""
-    decision = validate_proposal(_doc_proposal(block))
+    decision = validate_proposal(_doc_proposal(block), NEW_FILE)
     assert decision["final_decision"] == "EXECUTE_SAFE", block
     assert decision["status"] == "VALIDATED", block
 

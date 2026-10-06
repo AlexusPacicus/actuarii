@@ -25,7 +25,8 @@ from tools.boundary_validator.validator import validate_proposal
 def test_audit_persists_to_isolated_db(isolate_audit_db):
     decision = validate_proposal(
         '{"Intent_Class":"DOC","Target_File":"docs/x.md",'
-        '"Topological_Grounding":"q","Implementation_Block":"b","Safety_Abort":"NONE"}'
+        '"Topological_Grounding":"q","Implementation_Block":"b","Safety_Abort":"NONE"}',
+        "docs/x.md",
     )
     assert decision["final_decision"] == "EXECUTE_SAFE"
     with sqlite3.connect(isolate_audit_db) as conn:

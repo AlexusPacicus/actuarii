@@ -13,6 +13,7 @@ def test_boundary_validator_gate():
     """Validación Zero-Trust de propuestas (5 Radicales)."""
     valid_prop = json.dumps({
         "Intent_Class": "FIX",
+        "Target_File": str(ROOT / "tools" / "boundary_validator" / "validator.py"),
         "Implementation_Block": "x = 1",
         "Topological_Grounding": "def validate_proposal(",
         "Safety_Abort": "NONE"
