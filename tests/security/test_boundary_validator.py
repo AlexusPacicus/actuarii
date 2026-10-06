@@ -17,9 +17,10 @@ GROUNDED_FILE = ROOT / "tools" / "boundary_validator" / "validator.py"
 GROUNDING_QUOTE = "def validate_proposal("
 
 
-def _grounded_proposal() -> str:
+def _grounded_proposal(target: str = str(GROUNDED_FILE)) -> str:
     return json.dumps({
         "Intent_Class": "FIX",
+        "Target_File": target,
         "Implementation_Block": "update threshold",
         "Topological_Grounding": GROUNDING_QUOTE,
         "Safety_Abort": "NONE",
@@ -65,6 +66,7 @@ def test_security_SEC_M_04_literal_grounding_required():
     # Grounding that does NOT exist literally in the target file
     proposal_bad = json.dumps({
         "Intent_Class": "FIX",
+        "Target_File": str(GROUNDED_FILE),
         "Implementation_Block": "update threshold",
         "Topological_Grounding": "this_citation_does_not_exist_in_the_code_xyz",
         "Safety_Abort": "NONE",
@@ -83,25 +85,26 @@ def test_security_SEC_M_05_valid_grounding_approved():
 
 def test_security_SEC_M_07_mutating_intent_requires_target_file():
     """SEC-M-07: REFACTOR/FIX/AUDIT without a target_file must NOT pass
-    (no fail-open). The tool schema documents target_file as 'required for
-    REFACTOR/FIX/AUDIT'; omitting it is a grounding failure."""
+    (no fail-open). The tool schema requires target_file; omitting it is a
+    target mismatch."""
     for intent in ("REFACTOR", "FIX", "AUDIT"):
         proposal = json.dumps({
             "Intent_Class": intent,
+            "Target_File": str(GROUNDED_FILE),
             "Implementation_Block": "update threshold",
             "Topological_Grounding": "auto_calibrate_critical_threshold()",
             "Safety_Abort": "NONE",
         })
         decision = validate_proposal(proposal)
         assert decision["status"] == "QUARANTINED", intent
-        assert decision["final_decision"] == "ABORTED_GROUNDING_FAILED", intent
+        assert decision["final_decision"] == "ABORTED_TARGET_MISMATCH", intent
 
 
 def test_security_SEC_M_07_unreadable_target_file_is_grounding_failure():
     """SEC-M-07: a mutating intent whose target_file does not exist is also
     a grounding failure (the file cannot be verified)."""
-    proposal = _grounded_proposal()
-    decision = validate_proposal(proposal, "/nonexistent/path/to/app.py")
+    missing = "/nonexistent/path/to/app.py"
+    decision = validate_proposal(_grounded_proposal(missing), missing)
     assert decision["status"] == "QUARANTINED"
     assert decision["final_decision"] == "ABORTED_GROUNDING_FAILED"
 
@@ -116,7 +119,7 @@ def test_security_SEC_M_06_mcp_stdio_jsonrpc(monkeypatch, capsys):
         {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
         {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
          "params": {"name": "validate_proposal",
-                    "arguments": {"proposal": _grounded_proposal(),
+                    "arguments": {"proposal": json.loads(_grounded_proposal()),
                                   "target_file": str(GROUNDED_FILE)}}},
     ]
     monkeypatch.setattr(sys, "stdin", io.StringIO("".join(json.dumps(m) + "\n" for m in messages)))

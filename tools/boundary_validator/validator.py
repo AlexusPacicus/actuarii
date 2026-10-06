@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import json
@@ -15,8 +16,7 @@ import logging
 from pydantic import ValidationError
 
 from tools.boundary_validator import hook_gate
-from tools.boundary_validator.schemas.parser import JSONParsingError, parse_proposal_json
-from tools.boundary_validator.schemas.proposals import AgentMutationProposal
+from tools.boundary_validator.schemas.proposals import AgentMutationProposal, build_response_format
 
 logger = logging.getLogger("tools.boundary_validator.validator")
 
@@ -97,14 +97,42 @@ def _finalize(decision: dict, intent: str = "", target_file: str = "",
     return decision
 
 
+def _no_duplicate_keys(pairs: list) -> dict:
+    keys = [key for key, _ in pairs]
+    if len(keys) != len(set(keys)):
+        raise ValueError("duplicate key")
+    return dict(pairs)
+
+
+def _no_constant(name: str):
+    raise ValueError(f"the constant {name} is not allowed")
+
+
+def _resolve_in_root(path: str) -> Path:
+    candidate = Path(path).expanduser()
+    if not candidate.is_absolute():
+        candidate = REPO_ROOT / candidate
+    return candidate.resolve()
+
+
+def _same_file(first: str, second: str) -> bool:
+    if not first or not second:
+        return False
+    a, b = _resolve_in_root(first), _resolve_in_root(second)
+    if a == b:
+        return True
+    return a.exists() and b.exists() and os.path.samefile(a, b)
+
+
 def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dict:
     # Memory sanitization BEFORE processing (SEC-M-09): raw NUL.
     if "\x00" in proposal_json_str or "\x00" in target_file_path:
         return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST",
                          "case_id": str(uuid.uuid4())})
     try:
-        proposal, _used_repair = parse_proposal_json(proposal_json_str)
-    except JSONParsingError as e:
+        proposal = json.loads(proposal_json_str, object_pairs_hook=_no_duplicate_keys,
+                              parse_constant=_no_constant)
+    except (ValueError, RecursionError) as e:
         return _finalize({"status": "QUARANTINED", "final_decision": "INVALID_JSON",
                           "reason": str(e)})
 
@@ -129,13 +157,10 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
             return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST",
                               "case_id": str(uuid.uuid4())}, intent_raw, target_file_path, safety_abort_raw)
 
-        # Strict 5-Radicals conformance (SEC-M-14..18):
-        # Target_File travels out-of-band (MCP argument) and is merged before
-        # validation; unknown enums and extra fields fail closed.
-        merged = dict(proposal)
-        merged.setdefault("Target_File", target_file_path)
+        # Strict 5-Radicals conformance (SEC-M-14..18): every radical is
+        # required; unknown enums and extra fields fail closed.
         try:
-            model = AgentMutationProposal.model_validate(merged)
+            model = AgentMutationProposal.model_validate(proposal)
         except ValidationError as exc:
             logger.debug("Proposal schema violation", exc_info=exc)
             # A MISSING Safety_Abort is malformed input (INVALID_JSON);
@@ -154,21 +179,33 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
             return _finalize({"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE",
                               "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort)
 
-        # SEC-M-07 (no fail-open): REFACTOR/FIX/AUDIT are mutating intents, so
-        # literal grounding against a target file is MANDATORY. Omitting
-        # `target_file_path` is a grounding failure, not a pass.
-        if intent in ["REFACTOR", "FIX", "AUDIT"]:
-            if not target_file_path:
-                return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
-            # Dual Boundary: canonicalization + physical containment within the repo.
-            resolved = Path(target_file_path).expanduser().resolve(strict=True)
-            if not resolved.is_relative_to(REPO_ROOT):
-                return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
-            # BINARY UTF-8 subsequence matching over read_bytes().
+        # A receipt binds one file: the call's target_file MUST be the file the
+        # proposal names.
+        if not _same_file(model.Target_File, target_file_path):
+            return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_TARGET_MISMATCH",
+                              "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort)
+
+        # Dual Boundary: canonicalization + physical containment within the repo.
+        resolved = _resolve_in_root(target_file_path)
+        if not resolved.is_relative_to(REPO_ROOT):
+            return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
+
+        # SEC-M-07 (no fail-open): a file that exists MUST be cited literally,
+        # whatever the intent; a file that does not exist cannot be cited, so
+        # only the mutating intents (REFACTOR/FIX/AUDIT) fail on it.
+        if resolved.exists():
+            # BINARY UTF-8 subsequence matching over read_bytes(); an empty
+            # file admits only the empty quote.
             quote_bytes = grounding.encode("utf-8")
             file_bytes = resolved.read_bytes()
-            if not grounding or quote_bytes not in file_bytes:
+            if file_bytes:
+                grounded = bool(grounding) and quote_bytes in file_bytes
+            else:
+                grounded = not grounding
+            if not grounded:
                 return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
+        elif intent in ["REFACTOR", "FIX", "AUDIT"]:
+            return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
 
         return _finalize({"status": "VALIDATED", "final_decision": "EXECUTE_SAFE",
                           "case_id": str(uuid.uuid4()), "and_gate_ok": True},
@@ -189,28 +226,34 @@ SERVER_NAME = "boundary-validator"
 SERVER_VERSION = "1.2.0"
 PROTOCOL_VERSION = "2024-11-05"
 
+def _input_schema() -> dict:
+    # The strict proposal schema, with its enum definitions hoisted to the
+    # document root so that their "#/$defs/..." references resolve.
+    proposal = build_response_format(AgentMutationProposal)["json_schema"]["schema"]
+    definitions = proposal.pop("$defs")
+    return {
+        "type": "object",
+        "properties": {
+            "proposal": proposal,
+            "target_file": {
+                "type": "string",
+                "description": "The file the receipt is for; it MUST be the same file as the proposal's Target_File.",
+            },
+        },
+        "required": ["proposal", "target_file"],
+        "$defs": definitions,
+    }
+
+
 TOOL_DEFINITION = {
     "name": "validate_proposal",
     "description": (
         "BoundaryValidator Zero-Trust Gate: evaluates a neuro-symbolic proposal "
         "(5 Radicals) and returns the deterministic gate decision "
         "(EXECUTE_SAFE | ABORTED_GROUNDING_FAILED | ABORTED_VIOLATES_ZERO_TRUST | "
-        "BLOCKED_BY_SAFETY_GATE | INVALID_JSON)."
+        "BLOCKED_BY_SAFETY_GATE | INVALID_JSON | ABORTED_TARGET_MISMATCH)."
     ),
-    "inputSchema": {
-        "type": "object",
-        "properties": {
-            "proposal": {
-                "type": "string",
-                "description": "Serialized JSON proposal with keys Intent_Class, Implementation_Block, Topological_Grounding, Safety_Abort.",
-            },
-            "target_file": {
-                "type": "string",
-                "description": "Source file path for literal grounding verification (required for REFACTOR/FIX/AUDIT).",
-            },
-        },
-        "required": ["proposal"],
-    },
+    "inputSchema": _input_schema(),
 }
 
 
@@ -262,13 +305,15 @@ def handle_request(req: dict):
         if name != "validate_proposal":
             return _rpc_error(request_id, -32602, f"Unknown tool: {name!r}")
         arguments = params.get("arguments") or {}
-        proposal = arguments.get("proposal", "")
-        target_file = arguments.get("target_file", "")
-        if not isinstance(proposal, str):
-            return _rpc_error(request_id, -32602, "arguments.proposal must be a string")
+        proposal = arguments.get("proposal")
+        target_file = arguments.get("target_file")
+        if not isinstance(proposal, dict):
+            return _rpc_error(request_id, -32602, "arguments.proposal must be an object")
+        if not isinstance(target_file, str) or not target_file:
+            return _rpc_error(request_id, -32602, "arguments.target_file must be a non-empty string")
         try:
-            decision = validate_proposal(proposal, target_file)
-        except Exception as e:  # e.g. missing file in the grounding check
+            decision = validate_proposal(json.dumps(proposal), target_file)
+        except Exception as e:  # the gate is total; this is the last line of defence
             return _rpc_error(request_id, -32603, f"Internal error: {e}")
         return _rpc_result(request_id, {
             "content": [{"type": "text", "text": json.dumps(decision, indent=2)}],

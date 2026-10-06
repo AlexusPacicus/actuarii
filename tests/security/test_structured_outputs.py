@@ -5,18 +5,26 @@ Normative: tools/boundary_validator/schemas/proposals.py (AgentMutationProposal)
 Coverage: SEC-M-14, SEC-M-15, SEC-M-16, SEC-M-17, SEC-M-18
 
 RFC 2119: build_response_format MUST emit a strict json_schema response
-format; strict mode MUST forbid additional properties; parse_proposal_json
-MUST follow the ordered pipeline; repaired-but-incomplete JSON MUST raise
-JSONParsingError; parse_proposal MUST validate against AgentMutationProposal
-and the validator integration MUST keep SEC-M-01..12 outcomes intact.
+format; strict mode MUST forbid additional properties; the validator MUST
+read the proposal with a strict JSON parse and MUST NOT extract or repair
+it (an invalid payload is INVALID_JSON); the validator integration MUST
+keep SEC-M-01..12 outcomes intact.
 """
 import json
+from pathlib import Path
 
 import pytest
 
-from tools.boundary_validator.schemas.parser import JSONParsingError, parse_proposal, parse_proposal_json
+from tools.boundary_validator import schemas
 from tools.boundary_validator.schemas.proposals import AgentMutationProposal, build_response_format
 from tools.boundary_validator.validator import validate_proposal
+
+SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "tools" / "boundary_validator" / "schemas"
+TARGET = "docs/strict-input-probe.md"
+VALID = (
+    '{"Intent_Class": "DOC", "Target_File": "docs/strict-input-probe.md", "Topological_Grounding": "y", '
+    '"Implementation_Block": "z", "Safety_Abort": "NONE"}'
+)
 
 
 # ---------------------------------------------------------------------------
@@ -57,59 +65,67 @@ def test_structured_outputs_SEC_M_15_build_emits_strict_schema():
 
 
 # ---------------------------------------------------------------------------
-# SEC-M-16: parse_proposal_json ordered pipeline
+# SEC-M-16/17: the proposal is read with a strict parse; nothing is extracted or repaired
 # ---------------------------------------------------------------------------
 
 
-def test_structured_outputs_SEC_M_16_pure_json_no_repair():
-    raw = '{"Intent_Class": "FIX", "Target_File": "x", "Topological_Grounding": "y", "Implementation_Block": "z", "Safety_Abort": "NONE"}'
-    parsed, used_repair = parse_proposal_json(raw)
-    assert used_repair is False
-    assert parsed["Intent_Class"] == "FIX"
+def test_structured_outputs_SEC_M_16_a_valid_object_is_accepted():
+    decision = validate_proposal(VALID, TARGET)
+    assert decision["status"] == "VALIDATED"
+    assert decision["final_decision"] == "EXECUTE_SAFE"
 
 
-def test_structured_outputs_SEC_M_16_fenced_json_extracted():
-    raw = 'Here is the payload:\n```json\n{"Intent_Class": "FIX", "Target_File": "x", "Topological_Grounding": "y", "Implementation_Block": "z", "Safety_Abort": "NONE"}\n```\n'
-    parsed, used_repair = parse_proposal_json(raw)
-    assert used_repair is False
-    assert parsed["Intent_Class"] == "FIX"
+STRICT_REJECTIONS = {
+    "fenced block": "```json\n" + VALID + "\n```",
+    "text around the object": "Here is the payload:\n" + VALID + "\nThat is all.",
+    "trailing comma": VALID[:-1] + ",}",
+    "unclosed brace": VALID[:-1],
+    "truncated": '{"Intent_Class": "DOC", "Target_File": "docs/strict-input-probe.md"',
+    "duplicate key": VALID[:-1] + ', "Intent_Class": "FIX"}',
+    "NaN": VALID[:-1] + ', "Extra": NaN}',
+    "Infinity": VALID[:-1] + ', "Extra": Infinity}',
+    "negative Infinity": VALID[:-1] + ', "Extra": -Infinity}',
+    "array": "[" + VALID + "]",
+    "string": json.dumps(VALID),
+    "null": "null",
+    "number": "42",
+    "empty": "",
+    "single quotes": VALID.replace('"', "'"),
+}
 
 
-def test_structured_outputs_SEC_M_16_trailing_comma_repaired():
-    raw = '{"Intent_Class": "FIX", "Target_File": "x", "Topological_Grounding": "y", "Implementation_Block": "z", "Safety_Abort": "NONE",}'
-    parsed, used_repair = parse_proposal_json(raw)
-    assert used_repair is True
-    assert parsed["Intent_Class"] == "FIX"
+@pytest.mark.parametrize("raw", STRICT_REJECTIONS.values(), ids=STRICT_REJECTIONS.keys())
+def test_structured_outputs_SEC_M_17_anything_but_a_strict_object_is_invalid_json(raw):
+    decision = validate_proposal(raw, TARGET)
+    assert decision["status"] == "QUARANTINED"
+    assert decision["final_decision"] == "INVALID_JSON"
+
+
+def test_structured_outputs_SEC_M_17_a_duplicate_key_does_not_let_the_last_value_win():
+    first_wins = VALID[:-1] + ', "Intent_Class": "DOC"}'
+    assert validate_proposal(first_wins, TARGET)["final_decision"] == "INVALID_JSON"
+
+
+def test_structured_outputs_SEC_M_17_deeply_nested_input_is_invalid_json():
+    assert validate_proposal("[" * 100000, TARGET)["final_decision"] == "INVALID_JSON"
+
+
+@pytest.mark.parametrize("module", ["parser", "docstate"])
+def test_structured_outputs_SEC_M_17_the_tolerant_parser_and_docstate_modules_are_gone(module):
+    assert not (SCHEMAS_DIR / f"{module}.py").exists()
+    with pytest.raises(ImportError):
+        __import__(f"tools.boundary_validator.schemas.{module}")
+
+
+@pytest.mark.parametrize("name", ["DocState", "JSONParsingError", "parse_proposal", "parse_proposal_json"])
+def test_structured_outputs_SEC_M_17_the_package_no_longer_exports_them(name):
+    assert name not in schemas.__all__
+    assert not hasattr(schemas, name)
 
 
 # ---------------------------------------------------------------------------
-# SEC-M-17: repaired-but-incomplete JSON raises JSONParsingError
+# SEC-M-18: validator integration intact
 # ---------------------------------------------------------------------------
-
-
-def test_structured_outputs_SEC_M_17_repaired_incomplete_raises():
-    raw = '{"Intent_Class": "FIX", "Target_File": "x"'  # truncated, repairable
-    with pytest.raises(JSONParsingError):
-        parse_proposal(raw)
-
-
-# ---------------------------------------------------------------------------
-# SEC-M-18: parse_proposal validation + validator integration intact
-# ---------------------------------------------------------------------------
-
-
-def test_structured_outputs_SEC_M_18_validates_agent_mutation_proposal():
-    proposal = parse_proposal(
-        json.dumps({
-            "Intent_Class": "FIX",
-            "Target_File": "traianus/app.py",
-            "Topological_Grounding": "auto_calibrate_critical_threshold()",
-            "Implementation_Block": "def f(): pass",
-            "Safety_Abort": "NONE",
-        })
-    )
-    assert isinstance(proposal, AgentMutationProposal)
-    assert proposal.Intent_Class.value == "FIX"
 
 
 def test_structured_outputs_SEC_M_18_invalid_json_still_invalid_decision():

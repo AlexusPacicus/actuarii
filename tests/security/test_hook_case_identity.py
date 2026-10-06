@@ -261,8 +261,10 @@ UNGOVERNED = [
 def audit():
     """The audit trail exists and holds a receipt for another file; `grant` adds one for a target."""
     def grant(target):
+        file = REPO_ROOT / target
+        quote = file.read_text(encoding="utf-8")[:20] if file.exists() else ""
         decision = validate_proposal(json.dumps({
-            "Intent_Class": "DOC", "Target_File": target, "Topological_Grounding": "q",
+            "Intent_Class": "DOC", "Target_File": target, "Topological_Grounding": quote,
             "Implementation_Block": "b", "Safety_Abort": "NONE",
         }), target)
         assert decision["final_decision"] == "EXECUTE_SAFE"
