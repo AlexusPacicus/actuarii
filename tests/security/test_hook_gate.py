@@ -166,7 +166,7 @@ def test_audit_db_path_matches_validator_regardless_of_cwd(tmp_path, monkeypatch
 
 def test_malformed_stdin_json_blocks(monkeypatch):
     """R2/INV-2 (REMEDIATION-01 Delta1): malformed JSON on stdin must exit 2
-    (block), not 0 (allow) -- the hook's fail-closed claim (AGENTS.md SS6.2)
+    (block), not 0 (allow) -- the hook's fail-closed claim
     is total only if every unparseable input blocks too. Loaded as a plain
     module (not spawned) and driven through a replaced sys.stdin, so no host
     process primitive is needed to exercise main() end to end."""

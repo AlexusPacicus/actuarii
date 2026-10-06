@@ -7,8 +7,8 @@ written: no temporary or cache files.
     python3 tools/audit/context_pack.py [--root DIR] [--log PATH] [--max-bytes N] <<'EOF'
     {"task": "why these sections",
      "sources": [{"path": "AGENTS.md", "select": [{"clause": "6.1"}, {"heading": "Scope"}]},
-                 {"path": "traianus/storage/_storage.py",
-                  "select": [{"symbol": "init_relational_tables"}]}]}
+                 {"path": "tools/audit/run_process.py",
+                  "select": [{"symbol": "run"}]}]}
     EOF
 
 Selectors (an object with exactly one key):

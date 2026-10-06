@@ -20,7 +20,7 @@ from tools.boundary_validator.schemas.proposals import AgentMutationProposal
 
 logger = logging.getLogger("tools.boundary_validator.validator")
 
-# Zero-Trust capability matrix (AGENTS.md §2.1): each clause binds a banned
+# Zero-Trust capability matrix: each clause binds a banned
 # host primitive to its physical effect and to the pattern that identifies it.
 # Boundary anchoring is normative, not cosmetic — a naked substring test
 # quarantines prose ("kept in sync by hand" contains "nc "), which trains the
@@ -129,7 +129,7 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
             return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST",
                               "case_id": str(uuid.uuid4())}, intent_raw, target_file_path, safety_abort_raw)
 
-        # Strict 5-Radicals conformance (AGENTS.md 5.1, SEC-M-14..18):
+        # Strict 5-Radicals conformance (SEC-M-14..18):
         # Target_File travels out-of-band (MCP argument) and is merged before
         # validation; unknown enums and extra fields fail closed.
         merged = dict(proposal)

@@ -1,69 +1,25 @@
-# Python & Caches
+# Python
 __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
 venv/
+*.egg-info/
+build/
+dist/
+.coverage
 
-# Database & Runtime
+# Local data
 *.db
 *.db-shm
 *.db-wal
-
-# Build Artifacts
-traianus.egg-info/
-repomix-output.xml
-
-# Internal Dev (not uploaded)
-developer/
-
-# Development internals (not uploaded); SPECs + METHODOLOGY ARE versioned (R1)
-docs/development/bitacora.md
-docs/development/working_tree.md
-docs/development/SYNC_PLAN.md
-docs/development/tests/TEST_OVERVIEW.md
-
-# Local experiment drafts
-tools/experiments/exp_kinetic_resonance.py
-
-# Local runtime data
 .data/
 
-# Archived documentation (preserved in git history, not in working tree)
-docs/exploring/
+# Local Claude Code configuration
+.claude/settings.local.json
+.claude/launch.json
 
-# Manuscript drafts (not published yet)
-docs/manifesto/
-
-# OS / Editors
+# System and editors
 .DS_Store
 .idea/
 .vscode/
-
-# Binaries / Manuscripts
-*.pdf
-
-# OpenCode dev scaffolding (skills are tracked; npm artifacts are not)
-.opencode/node_modules/
-frontend/node_modules/
-.opencode/package.json
-.opencode/package-lock.json
-
-# Build/vendor artifacts (global patterns)
-node_modules/
-.vite/
-dist/
-
-# RefApp-01 PoC working materials (operator-local; NOT part of the substrate)
-/tools/results/
-/tools/export_chromatic_gif.py
-/tools/export_dual_instantaneity.py
-/tools/export_triangular_spiral_gif.py
-/docs/manifesto/TOMO_0.md
-
-# Research datasets (versioned): data/spinoza/ holds the frozen corpus.
-# Only ephemeral SQLite work artifacts live under .data/ (ignored above).
-# Local run artefacts
-.coverage
-.claude/launch.json
-.claude/settings.local.json

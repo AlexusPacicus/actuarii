@@ -1,5 +1,5 @@
 #!/bin/sh
-# SessionStart hook: puts tools/bin, the Python gate of AGENTS 2.5 (tools/bin/python3), first on the
+# SessionStart hook: puts tools/bin, the Python gate (tools/bin/python3), first on the
 # PATH of every Bash call of the session. It appends one line, export PATH='<tools/bin>':"$PATH",
 # to $CLAUDE_ENV_FILE, which the harness sources before each Bash call; <tools/bin> is the physical
 # path of the directory next to this hook, found from $0 and not from the cwd. It prints nothing and

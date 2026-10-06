@@ -9,7 +9,7 @@ Complements `test_opencode_permissions.py`, which stays text-level on purpose:
 rule ORDER is a textual property in OpenCode (last match wins) and cannot be
 asserted over a parsed mapping.
 
-Normative: AGENTS.md 2.5, 6.2
+Normative: the permission perimeter of both harnesses
 Coverage: SEC-M-13"""
 import json
 import re
@@ -30,7 +30,7 @@ APPROVED_GIT_ALLOW = {
     "status", "diff", "log", "show", "rev-parse", "grep", "blame", "ls-files",
 }
 
-# Primitives that MUST be denied in every matrix (AGENTS.md 2.5, 6.2).
+# Primitives that MUST be denied in every matrix.
 REQUIRED_DENY = {"rm *", "python3 -c *", "python3 -m *", "webfetch", "websearch"}
 
 # Alternation order matters: a string literal is consumed whole, so a `//`
@@ -114,7 +114,7 @@ def test_security_SEC_M_13_git_allows_are_read_only(matrix):
 
 
 def test_security_SEC_M_13_python_allows_stay_inside_committed_trees(matrix):
-    """AGENTS.md 2.5: a python3 allow MUST target committed scripts under
+    """A python3 allow MUST target committed scripts under
     tools/ or traianus/."""
     name, rules = matrix
     for pattern, decision in rules.items():
@@ -127,7 +127,7 @@ def test_security_SEC_M_13_python_allows_stay_inside_committed_trees(matrix):
 
 
 def test_security_SEC_M_13_perimeter_parity_between_harnesses():
-    """AGENTS.md 6.2: both matrices MUST declare the same perimeter. A rule
+    """Both matrices MUST declare the same perimeter. A rule
     granted in one harness and missing from the other is drift."""
     opencode = _opencode_matrix()
     claude = _claude_matrix()
@@ -137,6 +137,27 @@ def test_security_SEC_M_13_perimeter_parity_between_harnesses():
         f"perimeter drift -- only in opencode.jsonc: {opencode_only}; "
         f"only in .claude/settings.json: {claude_only}"
     )
+
+
+def test_every_python_allow_names_a_path_that_exists(matrix):
+    name, rules = matrix
+    missing = [
+        pattern for pattern, decision in rules.items()
+        if decision == ALLOW and pattern.startswith("python3 ")
+        and not (ROOT / pattern[len("python3 "):].split("*")[0]).exists()
+    ]
+    assert missing == [], f"{name}: python3 allows for paths that do not exist"
+
+
+CLAUDE_MD = ROOT / "CLAUDE.md"
+
+
+def test_opencode_loads_the_instructions_that_claude_md_imports():
+    imported = re.findall(r"^@(\S+)$", CLAUDE_MD.read_text(encoding="utf-8"), re.MULTILINE)
+    opencode = json.loads(_strip_line_comments(OPENCODE.read_text(encoding="utf-8")))
+    assert imported
+    assert opencode["instructions"] == imported
+    assert [path for path in imported if not (ROOT / path).is_file()] == []
 
 
 def test_line_comment_stripper_preserves_urls_inside_strings():
@@ -164,7 +185,7 @@ def _launched_server_script():
 
 
 def test_security_boundary_validator_server_launches_from_tools_boundary_validator():
-    """AGENTS.md 6.2: both harnesses MUST launch the gate from its current path."""
+    """Both harnesses MUST launch the gate from its current path."""
     assert _launched_server_script() == {".mcp.json": GATE_SERVER, "opencode.jsonc": GATE_SERVER}
     assert (ROOT / GATE_SERVER).is_file()
 

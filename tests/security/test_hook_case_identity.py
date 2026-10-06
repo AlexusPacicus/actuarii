@@ -1,4 +1,4 @@
-"""Both path gates decide by filesystem identity, not by the spelled path (AGENTS.md 6.2).
+"""Both path gates decide by filesystem identity, not by the spelled path.
 
 On a case-insensitive filesystem (APFS by default) `TESTS/x.py` and `tests/x.py` name one file, and a
 gate that compares spellings lets the first through. tools/hooks/require_boundary_validation.py and

@@ -1,7 +1,7 @@
-"""Bash hook (tools/hooks/deny_python_escapes.py, AGENTS 2.5): the ways of reaching a Python
+"""Bash hook (tools/hooks/deny_python_escapes.py): the ways of reaching a Python
 interpreter around the tools/bin shim are denied (exit 2, fail closed); every other command passes.
 
-Normative: AGENTS.md 2.5, 6.2
+Normative: no inline Python and no interpreter outside the committed scripts.
 """
 import ast
 import io

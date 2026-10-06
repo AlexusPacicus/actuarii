@@ -1,4 +1,4 @@
-"""Delegation contract and report schema (tools/audit/delegation_contract.py, AGENTS 6.1).
+"""Delegation contract and report schema (tools/audit/delegation_contract.py).
 
 A delegation is a strict JSON document, not a free-text prompt: every object forbids extra keys, every
 property is required and no field has a default (the meaning of `strict` in build_response_format).
@@ -39,7 +39,6 @@ CONTRACT = {
     'branch': 'feat/delegation-contract',
     'base_commit': '651bdf4',
     'attribution': 'Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>',
-    'scope': 'tools',
     'context': {
         'task': 'why these sections',
         'sources': [{'path': 'notes.md', 'select': [{'clause': '1.1'}, {'heading': 'Scope'}]}],
@@ -225,9 +224,8 @@ BAD_VALUES = [
     ('contract', ('tests', 0, 'id'), ['', 'T', 't1', 'T100', 'X1', 'B1']),
     ('contract', ('schema_version',), ['', 'delegation/2', 'delegation-report/1']),
     ('contract', ('report_schema',), ['', 'delegation-report/2', 'delegation/1']),
-    ('contract', ('scope',), ['', 'docs', 'Tools', 'Client', 'client ']),
     ('contract', ('tests', 0, 'expectation'), ['', 'green', 'RED', 'Manual', 'manual', 'manual ']),
-    ('contract', ('gates', 0), ['', 'ruff', 'pytest', 'MYPY', 'TSC', 'tsc', 'tsc ']),
+    ('contract', ('gates', 0), ['', 'MYPY', 'TSC', 'tsc ', 'two words', '-tsc', 'a' * 41]),
     ('contract', ('title',), ['', 'x' * 121]),
     ('contract', ('problem',), ['']),
     ('contract', ('commit_message',), ['', 'x' * 101, 'x' * 101 + LF + 'body']),
@@ -235,7 +233,7 @@ BAD_VALUES = [
     ('report', ('task_id',), ['', 'ab', 'Abc', 'a' * 65]),
     ('report', ('commit',), ['', 'a' * 39, 'a' * 41, 'A' * 40, 'g' * 40, '651bdf4']),
     ('report', ('tests', 0, 'id'), ['', 'T', 'Y1', 'x1', 'T100', 'B1']),
-    ('report', ('gates', 0, 'gate'), ['', 'ruff', 'pytest', 'TSC', 'tsc', 'tsc ']),
+    ('report', ('gates', 0, 'gate'), ['', 'TSC', 'tsc ', 'two words', '-tsc', 'a' * 41]),
     ('report', ('gates', 0, 'status'), ['', 'ok', 'PASS']),
 ]
 GOOD_VALUES = [
@@ -244,13 +242,12 @@ GOOD_VALUES = [
     ('contract', ('base_commit',), ['abcdef1', 'a' * 40]),
     ('contract', ('behaviours', 0, 'id'), ['B1', 'B99']),
     ('contract', ('tests', 0, 'id'), ['T1', 'T99']),
-    ('contract', ('scope',), ['engine']),
     ('contract', ('tests', 0, 'expectation'), ['guard']),
-    ('contract', ('gates', 0), ['pytest_model', 'mypy', 'validate_proposal']),
+    ('contract', ('gates', 0), ['pytest_model', 'mypy', 'validate_proposal', 'tsc', 'a', 'a' * 40]),
     ('contract', ('title',), ['x', 'x' * 120]),
     ('contract', ('commit_message',), ['x', 'x' * 100, 'subject' + LF + 'y' * 500]),
     ('report', ('commit',), ['a' * 40]),
-    ('report', ('gates', 0, 'gate'), ['pytest_model', 'validate_proposal']),
+    ('report', ('gates', 0, 'gate'), ['pytest_model', 'validate_proposal', 'tsc', 'a', 'a' * 40]),
     ('report', ('tests', 0, 'id'), ['T1', 'X12']),
     ('report', ('gates', 0, 'status'), ['fail', 'not_run']),
 ]
@@ -581,19 +578,11 @@ def test_the_agent_definition_names_the_two_commands_and_the_json_contract(cli):
         assert cli(DOCS.get(argv[0], ''), *argv)[0] == 0, command
 
 
-# T14 scope client: the RefApp-01 client in ../refapp-01, gated by npm test, typecheck and build
+# T14 no scope, and a gate is a free name: the contract declares what each one means
 
 SECOND = {**TEST, 'id': 'T2'}
-NPM = ['npm_test', 'npm_typecheck', 'npm_build']
-PYTHON_GATES = ['pytest_full', 'pytest_model', 'ruff_ci', 'mypy', 'validate_proposal']
-
-
-def scoped(scope, **fields):
-    return {**copy.deepcopy(CONTRACT), 'scope': scope, **fields}
-
-
-def client(**fields):
-    return scoped('client', **{'gates': list(NPM), **fields})
+GATE_NAMES = ['pytest_full', 'validate_proposal', 'ruff_ci', 'tsc', 'npm-test', 'lint2', '0', 'a' * 40]
+BAD_GATE_NAMES = ['', ' ', 'Tsc', 'npm test', 'npm.test', '_x', '-x', 'a' * 41, 'tsc' + LF, ' tsc', 'tsc ', 'tsc\t', 'tsç']
 
 
 def error_locations(err):
@@ -601,46 +590,55 @@ def error_locations(err):
 
 
 def test_each_coupling_is_reported_at_its_own_field(cli):
-    broken = scoped('tools', gates=['ruff_ci', 'ruff_ci'], tests=[TEST, {**TEST, 'must_catch': 'other'}])
+    broken = {**copy.deepcopy(CONTRACT), 'gates': ['ruff_ci', 'ruff_ci'], 'tests': [TEST, {**TEST, 'must_catch': 'other'}]}
     assert sorted(error_locations(reject(cli, 'contract', broken))) == ['gates', 'tests']
 
 
-@pytest.mark.parametrize('scope', ['engine', 'tools'])
-def test_an_engine_or_tools_contract_keeps_red_and_guard_tests_and_every_earlier_gate(cli, scope):
-    gates = ['pytest_full', 'pytest_model', 'ruff_ci', 'mypy', 'validate_proposal']
-    accept(cli, 'contract', scoped(scope, tests=[TEST, {**SECOND, 'expectation': 'guard'}], gates=gates))
+def test_a_contract_keeps_red_and_guard_tests(cli):
+    accept(cli, 'contract', {**copy.deepcopy(CONTRACT), 'tests': [TEST, {**SECOND, 'expectation': 'guard'}]})
 
 
-@pytest.mark.parametrize('gates', [NPM, NPM[::-1], [NPM[1], NPM[2], NPM[0]]], ids=lambda gates: '+'.join(gates))
-@pytest.mark.parametrize('tests', [[TEST], [TEST, {**SECOND, 'expectation': 'guard'}]], ids=['red', 'red+guard'])
-def test_a_client_contract_with_the_three_npm_gates_in_any_order_is_accepted(cli, gates, tests):
-    accept(cli, 'contract', client(gates=gates, tests=tests))
+@pytest.mark.parametrize('scope', ['engine', 'tools', 'client', ''])
+def test_a_contract_with_a_scope_is_rejected(cli, scope):
+    err = reject(cli, 'contract', {**copy.deepcopy(CONTRACT), 'scope': scope})
+    assert error_locations(err) == ['scope']
+    assert 'extra' in err.lower()
 
 
-WRONG_CLIENT_GATES = (
-    [[gate for gate in NPM if gate != missing] for missing in NPM]
-    + [NPM + [extra] for extra in PYTHON_GATES]
-    + [PYTHON_GATES[:1]]
-)
+def test_the_contract_model_has_no_scope_and_no_npm_gates():
+    assert 'scope' not in dc.DelegationContract.model_fields
+    assert not hasattr(dc, 'NPM_GATES')
 
 
-@pytest.mark.parametrize('gates', WRONG_CLIENT_GATES, ids=lambda gates: '+'.join(gates))
-def test_a_client_contract_whose_gates_are_not_the_three_npm_gates_is_rejected_at_gates(cli, gates):
-    assert error_locations(reject(cli, 'contract', client(gates=gates))) == ['gates']
+@pytest.mark.parametrize('gates', [GATE_NAMES, GATE_NAMES[::-1], GATE_NAMES[:1]], ids=['all', 'reversed', 'one'])
+def test_a_contract_accepts_gates_of_any_valid_name_in_any_order(cli, gates):
+    accept(cli, 'contract', replaced('contract', ('gates',), gates))
 
 
-@pytest.mark.parametrize('scope', ['engine', 'tools'])
-@pytest.mark.parametrize('npm', NPM)
-@pytest.mark.parametrize('base', [['pytest_full', 'ruff_ci'], []], ids=['with-python-gates', 'alone'])
-def test_an_engine_or_tools_contract_with_an_npm_gate_is_rejected_at_gates(cli, scope, npm, base):
-    err = reject(cli, 'contract', scoped(scope, gates=base + [npm]))
-    assert error_locations(err) == ['gates']
-    assert 'npm' in err
+@pytest.mark.parametrize('name', BAD_GATE_NAMES, ids=repr)
+def test_a_contract_gate_that_breaks_the_pattern_is_rejected_at_its_item(cli, name):
+    err = reject(cli, 'contract', replaced('contract', ('gates',), ['pytest_full', name]))
+    assert error_locations(err) == ['gates.1']
 
 
-def test_a_report_may_carry_the_three_npm_gates(cli):
-    gates = [{'gate': gate, 'status': 'pass', 'detail': 'ok'} for gate in NPM]
+@pytest.mark.parametrize('name', GATE_NAMES, ids=repr)
+def test_a_report_gate_with_a_valid_name_is_accepted(cli, name):
+    gates = [{'gate': name, 'status': 'pass', 'detail': 'ok'}]
     accept(cli, 'report', replaced('report', ('gates',), gates))
+
+
+@pytest.mark.parametrize('name', BAD_GATE_NAMES, ids=repr)
+def test_a_report_gate_that_breaks_the_pattern_is_rejected_at_its_field(cli, name):
+    gates = [{'gate': name, 'status': 'pass', 'detail': 'ok'}]
+    assert error_locations(reject(cli, 'report', replaced('report', ('gates',), gates))) == ['gates.0.gate']
+
+
+def test_the_two_gate_fields_share_one_pattern():
+    patterns = {
+        dc.DelegationContract.model_json_schema()['properties']['gates']['items']['pattern'],
+        dc.GateResult.model_json_schema()['properties']['gate']['pattern'],
+    }
+    assert patterns == {'^[a-z0-9][a-z0-9_-]{0,39}$'}
 
 
 def markdown_bullet(text, start):

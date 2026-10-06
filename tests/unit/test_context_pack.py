@@ -1,4 +1,4 @@
-"""Volatile section extraction (tools/audit/context_pack.py, AGENTS 6.1).
+"""Volatile section extraction (tools/audit/context_pack.py).
 
 A delegation contract embeds a JSON spec; the tool serves only the sections it names, to stdout,
 and appends one log line per selector (path, selector, range, hashes) without the content.

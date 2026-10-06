@@ -1,6 +1,6 @@
 """The boundary validator keeps its audit trail in its own database, independent of the engine.
 
-Normative: AGENTS.md 1.3, 6.2; REMEDIATION-01 INV-1. The gate owns the location (hook_gate) and the
+Normative: REMEDIATION-01 INV-1. The gate owns the location (hook_gate) and the
 writer follows the path the reader resolves, so the two cannot diverge; nothing under
 tools/boundary_validator imports the engine.
 """

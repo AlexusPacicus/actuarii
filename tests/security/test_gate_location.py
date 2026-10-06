@@ -1,4 +1,4 @@
-"""The Zero-Trust gate lives in tools/boundary_validator/, outside the deterministic engine (AGENTS.md 3.1, 6.2).
+"""The Zero-Trust gate lives in tools/boundary_validator/, outside the deterministic engine.
 
 Guards the moves from the former locations: the gate imports from its current path, neither former
 package exists and nothing in the code or the tests still names them. traianus/governance/, the
