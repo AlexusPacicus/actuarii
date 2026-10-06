@@ -333,6 +333,24 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
 4. **Bitácora:** si Actuarii lleva su propio DEVLOG y LEDGER o los cambios se anotan en los de
    Traianus.
 
+## Traspaso (2026-10-06, 21:35)
+
+* **Auditoría adversarial hecha** con el autor (pautas en `docs/adversarial-audit/PAUTAS.md`, casos
+  A01–A18 en `CASES.md`). Proceso completo del kit en `docs/process/PROCESO.md`, que incluye el plan
+  de correcciones F1–F7.
+* **Fusionado en `main`:** F1 (`afe12bb`), F2 (`65f6d30`), F3 (`47f29be`) y F4a (`d87032d`). La suite
+  da 2350 en verde.
+* **Siguiente:** F4b, que sustituye la matriz léxica por `ast` sobre el resultado, solo en ficheros
+  `.py` y solo con las primitivas que el cambio introduce (diseño aprobado en
+  `docs/design/RECIBO_CONTENIDO.md` §4). Después F5, F6 y F7, y luego medir el coste por escritura
+  gobernada y decidir la optimización antes de empaquetar. El verificador en el commit va a la v0.2.
+* **Comprobar al abrir la sesión:** tras reconectar el servidor MCP, la tabla `receipts` ya se crea y
+  guarda el hash. Pero una propuesta enviada como texto se aceptó, y la definición de la herramienta
+  que ve el agente sigue mostrando `proposal` como texto. Hay que averiguar si el harness convierte
+  el texto en objeto o si el rechazo de F3 no se aplica en la llamada real.
+* **Desde F4a**, cada escritura gobernada necesita una propuesta con el contenido literal: en un
+  `Edit`, el `old_string` es `Topological_Grounding` y el `new_string` es `Implementation_Block`.
+
 ## Reglas de trabajo heredadas
 
 Vienen de la memoria de la sesión de Traianus y una sesión nueva aquí no las ve:
