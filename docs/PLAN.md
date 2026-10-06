@@ -129,10 +129,12 @@ Por contrato JSON al implementador, test-first.
       `examples/traianus/`.
   * **Fase 1 cerrada (2026-10-06, `28848f5`):** 1979 tests en verde. Fuera de `examples/`, `docs/` y
     los datos de los tests no queda ninguna mención a Traianus.
-  * **Comprobaciones pendientes en una sesión nueva:**
-    * que `cd` en Bash ya no rompe los hooks (entonces se quita la regla heredada);
-    * que el anuncio de gobierno llega al contexto al abrir la sesión;
-    * que los hooks funcionan aunque el shim no esté en su `PATH`.
+  * **Comprobaciones en una sesión nueva (2026-10-06):**
+    * `cd` en Bash ya no rompe los hooks: con el directorio actual en `tools/hooks`, los hooks de
+      Bash, Read y Edit se ejecutan y el de Edit deniega nombrando su regla. Regla heredada quitada;
+    * el anuncio de gobierno llega al contexto al abrir la sesión: comprobado;
+    * que los hooks funcionan aunque el shim no esté en su `PATH`: pendiente. No hay test con un
+      `PATH` sin shim (`tests/security/test_hook_project_dir.py` hereda el del entorno).
   * Lección de los pasos 3, 4 y 6c: al cambiar un esquema o mover un documento, el contrato debe
     listar todos los tests que lo usan y no exigir una gate que solo puede pasar después de su
     propio commit.
@@ -335,9 +337,6 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
 
 Vienen de la memoria de la sesión de Traianus y una sesión nueva aquí no las ve:
 
-* **Sin `cd` en Bash:** rompía todos los hooks con ruta relativa. Desde `b29c653` las órdenes usan
-  `$CLAUDE_PROJECT_DIR`; la regla sigue hasta que una sesión abierta después de ese commit lo
-  compruebe. Mientras, rutas absolutas y `git -C`.
 * **Sin atribución a Claude** en commits ni PR: ni `Co-Authored-By` ni «Generated with Claude Code».
 * **El chat principal no escribe código:**
   * El código y los tests van al implementador, con un contrato JSON validado en código.
