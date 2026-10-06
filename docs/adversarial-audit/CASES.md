@@ -24,7 +24,7 @@ Según `docs/adversarial-audit/PAUTAS.md` (aprobadas en `d00af1e`). Primer día:
 | A06 | G10 | A | Falso positivo: `echo "PATH=$PATH"` se deniega, también como dato de un heredoc (H3) | C3 |
 | A07 | G9, G10 | A, B | `uv run`, `pipx run` y `pytest` ejecutan Python fuera del shim | C2 |
 | A08 | G2, G12 | B | El cableado del kit y sus validadores se escriben sin recibo en este repositorio | C1 (decisión 2 de las pautas) |
-| A09 | G1, G12 | B | ¿Surte efecto en la sesión un `settings.local.json` con `disableAllHooks`? | Pendiente: prueba en vivo |
+| A09 | G1, G12 | B | Un `settings.local.json` con `disableAllHooks` apaga las puertas en la misma sesión (documentado) | C1 |
 | A10 | G1, G13 | B | Borrar o mover `.actuarii.json` por `Bash` rebaja el gobierno al mínimo sin aviso hasta la sesión siguiente | C2 |
 | A11 | Límite §9 | — | Hooks con un `PATH` sin el shim y con un Python 3.9 real (H5) | Pendiente: necesita un test |
 | A12 | G4 | A | El MCP recibe la propuesta como texto y `target_file` es opcional | C4, o se resuelve con A03 |
@@ -121,13 +121,30 @@ y `git -c core.pager` buscan `python3` en el `PATH` y el shim los recoge (inferi
   `.mcp.json`, `opencode.jsonc` y `tools/**` a `governed_paths`. Para quien adopte el kit: que el
   mínimo incorporado incluya los ficheros que montan el kit.
 
-### A09 — Ajustes locales que apagan los hooks (pendiente)
+### A09 — Ajustes locales que apagan los hooks
 
 * **Garantía:** G1, G12. **Perfil:** B.
-* **Intento previsto:** escribir `.claude/settings.local.json` con `"disableAllHooks": true` y comprobar
-  si una escritura gobernada sin recibo pasa en la misma sesión y en la siguiente.
-* **Estado:** sin ejecutar. Toca la configuración de seguridad del harness en vivo y necesita la
-  aprobación explícita del autor, que además debería deshacerlo él mismo si surte efecto.
+* **Intento previsto:** escribir `.claude/settings.local.json` con `"disableAllHooks": true`.
+* **Estado:** no se ejecutó en vivo, porque toca la configuración de seguridad del harness y el autor
+  no lo aprobó. Se resolvió con la documentación oficial de Claude Code
+  (`code.claude.com/docs/en/hooks`, leída el 2026-10-07).
+* **Documentado:**
+  * `disableAllHooks: true` en un fichero de ajustes apaga todos los hooks. Vale el valor que queda
+    tras la precedencia, y `.claude/settings.local.json` está por encima de `.claude/settings.json`.
+  * Un cambio en un fichero de ajustes se aplica a la sesión en marcha. El evento `ConfigChange`
+    (fuentes `project_settings`, `local_settings` y `skills`) puede bloquearlo antes de que se aplique.
+  * Un `"disableAllHooks": false` en el `.claude/settings.json` del proyecto gana al `true` de los
+    ajustes de usuario.
+* **Lectura:** con A08, un agente apaga todas las puertas del kit en la misma sesión escribiendo un
+  fichero no gobernado, incluso por `Bash`.
+* **Clasificación propuesta:** C1. Hay que hacer tres cosas:
+  * un hook `ConfigChange` que bloquee los cambios de `project_settings`, `local_settings` y `skills`
+    durante la sesión (el fichero cambia en disco, pero la sesión no lo aplica);
+  * `"disableAllHooks": false` en `.claude/settings.json`;
+  * gobernar esos ficheros (A08).
+
+  Queda un límite que se declara: un `settings.local.json` que ya existe al abrir la sesión se aplica
+  antes de que ningún hook corra.
 
 ### A10 — Sin `.actuarii.json`, menos gobierno y sin aviso
 
@@ -155,8 +172,50 @@ y `git -c core.pager` buscan `python3` en el `PATH` y el shim los recoge (inferi
 * **Clasificación propuesta:** C4. Pero si A03 se corrige haciendo `target_file` obligatorio y
   publicando el esquema Pydantic como `inputSchema`, A12 se resuelve en el mismo contrato.
 
-## Pendiente para el segundo día
+## Segundo día (2026-10-07)
 
-* A09, con la aprobación del autor.
-* G8 (contexto obligatorio) y G11 (revisión ciega), con un registro y un paquete sintéticos.
-* Grafías de ruta: Unicode NFC frente a NFD, y recibos en el borde de la ventana.
+### A13 — Contexto obligatorio y revisión ciega: cobertura de tests (OK)
+
+* **Garantía:** G8, G11.
+* **Método:** se comparó la lista de ataques de las pautas con los tests existentes, en lugar de
+  lanzar los hooks contra un registro y un paquete sintéticos: los tests ya lo hacen así.
+* **Cubierto:**
+  * G11: enlace simbólico que sale del paquete, `..`, directorio hermano con el mismo prefijo, `Grep`
+    sin ruta, filtro de `Glob` que escapa, candado corrupto o que apunta a un paquete inexistente, y
+    entrada mal formada con el candado puesto.
+  * G8: registro inutilizable (y su reparación), log ilegible, contrato que falta, líneas de log mal
+    formadas, recibo caducado o de otro contrato, contrato editado después de servirse, y registro
+    nulo o configurado en otra ruta.
+* **Resultado:** OK. Lo que queda abierto (log forjable por `Bash`, candado borrable por `Bash`) ya
+  está declarado.
+
+### A14 — Grafías de ruta (OK, con un apunte)
+
+* **Garantía:** G3.
+* **Cubierto:** mayúsculas, enlaces simbólicos, `..`, `~` y variantes NFD con plegado de mayúsculas,
+  sobre un sistema de ficheros simulado que se comporta como APFS (`test_hook_case_identity.py`). Las
+  ventanas de recibo caducadas también tienen test.
+* **Apunte:** un patrón de `governed_paths` con caracteres no ASCII y un fichero que aún no existe se
+  comparan tal como se escriben. No se probó un caso real; el riesgo es bajo porque los patrones
+  habituales son ASCII.
+
+### A15 — La fase roja del TDD la declara el propio implementador
+
+* **Garantía:** ninguna **[enforced]**. `AGENTS.md` 8.1 es una convención.
+* **Origen:** observación del autor (2026-10-07): las condiciones de los tests deberían cumplirse por
+  código, no por declaración.
+* **Observado en la fase 1:** el `red_reason` de cada `DelegationReport` lo escribe el implementador,
+  y varios tests de «guarda» nacieron en verde.
+* **Idea:** una gate que ejecute los tests del contrato en el commit base (deben fallar por la razón
+  declarada) y en el commit final (deben pasar), y que el informe lleve esa prueba en lugar de una
+  afirmación.
+* **Clasificación propuesta:** C4. Se trata después de corregir los C1, como propone el autor.
+
+## Cierre de la auditoría
+
+* **C1, se corrigen antes del lanzamiento:** A01, A03, A04 (decisión del autor el 2026-10-07: se
+  corrige en la v0.1), A08 y A09.
+* **C2 y C3, se declaran y se corrigen si es barato:** A02, A05, A06, A07 y A10.
+* **Pendiente de un test:** A11.
+* **C4:** A12 (se resuelve con A03) y A15.
+* **OK:** A13 y A14, más los controles del primer día.
