@@ -9,6 +9,7 @@ import re
 import sqlite3
 import sys
 from contextlib import closing
+from pathlib import Path
 
 import pytest
 
@@ -210,7 +211,12 @@ FOREIGN = re.compile(r"AGENTS|SS\d|(?i:traianus)")
 
 
 def run_hook(monkeypatch, path, tool="Edit"):
-    payload = json.dumps({"tool_name": tool, "tool_input": {"file_path": str(path)}})
+    # the change grant() leaves a receipt for: _doc_proposal's quote as old_string and "b" as new_string
+    path = Path(path)
+    inside = path.is_relative_to(REPO_ROOT)
+    old = _quote_of(path.relative_to(REPO_ROOT).as_posix()) if inside else ""
+    tool_input = {"file_path": str(path), "old_string": old, "new_string": "b"}
+    payload = json.dumps({"tool_name": tool, "tool_input": tool_input})
     monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
     return require_boundary_validation.main()
 
@@ -221,10 +227,11 @@ def grant(target):
 
 def age(audit_db, target, seconds):
     with closing(sqlite3.connect(audit_db)) as conn, conn:
-        conn.execute(
-            "UPDATE audit_log SET timestamp = datetime('now', ?) WHERE target_file = ?",
-            (f"-{seconds} seconds", target),
-        )
+        for table in ("audit_log", "receipts"):
+            conn.execute(
+                f"UPDATE {table} SET timestamp = datetime('now', ?) WHERE target_file = ?",
+                (f"-{seconds} seconds", target),
+            )
 
 
 @pytest.fixture

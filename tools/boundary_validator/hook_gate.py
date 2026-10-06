@@ -21,6 +21,13 @@ audit_log table (its DDL lives there) to the path _db_path() returns, so the
 writer and the reader cannot diverge. The location is a module attribute,
 never an environment variable or a config file: the hook would trust a path
 an agent can set. Tests repoint the attribute in process.
+
+A receipt is a row of the `receipts` table of that database (case_id, timestamp,
+target_file, grounding_sha256, block_sha256), written by the validator only with
+EXECUTE_SAFE: the SHA-256 of the UTF-8 bytes of the proposal's Topological_Grounding
+and Implementation_Block, nothing normalised. has_receipt and has_any_receipt read it;
+has_recent_execute_safe keeps reading audit_log, for the tools that write something the
+gate cannot compare.
 """
 from __future__ import annotations
 
@@ -88,15 +95,39 @@ def has_recent_execute_safe(file_path: str, window_seconds: int = project_config
             "AND datetime(timestamp) >= datetime('now', ?)",
             (f"-{window_seconds} seconds",),
         ).fetchall()
-    for (raw_target,) in rows:
-        if not raw_target:
-            continue
-        candidate = Path(raw_target)
-        if not candidate.is_absolute():
-            candidate = REPO_ROOT / candidate
-        try:
-            if candidate.resolve() == resolved_target:
-                return True
-        except OSError:
-            continue
-    return False
+    return any(_names(raw_target, resolved_target) for (raw_target,) in rows)
+
+
+def _names(raw_target: str | None, resolved_target: Path) -> bool:
+    if not raw_target:
+        return False
+    candidate = Path(raw_target)
+    if not candidate.is_absolute():
+        candidate = REPO_ROOT / candidate
+    try:
+        return candidate.resolve() == resolved_target
+    except OSError:
+        return False
+
+
+def _recent_receipts(file_path: str, window_seconds: int) -> list[tuple[str, str]]:
+    resolved_target = Path(file_path).expanduser().resolve()
+    with closing(sqlite3.connect(f"{_db_path().as_uri()}?mode=ro", uri=True)) as conn:
+        rows = conn.execute(
+            "SELECT target_file, grounding_sha256, block_sha256 FROM receipts "
+            "WHERE datetime(timestamp) >= datetime('now', ?)",
+            (f"-{window_seconds} seconds",),
+        ).fetchall()
+    return [(grounding, block) for raw_target, grounding, block in rows if _names(raw_target, resolved_target)]
+
+
+def has_receipt(file_path: str, block_sha256: str, grounding_sha256: str | None = None,
+                window_seconds: int = project_config.DEFAULT_WINDOW) -> bool:
+    return any(
+        block == block_sha256 and (grounding_sha256 is None or grounding == grounding_sha256)
+        for grounding, block in _recent_receipts(file_path, window_seconds)
+    )
+
+
+def has_any_receipt(file_path: str, window_seconds: int = project_config.DEFAULT_WINDOW) -> bool:
+    return bool(_recent_receipts(file_path, window_seconds))

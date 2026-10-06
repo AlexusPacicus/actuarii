@@ -55,18 +55,28 @@ def grant(target):
     assert validate_proposal(proposal, target)["final_decision"] == "EXECUTE_SAFE"
 
 
+# What each writer writes, as the receipt that grant() leaves covers it: the quote is the old_string and the
+# block the new_string, or the block alone is the content or the new_source.
+CONTENT = {
+    "Edit": {"old_string": "q", "new_string": "b"},
+    "MultiEdit": {"edits": [{"old_string": "q", "new_string": "b"}]},
+    "Write": {"content": "b"},
+    "NotebookEdit": {"new_source": "b"},
+}
+
+
 # T1: a known writer needs a receipt for the governed path, and a path field
 
 
 @pytest.mark.parametrize("tool, field", WRITERS)
 def test_a_writer_on_a_governed_path_is_denied_without_a_receipt(gate, tool, field):
-    assert gate(tool, {field: GOVERNED}) == 2
+    assert gate(tool, {field: GOVERNED, **CONTENT[tool]}) == 2
 
 
 @pytest.mark.parametrize("tool, field", WRITERS)
 def test_a_writer_on_a_governed_path_is_allowed_with_a_receipt(gate, tool, field):
     grant("src/a.py")
-    assert gate(tool, {field: GOVERNED}) == 0
+    assert gate(tool, {field: GOVERNED, **CONTENT[tool]}) == 0
 
 
 @pytest.mark.parametrize("tool, field", WRITERS)
