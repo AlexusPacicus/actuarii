@@ -115,11 +115,27 @@ Por contrato JSON al implementador, test-first.
     en cada llamada; el registro configurado está siempre gobernado. Una sola copia de
     `path_matches`, en `tools/project_config.py`. El registro de Traianus pasa intacto a
     `examples/traianus/contract_registry.json`. 1768 en verde.
-  * Pendientes: anuncio al abrir sesión de lo que se gobierna y de dónde sale (paso 5); textos,
-    `AGENTS.md` (sus cláusulas 3.7 y 6.2 aún citan `tools/hooks/contract_registry.json`),
-    subagentes, skills y limpieza del perímetro de permisos (paso 6).
-  * Lección de los pasos 3 y 4: al cambiar el esquema, el contrato debe listar todos los tests que
-    escriben configuraciones (`grep` de `actuarii-config/1` en `tests/`) antes de lanzarse.
+  * Paso 5 (`453fd01`): hook `SessionStart` que anuncia qué se gobierna y de dónde sale.
+  * Paso 6, con decisiones del autor (2026-10-06):
+    * 6a (`1bce3ce`): la revisión ciega se configura con la clave `review`. La configuración completa
+      de Traianus está en `examples/traianus/actuarii.json`.
+    * 6b (`c199173`): fuera `check_doc_citations.py`; el contrato de delegación pierde `scope` y las
+      gates de Traianus (una gate es un nombre libre validado); sin citas de cláusulas de `AGENTS`
+      en `tools/` ni en `tests/`; permisos sin directorios inexistentes; OpenCode carga lo mismo que
+      `CLAUDE.md`; `.gitignore` propio.
+    * 6c (`8fc0a41`, `56edf05`, `e52d951`): `AGENTS.md` genérico (v2.0.0) con sus límites
+      declarados; subagentes `implementer` y `blind-reviewer`; skills `blind-review` y `tdd-cycle`
+      genéricas, idénticas en `.claude/` y `.opencode/` (con test). Lo de Traianus pasa a
+      `examples/traianus/`.
+  * **Fase 1 cerrada (2026-10-06, `28848f5`):** 1979 tests en verde. Fuera de `examples/`, `docs/` y
+    los datos de los tests no queda ninguna mención a Traianus.
+  * **Comprobaciones pendientes en una sesión nueva:**
+    * que `cd` en Bash ya no rompe los hooks (entonces se quita la regla heredada);
+    * que el anuncio de gobierno llega al contexto al abrir la sesión;
+    * que los hooks funcionan aunque el shim no esté en su `PATH`.
+  * Lección de los pasos 3, 4 y 6c: al cambiar un esquema o mover un documento, el contrato debe
+    listar todos los tests que lo usan y no exigir una gate que solo puede pasar después de su
+    propio commit.
 * **Mensajes y textos:** sin Traianus ni cláusulas suyas. Cada denegación dice qué regla del
   fichero de configuración la causa.
 * **AGENTS.md:** una plantilla genérica de constitución, con las reglas que el kit hace cumplir y sus
