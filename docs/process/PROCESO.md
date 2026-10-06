@@ -180,10 +180,10 @@ las puertas.
 | Corrección | Hallazgos | Qué cambia |
 |---|---|---|
 | F1 | A08, A09 | Hook `ConfigChange` que bloquea en la sesión los cambios de `project_settings`, `local_settings` y `skills`; `"disableAllHooks": false` en `settings.json`; gobernar `.claude/**`, `.mcp.json`, `opencode.jsonc` y `tools/**`, y el cableado en el mínimo incorporado. |
-| F2 | A01 | La puerta de escritura vigila también `NotebookEdit` (`notebook_path`). |
+| F2 | A01 | La puerta de escritura deja de enumerar herramientas (decisión del autor, 2026-10-07): se engancha a todas, deja pasar las que solo leen, exige recibo a cualquier otra que lleve una ruta gobernada en su entrada, y deniega la que no sabe interpretar si toca el repositorio. |
 | F3 | A03, A12, A02 | `target_file` obligatorio e igual al `Target_File`; el esquema Pydantic como `inputSchema` del MCP; cita obligatoria si el fichero existe, sea cual sea la intención. |
-| F4 | A04 | El recibo ata el contenido. El validador guarda el hash del `Implementation_Block`, y la puerta solo permite el `Edit` o `Write` cuyo texto nuevo tenga ese hash. Es lo que el esquema de 5 Radicales ya decía («texto exacto que se inserta»). |
-| F5 | A06, A07 | El hook de `Bash` deja de confundir un argumento entre comillas con una asignación, y conoce `uv run` y `pipx run`. Se declara lo de `pytest`. |
+| F4 | A04, A05 | El recibo ata el contenido. El validador guarda el hash del `Implementation_Block`, y la puerta solo permite el `Edit` o `Write` cuyo texto nuevo tenga ese hash. Es lo que el esquema de 5 Radicales ya decía («texto exacto que se inserta»). Con el contenido real en el bloque, la matriz léxica se elimina (decisión del autor, 2026-10-07): para ficheros Python se analiza el árbol sintáctico y se deniegan los imports y las llamadas de red o de procesos, y todo import o `exec` dinámico; en los demás ficheros no hay matriz. En el diseño de F4 se decide también si el verificador en el commit (el punto único donde convergen todas las escrituras, `Bash` incluido) entra en la v0.1 o en la v0.2. |
+| F5 | A06, A07 | El hook de `Bash` deja de confundir un argumento entre comillas con una asignación. No se amplía con más formas: se declara como heurística, con `uv run`, `pipx run` y `pytest` entre los límites. |
 | F6 | A11 | Test de los hooks con un `PATH` sin el shim y, si existe, con `/usr/bin/python3`. |
 | F7 | A05, A07, A10, A09 | Declarar en `AGENTS.md` §9 lo que queda: la matriz textual, `pytest`, `.actuarii.json` borrado por `Bash` y un `settings.local.json` que ya existe al abrir la sesión. |
 
