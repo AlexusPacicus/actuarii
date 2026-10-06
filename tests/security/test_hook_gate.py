@@ -36,6 +36,7 @@ CONFIG = {
     "governed_paths": ["src/**", "docs/specs/*.md", "NOTES.md"],
     "python_script_dirs": [],
     "contract_registry": None,
+    "review": None,
     "receipt_window_seconds": 60,
 }
 REGISTRY_RULE = "always governed: the contract registry"

@@ -24,18 +24,30 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "tools" / "project_config.py"
 BUILT_IN = "built-in minimum (no .actuarii.json)"
 OWN_RULE = "always governed: the project configuration"
+REVIEW = {
+    "procedure": "audit/PROCEDURE.md",
+    "base_docs": ["audit/defs.md", "audit/contracts.md"],
+    "records": "audit/records",
+    "denied": ["private/", "adrs/ADR-1-"],
+}
 VALID = {
     "schema": "actuarii-config/1",
     "governed_paths": ["src/**", "docs/*.md"],
     "python_script_dirs": ["scripts", "tools/sub", "."],
     "contract_registry": "contracts/registry.json",
+    "review": REVIEW,
     "receipt_window_seconds": 60,
 }
 REGISTRY_RULE = "always governed: the contract registry"
+EXAMPLE = ROOT / "examples" / "traianus" / "actuarii.json"
 
 
 def text(**changes):
     return json.dumps({**VALID, **changes})
+
+
+def review_as(**changes):
+    return text(review={**REVIEW, **changes})
 
 
 def without(key):
@@ -45,8 +57,39 @@ def without(key):
 def window_as(literal):
     return (
         '{"schema": "actuarii-config/1", "governed_paths": ["a"], "python_script_dirs": [], '
-        '"contract_registry": null, "receipt_window_seconds": %s}' % literal
+        '"contract_registry": null, "review": null, "receipt_window_seconds": %s}' % literal
     )
+
+
+PLAIN_PATH_ERRORS = [
+    ("/etc/x", "absolute"), ("a/../b", r"\.\."), ("..", r"\.\."), ("a\\b", "backslash"), ("a*", "wildcard"),
+    ("**", "wildcard"), ("a?b", "wildcard"), ("a[b]", "wildcard"), ("a{b}", "wildcard"), ("a\nb", "control"),
+    ("a\tb", "control"), ("a\x7fb", "control"), ("./a", "segment"), ("a//b", "segment"), (".", "segment"),
+]
+WRONG_TYPES = [("null", None), ("number", 1), ("true", True), ("object", {})]
+REVIEW_INVALID = [
+    *[pytest.param(text(review=value), "review must be null or an object", id=f"review-{name}")
+      for name, value in [("number", 1), ("string", "x"), ("list", []), ("true", True)]],
+    pytest.param(review_as(extra=1), "unknown key.*extra", id="review-unknown-key"),
+    *[pytest.param(text(review={k: v for k, v in REVIEW.items() if k != key}), f"missing key.*{key}",
+                   id=f"review-missing-{key}") for key in REVIEW],
+    *[pytest.param(review_as(**{key: value}), f"review.{key}", id=f"review-{key}-{name}")
+      for key in ("procedure", "records")
+      for name, value in [*WRONG_TYPES, ("list", []), ("empty", "")]],
+    *[pytest.param(review_as(**{key: value}), fragment, id=f"review-{key}-{fragment}-{index}")
+      for key in ("procedure", "records")
+      for index, (value, fragment) in enumerate([*PLAIN_PATH_ERRORS, ("a/", "trailing")])],
+    *[pytest.param(review_as(**{key: value}), f"review.{key}", id=f"review-{key}-{name}")
+      for key in ("base_docs", "denied")
+      for name, value in [*WRONG_TYPES, ("string", "x"), ("not-strings", [1]), ("empty-string", [""])]],
+    *[pytest.param(review_as(**{key: ["a", "a"]}), "duplicate", id=f"review-{key}-duplicate")
+      for key in ("base_docs", "denied")],
+    pytest.param(review_as(denied=["a/", "a/"]), "duplicate", id="review-denied-duplicate-slash"),
+    *[pytest.param(review_as(base_docs=[value]), fragment, id=f"review-base_docs-{fragment}-{index}")
+      for index, (value, fragment) in enumerate([*PLAIN_PATH_ERRORS, ("a/", "trailing")])],
+    *[pytest.param(review_as(denied=[value]), fragment, id=f"review-denied-{fragment}-{index}")
+      for index, (value, fragment) in enumerate([*PLAIN_PATH_ERRORS, ("a//", "trailing"), ("/", "segment")])],
+]
 
 
 # T1: a case per validation rule
@@ -56,9 +99,12 @@ INVALID = [
     pytest.param("", "not valid JSON", id="empty"),
     pytest.param(
         '{"schema": "actuarii-config/1", "schema": "actuarii-config/1", '
-        '"governed_paths": ["a"], "python_script_dirs": [], "contract_registry": null, '
+        '"governed_paths": ["a"], "python_script_dirs": [], "contract_registry": null, "review": null, '
         '"receipt_window_seconds": 60}',
         "duplicate key 'schema'", id="duplicate-key"),
+    pytest.param(
+        text().replace('"procedure"', '"procedure": "a", "procedure"', 1),
+        "duplicate key 'procedure'", id="duplicate-key-in-review"),
     pytest.param(window_as("NaN"), "NaN", id="nan"),
     pytest.param(window_as("Infinity"), "Infinity", id="infinity"),
     pytest.param(window_as("-Infinity"), "Infinity", id="negative-infinity"),
@@ -124,6 +170,7 @@ INVALID = [
     pytest.param(text(contract_registry="./r.json"), "segment", id="registry-dot-segment"),
     pytest.param(text(contract_registry="."), "segment", id="registry-dot-alone"),
     pytest.param(text(contract_registry="a//r.json"), "segment", id="registry-empty-segment"),
+    *REVIEW_INVALID,
     pytest.param(text(receipt_window_seconds="60"), "receipt_window_seconds", id="window-a-string"),
     pytest.param(text(receipt_window_seconds=60.5), "receipt_window_seconds", id="window-a-float"),
     pytest.param(text(receipt_window_seconds=True), "receipt_window_seconds", id="window-true"),
@@ -162,6 +209,10 @@ def test_a_valid_configuration_is_loaded_as_written(config_file):
     assert config.governed_paths == ("src/**", "docs/*.md")
     assert config.python_script_dirs == ("scripts", "tools/sub", ".")
     assert config.contract_registry == "contracts/registry.json"
+    assert config.review.procedure == "audit/PROCEDURE.md"
+    assert config.review.base_docs == ("audit/defs.md", "audit/contracts.md")
+    assert config.review.records == "audit/records"
+    assert config.review.denied == ("private/", "adrs/ADR-1-")
     assert config.receipt_window_seconds == 60
     assert config.source == ".actuarii.json"
 
@@ -169,6 +220,23 @@ def test_a_valid_configuration_is_loaded_as_written(config_file):
 def test_the_contract_registry_may_be_null_and_then_there_is_none(config_file):
     config_file(text(contract_registry=None))
     assert load().contract_registry is None
+
+
+def test_the_review_may_be_null_and_then_there_is_no_blind_review(config_file):
+    config_file(text(review=None))
+    assert load().review is None
+
+
+def test_the_review_lists_may_be_empty(config_file):
+    config_file(review_as(base_docs=[], denied=[]))
+    review = load().review
+    assert (review.base_docs, review.denied) == ((), ())
+
+
+@pytest.mark.parametrize("entry", ["a", "a/", "a/b-", "dir.d/x.md", "a/b/"])
+def test_a_denied_prefix_may_end_in_a_slash_and_is_kept_as_written(config_file, entry):
+    config_file(review_as(denied=[entry]))
+    assert load().review.denied == (entry,)
 
 
 @pytest.mark.parametrize("registry", ["r.json", "a/b/registry.json", "dir.d/r"])
@@ -195,6 +263,7 @@ def test_without_a_file_the_built_in_minimum_is_governed_and_says_so(config_file
     assert config.governed_paths == (".actuarii.json", "AGENTS.md", "CLAUDE.md")
     assert config.python_script_dirs == (".",)
     assert config.contract_registry is None
+    assert config.review is None
     assert config.receipt_window_seconds == 900
     assert config.source == BUILT_IN
 
@@ -319,6 +388,7 @@ def test_the_real_configuration_loads_and_governs_what_this_repository_governs()
     assert config.receipt_window_seconds == 900
     assert config.python_script_dirs == ()
     assert config.contract_registry is None
+    assert config.review is None
     governed = [
         "AGENTS.md", "CLAUDE.md", "tests/x.py", "tools/boundary_validator/x.py", ".actuarii.json",
         "tools/hooks/x.py", "tools/hooks/sub/y.json", "tools/bin/python3", "tools/bin/python",
@@ -326,6 +396,30 @@ def test_the_real_configuration_loads_and_governs_what_this_repository_governs()
     for rel in governed:
         assert governance(rel) is not None, rel
     assert governance("docs/x.md") is None
+
+
+# the example of a project that adopts the kit with a blind review
+
+def test_the_traianus_example_is_a_valid_configuration_that_reproduces_its_blind_review(config_file):
+    config_file(EXAMPLE.read_text(encoding="utf-8"))
+    config = load()
+    assert config.source == ".actuarii.json"
+    assert config.governed_paths == (
+        "traianus/**", "tests/**", "AGENTS.md", "docs/specifications/**", "tools/boundary_validator/**")
+    assert config.python_script_dirs == ("tools", "traianus")
+    assert config.contract_registry == "tools/hooks/contract_registry.json"
+    assert config.receipt_window_seconds == 900
+    assert config.review.procedure == ".claude/skills/instrument-audit/SKILL.md"
+    assert config.review.base_docs == (
+        "docs/methodology/instrument-audit/definitions.md",
+        "docs/methodology/instrument-audit/derivations.md",
+        "docs/methodology/instrument-audit/contracts.md",
+    )
+    assert config.review.records == "docs/methodology/instrument-audit"
+    assert config.review.denied == (
+        "frontend/POC.md", "docs/adrs/ADR-026-", "traianus/geometry/spatial_observables.py",
+        "data/spinoza/telemetry/", "docs/LEDGER.md", "docs/relational-bridges/", "docs/development/",
+    )
 
 
 # the command line: the shim asks for the directories where Python may run

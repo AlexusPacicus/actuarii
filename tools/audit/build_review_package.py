@@ -1,18 +1,18 @@
-"""Build the package a blind instrument review reads, and hold the review lock.
+"""Build the package a blind review reads, and hold the review lock.
 
-The package holds the review procedure (the instrument-audit skill, whose citations are not
-followed) and exactly what docs/methodology/instrument-audit/definitions.md allows: the three base
-documents, the record under review, and the repository files they cite (one level, never the
-citations of cited files), read from one commit with `git show`. Denied paths never enter it: the
-entries of definitions.md "Not allowed", the dev log, and every other record under
-docs/methodology/instrument-audit/.
+What a review reads comes from the `review` key of .actuarii.json: the package holds the review procedure
+(whose citations are not followed), the base documents, the record under review, and the repository files they
+cite (one level, never the citations of cited files), read from one commit with `git show`. Denied paths never
+enter it: the prefixes of `denied`, every other record under the records directory, and always `.data/` (the audit
+trail, the context log and the lock). A prefix denies by string prefix, not by directory.
 Citations that do not resolve at the commit are listed, not invented. MANIFEST.json records the
-commit, the record, each file's sha256, and the denied and unresolved citations.
+commit, the record, the procedure, the base documents, the denied prefixes, each file's sha256, and the denied and
+unresolved citations. Without a configured review, or with an invalid configuration, nothing is built.
 
 While the lock exists, tools/hooks/confine_review_reads.py confines Read, Grep and Glob to the
 package, so blindness holds by construction.
 
-    build_review_package.py build --record docs/methodology/instrument-audit/K6.md --commit <sha> --out <dir> --lock
+    build_review_package.py build --record <records>/<record>.md --commit <sha> --out <dir> --lock
     build_review_package.py unlock
 """
 import argparse
@@ -26,24 +26,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools import project_config  # noqa: E402
+from tools.project_config import ReviewConfig  # noqa: E402
+
 LOCK_PATH = REPO_ROOT / ".data" / "review_lock.json"
-AUDITS = "docs/methodology/instrument-audit/"
-PROCEDURE = ".claude/skills/instrument-audit/SKILL.md"
-BASE_DOCS = (
-    "docs/methodology/instrument-audit/definitions.md",
-    "docs/methodology/instrument-audit/derivations.md",
-    "docs/methodology/instrument-audit/contracts.md",
-)
-DENIED = (
-    "frontend/POC.md",
-    "docs/adrs/ADR-026-",
-    "traianus/geometry/spatial_observables.py",
-    "data/spinoza/telemetry/",
-    "docs/LEDGER.md",
-    "docs/relational-bridges/",
-    "docs/development/",
-    ".data/",
-)
+ALWAYS_DENIED = (".data/",)
 PATH_RE = re.compile(r"(?<![\w./-])[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.*-]+)+")
 
 Reader = Callable[[str], bytes | None]
@@ -60,18 +50,18 @@ def cited_paths(text: str) -> list[str]:
     return sorted({match.rstrip(".") for match in PATH_RE.findall(text)})
 
 
-def _is_denied(path: str, docs: tuple[str, ...]) -> bool:
-    if path.startswith(AUDITS) and path not in docs:
+def _is_denied(path: str, docs: tuple[str, ...], review: ReviewConfig) -> bool:
+    if path.startswith(f"{review.records}/") and path not in docs:
         return True
-    return any(path.startswith(entry) or path == entry.rstrip("/") for entry in DENIED)
+    return any(path.startswith(entry) or path == entry.rstrip("/") for entry in (*ALWAYS_DENIED, *review.denied))
 
 
-def select_files(record: str, read: Reader) -> Selection:
-    if not record.startswith(AUDITS) or record in BASE_DOCS:
-        raise ValueError(f"the record must be a file under {AUDITS}, got {record}")
-    docs = (*BASE_DOCS, record)
+def select_files(record: str, read: Reader, review: ReviewConfig) -> Selection:
+    if not record.startswith(f"{review.records}/") or record in review.base_docs:
+        raise ValueError(f"the record must be a file under {review.records}/ and not a base document, got {record}")
+    docs = (*review.base_docs, record)
     selection = Selection()
-    for doc in (PROCEDURE, *docs):
+    for doc in (review.procedure, *docs):
         data = read(doc)
         if data is None:
             raise FileNotFoundError(f"{doc} not found at the reviewed commit")
@@ -80,7 +70,7 @@ def select_files(record: str, read: Reader) -> Selection:
     for path in cited:
         if path in docs:
             continue
-        if _is_denied(path, docs):
+        if _is_denied(path, docs, review):
             selection.denied.append(path)
             continue
         data = read(path)
@@ -91,7 +81,7 @@ def select_files(record: str, read: Reader) -> Selection:
     return selection
 
 
-def write_package(out_dir: Path, selection: Selection, commit: str, record: str) -> None:
+def write_package(out_dir: Path, selection: Selection, commit: str, record: str, review: ReviewConfig) -> None:
     out_dir.mkdir(parents=True, exist_ok=False)
     for path, data in selection.files.items():
         target = out_dir / path
@@ -100,6 +90,9 @@ def write_package(out_dir: Path, selection: Selection, commit: str, record: str)
     manifest = {
         "commit": commit,
         "record": record,
+        "procedure": review.procedure,
+        "base_docs": list(review.base_docs),
+        "denied_prefixes": list(review.denied),
         "files": {p: hashlib.sha256(d).hexdigest() for p, d in selection.files.items()},
         "denied": selection.denied,
         "unresolved": selection.unresolved,
@@ -130,6 +123,19 @@ def git_reader(commit: str) -> Reader:
     return read
 
 
+def _configured_review() -> ReviewConfig | None:
+    try:
+        review = project_config.load().review
+    except project_config.ConfigError as exc:
+        sys.stderr.write(f"{exc}\n")
+        return None
+    if review is None:
+        sys.stderr.write(
+            f"no blind review is configured: set the review key of {project_config.CONFIG_NAME} "
+            "(procedure, base_docs, records, denied)\n")
+    return review
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -144,8 +150,11 @@ def main(argv: list[str]) -> int:
         clear_lock(LOCK_PATH)
         print(f"review lock cleared: {LOCK_PATH}")
         return 0
-    selection = select_files(args.record, git_reader(args.commit))
-    write_package(args.out, selection, args.commit, args.record)
+    review = _configured_review()
+    if review is None:
+        return 1
+    selection = select_files(args.record, git_reader(args.commit), review)
+    write_package(args.out, selection, args.commit, args.record, review)
     print(json.dumps({"package": str(args.out.resolve()), "files": sorted(selection.files),
                       "denied": selection.denied, "unresolved": selection.unresolved}, indent=2))
     if args.lock:

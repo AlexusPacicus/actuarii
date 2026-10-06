@@ -1,18 +1,22 @@
 """The project configuration: `.actuarii.json` at the repository root.
 
 It tells the write gate (tools/boundary_validator/hook_gate.py) which paths it governs and how long a
-boundary-validator receipt counts, the Python gate (tools/bin/python3) where Python may run, and the
-contract-context hook (tools/hooks/require_contract_context.py) where its registry lives:
+boundary-validator receipt counts, the Python gate (tools/bin/python3) where Python may run, the
+contract-context hook (tools/hooks/require_contract_context.py) where its registry lives, and the blind review
+builder (tools/audit/build_review_package.py) what a review reads and what it never sees:
 
     {"schema": "actuarii-config/1", "governed_paths": [<patterns>], "python_script_dirs": [<directories>],
-     "contract_registry": <path or null>, "receipt_window_seconds": <1..86400>}
+     "contract_registry": <path or null>, "review": <object or null>, "receipt_window_seconds": <1..86400>}
 
 A pattern is a path relative to the root: `*` stays inside one segment, `**` crosses segments, the rest is
 literal. A script directory is `.` (the whole root) or a plain path relative to the root, without wildcards; the
 list may be empty. The contract registry is null (no registry: no path requires contract context) or a plain path
-relative to the root, which the write gate governs whether or not governed_paths lists it. The file is read
-strictly: every deviation is a ConfigError naming its cause, never a default. Without the file the gate governs a
-built-in minimum, scripts may run from the whole root and there is no contract registry, and the verdicts say so.
+relative to the root, which the write gate governs whether or not governed_paths lists it. The review is null (no
+blind review is configured) or an object with exactly these keys: `procedure` (a file), `base_docs` (a list of
+files, possibly empty), `records` (a directory) and `denied` (a list, possibly empty, of prefixes that may end in
+`/`); all are plain paths relative to the root, without duplicates. The file is read strictly: every deviation is a
+ConfigError naming its cause, never a default. Without the file the gate governs a built-in minimum, scripts may
+run from the whole root, there is no contract registry and no blind review, and the verdicts say so.
 The file itself is always governed.
 
 Run as `project_config.py --python-script-dirs` it prints the effective script directories, one per line, and
@@ -35,12 +39,14 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_NAME = ".actuarii.json"
 CONFIG_PATH = ROOT / CONFIG_NAME
 SCHEMA = "actuarii-config/1"
-KEYS = ("schema", "governed_paths", "python_script_dirs", "contract_registry", "receipt_window_seconds")
+KEYS = ("schema", "governed_paths", "python_script_dirs", "contract_registry", "review", "receipt_window_seconds")
+REVIEW_KEYS = ("procedure", "base_docs", "records", "denied")
 DEFAULT_WINDOW = 900
 MAX_WINDOW = 86400
 BUILT_IN_PATHS = (CONFIG_NAME, "AGENTS.md", "CLAUDE.md")
 BUILT_IN_SCRIPT_DIRS = (".",)
 BUILT_IN_REGISTRY = None
+BUILT_IN_REVIEW = None
 BUILT_IN_SOURCE = "built-in minimum (no .actuarii.json)"
 OWN_RULE = "always governed: the project configuration"
 REGISTRY_RULE = "always governed: the contract registry"
@@ -56,10 +62,21 @@ class ConfigError(ValueError):
 
 
 @dataclass(frozen=True)
+class ReviewConfig:
+    """What a blind review reads (procedure, base documents, the directory of records) and what it never sees."""
+
+    procedure: str
+    base_docs: tuple[str, ...]
+    records: str
+    denied: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ProjectConfig:
     governed_paths: tuple[str, ...]
     python_script_dirs: tuple[str, ...]
     contract_registry: str | None
+    review: ReviewConfig | None
     receipt_window_seconds: int
     source: str
 
@@ -130,12 +147,49 @@ def _check_registry(registry: object) -> None:
     _check_plain_path(registry, f"contract_registry {registry!r}")
 
 
+def _review_entry(entry: object, where: str, prefix: bool = False) -> str:
+    """A plain path of the review; a denied prefix (`prefix`) may also end in one `/`."""
+    if not isinstance(entry, str) or not entry:
+        raise _error(f"{where} must be a non-empty string")
+    _check_plain_path(entry[:-1] if prefix and entry.endswith("/") else entry, f"{where} {entry!r}")
+    return entry
+
+
+def _review_list(value: object, name: str, prefix: bool = False) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        raise _error(f"review.{name} must be a list of non-empty strings")
+    entries = tuple(_review_entry(entry, f"review.{name} entry", prefix) for entry in value)
+    if len(set(entries)) != len(entries):
+        raise _error(f"review.{name} has duplicate entries")
+    return entries
+
+
+def _check_review(review: object) -> ReviewConfig | None:
+    if review is None:
+        return None
+    if not isinstance(review, dict):
+        raise _error("review must be null or an object")
+    unknown = sorted(set(review) - set(REVIEW_KEYS))
+    if unknown:
+        raise _error(f"review has unknown keys {unknown}")
+    missing = [key for key in REVIEW_KEYS if key not in review]
+    if missing:
+        raise _error(f"review is missing keys {missing}")
+    return ReviewConfig(
+        _review_entry(review["procedure"], "review.procedure"),
+        _review_list(review["base_docs"], "base_docs"),
+        _review_entry(review["records"], "review.records"),
+        _review_list(review["denied"], "denied", prefix=True),
+    )
+
+
 def load() -> ProjectConfig:
     """The configuration at CONFIG_PATH, validated; the built-in minimum when the file does not exist."""
     try:
         raw = CONFIG_PATH.read_text(encoding="utf-8")
     except FileNotFoundError:
-        return ProjectConfig(BUILT_IN_PATHS, BUILT_IN_SCRIPT_DIRS, BUILT_IN_REGISTRY, DEFAULT_WINDOW, BUILT_IN_SOURCE)
+        return ProjectConfig(
+            BUILT_IN_PATHS, BUILT_IN_SCRIPT_DIRS, BUILT_IN_REGISTRY, BUILT_IN_REVIEW, DEFAULT_WINDOW, BUILT_IN_SOURCE)
     except UnicodeDecodeError as exc:
         raise _error(f"not valid UTF-8 ({exc})") from exc
     except OSError as exc:
@@ -170,10 +224,11 @@ def load() -> ProjectConfig:
         _check_dir(entry)
     registry = data["contract_registry"]
     _check_registry(registry)
+    review = _check_review(data["review"])
     window = data["receipt_window_seconds"]
     if isinstance(window, bool) or not isinstance(window, int) or not 1 <= window <= MAX_WINDOW:
         raise _error(f"receipt_window_seconds must be an integer from 1 to {MAX_WINDOW}, got {window!r}")
-    return ProjectConfig(tuple(paths), tuple(dirs), registry, window, CONFIG_NAME)
+    return ProjectConfig(tuple(paths), tuple(dirs), registry, review, window, CONFIG_NAME)
 
 
 def path_matches(pattern: str, rel: str) -> bool:

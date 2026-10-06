@@ -2,7 +2,7 @@
 
 Claude Code adds the stdout of a SessionStart hook to the agent's context, so the kit never governs in silence:
 the source of the rules (.actuarii.json, the built-in minimum, or an invalid configuration), the paths whose
-Edit/Write needs a receipt and for how long, the contract registry and where Python may run. Every fact comes
+Edit/Write needs a receipt and for how long, the contract registry, the blind review and where Python may run. Every fact comes
 from tools/project_config, never from a list kept here, so the announcement cannot diverge from the gates.
 
 It never blocks and never fails: it always exits 0 and writes nothing to stderr, because a SessionStart hook
@@ -23,7 +23,7 @@ WHOLE_REPOSITORY = ". (the whole repository)"
 
 try:
     import tools.project_config as project_config
-    from tools.project_config import CONFIG_NAME, DEFAULT_WINDOW, ROOT, ConfigError, ProjectConfig, load
+    from tools.project_config import CONFIG_NAME, DEFAULT_WINDOW, ROOT, ConfigError, ProjectConfig, ReviewConfig, load
 except Exception as exc:
     project_config = None
     IMPORT_FAILURE = f"{type(exc).__name__}: {exc}"
@@ -43,6 +43,10 @@ def _invalid(error: Exception) -> list[str]:
     ]
 
 
+def _review(review: ReviewConfig | None) -> str:
+    return "none" if review is None else f"procedure {review.procedure}, records in {review.records}"
+
+
 def _valid(config: ProjectConfig) -> list[str]:
     registry = config.contract_registry
     receipts = dict.fromkeys([CONFIG_NAME, *([registry] if registry else []), *config.governed_paths])
@@ -52,6 +56,7 @@ def _valid(config: ProjectConfig) -> list[str]:
         f"  Edit/Write needs a receipt from {GATE_TOOL}, valid for {config.receipt_window_seconds} s, on:",
         *(f"    {path}" for path in receipts),
         f"  Contract registry: {registry or 'none'}",
+        f"  Blind review: {_review(config.review)}",
         f"  Python runs only committed scripts, from {_kit_dir()} (the kit) and python_script_dirs: {dirs or 'none'}",
         "  Declared limit: writes made through Bash do not pass these gates.",
     ]
