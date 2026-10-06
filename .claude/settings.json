@@ -69,7 +69,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "*",
         "hooks": [
           { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR\"/tools/hooks/require_boundary_validation.py" },
           { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR\"/tools/hooks/require_contract_context.py" }

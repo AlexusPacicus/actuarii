@@ -1,8 +1,12 @@
 """PreToolUse hook: the contracts a registry names are a precondition of the work on the paths it registers.
 
 The registry is the file `contract_registry` names in .actuarii.json (tools/project_config.py), read on every
-call; null, or no configuration file, means there is none and every Edit and Write passes. Edit and Write on a
-path registered there are denied (exit 2) unless every contract section the matching rules require was served by
+call; null, or no configuration file, means there is none and every write passes. The known writers are Edit,
+MultiEdit and Write (path field `file_path`) and NotebookEdit (`notebook_path`); a writer whose field is empty or
+absent passes here, since denying it is the work of the write gate (require_boundary_validation.py). Any other
+tool does not pass through this hook: the write gate asks it for a receipt when its input names a governed path,
+but the contract context is required of the four writers only. A write on a path registered in the registry is
+denied (exit 2) unless every contract section the matching rules require was served by
 tools/audit/context_pack.py within `window_seconds`, from the contract file as it is now. The receipt is the
 `served` line context_pack appends to .data/context_pack.log (path, kind, value, ts, file_sha256). A denial names
 the registry, the missing sections and the context_pack command that serves them.
@@ -55,7 +59,7 @@ except Exception as exc:  # fail-closed: a hook that cannot start must deny
     sys.exit(2)
 
 LOG_PATH = REPO_ROOT / ".data" / "context_pack.log"
-GATED_TOOLS = {"Edit", "Write"}
+GATED_TOOLS = {"Edit": "file_path", "MultiEdit": "file_path", "Write": "file_path", "NotebookEdit": "notebook_path"}
 STAMP = "%Y-%m-%dT%H:%M:%SZ"
 REQUIREMENT_KEYS = ("path", "kind", "value")
 JSON_ERRORS = (ValueError, RecursionError)
@@ -234,10 +238,11 @@ def decide(
     Without an explicit `registry_path` the registry is the one `contract_registry` names in the project
     configuration, read now; a null there means no registry.
     """
-    if payload.get("tool_name") not in GATED_TOOLS:
+    tool = payload.get("tool_name")
+    if not isinstance(tool, str) or tool not in GATED_TOOLS:
         return None
     tool_input = payload.get("tool_input", {})
-    file_path = tool_input.get("file_path", "") if isinstance(tool_input, dict) else None
+    file_path = tool_input.get(GATED_TOOLS[tool], "") if isinstance(tool_input, dict) else None
     if file_path == "":
         return None
     if not isinstance(file_path, str):

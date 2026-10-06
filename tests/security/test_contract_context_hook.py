@@ -127,10 +127,27 @@ def missing(err):
 # T1: what the hook does not gate
 
 
-@pytest.mark.parametrize("tool", ["Read", "Grep", "Glob", "Bash", "NotebookEdit"])
-def test_tools_other_than_edit_and_write_pass(hook, env, tool):
+@pytest.mark.parametrize("tool", ["Read", "Grep", "Glob", "Bash"])
+def test_tools_other_than_the_writers_pass(hook, env, tool):
     assert run(hook, env, "src/vec.py", tool) == 0
     assert not env.log.exists()
+
+
+@pytest.mark.parametrize("tool, field", [
+    ("Edit", "file_path"), ("MultiEdit", "file_path"), ("Write", "file_path"), ("NotebookEdit", "notebook_path")])
+def test_every_writer_on_a_registered_path_needs_its_context(hook, env, capsys, tool, field):
+    payload = json.dumps({"tool_name": tool, "tool_input": {field: str(env.root / "src" / "vec.py")}})
+    assert hook.main(payload, env.root, env.log, env.registry, NOW) == 2
+    assert missing(capsys.readouterr().err) == [ENGINE]
+    write_log(env, receipt(ENGINE))
+    assert hook.main(payload, env.root, env.log, env.registry, NOW) == 0
+
+
+@pytest.mark.parametrize("tool", ["Write", "MultiEdit", "NotebookEdit"])
+@pytest.mark.parametrize("tool_input", [{}, {"file_path": "", "notebook_path": ""}])
+def test_a_writer_with_an_empty_path_field_passes_here(hook, env, tool, tool_input):
+    payload = json.dumps({"tool_name": tool, "tool_input": tool_input})
+    assert hook.main(payload, env.root, env.log, env.registry, NOW) == 0
 
 
 @pytest.mark.parametrize("target", ["plain.py", "src/other.py", ""])
@@ -651,8 +668,8 @@ def settings():
     return json.loads(SETTINGS.read_text(encoding="utf-8"))
 
 
-def test_hook_follows_the_boundary_hook_under_edit_write():
-    [entry] = [item for item in settings()["hooks"]["PreToolUse"] if item["matcher"] == "Edit|Write"]
+def test_hook_follows_the_boundary_hook_for_every_tool():
+    [entry] = [item for item in settings()["hooks"]["PreToolUse"] if item["matcher"] == "*"]
     assert [shlex.split(item["command"]) for item in entry["hooks"]] == [BOUNDARY_HOOK, CONTRACT_HOOK]
 
 
