@@ -284,7 +284,9 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
      trabajo.
    * Si no llega, se revisa con datos, sin reencuadrar.
 2. **La búsqueda previa:** quién la hace y con qué herramienta (en Traianus WebFetch y WebSearch están
-   denegados).
+   denegados). **Resuelta (2026-10-06):** Claude, con el navegador integrado, por elección del autor.
+   Resultado en `docs/prior-art/PRIOR_ART.md`: no hay nada igual; se ajusta la presentación, no el
+   kit. Abre una decisión para la fase 2: distribuir como plugin, como `install.sh` o de las dos formas.
 3. **Repositorio en GitHub:** privado hasta la fase 3 (propuesta) o público desde ya.
 4. **Bitácora:** si Actuarii lleva su propio DEVLOG y LEDGER o los cambios se anotan en los de
    Traianus.
