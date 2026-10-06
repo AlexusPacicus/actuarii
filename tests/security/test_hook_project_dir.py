@@ -18,6 +18,7 @@ CONFINE = "confine_review_reads.py"
 BASH = "deny_python_escapes.py"
 SESSION = "session_python_gate.sh"
 ANNOUNCE = "announce_governance.py"
+CONFIG = "block_config_changes.py"
 
 
 def _commands() -> dict[str, str]:
@@ -41,11 +42,11 @@ def _edit(path: str) -> dict:
     return {"tool_name": "Edit", "tool_input": {"file_path": str(ROOT / path)}}
 
 
-def test_the_six_hooks_are_registered():
-    assert set(_commands()) == {BOUNDARY, CONTRACT, CONFINE, BASH, SESSION, ANNOUNCE}
+def test_the_seven_hooks_are_registered():
+    assert set(_commands()) == {BOUNDARY, CONTRACT, CONFINE, BASH, SESSION, ANNOUNCE, CONFIG}
 
 
-@pytest.mark.parametrize("script", [BOUNDARY, CONTRACT, CONFINE, BASH, SESSION, ANNOUNCE])
+@pytest.mark.parametrize("script", [BOUNDARY, CONTRACT, CONFINE, BASH, SESSION, ANNOUNCE, CONFIG])
 def test_command_names_its_script_by_project_dir(script):
     argv = shlex.split(_commands()[script])
     assert len(argv) == 2 and argv[1] == PREFIX + script
@@ -74,6 +75,16 @@ def test_bash_is_allowed_from_another_directory(tmp_path):
     payload = {"tool_name": "Bash", "tool_input": {"command": "git status"}}
     done = _run(BASH, tmp_path, payload)
     assert (done.returncode, done.stderr) == (0, "")
+
+
+def test_config_change_hook_blocks_a_local_settings_change_from_another_directory(tmp_path):
+    payload = {"hook_event_name": "ConfigChange", "source": "local_settings", "file_path": "/work/.claude/settings.local.json"}
+    without_shim = os.pathsep.join(
+        entry for entry in os.environ["PATH"].split(os.pathsep) if Path(entry) != ROOT / "tools" / "bin")
+    done = _run(CONFIG, tmp_path, payload, PATH=without_shim)
+    assert done.returncode == 2
+    assert "/work/.claude/settings.local.json" in done.stderr
+    assert "can't open file" not in done.stderr
 
 
 def test_session_hook_puts_tools_bin_first_on_the_path_from_another_directory(tmp_path):

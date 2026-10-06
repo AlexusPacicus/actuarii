@@ -260,7 +260,7 @@ def test_the_window_accepts_its_limits(config_file, seconds):
 
 def test_without_a_file_the_built_in_minimum_is_governed_and_says_so(config_file):
     config = load()
-    assert config.governed_paths == (".actuarii.json", "AGENTS.md", "CLAUDE.md")
+    assert config.governed_paths == (".actuarii.json", "AGENTS.md", "CLAUDE.md", ".claude/**", ".mcp.json", "tools/**")
     assert config.python_script_dirs == (".",)
     assert config.contract_registry is None
     assert config.review is None
@@ -276,7 +276,24 @@ def test_without_a_file_the_minimum_governs_its_paths_and_reports_the_source(con
     assert f'"{rel}"' in verdict.rule
 
 
-@pytest.mark.parametrize("rel", ["src/a.py", "tests/x.py", "README.md"])
+@pytest.mark.parametrize("rel", [
+    ".claude/settings.json", ".claude/settings.local.json", ".claude/agents/x.md", ".claude/skills/tdd-cycle/SKILL.md",
+    ".mcp.json", "tools/audit/x.py", "tools/hooks/x.py", "tools/bin/python3",
+])
+def test_without_a_file_the_minimum_governs_the_wiring_and_the_kit(config_file, rel):
+    verdict = governance(rel)
+    assert verdict is not None, rel
+    assert verdict.source == BUILT_IN
+    assert verdict.window_seconds == 900
+
+
+def test_the_kit_directory_of_the_minimum_is_where_project_config_lives_relative_to_the_root():
+    kit = Path(project_config.__file__).resolve().parent.relative_to(ROOT).as_posix()
+    assert kit == "tools"
+    assert project_config.BUILT_IN_PATHS[-1] == f"{kit}/**"
+
+
+@pytest.mark.parametrize("rel", ["src/a.py", "tests/x.py", "README.md", "docs/x.md", "opencode.jsonc", "pyproject.toml"])
 def test_without_a_file_nothing_else_is_governed(config_file, rel):
     assert governance(rel) is None
 
@@ -392,6 +409,8 @@ def test_the_real_configuration_loads_and_governs_what_this_repository_governs()
     governed = [
         "AGENTS.md", "CLAUDE.md", "tests/x.py", "tools/boundary_validator/x.py", ".actuarii.json",
         "tools/hooks/x.py", "tools/hooks/sub/y.json", "tools/bin/python3", "tools/bin/python",
+        ".claude/settings.json", ".claude/settings.local.json", ".claude/agents/x.md", ".mcp.json",
+        "opencode.jsonc", "pyproject.toml", "tools/audit/x.py",
     ]
     for rel in governed:
         assert governance(rel) is not None, rel

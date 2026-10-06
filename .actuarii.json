@@ -4,10 +4,11 @@
     "AGENTS.md",
     "CLAUDE.md",
     "tests/**",
-    "tools/boundary_validator/**",
-    "tools/project_config.py",
-    "tools/hooks/**",
-    "tools/bin/**"
+    "tools/**",
+    ".claude/**",
+    ".mcp.json",
+    "opencode.jsonc",
+    "pyproject.toml"
   ],
   "python_script_dirs": [],
   "contract_registry": null,

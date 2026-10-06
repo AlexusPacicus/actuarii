@@ -279,6 +279,13 @@ def test_without_a_file_the_built_in_minimum_governs_and_names_itself(monkeypatc
     assert run_hook(monkeypatch, REPO_ROOT / "tests" / "x.py") == 0
 
 
+@pytest.mark.parametrize("path", [".claude/settings.local.json", ".mcp.json", "tools/audit/x.py"])
+def test_without_a_file_the_built_in_minimum_governs_the_wiring_and_the_kit(monkeypatch, capsys, config_file, trail, path):
+    assert run_hook(monkeypatch, REPO_ROOT / path) == 2
+    assert BUILT_IN in capsys.readouterr().err
+    assert run_hook(monkeypatch, REPO_ROOT / "docs" / "x.md") == 0
+
+
 # T3b: the configured contract registry is always governed
 
 @pytest.mark.parametrize("governed", [["src/**"], ["src/**", "contracts/**"], ["contracts/registry.json"]])

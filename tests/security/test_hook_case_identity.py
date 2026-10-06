@@ -243,16 +243,17 @@ GOVERNED = [
     ("tools/boundary_validator/hook_gate.py", f"{REPO_ROOT}/Tools/Boundary_Validator/Hook_Gate.py"),
     ("tests/x.py", f"{SHOUT}/tests/x.py"),
     ("tests/x.py", f"{SWAP}/Tests/x.py"),
+    ("tools/x.py", f"{REPO_ROOT}/Tools/x.py"),
+    ("tools/audit/x.py", f"{REPO_ROOT}/Tools/Audit/x.py"),
+    ("tools/audit/context_pack.py", f"{REPO_ROOT}/Tools/Audit/Context_Pack.py"),
+    (".claude/settings.json", f"{REPO_ROOT}/.CLAUDE/settings.json"),
+    ("tools/x.py", f"{SHOUT}/tools/x.py"),
 ]
 UNGOVERNED = [
-    f"{REPO_ROOT}/tools/x.py",
-    f"{REPO_ROOT}/Tools/x.py",
-    f"{REPO_ROOT}/Tools/Audit/x.py",
-    f"{REPO_ROOT}/Tools/Audit/Context_Pack.py",
     f"{REPO_ROOT}/DOCS/roadmap/x.md",
     f"{REPO_ROOT}/Docs/Roadmap/NEXT_RESEARCH.md",
-    f"{REPO_ROOT}/.CLAUDE/settings.json",
-    f"{SHOUT}/tools/x.py",
+    f"{REPO_ROOT}/DOCS/process/PROCESO.md",
+    f"{SHOUT}/docs/x.md",
 ]
 
 
@@ -313,7 +314,7 @@ def test_a_receipt_for_another_file_covers_no_variant(monkeypatch, capsys, audit
 def test_the_hook_runs_with_the_os_primitives_unless_told_otherwise(monkeypatch, capsys, audit):
     assert gate(monkeypatch, str(REPO_ROOT / "tests" / "x.py")) == 2
     assert "no recent EXECUTE_SAFE" in capsys.readouterr().err
-    assert gate(monkeypatch, str(REPO_ROOT / "tools" / "x.py")) == 0
+    assert gate(monkeypatch, str(REPO_ROOT / "docs" / "x.md")) == 0
 
 
 # T5: fail closed
