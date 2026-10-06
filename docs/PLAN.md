@@ -139,9 +139,10 @@ Por contrato JSON al implementador, test-first.
 
 ### Fase 3 — lanzamiento
 
-* **Búsqueda previa:** antes de escribir el README, buscar herramientas parecidas (colecciones de
-  hooks para Claude Code, guardrails de agentes, gobierno con recibos). Decir en qué se parece y en
-  qué no. Si ya existe algo igual, se replantea aquí, no después.
+* **Búsqueda previa:** buscar herramientas parecidas (colecciones de hooks para Claude Code,
+  guardrails de agentes, gobierno con recibos). Decir en qué se parece y en qué no. Se adelanta a la
+  semana 1 (ver «Calendario»): si ya existe algo igual, hay que saberlo antes de empaquetar, no
+  después.
 * **README en inglés:**
   * El problema.
   * Qué impide el kit y qué no: la lista de límites declarados es lo que lo hace creíble.
@@ -153,7 +154,10 @@ Por contrato JSON al implementador, test-first.
 
 ### Fase 4 — Traianus como memoria de agentes (solo si el kit da señal)
 
-Ver la sección siguiente.
+* **Cuándo:** después de las fases 0–3 y con el perfil de freelance en marcha. No retrasa los ingresos.
+* **Regla del autor (2026-10-06):** la investigación de Traianus (WP1, la puerta, la línea física de
+  la viscosidad) solo se retoma con una aplicación que demuestre utilidad. Esta es esa aplicación.
+* **Detalle:** en «Como memoria de agentes», más abajo.
 
 ## Cómo entra Traianus
 
@@ -217,7 +221,62 @@ Los *actuarii* levantan las actas; Traianus es el archivo donde quedan.
 * **Primer piloto posible:** las notas de memoria del propio proyecto como corpus, con la regla
   escrita antes.
 
+#### Criterio de utilidad (autor y Claude, 2026-10-06)
+
+Lección del producto de matemáticas: allí lo que importaba era la calidad del ranking, que da
+cualquier embedding, y el motor no intervino. La aplicación que justifique retomar Traianus tiene que
+cumplir las cuatro condiciones:
+
+1. **Su utilidad viene de las propiedades del motor** (append-only, aprobación humana,
+   determinismo), no de buscar bien.
+2. **Tiene un usuario real desde el primer día:** el autor, con sus propios agentes.
+3. **Su utilidad se mide**, con la regla comprometida antes de cualquier dato.
+4. **No retrasa los ingresos.**
+
+La memoria de los agentes del autor cumple las cuatro.
+
+**Datos que genera para la investigación:**
+* Cada aprobación, corrección o rechazo del autor es una **etiqueta**.
+* Así la puerta tiene por fin un trabajo contra el que medirse: ¿σ² ≥ θ_dyn, o una base derivada del
+  corpus (WP1), predice lo que el autor rechaza?
+* Es la pregunta de WP1, con datos reales que se acumulan con el uso, y no con 18 ítems escritos a
+  mano.
+
+**Condiciones de método:**
+* Mientras aprueba, el autor no ve σ² ni el estado de la puerta. Si los viera, sus etiquetas dejarían
+  de ser independientes de lo que se mide.
+* Hipótesis, regla de decisión y tamaño mínimo de muestra, comprometidos antes de empezar a etiquetar.
+* La viscosidad como umbral (línea aparcada en `docs/roadmap/NEXT_RESEARCH.md` de Traianus) entra
+  solo después de WP1, porque depende de la base.
+
+**Valor comercial:** «memoria auditable para los agentes de tu equipo» encaja con la oferta de
+freelance de configurar agentes de forma segura.
+
+## Calendario (acordado 2026-10-06)
+
+Tres semanas hasta el lanzamiento y cuatro de ventana para la señal. Se fija a partir del ritmo de la
+fase 1 (cuatro pasos en un día) y de los créditos semanales. Si hay menos horas, se recorta alcance,
+no se mueve la fecha de lanzamiento.
+
+| Semana | Fechas | Qué |
+|---|---|---|
+| 1 | 6–11 oct | Búsqueda previa, lo primero (un día como mucho). Cerrar la fase 1 (paso 5 hecho en `453fd01`; queda el paso 6). Cerrar las decisiones pendientes. |
+| 2 | 12–18 oct | Fase 2: `pyproject.toml`, `LICENSE`, `NOTICE`, orden de instalación, prueba en un repo vacío con cronómetro (< 5 min), CI. |
+| 3 | 19–25 oct | Fase 3: README en inglés, documento del caso Traianus, texto corto para HN y Reddit. **Se publica el 25 de octubre, esté como esté**; lo que no esté listo pasa a la v0.2. |
+| 4–7 | 26 oct – 22 nov | Ventana de señal. Auditoría de ejemplo publicada (con el propio kit, sobre un repositorio ajeno; fallos de seguridad, primero en privado a sus mantenedores). Solo se arregla lo que pidan usuarios reales. |
+| — | 22 nov | Revisión con datos frente a la señal comprometida. |
+
+**Antes del lanzamiento no se hace:**
+* Nada de Traianus: ni la fase 4, ni el endpoint de consulta, ni WP1.
+* Ninguna mejora de gobernanza que no responda a un fallo real.
+* Ninguna función nueva fuera de este plan.
+
 ## Decisiones pendientes (autor)
+
+Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del autor:
+* Señal: la del punto 1 tal como está.
+* Repositorio en GitHub: privado hasta el 25 de octubre.
+* Bitácora: un solo DEVLOG en Actuarii, sin LEDGER.
 
 1. **Señal de éxito y fecha, escritas antes del lanzamiento.**
    * Propuesta: cuatro semanas desde la publicación.
