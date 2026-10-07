@@ -314,25 +314,19 @@ no se mueve la fecha de lanzamiento.
 * Ninguna mejora de gobernanza que no responda a un fallo real.
 * Ninguna función nueva fuera de este plan.
 
-## Decisiones pendientes (autor)
+## Decisiones de la semana 1 (autor, 2026-10-07)
 
-Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del autor:
-* Señal: la del punto 1 tal como está.
-* Repositorio en GitHub: privado hasta el 25 de octubre.
-* Bitácora: un solo DEVLOG en Actuarii, sin LEDGER.
+Las cuatro están cerradas. Las tres primeras son las propuestas de Claude del 2026-10-06, aceptadas tal
+cual.
 
-1. **Señal de éxito y fecha, escritas antes del lanzamiento.**
-   * Propuesta: cuatro semanas desde la publicación.
-   * Éxito si al menos 5 personas ajenas lo instalan o abren una issue, o si nace una conversación de
-     trabajo.
-   * Si no llega, se revisa con datos, sin reencuadrar.
-2. **La búsqueda previa:** quién la hace y con qué herramienta (en Traianus WebFetch y WebSearch están
-   denegados). **Resuelta (2026-10-06):** Claude, con el navegador integrado, por elección del autor.
-   Resultado en `docs/prior-art/PRIOR_ART.md`: no hay nada igual; se ajusta la presentación, no el
-   kit. Abre una decisión para la fase 2: distribuir como plugin, como `install.sh` o de las dos formas.
-3. **Repositorio en GitHub:** privado hasta la fase 3 (propuesta) o público desde ya.
-4. **Bitácora:** si Actuarii lleva su propio DEVLOG y LEDGER o los cambios se anotan en los de
-   Traianus.
+1. **Señal de éxito, escrita antes del lanzamiento:** cuatro semanas desde la publicación. Éxito si al
+   menos 5 personas ajenas lo instalan o abren una issue, o si nace una conversación de trabajo. Si no
+   llega, se revisa con datos, sin reencuadrar.
+2. **Repositorio en GitHub:** privado hasta el 25 de octubre; público al publicar.
+3. **Bitácora:** un solo DEVLOG en Actuarii, sin LEDGER, y nada en los de Traianus.
+4. **La búsqueda previa (2026-10-06):** la hizo Claude con el navegador integrado. Resultado en
+   `docs/prior-art/PRIOR_ART.md`: no hay nada igual; se ajusta la presentación, no el kit. Deja abierta
+   una decisión para la fase 2: distribuir como plugin, como `install.sh` o de las dos formas.
 
 ## Traspaso (2026-10-07, cierre de la semana 1 de trabajo)
 
@@ -377,8 +371,8 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
     `allowUnsandboxedCommands: false` en los ajustes del usuario;
   * la CI en Linux necesita `bubblewrap` y `socat` para el sandbox; los tests que piden un sistema de
     ficheros que no distingue mayúsculas se saltan allí, con su motivo.
-* **Pendiente del autor:** las decisiones de la semana 1 (señal de éxito, repositorio de GitHub
-  privado hasta el 25 de octubre, bitácora).
+* Las decisiones de la semana 1 están
+  cerradas (sección anterior).
 
 ## Ideas para la v0.2
 

@@ -98,6 +98,20 @@ cada uno medido por separado para saber cuánto aporta:
    arrancar y, con `-I`, sin `PYTHONPATH` ni el directorio del usuario, que además es más seguro.
    Se mide antes de decidir; si no ahorra nada apreciable, no se hace.
 
+**Alternativa a los pasos 2 y 3 (idea del autor, 2026-10-07): un proceso residente.** Levantar Python
+una vez por sesión, la primera vez que hace falta, y mantenerlo vivo: los hooks pasan a ser clientes
+mínimos (un `sh` que le pasa la entrada y devuelve su decisión), sin arrancar un intérprete en cada
+llamada. Es generalizable: vale para todos los hooks, y para un proyecto que no sea de Python el kit
+deja de costar un arranque de Python por escritura. Lo que hay que resolver antes:
+* **Código viejo en marcha:** como el servidor MCP, el proceso ejecuta el código con el que arrancó;
+  un cambio en una puerta exige reiniciarlo, y hoy los hooks se releen en cada llamada (AGENTS 6.5).
+  Necesita detectar que su código cambió (por hash) y reiniciarse o denegar.
+* **Sin proceso, se deniega:** si no responde, el cliente deniega; nunca se salta la puerta.
+* **Canal privado:** un socket de Unix con permisos solo para el usuario. El sandbox no deja a `Bash`
+  conectarse a sockets de Unix por defecto, así que el agente no puede hablarle ni suplantarlo; sí
+  podría matarlo, y entonces todo se deniega (un bloqueo, no un hueco).
+* **Medirlo** con el mismo método que los pasos 2 y 3 antes de elegir.
+
 **Estimación** (a comprobar, no a dar por hecha): unos 200 ms de validador y unos 150 ms de hooks,
 por debajo de 500 ms en total. **Fuera de este diseño:** quitar la llamada al validador (el recibo es
 la garantía) o cachear recibos (rompería que el recibo ata un cambio exacto).
