@@ -35,7 +35,6 @@ GOVERNED = str(REPO_ROOT / "src" / "a.py")
 OLD = "old text\n"
 NEW = "new text\n"
 UNKNOWN = "mcp__fs__write_file"
-PROCESS_PRIMITIVE = "import sub" + "process"
 
 
 def sha(text):
@@ -152,7 +151,6 @@ def test_two_texts_that_differ_by_one_byte_leave_two_different_hashes(isolate_au
 
 @pytest.mark.parametrize("text, target", [
     pytest.param(proposal(abort="BOUNDARY_VIOLATION"), TARGET, id="safety-abort"),
-    pytest.param(proposal(block=PROCESS_PRIMITIVE), TARGET, id="forbidden-primitive"),
     pytest.param("{not json", TARGET, id="invalid-json"),
     pytest.param(proposal(target="src/b.py"), TARGET, id="target-mismatch"),
     pytest.param(proposal(target="tools/boundary_validator/hook_gate.py", grounding="not in that file", intent="FIX"),

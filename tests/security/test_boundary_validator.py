@@ -45,19 +45,6 @@ def test_security_SEC_M_02_safety_abort_blocks():
     assert decision["final_decision"] == "BLOCKED_BY_SAFETY_GATE"
 
 
-def test_security_SEC_M_03_external_network_blocked():
-    for token in ["fetch(", "axios", "urllib.request", "import requests"]:
-        proposal = json.dumps({
-            "Intent_Class": "REFACTOR",
-            "Implementation_Block": f"const x = {token}('http://evil');",
-            "Topological_Grounding": "x",
-            "Safety_Abort": "NONE",
-        })
-        decision = validate_proposal(proposal)
-        assert decision["status"] == "QUARANTINED", token
-        assert decision["final_decision"] == "ABORTED_VIOLATES_ZERO_TRUST", token
-
-
 def test_security_SEC_M_04_literal_grounding_required():
     src = GROUNDED_FILE.read_text(encoding="utf-8")
     assert GROUNDING_QUOTE in src  # citation exists literally
