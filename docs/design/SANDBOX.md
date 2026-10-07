@@ -230,3 +230,14 @@ del usuario sigue siendo recomendable, por el fichero local (§5).
 * **Formato del mensaje** (prefijo de una lista cerrada, tipo frente a rutas, plantilla, sin
   atribución): a la v0.2.
 * **S5:** confirmado por el autor: en modo automático también pregunta.
+* **Integridad del commit, hecha (2026-10-07, `e4aa45f` y `ceef6a7`):** `tools/git/commit_integrity.py`,
+  lanzado por `tools/git/pre-commit`, que la persona copia a `.git/hooks/pre-commit` y hace ejecutable.
+  Rechaza el commit si una ruta gobernada del índice no coincide con el disco (contenido con los filtros
+  de git, y modo), y si cualquier ruta del índice se escribe distinto que en el disco: en revisión se vio
+  que `TESTS/x.py` con un contenido falso pasaba junto a `tests/x.py`, porque la regla `tests/**` casa
+  por grafía. El anuncio de la sesión dice si el sandbox está activo y si el hook está instalado.
+  **Límites que se declaran:** `git commit --no-verify` y las órdenes internas de git (`commit-tree`,
+  `update-ref`) se saltan los hooks, y `git merge` no ejecuta `pre-commit`; la persona aprueba todas
+  esas órdenes. Con `core.fileMode false` la comprobación del modo puede rechazar commits legítimos. Un
+  nombre guardado en disco en otra forma Unicode que la del índice se rechaza. Un fichero gobernado se
+  commitea entero (`git add -p` se rechaza).
