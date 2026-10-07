@@ -205,7 +205,7 @@ F5 → F6 → F7. Después, A15.
 | F4c | Adelantada a la v0.1 en otra forma: el hook `pre-commit` de integridad (el índice de una ruta gobernada coincide con el disco, y cada ruta se escribe como en el disco) | `15c8ad0` |
 | Sandbox | Nueva, tras la auditoría: el sandbox de Claude Code corta la red de `Bash` y sus escrituras, movimientos y borrados en las rutas gobernadas (`docs/design/SANDBOX.md`, casos S1–S9). Cierra la parte de A10 que dependía de `Bash` | `750ac0c` |
 | F5 | Reducida a declarar la heurística (`AGENTS.md` §9, «Clever shell» y «Test runners»): con el sandbox, un rodeo del hook de `Bash` ya no llega a la red ni a las rutas gobernadas | `f4189ea` |
-| F6 | Pendiente: test de los hooks con un `PATH` sin el shim | — |
+| F6 | Hecha: las siete órdenes de hook dan la misma decisión con el shim, sin él y con el Python 3.9.6 del sistema | `1391323` |
 | F7 | Hecha en `AGENTS.md` v2.1.0 §9 | `f4189ea` |
 | A15 | Pendiente | — |
 

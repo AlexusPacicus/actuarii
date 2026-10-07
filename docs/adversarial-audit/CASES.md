@@ -156,7 +156,7 @@ y `git -c core.pager` buscan `python3` en el `PATH` y el shim los recoge (inferi
   anuncio solo se repite al abrir la sesión siguiente.
 * **Clasificación propuesta:** C2. Se declara.
 
-### A11 — Hooks sin el shim en el `PATH` y con un Python 3.9 real (pendiente, H5)
+### A11 — Hooks sin el shim en el `PATH` y con un Python 3.9 real (cerrado en F6, `1391323`)
 
 * **Estado:** no se puede probar desde la sesión. El hook de Bash deniega, como debe, cambiar el `PATH`
   o nombrar un intérprete por ruta (`/usr/bin/python3` es 3.9 en macOS). Hace falta un test que lance
