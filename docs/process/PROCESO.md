@@ -209,6 +209,6 @@ F5 → F6 → F7. Después, A15.
 | F7 | Hecha en `AGENTS.md` v2.1.0 §9 | `f4189ea` |
 | A15 | Pendiente | — |
 
-**Abierto, encontrado al cerrar estos documentos:** `.opencode/` (las skills de OpenCode) no está en
-`governed_paths`, así que se escribe sin recibo y, al no tener entrada en `denyWrite`, también desde
-`Bash`. Es el caso de A08 para la otra herramienta.
+**Declarado (autor, 2026-10-07):** `.opencode/` (las skills de OpenCode) no está en `governed_paths`;
+se escribe sin recibo, también desde `Bash`. OpenCode se usa aquí solo para opinar, y el test que exige
+las mismas skills en las dos herramientas detecta una copia cambiada. `AGENTS.md` §9, «OpenCode's skills».

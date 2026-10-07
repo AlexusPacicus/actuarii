@@ -170,6 +170,9 @@ The enforcement above does not cover:
   reaches the network. A `.claude/settings.local.json` present before the session starts can turn
   the sandbox or the hooks off; during the session it cannot be written. An
   `allowUnsandboxedCommands: false` in the user's own `~/.claude/settings.json` holds against it.
+* **OpenCode's skills.** `.opencode/` is not governed: an agent writes its skills without a receipt,
+  from `Bash` too. A changed copy turns the test that keeps both tools' skills identical red, and the
+  Claude Code copy, which is governed, cannot follow it without a receipt.
 * **Self-issued receipts.** The agent obtains its own `EXECUTE_SAFE`. A receipt proves that a
   well-formed, grounded proposal for that exact change was recorded before the write, not that a
   human approved it.
