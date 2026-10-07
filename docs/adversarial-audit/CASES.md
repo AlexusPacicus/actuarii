@@ -199,7 +199,7 @@ y `git -c core.pager` buscan `python3` en el `PATH` y el shim los recoge (inferi
   comparan tal como se escriben. No se probó un caso real; el riesgo es bajo porque los patrones
   habituales son ASCII.
 
-### A15 — La fase roja del TDD la declara el propio implementador
+### A15 — La fase roja del TDD la declara el propio implementador (cerrado, `a69f940`)
 
 * **Garantía:** ninguna **[enforced]**. `AGENTS.md` 8.1 es una convención.
 * **Origen:** observación del autor (2026-10-07): las condiciones de los tests deberían cumplirse por

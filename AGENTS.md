@@ -110,8 +110,12 @@ delegates code and tests to the subagent `.claude/agents/implementer.md`.
 
 6.2 A delegation is a strict JSON `DelegationContract`, and the answer a `DelegationReport`
 (`tools/audit/delegation_contract.py`). Both **MUST** be validated in code before they are used:
-`delegation_contract.py contract` before the launch and `delegation_contract.py report` before
-the report is accepted.
+`delegation_contract.py contract` before the launch, and `delegation_contract.py report` and
+`tools/audit/verify_red_green.py` before the report is accepted. **[enforced]** The report names the
+pytest node ids and the expectation of every test; the verifier runs them, in temporary worktrees,
+at the base commit with the final test files and at the final commit, and then the whole suite at
+the final commit: a red test must not pass at base, a guard must, and everything must pass at the
+end. The proof is the run, not the report.
 
 6.3 The implementer works on the one branch the contract names, touches only the files it lists,
 writes the tests first, passes every gate the contract names, never pushes and stops at a commit.
@@ -193,6 +197,10 @@ The enforcement above does not cover:
 * **Test runners.** `pytest` runs the test files it collects, committed or not, with its own
   interpreter, outside the shim; so do `uv run` and `pipx run`. With the sandbox on they reach
   neither the network nor the governed paths.
+* **Red for the stated reason.** The verifier of 6.2 proves that a red test does not pass at the
+  base commit, not that it fails for the reason the report gives; a test with several node ids is
+  red when they do not all pass at base. The base commit keeps its own `conftest.py` and support
+  files: only the test files are brought from the final commit.
 * **Edited scripts.** The shim binds the identity of a committed script, not its content: a
   committed script edited in the working tree still runs.
 * **Clever shell.** `deny_python_escapes.py` is a text-level heuristic, not a shell parser:
