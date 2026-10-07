@@ -7,7 +7,9 @@ check refuses the commit when a path it stages is governed (tools/project_config
 mode and blob, is not what is on disk: the blob is the one git would store for the file, the filters of the
 repository applied, and the mode is 100755 when the owner may execute the file, else 100644. A symbolic link or
 any other file that is not a regular file at such a path is refused. A governed file is committed whole: a partial
-staging (`git add -p`) differs from the disk and is refused.
+staging (`git add -p`) differs from the disk and is refused. Governed or not, a staged path must also be spelled as the
+disk spells it: every component that exists on disk must be listed in its directory under exactly the staged name,
+so that a case variant (TESTS/x.py for tests/x.py on a case-insensitive filesystem) cannot dodge a governed path.
 
 tools/git/pre-commit runs it; the person copies that script to .git/hooks/pre-commit, which the sandbox protects.
 Every git command starts through tools.audit.run_process and inherits the environment, so GIT_INDEX_FILE (set by
@@ -105,11 +107,40 @@ def _difference(root: str, rel: str, index: tuple | None) -> str | None:
     return None
 
 
+def _misspelling(root: str, rel: str, listings: dict) -> str | None:
+    """Why `rel` is not spelled as the disk spells it, or None. The components are walked from the root while they
+    exist on disk (os.lstat of the staged spelling succeeds); each must be listed in its directory under exactly
+    that name. A path that is new on disk ends the walk and passes. An error while listing propagates."""
+    parts = rel.split("/")
+    for depth, part in enumerate(parts):
+        directory = os.path.join(root, *parts[:depth])
+        try:
+            here = os.lstat(os.path.join(directory, part))
+        except (FileNotFoundError, NotADirectoryError):
+            return None
+        if directory not in listings:
+            listings[directory] = os.listdir(directory)
+        names = listings[directory]
+        if part in names:
+            continue
+        for name in names:
+            if name.casefold() == part.casefold() or os.path.samestat(here, os.lstat(os.path.join(directory, name))):
+                return f"the staged spelling differs from the name on disk: '{part}' is listed as '{name}'"
+        return f"the staged spelling differs from the name on disk: '{part}' exists but no listed name matches it"
+    return None
+
+
 def check(root: str) -> list:
-    """One line for every staged governed path that differs from the disk; raises ConfigError while the project
-    configuration is invalid and CheckError when git does not answer as expected."""
+    """One line for every staged path spelled otherwise than the disk spells it and for every staged governed path
+    that differs from the disk; raises ConfigError while the project configuration is invalid and CheckError when
+    git does not answer as expected."""
     problems = []
+    listings: dict = {}
     for rel, index in _staged(root):
+        misspelled = _misspelling(root, rel, listings)
+        if misspelled is not None:
+            problems.append(f"{PREFIX} {rel}: {misspelled}")
+            continue
         governed = project_config.governance(rel)
         if governed is None:
             continue

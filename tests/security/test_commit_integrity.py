@@ -289,6 +289,94 @@ def test_the_first_commit_with_a_governed_mismatch_is_refused(repo, capsys):
     assert_refused(capsys, "gov/a.txt", "the staged content differs from the file on disk")
 
 
+# T7: a staged path is spelled as the disk spells it
+
+
+def _tells_case_apart(directory):
+    probe = directory / "Case-Probe"
+    probe.write_text("x", encoding="utf-8")
+    try:
+        return not (directory / "case-probe").exists()
+    finally:
+        probe.unlink()
+
+
+@pytest.fixture
+def case_insensitive(tmp_path):
+    if _tells_case_apart(tmp_path):
+        pytest.skip("the filesystem of tmp_path tells names apart by case")
+
+
+def assert_misspelled(capsys, rel, part, on_disk):
+    code, lines = run_check(capsys)
+    assert code == 1
+    assert len(lines) == 2 and all(line.startswith(PREFIX) for line in lines), lines
+    path_line, way_out = lines
+    assert rel in path_line and f"'{part}' is listed as '{on_disk}'" in path_line
+    assert "the staged spelling differs from the name on disk" in path_line
+    assert "stage the whole file" in way_out and "git restore --staged <path>" in way_out
+
+
+def test_a_case_variant_of_a_committed_governed_directory_is_refused(committed, capsys, case_insensitive):
+    stage_blob(committed, "GOV/a.txt", "forged\n")
+    assert_misspelled(capsys, "GOV/a.txt", "GOV", "gov")
+
+
+def test_a_case_variant_of_a_committed_governed_file_name_is_refused(committed, capsys, case_insensitive):
+    stage_blob(committed, "gov/A.txt", "forged\n")
+    assert_misspelled(capsys, "gov/A.txt", "A.txt", "a.txt")
+
+
+def test_a_new_file_under_a_case_variant_of_an_existing_directory_is_refused(committed, capsys, case_insensitive):
+    stage_blob(committed, "GOV/new.txt", "forged\n")
+    assert_misspelled(capsys, "GOV/new.txt", "GOV", "gov")
+
+
+def test_an_ungoverned_case_variant_is_refused_too(committed, capsys, case_insensitive):
+    stage_blob(committed, "Other/o.txt", "forged\n")
+    assert_misspelled(capsys, "Other/o.txt", "Other", "other")
+
+
+def test_a_new_directory_with_a_new_file_passes(committed, capsys):
+    put(committed, "fresh/deeper/f.txt", "f\n")
+    must(committed, "add", "fresh/deeper/f.txt")
+    assert_accepted(capsys)
+
+
+def test_a_new_file_in_an_existing_directory_spelled_as_on_disk_passes(committed, capsys):
+    put(committed, "gov/new.txt", "n\n")
+    put(committed, "other/new.txt", "n\n")
+    must(committed, "add", "-A")
+    assert_accepted(capsys)
+
+
+def test_a_deletion_of_existing_paths_spelled_as_on_disk_passes(committed, capsys):
+    must(committed, "rm", "-q", "gov/b.txt", "other/p.txt")
+    assert_accepted(capsys)
+
+
+def test_a_directory_that_cannot_be_listed_refuses_the_commit(committed, monkeypatch, capsys):
+    put(committed, "other/o.txt", "changed\n")
+    must(committed, "add", "other/o.txt")
+
+    def denied(path="."):
+        raise PermissionError(13, "denied", str(path))
+
+    monkeypatch.setattr(os, "listdir", denied)
+    code, lines = run_check(capsys)
+    assert code == 1 and lines and all(line.startswith(PREFIX) for line in lines)
+    assert "denied" in "\n".join(lines)
+
+
+def test_a_real_commit_of_a_case_variant_of_a_governed_file_is_refused_through_the_hook(hooked, case_insensitive):
+    before = head(hooked)
+    stage_blob(hooked, "GOV/a.txt", "forged\n")
+    refused = git(hooked, "commit", "-q", "-m", "variant")
+    assert refused.returncode != 0
+    assert PREFIX in refused.stderr and "GOV/a.txt" in refused.stderr and "'GOV' is listed as 'gov'" in refused.stderr
+    assert head(hooked) == before
+
+
 # T5 and the temporary index of `git commit -a` and `git commit <path>`: a real commit, through the hook
 
 
