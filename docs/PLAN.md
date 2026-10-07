@@ -409,6 +409,10 @@ Vienen de la memoria de la sesión de Traianus y una sesión nueva aquí no las 
 * **Python:** solo scripts commiteados, a través del shim; `pytest` por su propio punto de entrada,
   nunca `python3 -m`.
 * **Las ideas que se salen del camino** se apuntan y esperan a que acabe el objetivo actual.
+* **DEVLOG:** al cerrar cada sesión, una entrada del día en `docs/DEVLOG.md` (qué se hizo con sus commits, qué
+  se decidió, qué salió mal y qué se aprendió).
+* **Commitear solo con la suite en verde,** comprobando el código de salida de `pytest`, no el de la
+  orden que le sigue.
 
 ## Cómo empezar la sesión nueva
 
