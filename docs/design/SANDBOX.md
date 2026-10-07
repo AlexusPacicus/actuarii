@@ -4,7 +4,7 @@ Borrador de Claude, 2026-10-07. Responde a la investigación acordada tras F4b (
 de primitivas sobre `ast` frena al agente honesto, pero no es una frontera; la frontera está donde se
 ejecuta el código. Fuente: la documentación oficial, «Configure the sandboxed Bash tool»
 (code.claude.com/docs/en/sandboxing), leída el 2026-10-07. Versión instalada: Claude Code 2.1.291. Lo que
-sigue es lo que la documentación dice; nada está probado todavía en esta máquina (§5).
+sigue es lo que la documentación dice; nada está probado todavía en esta máquina (§7).
 
 ## 1. Las dos preguntas
 
@@ -48,12 +48,12 @@ hooks y la configuración de `.git`, sin excepción posible.
 * **Dónde vale cada clave:** la documentación dice que un `false` de `allowUnsandboxedCommands` en los
   ajustes del usuario, en `--settings` o en los gestionados se mantiene aunque el proyecto ponga `true`,
   y que solo esos tres orígenes hacen el sandbox «admin-required». No deja claro si un `false` puesto
-  solo en `.claude/settings.json` basta. Hay que probarlo (§5, S4).
+  solo en `.claude/settings.json` basta. Hay que probarlo (§7, S4).
 
 ## 4. Qué cambiaría en el kit
 
-* **Configuración propuesta** en `.claude/settings.json` (las rutas, a comprobar en S2, en la forma
-  relativa a la raíz que la documentación da para los ajustes del proyecto):
+* **Configuración propuesta** en `.claude/settings.json`, en resumen (la versión exacta, con las rutas
+  en la forma `./` que fija la referencia, está en §6):
 
   ```json
   "sandbox": {
@@ -100,9 +100,65 @@ hooks y la configuración de `.git`, sin excepción posible.
   proceso, `claude --settings '…'` en el directorio del paquete, con el sandbox activo y `denyRead`
   sobre todo lo que queda fuera del paquete. Hoy no responde a un fallo real.
 
-## 5. Plan de prueba (se commitea antes de ejecutarlo)
+## 5. Lo que fija la referencia de ajustes (code.claude.com/docs/en/settings-reference, 2026-10-07)
 
-Con la configuración del §4 en `.claude/settings.json` (pasa por la puerta y, por F1, se aplica al
+* **Rutas:** en los ajustes del proyecto, `./ruta` o una ruta sin prefijo se resuelven desde la raíz del
+  proyecto; `/ruta` es absoluta. Se escribe `./tests` y no `/tests`.
+* **Ámbito:** `enabled`, `failIfUnavailable`, `allowUnsandboxedCommands`, `autoAllowBashIfSandboxed` y
+  `filesystem.denyWrite` se pueden poner en el `.claude/settings.json` del proyecto. Las tres primeras
+  tienen «límites en los ajustes del proyecto y locales».
+* **Precedencia:** `.claude/settings.local.json` va por encima de `.claude/settings.json`, así que un
+  fichero local podría poner `enabled: false` o `allowUnsandboxedCommands: true`. Durante la sesión no se
+  puede: F1 bloquea los cambios de ajustes, el sandbox protege `.claude/` de `Bash` y `.claude/**` está
+  gobernado para `Edit` y `Write`. Antes de abrirla, sí (A10, ya declarado).
+* **El refuerzo que el proyecto no puede dar:** un `allowUnsandboxedCommands: false` en
+  `~/.claude/settings.json` se mantiene aunque el proyecto o el fichero local pongan `true` (desde la
+  2.1.285; aquí hay 2.1.291). El README lo recomienda y el instalador avisa si falta. Es un cambio en la
+  configuración del usuario, fuera del repositorio: lo hace la persona.
+* **Las listas se suman:** `denyWrite` se combina entre ficheros. Las reglas `Edit(...)` de deny se
+  añaden a `denyWrite`, y las de allow, a `allowWrite`.
+
+## 6. Cambio propuesto en `.claude/settings.json` (sin aplicar)
+
+Se añade la clave `sandbox` al final del objeto raíz, después de `"enableAllProjectMcpServers": true`.
+El resto del fichero no cambia. El perímetro de permisos tampoco: `autoAllowBashIfSandboxed: false`
+mantiene la pregunta en cada orden de `Bash` que no está en `allow`.
+
+```json
+  "enableAllProjectMcpServers": true,
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "autoAllowBashIfSandboxed": false,
+    "filesystem": {
+      "denyWrite": [
+        "./AGENTS.md",
+        "./CLAUDE.md",
+        "./tests",
+        "./tools",
+        "./opencode.jsonc",
+        "./pyproject.toml",
+        "./.actuarii.json",
+        "./.data/boundary_validator_audit.db"
+      ]
+    }
+  }
+```
+
+**Cómo se aplica:** la edición pasa por la puerta (un recibo de `validate_proposal` con el `old_string`
+y el `new_string` exactos). F1 hace que no se aplique en la sesión en curso, así que después hay que
+abrir una sesión nueva y ejecutar §7 en ella. Si algo sale mal, se vuelve a la versión anterior con el
+mismo procedimiento, o la persona lo hace a mano.
+
+**Después, si §7 sale bien** (por contrato, test primero): un test que compruebe que `denyWrite` cubre
+cada entrada de `governed_paths` de `.actuarii.json` (salvo `.claude/**` y `.mcp.json`, que el sandbox
+protege solo); `AGENTS.md` §9 con los límites que se cierran y los que quedan; y la decisión sobre los
+`git switch` y `git merge`.
+
+## 7. Plan de prueba (se commitea antes de ejecutarlo)
+
+Con la configuración del §6 en `.claude/settings.json` (pasa por la puerta y, por F1, se aplica al
 abrir una sesión nueva). Cada caso dice lo que se espera; lo que salga distinto se anota tal cual.
 
 | Caso | Orden (la lanza Claude, no la persona) | Se espera |
