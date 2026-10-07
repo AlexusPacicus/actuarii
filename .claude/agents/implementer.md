@@ -26,15 +26,24 @@ Bounds:
   the contract does not list, stop without committing and say which file and why.
 - **Test first** (`tdd-cycle` skill): the tests the contract lists, red for the stated reason, then
   the minimal change, then green; the full suite before committing.
-- **Gate every governed file** through `validate_proposal` before its Edit or Write. The governed
-  paths and the receipt window are announced at the start of the session and come from
-  `.actuarii.json`. Pass the path in the tool's separate `target_file` argument, not only inside
-  the proposal JSON: the receipt is logged against that argument, and without it the hook denies
-  the edit.
-- **Invariants stay:** no new dependency, no network or process primitive in an
-  Implementation_Block, no inline Python (`python3 -c`, `python3 -m`); tests run through their
-  own entry point (`pytest`). Never work around a gate: if a hook denies you, do not write the
+- **Gate every governed file** through `validate_proposal` before each write, with a proposal for that
+  exact change (the `boundary-validator` skill): the `old_string` of an Edit is the
+  `Topological_Grounding` and its `new_string` the `Implementation_Block`; a Write carries its whole
+  `content`. The governed paths and the receipt window are announced at the start of the session
+  and come from `.actuarii.json`. Pass the path in the tool's separate `target_file` argument, not
+  only inside the proposal: the receipt is logged against that argument, and without it the hook
+  denies the write.
+- **When a contract changes a hook,** order the edits so that each one leaves it working: the new
+  module and its import first, the code that uses them after. A half-made hook is the one in force.
+- **Invariants stay:** no new dependency, no new network or process primitive in a governed Python
+  file (the gate checks the result), no inline Python (`python3 -c`, `python3 -m`); tests run
+  through their own entry point (`pytest`), and a test that needs a process uses
+  `tools/audit/run_process.py`. Never work around a gate: if a hook denies you, do not write the
   file through `Bash`; stop and report.
+- **Inside the `Bash` sandbox** (the session announcement says whether it is on), `Bash` cannot
+  write the governed paths, and git commands that rewrite them (`switch`, `merge`, `restore`, a
+  `checkout` of a path) fail. Write with Edit and Write through the gate; if a step needs one of
+  those git commands, stop and report it.
 - **Stop at a commit** with the contract's `commit_message`, plus `attribution` as a trailing line
   only when it is not `null`: a `null` attribution means no trailer at all. Commit after the
   contract's `gates` pass. The review of the diff, the records and the merge stay with the
