@@ -395,6 +395,18 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
 * **Desde F4a**, cada escritura gobernada necesita una propuesta con el contenido literal: en un
   `Edit`, el `old_string` es `Topological_Grounding` y el `new_string` es `Implementation_Block`.
 
+## Ideas para la v0.2
+
+* **Plantilla de script para los tests (autor, 2026-10-07):** llevar la verificación de A15 (la fase
+  roja en el commit base y la verde en el final, ejecutadas por código y no declaradas) a una
+  plantilla de script reutilizable que compruebe de forma determinista la reproducibilidad (la misma
+  suite da el mismo resultado en un árbol limpio) y la cobertura (qué código cubren los tests que el
+  contrato nombra), para cualquier proyecto que adopte el kit.
+* **Formato del mensaje del commit** (prefijo de una lista cerrada, tipo frente a rutas, plantilla,
+  sin atribución), en el `pre-commit` (`docs/design/SANDBOX.md` §9).
+* **Revisor ciego con `Bash`**, como otro proceso con `denyRead` fuera del paquete
+  (`docs/design/SANDBOX.md` §4).
+
 ## Reglas de trabajo heredadas
 
 Vienen de la memoria de la sesión de Traianus y una sesión nueva aquí no las ve:
