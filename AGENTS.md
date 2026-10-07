@@ -203,4 +203,5 @@ The enforcement above does not cover:
   hook says so on stderr.
 * **The session announcement** informs; it cannot block anything.
 * **Python 3.9.** The hooks and the commit check are written to import under a Python 3.9 system
-  interpreter, which is checked statically, not by running one.
+  interpreter. The hook commands are run by the tests under the system `/usr/bin/python3` where
+  one exists, on the payloads the tests carry; the rest is checked statically.
