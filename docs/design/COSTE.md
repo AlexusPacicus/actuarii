@@ -76,3 +76,28 @@ emparejada con su recibo por el contenido exacto (el `new_string` o el `content`
 `permissions.allow` y medir de nuevo (si la hipótesis se confirma, es el grueso del coste); unir los
 dos hooks de escritura en un solo proceso (unos 240 ms menos); arrancar Python con menos trabajo
 (`-S`, `-I`) en los hooks.
+
+## 5. Diseño de optimización para la v0.2
+
+**Objetivo:** la mediana del tiempo añadido por escritura gobernada por debajo de 1 s, medida con el
+mismo método (§2) y con la regla comprometida de nuevo antes de medir. Tres pasos, en este orden, y
+cada uno medido por separado para saber cuánto aporta:
+
+1. **El validador en `permissions.allow`.** Añadir `mcp__boundary-validator__validate_proposal` a la
+   lista de permitidos de `.claude/settings.json` y su equivalente en `opencode.jsonc` (AGENTS 7.1 exige
+   el mismo perímetro). No abre nada: la herramienta solo valida y anota en el rastro, que escribe el
+   servidor. Comprueba la hipótesis del §4: si la ida y vuelta baja a la rama rápida (unos 200 ms), era
+   la revisión del modo automático. Es una línea de configuración y un cambio en los tests del
+   perímetro.
+2. **Un solo proceso para los hooks de escritura.** Hoy `require_boundary_validation.py` y
+   `require_contract_context.py` arrancan cada uno su Python para la misma escritura. Un único hook
+   de entrada que importe los dos y los ejecute en orden, sin cambiar su lógica ni sus mensajes,
+   ahorra un arranque (unos 240 ms). Siguiendo AGENTS 6.5: primero el hook nuevo, probado; después el
+   cambio de `settings.json`; los dos antiguos se quedan como módulos.
+3. **Arranque de Python más ligero en los hooks** (`-I`, `-S`, que el shim ya admite): menos trabajo al
+   arrancar y, con `-I`, sin `PYTHONPATH` ni el directorio del usuario, que además es más seguro.
+   Se mide antes de decidir; si no ahorra nada apreciable, no se hace.
+
+**Estimación** (a comprobar, no a dar por hecha): unos 200 ms de validador y unos 150 ms de hooks,
+por debajo de 500 ms en total. **Fuera de este diseño:** quitar la llamada al validador (el recibo es
+la garantía) o cachear recibos (rompería que el recibo ata un cambio exacto).
