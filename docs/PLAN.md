@@ -255,9 +255,10 @@ Los *actuarii* levantan las actas; Traianus es el archivo donde quedan.
 * **Ordenar los recuerdos:** solo por cercanía (ε o vecinas más próximas). σ² no mide relevancia
   (lectura de LEDGER 103).
 * **Una tensión de diseño que hay que resolver antes:**
-  * La matriz zero-trust del propio kit pone en cuarentena las primitivas de red (`urllib`, `httpx`…)
-    en los bloques de implementación que pasan por la puerta.
-  * Un cliente HTTP a `127.0.0.1` las necesita.
+  * La puerta del kit deniega que un cambio introduzca primitivas de red (`urllib`, `http`…) en un
+    `.py` gobernado, y el sandbox no deja a `Bash` conectarse a `127.0.0.1` sin permitirlo en
+    `allowedDomains`.
+  * Un cliente HTTP a `127.0.0.1` necesita las dos cosas.
   * Hará falta una excepción declarada (un módulo designado, solo loopback, con su test), no un
     rodeo.
 * **Primer piloto posible:** las notas de memoria del propio proyecto como corpus, con la regla
@@ -333,67 +334,51 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
 4. **Bitácora:** si Actuarii lleva su propio DEVLOG y LEDGER o los cambios se anotan en los de
    Traianus.
 
-## Traspaso (2026-10-06, 21:35)
+## Traspaso (2026-10-07, cierre de la semana 1 de trabajo)
 
-* **Auditoría adversarial hecha** con el autor (pautas en `docs/adversarial-audit/PAUTAS.md`, casos
-  A01–A18 en `CASES.md`). Proceso completo del kit en `docs/process/PROCESO.md`, que incluye el plan
-  de correcciones F1–F7.
-* **Fusionado en `main`:** F1 (`afe12bb`), F2 (`65f6d30`), F3 (`47f29be`) y F4a (`d87032d`). La suite
-  da 2350 en verde.
-* **Siguiente:** F4b, que sustituye la matriz léxica por `ast` sobre el resultado, solo en ficheros
-  `.py` y solo con las primitivas que el cambio introduce (diseño aprobado en
-  `docs/design/RECIBO_CONTENIDO.md` §4). Después F5, F6 y F7, y luego medir el coste por escritura
-  gobernada y decidir la optimización antes de empaquetar. El verificador en el commit va a la v0.2.
-* **F4b en dos pasos (2026-10-07), rama `fix/audit-f4b`:** la comprobación decide en la puerta, no
-  solo en el validador (§4.1 del diseño: dos recibos limpios por separado se encadenan en una
-  primitiva). El servidor MCP en marcha conserva la matriz hasta que se reconecta, así que F4b-1
-  (`28f2c80`) solo la quita (2345 en verde) y F4b-2, tras reconectar, escribe `primitives.py`, la
-  puerta y el validador. La rama se fusiona entera después de F4b-2 y de otra reconexión. El autor
-  añade a la lista del diseño `posix`, `nt`, `_posixsubprocess`, `_socket`, `multiprocessing` y
-  `asyncio`, y que `eval`, `exec`, `compile` y `__import__` cuenten aunque solo se nombren.
-* **F4b-2 (`b6888ca`, 2717 en verde):** `primitives.py`, la puerta y el validador, con `from os import *`
-  como `os.*` y el `.py` que no es UTF-8 denegado también en el validador. Comprobado de punta a punta:
-  con un recibo del validador anterior, la puerta real deniega un `Write` con `import socket`.
-* **La lista de primitivas queda cerrada con F4b (autor, 2026-10-07):** no se le añade ninguna forma
-  más; cada forma nueva sería otro parche. Lo que aparezca se declara como límite y se resuelve en el
-  sistema operativo o en el intérprete.
-* **Lección del incidente de F4b-2:** el hook se vuelve a leer en cada llamada, así que una edición a
-  medias de la puerta es la puerta que está en vigor. Con el cableado antes del `import`, el hook dio
-  `NameError`, denegó todas las escrituras en `.py` gobernados (también la que lo arreglaba) y hubo
-  que devolverlo a `HEAD` con `git restore`, con permiso del autor. Un contrato que toca la puerta
-  ordena las ediciones para que cada una la deje funcionando: el módulo nuevo y el `import` antes que
-  el cableado.
-* **Orden nuevo (autor, 2026-10-07):** F4b, el sandbox y después F5, F6 y F7, que pueden cambiar o
-  sobrar según lo que salga (F5 también es una heurística sobre el texto).
-* **Sandbox probado (2026-10-07, `docs/design/SANDBOX.md` §8 y §9):** S1–S4 como se esperaba; la v0.1
-  se apoya en él para la red, los procesos y las escrituras por `Bash`, y F5 queda en declarar la
-  heurística. Hallazgo de S8: un `git checkout <commit> -- <ruta>` que falla ya ha escrito el índice.
-  Decisiones del autor: las órdenes de git que escriben rutas gobernadas las hace la persona (`!`); la
-  integridad del commit (índice igual al disco en las rutas gobernadas, hook `pre-commit`) entra en la
-  v0.1; el formato del mensaje va a la v0.2.
-* **Sandbox del sistema operativo (acordado 2026-10-07), justo después de F4b, medio día como
-  mucho:** la lista de primitivas sobre `ast` es una lista negra sobre un lenguaje dinámico;
-  frena al agente honesto, no es una frontera, y así se presenta en el README. La frontera real está
-  donde se ejecuta el código. Se investiga si el sandbox de Claude Code (seatbelt en macOS, bubblewrap
-  en Linux) corta la red de `Bash` y de sus procesos hijos, y si puede impedir que `Bash` escriba en
-  las rutas gobernadas. Si las dos cosas son posibles, la v0.1 se apoya en él para la red, los
-  procesos y las escrituras por `Bash` (el límite declarado más importante), y las puertas del kit
-  quedan para lo que el sistema no ve: recibo, cita literal, contexto del contrato y revisión ciega.
-  Si no, se declara y va a la v0.2. Alternativa intermedia, también a valorar: un audit hook
-  (PEP 578) instalado por el shim.
-* **Comprobado al abrir la sesión (2026-10-06):** tras reconectar el servidor MCP, la tabla
-  `receipts` se crea y guarda el hash. La propuesta enviada como texto se aceptaba porque Claude Code
-  convierte el texto JSON en objeto cuando el esquema declara un objeto; el rechazo de F3 sí se
-  aplica en la llamada real. Prueba con tres llamadas reales sobre `docs/PLAN.md` (no gobernado):
-  * texto JSON válido: `EXECUTE_SAFE` (llegó como objeto);
-  * texto que no es JSON: `arguments.proposal must be an object`, el error de F3;
-  * objeto: `EXECUTE_SAFE`.
-
-  El servidor sigue siendo estricto con un cliente que no convierte
-  (`test_a_proposal_as_text_is_an_invalid_params_error`). La definición con `proposal` como texto
-  era la de antes de reconectar; en una sesión nueva ya se ve el esquema de F3.
-* **Desde F4a**, cada escritura gobernada necesita una propuesta con el contenido literal: en un
-  `Edit`, el `old_string` es `Topological_Grounding` y el `new_string` es `Implementation_Block`.
+* **Estado:** `main` limpio, suite en 2976 verdes. Todas las correcciones de la auditoría están
+  cerradas; la tabla con sus commits está en `docs/process/PROCESO.md` §9. El kit tal como es lo
+  describe `AGENTS.md` v2.1.0.
+* **Hecho desde el traspaso anterior (2026-10-06):**
+  * F4b, primitivas por `ast` decididas en la puerta (`74177b4`); la lista queda cerrada.
+  * Sandbox de Claude Code como frontera de `Bash`: red, escrituras, movimientos y borrados en las
+    rutas gobernadas (`750ac0c`; prueba S1–S9 en `docs/design/SANDBOX.md`).
+  * Integridad del commit con el hook `pre-commit` (`15c8ad0`), instalado en este repositorio.
+  * `AGENTS.md` v2.1.0, la skill `boundary-validator` y la plantilla `implementer` al día (`f4189ea`,
+    `429d5ff`).
+  * F6, los hooks con y sin el shim y con el Python 3.9.6 del sistema (`a21fbfc`).
+  * A15, la fase roja y la verde comprobadas en código con `tools/audit/verify_red_green.py` y el
+    informe `delegation-report/2` (`17a05e1`).
+  * Coste de una escritura gobernada medido (`docs/design/COSTE.md`): 1875 ms de mediana, por encima
+    del umbral de 1 s; según la regla, no se optimiza antes del lanzamiento, el README declara las
+    cifras y el diseño para la v0.2 está en su §5.
+* **Cómo se trabaja ahora** (una sesión nueva tiene que saberlo):
+  * **El sandbox está activo.** `Bash` no escribe las rutas gobernadas ni sale a la red. Las órdenes de
+    git que reescriben rutas gobernadas (`switch`, `merge`, `restore`, `checkout` de una ruta) las
+    ejecuta el autor con `!`; el chat le pasa las órdenes, una por bloque.
+  * **El hook de integridad está instalado** en `.git/hooks/pre-commit`; el anuncio de la sesión dice
+    si lo está y si el sandbox está activo.
+  * **Cada informe de delegación** es `delegation-report/2` y se verifica con `verify_red_green.py`
+    (en segundo plano mientras se revisa el diff) antes de fusionar. El contrato que se pasa al
+    verificador tiene que decir `report_schema: delegation-report/2`.
+  * **Se commitea solo si `pytest` sale con 0**, comprobando su código de salida, no el de la orden
+    que le sigue (lección del commit rehecho `429d5ff`).
+  * **El servidor MCP ejecuta el código con el que arrancó:** un cambio en el validador necesita que
+    el autor lo reconecte. Los hooks, en cambio, se releen en cada llamada (AGENTS 6.5).
+  * `.opencode/` no está gobernado, por decisión del autor (AGENTS §9).
+* **Decisiones del autor del 2026-10-07:** la lista de primitivas cerrada; el sandbox como frontera de
+  lo que se ejecuta; las órdenes de git que escriben rutas gobernadas, a mano; la integridad del commit
+  en la v0.1 y el formato del mensaje en la v0.2; A15 verificado en el flujo de delegación; el coste
+  según la regla de `COSTE.md` §3.
+* **Siguiente: fase 2 (semana 2, 12–18 de octubre).** Además de lo que dice la fase:
+  * decidir la distribución: plugin, `install.sh` o las dos (`docs/prior-art/PRIOR_ART.md`);
+  * el instalador escribe la clave `sandbox` con un `denyWrite` sacado de `governed_paths`, copia el
+    hook `pre-commit` (corre fuera de la sesión, lo lanza la persona) y avisa si falta
+    `allowUnsandboxedCommands: false` en los ajustes del usuario;
+  * la CI en Linux necesita `bubblewrap` y `socat` para el sandbox; los tests que piden un sistema de
+    ficheros que no distingue mayúsculas se saltan allí, con su motivo.
+* **Pendiente del autor:** las decisiones de la semana 1 (señal de éxito, repositorio de GitHub
+  privado hasta el 25 de octubre, bitácora).
 
 ## Ideas para la v0.2
 
@@ -410,6 +395,8 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
   error de tiempo agotado, para que el verificador no lo tome de `run_process.subprocess`.
 * **Formato del mensaje del commit** (prefijo de una lista cerrada, tipo frente a rutas, plantilla,
   sin atribución), en el `pre-commit` (`docs/design/SANDBOX.md` §9).
+* **Coste por escritura gobernada:** el diseño de `docs/design/COSTE.md` §5 (validador en
+  `permissions.allow`, un solo proceso para los hooks de escritura, arranque de Python más ligero).
 * **Revisor ciego con `Bash`**, como otro proceso con `denyRead` fuera del paquete
   (`docs/design/SANDBOX.md` §4).
 
@@ -431,7 +418,7 @@ Vienen de la memoria de la sesión de Traianus y una sesión nueva aquí no las 
 
 ## Cómo empezar la sesión nueva
 
-1. Abrir Claude Code con `/Users/test/Documents/Actuarii` como carpeta.
-2. Primer mensaje: «Lee `docs/PLAN.md` y empieza por la fase 0.»
-3. Aún no hay `CLAUDE.md`: crearlo es el primer paso de la fase 0. Hasta entonces, `AGENTS.md` y este
-   plan no se cargan solos.
+1. Abrir Claude Code con `/Users/test/Documents/Actuarii` como carpeta. `CLAUDE.md` carga
+   `AGENTS.md` y este plan.
+2. Leer el anuncio de la sesión: el sandbox tiene que estar activo y el hook de integridad instalado.
+3. Primer mensaje: «Lee el traspaso de `docs/PLAN.md` y empieza la fase 2.»
