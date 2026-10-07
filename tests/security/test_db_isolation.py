@@ -80,18 +80,3 @@ def test_non_dict_payload_rejected_as_invalid_json():
     decision = validate_proposal("[1, 2, 3]")
     assert decision["status"] == "QUARANTINED"
     assert decision["final_decision"] == "INVALID_JSON"
-
-
-def test_denylist_still_precedes_schema_for_malformed_payloads():
-    """Content screening keeps priority: forbidden tokens quarantine even
-    when the payload also violates the strict schema."""
-    from tools.boundary_validator.validator import validate_proposal
-
-    decision = validate_proposal(json.dumps({
-        "Intent_Class": "NONE",
-        "Implementation_Block": "socket.socket()",
-        "Topological_Grounding": "",
-        "Safety_Abort": "NONE",
-    }))
-    assert decision["status"] == "QUARANTINED"
-    assert decision["final_decision"] == "ABORTED_VIOLATES_ZERO_TRUST"

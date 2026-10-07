@@ -265,7 +265,7 @@ def audit():
         quote = file.read_text(encoding="utf-8")[:20] if file.exists() else ""
         decision = validate_proposal(json.dumps({
             "Intent_Class": "DOC", "Target_File": target, "Topological_Grounding": quote,
-            "Implementation_Block": "b", "Safety_Abort": "NONE",
+            "Implementation_Block": quote, "Safety_Abort": "NONE",
         }), target)
         assert decision["final_decision"] == "EXECUTE_SAFE"
 
@@ -282,8 +282,10 @@ def quote_of(file_path):
 
 
 def gate(monkeypatch, file_path, tool="Edit", **primitives):
-    # the change `audit`'s grant leaves a receipt for: the file's quote as old_string and "b" as new_string
-    tool_input = {"file_path": file_path, "old_string": quote_of(file_path), "new_string": "b"}
+    # the change `audit`'s grant leaves a receipt for: the file's quote as old_string and as new_string, so
+    # that the result is the file as it is and parses whatever the file is
+    quote = quote_of(file_path)
+    tool_input = {"file_path": file_path, "old_string": quote, "new_string": quote}
     payload = json.dumps({"tool_name": tool, "tool_input": tool_input})
     monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
     return require_boundary_validation.main(**primitives)

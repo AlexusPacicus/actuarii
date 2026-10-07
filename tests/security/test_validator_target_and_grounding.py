@@ -129,11 +129,6 @@ def test_a_safety_abort_keeps_its_decision_before_the_target_check(root):
     assert decision["final_decision"] == "BLOCKED_BY_SAFETY_GATE"
 
 
-def test_a_primitive_keeps_its_decision_before_the_target_check(root):
-    decision = validate_proposal(_proposal(target="a.txt", block="import socket"), "b.txt")
-    assert decision["final_decision"] == "ABORTED_VIOLATES_ZERO_TRUST"
-
-
 # ---------------------------------------------------------------------------
 # Quote (A02)
 # ---------------------------------------------------------------------------

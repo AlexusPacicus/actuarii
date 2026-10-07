@@ -32,10 +32,9 @@ CONFIG = {
 }
 TARGET = "src/a.py"
 GOVERNED = str(REPO_ROOT / "src" / "a.py")
-OLD = "old text\n"
-NEW = "new text\n"
+OLD = "old = 1\n"
+NEW = "new = 2\n"
 UNKNOWN = "mcp__fs__write_file"
-PROCESS_PRIMITIVE = "import sub" + "process"
 
 
 def sha(text):
@@ -133,7 +132,7 @@ def test_the_receipt_keeps_the_target_file_as_it_arrived(isolate_audit_db):
     ("é", "x"),
     ("q", "é"),
     ("q", "é"),
-    ("q", "☃ \U0001f600"),
+    ("q", "# ☃ \U0001f600"),
 ])
 def test_the_hashes_are_those_of_the_exact_utf8_bytes_with_nothing_normalised(isolate_audit_db, grounding, block):
     grant(TARGET, grounding, block)
@@ -152,7 +151,6 @@ def test_two_texts_that_differ_by_one_byte_leave_two_different_hashes(isolate_au
 
 @pytest.mark.parametrize("text, target", [
     pytest.param(proposal(abort="BOUNDARY_VIOLATION"), TARGET, id="safety-abort"),
-    pytest.param(proposal(block=PROCESS_PRIMITIVE), TARGET, id="forbidden-primitive"),
     pytest.param("{not json", TARGET, id="invalid-json"),
     pytest.param(proposal(target="src/b.py"), TARGET, id="target-mismatch"),
     pytest.param(proposal(target="tools/boundary_validator/hook_gate.py", grounding="not in that file", intent="FIX"),

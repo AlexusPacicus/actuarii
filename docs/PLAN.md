@@ -344,6 +344,37 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
   `.py` y solo con las primitivas que el cambio introduce (diseño aprobado en
   `docs/design/RECIBO_CONTENIDO.md` §4). Después F5, F6 y F7, y luego medir el coste por escritura
   gobernada y decidir la optimización antes de empaquetar. El verificador en el commit va a la v0.2.
+* **F4b en dos pasos (2026-10-07), rama `fix/audit-f4b`:** la comprobación decide en la puerta, no
+  solo en el validador (§4.1 del diseño: dos recibos limpios por separado se encadenan en una
+  primitiva). El servidor MCP en marcha conserva la matriz hasta que se reconecta, así que F4b-1
+  (`28f2c80`) solo la quita (2345 en verde) y F4b-2, tras reconectar, escribe `primitives.py`, la
+  puerta y el validador. La rama se fusiona entera después de F4b-2 y de otra reconexión. El autor
+  añade a la lista del diseño `posix`, `nt`, `_posixsubprocess`, `_socket`, `multiprocessing` y
+  `asyncio`, y que `eval`, `exec`, `compile` y `__import__` cuenten aunque solo se nombren.
+* **F4b-2 (`b6888ca`, 2717 en verde):** `primitives.py`, la puerta y el validador, con `from os import *`
+  como `os.*` y el `.py` que no es UTF-8 denegado también en el validador. Comprobado de punta a punta:
+  con un recibo del validador anterior, la puerta real deniega un `Write` con `import socket`.
+* **La lista de primitivas queda cerrada con F4b (autor, 2026-10-07):** no se le añade ninguna forma
+  más; cada forma nueva sería otro parche. Lo que aparezca se declara como límite y se resuelve en el
+  sistema operativo o en el intérprete.
+* **Lección del incidente de F4b-2:** el hook se vuelve a leer en cada llamada, así que una edición a
+  medias de la puerta es la puerta que está en vigor. Con el cableado antes del `import`, el hook dio
+  `NameError`, denegó todas las escrituras en `.py` gobernados (también la que lo arreglaba) y hubo
+  que devolverlo a `HEAD` con `git restore`, con permiso del autor. Un contrato que toca la puerta
+  ordena las ediciones para que cada una la deje funcionando: el módulo nuevo y el `import` antes que
+  el cableado.
+* **Orden nuevo (autor, 2026-10-07):** F4b, el sandbox y después F5, F6 y F7, que pueden cambiar o
+  sobrar según lo que salga (F5 también es una heurística sobre el texto).
+* **Sandbox del sistema operativo (acordado 2026-10-07), justo después de F4b, medio día como
+  mucho:** la lista de primitivas sobre `ast` es una lista negra sobre un lenguaje dinámico;
+  frena al agente honesto, no es una frontera, y así se presenta en el README. La frontera real está
+  donde se ejecuta el código. Se investiga si el sandbox de Claude Code (seatbelt en macOS, bubblewrap
+  en Linux) corta la red de `Bash` y de sus procesos hijos, y si puede impedir que `Bash` escriba en
+  las rutas gobernadas. Si las dos cosas son posibles, la v0.1 se apoya en él para la red, los
+  procesos y las escrituras por `Bash` (el límite declarado más importante), y las puertas del kit
+  quedan para lo que el sistema no ve: recibo, cita literal, contexto del contrato y revisión ciega.
+  Si no, se declara y va a la v0.2. Alternativa intermedia, también a valorar: un audit hook
+  (PEP 578) instalado por el shim.
 * **Comprobado al abrir la sesión (2026-10-06):** tras reconectar el servidor MCP, la tabla
   `receipts` se crea y guarda el hash. La propuesta enviada como texto se aceptaba porque Claude Code
   convierte el texto JSON en objeto cuando el esquema declara un objeto; el rechazo de F3 sí se
