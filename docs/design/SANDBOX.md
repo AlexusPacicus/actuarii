@@ -192,7 +192,7 @@ Claude Code 2.1.291, macOS. Cada orden la lanzó Claude desde `Bash`, dentro del
 | S2b escritura | `touch docs/zz_probe`: funciona; se movió al temporal del sandbox | sí |
 | S3 rastro | `touch .data/boundary_validator_audit.db`: `Operation not permitted`. `context_pack.py` sigue anotando su log (313 → 314 líneas) | sí |
 | S4 reintento | `touch tests/zz_probe` con `dangerouslyDisableSandbox: true`: `Operation not permitted`; el parámetro se ignora con los ajustes del proyecto solos | sí |
-| S5 aprobación | pendiente de que el autor confirme si se le preguntó por las órdenes que escriben en `docs/` | — |
+| S5 aprobación | en modo automático, `touch docs/zz_probe` pidió permiso al autor (lo confirmó y rechazó la segunda vez): la regla `ask` de `Bash` a secas sigue en vigor porque `autoAllowBashIfSandboxed` es `false` | sí |
 | S6 kit | `Write` en `tests/` sin recibo: denegado por la puerta, nombrando su regla. El servidor MCP, fuera del sandbox, sigue emitiendo recibos | sí |
 | S7 suite | 2716 en verde y 1 fallo, el mismo que fuera del sandbox: `test_registration_changes_nothing_else_in_settings` fija las claves de `settings.json` y no conoce `sandbox` | sí (el fallo es del cambio, no del sandbox) |
 | S8 git | rama y commit vacío: funcionan. `git checkout 916ee79 -- tools/boundary_validator/validator.py`: `unable to unlink old … Operation not permitted` | sí, con un hallazgo |
@@ -229,4 +229,4 @@ del usuario sigue siendo recomendable, por el fichero local (§5).
   git (`commit-tree`, `update-ref`), que se saltan los hooks y que el perímetro ya pregunta.
 * **Formato del mensaje** (prefijo de una lista cerrada, tipo frente a rutas, plantilla, sin
   atribución): a la v0.2.
-* **S5:** pendiente de confirmar por el autor.
+* **S5:** confirmado por el autor: en modo automático también pregunta.

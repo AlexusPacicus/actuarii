@@ -89,5 +89,23 @@
       }
     ]
   },
-  "enableAllProjectMcpServers": true
+  "enableAllProjectMcpServers": true,
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "autoAllowBashIfSandboxed": false,
+    "filesystem": {
+      "denyWrite": [
+        "./AGENTS.md",
+        "./CLAUDE.md",
+        "./tests",
+        "./tools",
+        "./opencode.jsonc",
+        "./pyproject.toml",
+        "./.actuarii.json",
+        "./.data/boundary_validator_audit.db"
+      ]
+    }
+  }
 }

@@ -675,7 +675,8 @@ def test_hook_follows_the_boundary_hook_for_every_tool():
 
 def test_registration_changes_nothing_else_in_settings():
     """Pinned at the commit that added the hook; a deliberate perimeter change updates it
-    (the python gate wiring, 54c7f8c, is the second such change)."""
+    (the python gate wiring, 54c7f8c, is the second such change; the sandbox key, docs/design/SANDBOX.md
+    section 6, is the third)."""
     current = settings()
     assert current["permissions"] == PERMISSIONS
     parsed = [
@@ -690,7 +691,7 @@ def test_registration_changes_nothing_else_in_settings():
     ]
     assert current["enableAllProjectMcpServers"] is True
     assert current["disableAllHooks"] is False
-    assert set(current) == {"permissions", "hooks", "enableAllProjectMcpServers", "disableAllHooks"}
+    assert set(current) == {"permissions", "hooks", "enableAllProjectMcpServers", "disableAllHooks", "sandbox"}
     assert set(current["hooks"]) == {"PreToolUse", "SessionStart", "ConfigChange"}
 
 
