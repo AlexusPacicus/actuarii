@@ -215,3 +215,18 @@ del sandbox. `git branch -D` borró la rama igualmente.
 sandbox para la red, los procesos y las escrituras por `Bash`, y F5 queda en declarar la heurística.
 `allowUnsandboxedCommands: false` basta en los ajustes del proyecto (S4); el refuerzo en los ajustes
 del usuario sigue siendo recomendable, por el fichero local (§5).
+
+## 9. Decisiones del autor (2026-10-07)
+
+* **`git switch`, `git merge` y demás órdenes que escriben rutas gobernadas:** opción (a), las hace la
+  persona con `!`, fuera del sandbox. Ningún `excludedCommands`. Fusionar es el momento en que una
+  persona debe mirar.
+* **Integridad del commit, en la v0.1:** un hook de git `pre-commit` comprueba que cada ruta gobernada
+  del índice coincide con el fichero en disco (blob y modo). Con el sandbox, el disco de una ruta
+  gobernada solo lo escriben la puerta o la persona, así que lo que se commitea pasó por una de las dos.
+  Cierra el hallazgo de S8 y el truco de `git hash-object` + `git update-index`. Vive en `.git/hooks`,
+  que el sandbox protege; lo instala la persona. Se declaran `--no-verify` y las órdenes internas de
+  git (`commit-tree`, `update-ref`), que se saltan los hooks y que el perímetro ya pregunta.
+* **Formato del mensaje** (prefijo de una lista cerrada, tipo frente a rutas, plantilla, sin
+  atribución): a la v0.2.
+* **S5:** pendiente de confirmar por el autor.

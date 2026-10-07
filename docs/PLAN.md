@@ -365,6 +365,12 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
   el cableado.
 * **Orden nuevo (autor, 2026-10-07):** F4b, el sandbox y después F5, F6 y F7, que pueden cambiar o
   sobrar según lo que salga (F5 también es una heurística sobre el texto).
+* **Sandbox probado (2026-10-07, `docs/design/SANDBOX.md` §8 y §9):** S1–S4 como se esperaba; la v0.1
+  se apoya en él para la red, los procesos y las escrituras por `Bash`, y F5 queda en declarar la
+  heurística. Hallazgo de S8: un `git checkout <commit> -- <ruta>` que falla ya ha escrito el índice.
+  Decisiones del autor: las órdenes de git que escriben rutas gobernadas las hace la persona (`!`); la
+  integridad del commit (índice igual al disco en las rutas gobernadas, hook `pre-commit`) entra en la
+  v0.1; el formato del mensaje va a la v0.2.
 * **Sandbox del sistema operativo (acordado 2026-10-07), justo después de F4b, medio día como
   mucho:** la lista de primitivas sobre `ast` es una lista negra sobre un lenguaje dinámico;
   frena al agente honesto, no es una frontera, y así se presenta en el README. La frontera real está
