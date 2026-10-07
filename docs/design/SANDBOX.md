@@ -92,6 +92,14 @@ hooks y la configuración de `.git`, sin excepción posible.
   posterior (hecho por la persona) lo trae al árbol. Es lo que cubriría el verificador en el commit
   (F4c, v0.2). Se declara.
 
+* **La revisión ciega no cambia (autor, 2026-10-07).** `denyRead` del sandbox solo afecta a `Bash`, y
+  el revisor ciego solo tiene `Read`, `Grep` y `Glob`, que confina `confine_review_reads.py`. Las reglas
+  `Read(...)` de permisos sí alcanzan a esas herramientas, pero son fijas y de toda la sesión: cegarían
+  también al agente que ejecuta, y F1 impide cambiarlas a mitad de sesión. **Idea para la v0.2:** si un
+  revisor necesita `Bash` (por ejemplo, para ejecutar el instrumento que revisa), se lanza como otro
+  proceso, `claude --settings '…'` en el directorio del paquete, con el sandbox activo y `denyRead`
+  sobre todo lo que queda fuera del paquete. Hoy no responde a un fallo real.
+
 ## 5. Plan de prueba (se commitea antes de ejecutarlo)
 
 Con la configuración del §4 en `.claude/settings.json` (pasa por la puerta y, por F1, se aplica al
