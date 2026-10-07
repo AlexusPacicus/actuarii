@@ -402,6 +402,12 @@ Se cierran en la semana 1. Propuestas de Claude (2026-10-06), pendientes del aut
   plantilla de script reutilizable que compruebe de forma determinista la reproducibilidad (la misma
   suite da el mismo resultado en un árbol limpio) y la cobertura (qué código cubren los tests que el
   contrato nombra), para cualquier proyecto que adopte el kit.
+* **Verificación de A15 más barata y más estricta (autor, 2026-10-07):** empezar la parte del commit
+  base en cuanto termina la fase roja, a la par del implementador, con los ficheros de test atados
+  por su hash y la exigencia de que los commiteados sean los mismos; un modo que verifique solo los
+  tests del contrato y deje la suite entera a la CI, para proyectos con suites largas; exigir que
+  falle cada identificador de un test rojo, no solo el conjunto; y que `run_process.py` ofrezca su
+  error de tiempo agotado, para que el verificador no lo tome de `run_process.subprocess`.
 * **Formato del mensaje del commit** (prefijo de una lista cerrada, tipo frente a rutas, plantilla,
   sin atribución), en el `pre-commit` (`docs/design/SANDBOX.md` §9).
 * **Revisor ciego con `Bash`**, como otro proceso con `denyRead` fuera del paquete

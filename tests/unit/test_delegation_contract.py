@@ -50,15 +50,22 @@ CONTRACT = {
     'files_must_not_touch': ['traianus/**'],
     'gates': ['pytest_full', 'ruff_ci'],
     'commit_message': 'feat(tools): delegation contract',
-    'report_schema': 'delegation-report/1',
+    'report_schema': 'delegation-report/2',
 }
 REPORT = {
-    'schema_version': 'delegation-report/1',
+    'schema_version': 'delegation-report/2',
     'task_id': 'delegation-contract',
     'commit': '0123456789abcdef0123456789abcdef01234567',
     'tests': [
-        {'id': 'T1', 'red_reason': 'no schema yet', 'catches': 'an extra key'},
-        {'id': 'X1', 'red_reason': 'not validated', 'catches': 'a bad path'},
+        {
+            'id': 'T1', 'expectation': 'red', 'nodeids': ['tests/unit/test_x.py::test_a'],
+            'red_reason': 'no schema yet', 'catches': 'an extra key',
+        },
+        {
+            'id': 'X1', 'expectation': 'guard',
+            'nodeids': ['tests/unit/test_x.py::test_b', 'tests/unit/test_x.py::TestC::test_d[a b]'],
+            'red_reason': 'not validated', 'catches': 'a bad path',
+        },
     ],
     'gates': [{'gate': 'pytest_full', 'status': 'pass', 'detail': '1 passed'}],
     'choices': ['picked the first reading'],
@@ -211,6 +218,16 @@ def test_types_are_not_coerced(cli, command, path, bad):
 
 # T5 patterns, literals and lengths
 
+BAD_NODEIDS = [
+    '', '/tests/x.py::t', '../tests/x.py::t', 'tests/../x.py::t', 'tests/a/../x.py::t', 'tests/x..y.py::t',
+    'tests/./x.py::t', 'tests//x.py::t', 'src/x.py::t', 'testsx/x.py::t', 'x.py::t', 'tests/x.py', 'tests/x.py::',
+    'tests/x.txt::t', 'tests/::t', 'tests/x y.py::t', ' tests/x.py::t', 'tests/x.py ::t',
+    'tests' + BACKSLASH + 'x.py::t', 'tests/x.py::t' + LF + 'z', 'tests/x.py::t' + chr(0),
+]
+GOOD_NODEIDS = [
+    'tests/a.py::t', 'tests/unit/test_a-b_c.py::TestC::test_d[a b-1]', 'tests/a.py::t[x..y]',
+    'tests/a.py::t[' + chr(233) + ']',
+]
 BAD_VALUES = [
     ('contract', ('task_id',), ['', 'ab', 'a' * 65, 'Abc', '-abc', 'ab_c', 'abc def', 'abc' + LF]),
     ('contract', ('branch',), ['', 'ab', 'a' * 102, 'Feat/x', '-feat', 'feat x', '/feat', 'feat/../x',
@@ -222,16 +239,18 @@ BAD_VALUES = [
     ('contract', ('behaviours', 0, 'id'), ['', 'B', 'b1', 'B100', 'T1']),
     ('contract', ('tests', 0, 'id'), ['', 'T', 't1', 'T100', 'X1', 'B1']),
     ('contract', ('schema_version',), ['', 'delegation/2', 'delegation-report/1']),
-    ('contract', ('report_schema',), ['', 'delegation-report/2', 'delegation/1']),
+    ('contract', ('report_schema',), ['', 'delegation-report/1', 'delegation/1']),
     ('contract', ('tests', 0, 'expectation'), ['', 'green', 'RED', 'Manual', 'manual', 'manual ']),
     ('contract', ('gates', 0), ['', 'MYPY', 'TSC', 'tsc ', 'two words', '-tsc', 'a' * 41]),
     ('contract', ('title',), ['', 'x' * 121]),
     ('contract', ('problem',), ['']),
     ('contract', ('commit_message',), ['', 'x' * 101, 'x' * 101 + LF + 'body']),
-    ('report', ('schema_version',), ['', 'delegation/1', 'delegation-report/2']),
+    ('report', ('schema_version',), ['', 'delegation/1', 'delegation-report/1']),
     ('report', ('task_id',), ['', 'ab', 'Abc', 'a' * 65]),
     ('report', ('commit',), ['', 'a' * 39, 'a' * 41, 'A' * 40, 'g' * 40, '651bdf4']),
     ('report', ('tests', 0, 'id'), ['', 'T', 'Y1', 'x1', 'T100', 'B1']),
+    ('report', ('tests', 0, 'expectation'), ['', 'green', 'RED', 'manual', 'red ']),
+    ('report', ('tests', 0, 'nodeids', 0), BAD_NODEIDS),
     ('report', ('gates', 0, 'gate'), ['', 'TSC', 'tsc ', 'two words', '-tsc', 'a' * 41]),
     ('report', ('gates', 0, 'status'), ['', 'ok', 'PASS']),
 ]
@@ -248,6 +267,8 @@ GOOD_VALUES = [
     ('report', ('commit',), ['a' * 40]),
     ('report', ('gates', 0, 'gate'), ['pytest_model', 'validate_proposal', 'tsc', 'a', 'a' * 40]),
     ('report', ('tests', 0, 'id'), ['T1', 'X12']),
+    ('report', ('tests', 0, 'expectation'), ['red', 'guard']),
+    ('report', ('tests', 0, 'nodeids', 0), GOOD_NODEIDS),
     ('report', ('gates', 0, 'status'), ['fail', 'not_run']),
 ]
 BAD = flat(BAD_VALUES)
@@ -274,6 +295,7 @@ EMPTY_REJECTED = [
     ('contract', ('context', 'sources')),
     ('contract', ('context', 'sources', 0, 'select')),
     ('report', ('gates',)),
+    ('report', ('tests', 0, 'nodeids')),
 ]
 EMPTY_ACCEPTED = [
     ('contract', ('decisions',)),
@@ -315,6 +337,17 @@ def test_duplicate_ids_and_gates_are_rejected(cli, field, value):
 @pytest.mark.parametrize('field, value', DISTINCT, ids=[field for field, _ in DISTINCT])
 def test_distinct_ids_and_gates_are_accepted(cli, field, value):
     accept(cli, 'contract', replaced('contract', (field,), value))
+
+
+def test_duplicate_node_ids_in_a_test_are_rejected(cli):
+    ids = ['tests/a.py::t', 'tests/a.py::t']
+    err = reject(cli, 'report', replaced('report', ('tests', 0, 'nodeids'), ids))
+    assert 'tests.0.nodeids' in err
+    assert 'duplicate' in err
+
+
+def test_distinct_node_ids_in_a_test_are_accepted(cli):
+    accept(cli, 'report', replaced('report', ('tests', 0, 'nodeids'), ['tests/a.py::t', 'tests/a.py::u']))
 
 
 def test_an_entry_in_both_file_lists_is_rejected(cli):
@@ -568,7 +601,9 @@ def test_the_agent_definition_names_the_two_commands_and_the_json_contract(cli):
     for bound in ('**One branch**', '**Only the files the contract lists.**', '**Test first**',
                   '**Gate every governed file**', '**Invariants stay:**', '**Stop at a commit**'):
         assert bound in text
-    for needle in ('DelegationContract', 'DelegationReport', 'tools/audit/context_pack.py'):
+    needles = ('DelegationContract', 'DelegationReport', 'tools/audit/context_pack.py',
+               'tools/audit/verify_red_green.py', 'expectation', 'nodeids')
+    for needle in needles:
         assert needle in text
     commands = set(re.findall(r'tools/audit/delegation_contract[.]py ([a-z]+(?: --[a-z-]+)?)', text))
     assert {'contract --emit-context', 'report'} <= commands

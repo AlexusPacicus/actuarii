@@ -68,7 +68,18 @@ def _subject(value: str) -> str:
     return value
 
 
+def _nodeid(value: str) -> str:
+    if ".." in value.split("::", 1)[0]:
+        raise ValueError("a node id has no '..' in its path")
+    return value
+
+
 TaskId = Annotated[str, Field(pattern=r"^[a-z0-9][a-z0-9-]{2,63}$")]
+NodeId = Annotated[
+    str,
+    Field(pattern=r"^tests(/[A-Za-z0-9_][A-Za-z0-9_.-]*)+\.py::[^\x00-\x1f\x7f]+$"),
+    AfterValidator(_nodeid),
+]
 NonEmpty = Annotated[str, Field(min_length=1)]
 RelativePath = Annotated[str, AfterValidator(_relative_path)]
 
@@ -150,7 +161,7 @@ class DelegationContract(_Strict):
     files_must_not_touch: list[RelativePath]
     gates: Annotated[list[Gate], Field(min_length=1)]
     commit_message: Annotated[str, Field(min_length=1), AfterValidator(_subject)]
-    report_schema: Literal["delegation-report/1"]
+    report_schema: Literal["delegation-report/2"]
 
     @field_validator("behaviours", "tests")
     @classmethod
@@ -174,8 +185,16 @@ class DelegationContract(_Strict):
 
 class ReportedTest(_Strict):
     id: Annotated[str, Field(pattern=r"^(T|X)[0-9]{1,2}$")]
+    expectation: Literal["red", "guard"]
+    nodeids: Annotated[list[NodeId], Field(min_length=1)]
     red_reason: str
     catches: str
+
+    @field_validator("nodeids")
+    @classmethod
+    def _unique_nodeids(cls, nodeids: list[str]) -> list[str]:
+        _duplicates("node ids", nodeids)
+        return nodeids
 
 
 class GateResult(_Strict):
@@ -185,7 +204,7 @@ class GateResult(_Strict):
 
 
 class DelegationReport(_Strict):
-    schema_version: Literal["delegation-report/1"]
+    schema_version: Literal["delegation-report/2"]
     task_id: TaskId
     commit: Annotated[str, Field(pattern=r"^[0-9a-f]{40}$")]
     tests: list[ReportedTest]

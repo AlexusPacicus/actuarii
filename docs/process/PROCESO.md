@@ -207,7 +207,7 @@ F5 → F6 → F7. Después, A15.
 | F5 | Reducida a declarar la heurística (`AGENTS.md` §9, «Clever shell» y «Test runners»): con el sandbox, un rodeo del hook de `Bash` ya no llega a la red ni a las rutas gobernadas | `f4189ea` |
 | F6 | Hecha: las siete órdenes de hook dan la misma decisión con el shim, sin él y con el Python 3.9.6 del sistema | `1391323` |
 | F7 | Hecha en `AGENTS.md` v2.1.0 §9 | `f4189ea` |
-| A15 | Pendiente | — |
+| A15 | Hecha: `tools/audit/verify_red_green.py` ejecuta los tests del informe en el commit base y en el final, más la suite entera, en worktrees temporales; el informe pasa a `delegation-report/2` | `a69f940` |
 
 **Declarado (autor, 2026-10-07):** `.opencode/` (las skills de OpenCode) no está en `governed_paths`;
 se escribe sin recibo, también desde `Bash`. OpenCode se usa aquí solo para opinar, y el test que exige
