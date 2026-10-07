@@ -21,7 +21,7 @@ def _grounded_proposal(target: str = str(GROUNDED_FILE)) -> str:
     return json.dumps({
         "Intent_Class": "FIX",
         "Target_File": target,
-        "Implementation_Block": "update threshold",
+        "Implementation_Block": "update_threshold = 1",
         "Topological_Grounding": GROUNDING_QUOTE,
         "Safety_Abort": "NONE",
     })

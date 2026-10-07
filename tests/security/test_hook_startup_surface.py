@@ -29,8 +29,10 @@ ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "tools" / "boundary_validator" / "hook_gate.py"
 HOOK = ROOT / "tools" / "hooks" / "require_boundary_validation.py"
 PROJECT_CONFIG = ROOT / "tools" / "project_config.py"
+PRIMITIVES = ROOT / "tools" / "boundary_validator" / "primitives.py"
 
 GATE_MODULE = "tools.boundary_validator.hook_gate"
+PRIMITIVES_MODULE = "tools.boundary_validator.primitives"
 GATE_DEPENDENCY = "tools.project_config"
 
 
@@ -121,7 +123,9 @@ def test_security_project_configuration_imports_only_the_standard_library():
     )
 
 
-@pytest.mark.parametrize("path", [GATE, PROJECT_CONFIG], ids=["gate", "project_config"])
+@pytest.mark.parametrize(
+    "path", [GATE, PROJECT_CONFIG, PRIMITIVES, HOOK], ids=["gate", "project_config", "primitives", "hook"]
+)
 def test_security_gate_modules_postpone_annotations_for_a_system_python_3_9(path):
     assert _postpones_annotations(path)
 
@@ -149,6 +153,40 @@ def test_security_hook_script_turns_an_unusable_gate_into_a_block():
     assert any(_handler_exits_with_two(node) for node in guarded), (
         "the guard must exit 2 (block), not fall through or exit 1"
     )
+
+
+def test_security_primitives_module_imports_only_the_standard_library():
+    """The hook imports it at start: a third-party import there would stop the gate before it decides."""
+    tree = ast.parse(PRIMITIVES.read_text(encoding="utf-8"), feature_version=(3, 9))
+    roots = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            roots.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            assert node.level == 0, "primitives.py must not import a relative module"
+            roots.add(node.module.split(".")[0])
+    assert roots, "primitives.py imports nothing, not even ast"
+    assert not roots - set(sys.stdlib_module_names), sorted(roots - set(sys.stdlib_module_names))
+
+
+def test_security_hook_script_imports_the_primitives_inside_its_fail_closed_try():
+    tree = ast.parse(HOOK.read_text(encoding="utf-8"))
+    guarded = [
+        node
+        for node in tree.body
+        if isinstance(node, ast.Try)
+        and any(
+            isinstance(inner, ast.ImportFrom) and inner.module == PRIMITIVES_MODULE
+            for inner in ast.walk(node)
+        )
+    ]
+    assert guarded, f"the import of {PRIMITIVES_MODULE} is not guarded by a try"
+    assert any(_handler_exits_with_two(node) for node in guarded)
+    assert any(
+        isinstance(inner, ast.ImportFrom) and inner.module == GATE_MODULE
+        for node in guarded
+        for inner in ast.walk(node)
+    ), "the primitives and the gate must share the one guarded import"
 
 
 def test_security_gate_db_path_is_absolute():

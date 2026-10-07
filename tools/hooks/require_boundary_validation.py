@@ -30,6 +30,12 @@ The gate does not keep a list of the tools that write; it knows three classes of
    governed, needs a receipt for that file, with any content. The gate does not know whether such a tool
    writes, nor what, so it asks for the receipt per file.
 
+For Edit, MultiEdit and Write on a governed `.py` path, once the receipts pass, the hook computes the exact result
+from the file as it is (an Edit with `replace_all`, the edits of a MultiEdit in order, or the content of a Write),
+parses it with `ast` under its own Python and denies it when it does not parse or introduces a primitive the
+file does not already have (tools/boundary_validator/primitives.py). An Edit that cannot apply, because its
+`old_string` is not in the file, writes nothing and gets no primitive check.
+
 The governed paths and the receipt window come from the project configuration (.actuarii.json,
 tools/project_config.py), and every denial names the rule behind it. While that configuration is invalid every
 path inside the repository that a writer or a class 3 tool names is denied, with the error in the message,
@@ -70,6 +76,7 @@ try:
         has_receipt,
         has_recent_execute_safe,
     )
+    from tools.boundary_validator.primitives import NotPython, introduced
     from tools.project_config import CONFIG_NAME, ConfigError
 except Exception as exc:  # fail-closed: a gate that cannot start must deny
     # An unhandled failure here exits 1, which the harness reads as a broken
@@ -208,6 +215,61 @@ def required_receipts(tool: str, tool_input: dict[str, Any]) -> list[tuple[str |
     return [(None, _sha256(source))]
 
 
+def _apply_edit(current: str | None, edit: dict[str, Any]) -> str | None:
+    """The file after one Edit-style change; None when the tool cannot apply it and so writes nothing."""
+    old, new = edit["old_string"], edit["new_string"]
+    if old == "":
+        return new
+    if current is None or old not in current:
+        return None
+    return current.replace(old, new) if edit.get("replace_all") is True else current.replace(old, new, 1)
+
+
+def written_result(tool: str, tool_input: dict[str, Any], current: str | None) -> str | None:
+    """The exact content of the file after Edit, MultiEdit or Write writes it over `current` (None: no file).
+
+    None when the tool writes nothing: an Edit, or an edit of a MultiEdit, that cannot apply. Call it only once
+    required_receipts has read the tool input, which makes the fields it reads strings.
+    """
+    if tool == "Write":
+        return tool_input["content"]
+    result = current
+    for edit in [tool_input] if tool == "Edit" else tool_input["edits"]:
+        result = _apply_edit(result, edit)
+        if result is None:
+            return None
+    return result
+
+
+def primitive_denial(target: Path, tool: str, tool_input: dict[str, Any]) -> str | None:
+    """Why the result of `tool` on the Python file `target` is denied, or None when it is not.
+
+    Only Edit, MultiEdit and Write on a `.py` path. The result is parsed with this hook's Python; it is denied when
+    it does not parse or introduces a primitive the file as it is now does not have. A file that is not valid
+    UTF-8 cannot be read, so it is denied too.
+    """
+    if tool not in ("Edit", "MultiEdit", "Write") or not target.name.lower().endswith(".py"):
+        return None
+    try:
+        current = target.read_bytes().decode("utf-8")
+    except FileNotFoundError:
+        current = None
+    except UnicodeDecodeError:
+        return f"its current content is not valid UTF-8, so the gate cannot compute what {tool} would leave."
+    result = written_result(tool, tool_input, current)
+    if result is None:
+        return None
+    try:
+        new = introduced(current, result)
+    except NotPython:
+        return (f"the result of {tool} does not parse as Python {sys.version_info.major}.{sys.version_info.minor}, "
+                "the one that runs this hook, and the gate denies what it cannot check.")
+    if new:
+        return (f"{tool} would introduce a network, process or code-loading primitive the file does not have: "
+                f"{', '.join(new)}. A receipt does not cover it.")
+    return None
+
+
 OTHER_CONTENT = (
     "There are recent receipts for this file, but for other content: a receipt covers one exact change. "
     "The proposal must carry the old_string of an Edit, or of each edit of a MultiEdit, as its "
@@ -297,7 +359,14 @@ def main(
                     has_receipt(str(target), block, grounding, verdict.window_seconds)
                     for grounding, block in needed
                 ):
-                    continue
+                    denial = primitive_denial(target, tool, tool_input)
+                    if denial is None:
+                        continue
+                    sys.stderr.write(
+                        f"[require_boundary_validation] {target} is governed by {verdict.rule} "
+                        f"(source: {verdict.source}) and {denial}\n"
+                    )
+                    return 2
                 sys.stderr.write(
                     f"[require_boundary_validation] {target} is governed by {verdict.rule} "
                     f"(source: {verdict.source}) and has no recent EXECUTE_SAFE receipt for this exact "

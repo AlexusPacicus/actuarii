@@ -16,6 +16,7 @@ import logging
 from pydantic import ValidationError
 
 from tools.boundary_validator import hook_gate
+from tools.boundary_validator.primitives import NotPython, introduced
 from tools.boundary_validator.schemas.proposals import AgentMutationProposal, build_response_format
 
 logger = logging.getLogger("tools.boundary_validator.validator")
@@ -122,6 +123,40 @@ def _same_file(first: str, second: str) -> bool:
     return a.exists() and b.exists() and os.path.samefile(a, b)
 
 
+def _primitive_refusal(case_id: str, resolved: Path, grounding: str, block: str) -> dict | None:
+    """The refusal for a Python target whose possible results do not parse or introduce a primitive, else None.
+
+    The write gate decides on the exact result; this is the early warning, so that no receipt is issued for a
+    change the gate will refuse. The results are the file with the first occurrence of the quote replaced by the
+    block, and the block alone (a Write). The reason never carries a path.
+    """
+    current = None
+    if resolved.exists():
+        try:
+            current = resolved.read_bytes().decode("utf-8")
+        except UnicodeDecodeError:
+            return {"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE", "case_id": case_id,
+                    "reason": "the current file is not valid UTF-8, so no result of the change can be computed"}
+    results = [block]
+    if current is not None and grounding:
+        results.append(current.replace(grounding, block, 1))
+    parsed = False
+    new: set[str] = set()
+    for result in results:
+        try:
+            new.update(introduced(current, result))
+        except NotPython:
+            continue
+        parsed = True
+    if not parsed:
+        return {"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE", "case_id": case_id,
+                "reason": "the result of the change does not parse as Python"}
+    if new:
+        return {"status": "QUARANTINED", "final_decision": "ABORTED_VIOLATES_ZERO_TRUST", "case_id": case_id,
+                "reason": "the change introduces: " + ", ".join(sorted(new))}
+    return None
+
+
 def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dict:
     # Memory sanitization BEFORE processing (SEC-M-09): raw NUL.
     if "\x00" in proposal_json_str or "\x00" in target_file_path:
@@ -201,6 +236,12 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
         case_id = str(uuid.uuid4())
         grounding_sha256 = _sha256(model.Topological_Grounding)
         block_sha256 = _sha256(model.Implementation_Block)
+        if resolved.name.lower().endswith(".py"):
+            refusal = _primitive_refusal(case_id, resolved, model.Topological_Grounding,
+                                         model.Implementation_Block)
+            if refusal is not None:
+                abort = "SYNTAX_ERROR" if refusal["final_decision"] == "BLOCKED_BY_SAFETY_GATE" else safety_abort
+                return _finalize(refusal, intent, target_file_path, abort)
         decision = _finalize({"status": "VALIDATED", "final_decision": "EXECUTE_SAFE",
                               "case_id": case_id, "and_gate_ok": True},
                              intent, target_file_path, safety_abort)
