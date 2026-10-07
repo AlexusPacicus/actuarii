@@ -39,6 +39,40 @@ Una escritura gobernada (`Edit`, `MultiEdit`, `Write`) cuesta, además de la esc
 * Si lo que se dispara es el coste de los `Write` grandes, la acción es documentar en el README que
   se prefiera `Edit` (lo que ya dice la skill `boundary-validator`), no cambiar el kit.
 
-## 4. Resultados
+## 4. Resultados (2026-10-07)
 
-(Se añaden después de medir.)
+**Muestra:** 15 escrituras gobernadas de las transcripciones `9210c485` y `87a82f04`, cada una
+emparejada con su recibo por el contenido exacto (el `new_string` o el `content` es el
+`Implementation_Block`), sin duplicados (la sesión retomada repite la historia de la anterior): 13
+`Edit` y 2 `Write`. Las llamadas al validador que fueron sondas, sin escritura detrás, quedan fuera.
+
+| Medida | Valores (ordenados) | Mediana |
+|---|---|---|
+| Ida y vuelta del validador, ms | 189 204 208 440 446 493 1070 1378 1465 1557 1686 1741 1757 1984 2262 | **1378** |
+| Hook `require_boundary_validation.py`, 20 veces, ms | mín. 245, máx. 354 | **254** |
+| Hook `require_contract_context.py`, 20 veces, ms | mín. 237, máx. 259 | **243** |
+| Sobrecoste en tokens de un `Edit` (caracteres de la propuesta / del `Edit`) | 1.01 1.01 1.02 1.03 1.03 1.05 1.06 1.08 1.09 1.09 1.12 1.21 1.26 | **1.06** |
+
+**Aplicación de la regla (§3):**
+* Tiempo añadido por escritura: 1378 + 254 + 243 = **1875 ms**, por encima de 1 s. **No se cumple.**
+* Sobrecoste en tokens de un `Edit`: **1.06 veces**, por debajo de 3. Se cumple. Los dos `Write` de
+  la muestra eran ficheros de una línea (razón 2.0 y 2.1, por los campos fijos de la propuesta).
+* **Decisión, según la regla:** no se optimiza antes del lanzamiento; se escribe un diseño de
+  optimización para la v0.2 y el README declara el coste con estas cifras.
+
+**Desglose, fuera de la regla (no la cambia):**
+* El servidor del validador, ejecutado aparte con 20 peticiones en un proceso: **4 ms** por petición;
+  el arranque del servidor (435 ms) ocurre una vez por sesión. Casi toda la ida y vuelta de 1378 ms
+  no es trabajo del kit sino del harness.
+* La ida y vuelta es bimodal: 6 llamadas por debajo de 500 ms y 9 por encima de 1 s, sin relación con
+  el tamaño de la propuesta (4676 caracteres en 204 ms, 244 en 1741 ms). La sesión estaba en modo
+  automático; una hipótesis, sin comprobar, es que una parte de las llamadas pasa por la revisión
+  del clasificador porque `validate_proposal` no está en `permissions.allow`.
+* Cada hook es casi todo arranque de Python (unos 240 ms de los 250).
+* La escritura misma, con sus hooks, tardó una mediana de 205 ms de llamada a resultado en la
+  transcripción (los hooks pueden ir en paralelo).
+
+**Candidatos para el diseño de la v0.2** (sin decidir): poner `validate_proposal` en
+`permissions.allow` y medir de nuevo (si la hipótesis se confirma, es el grueso del coste); unir los
+dos hooks de escritura en un solo proceso (unos 240 ms menos); arrancar Python con menos trabajo
+(`-S`, `-I`) en los hooks.
