@@ -56,7 +56,19 @@ first, the same way, and send it only on exit 0:
     {the JSON document}
     EOF
 
-It carries the commit hash; the tests added, each with what it can catch (`catches`) and the
-reason it was red (`red_reason`; `X` ids for tests beyond the contract's); each gate's result;
+It carries the commit hash; the tests added, each with what it can catch (`catches`), the reason it
+was red (`red_reason`), its `expectation` (`red` or `guard`, the one the contract gives it) and its
+`nodeids` (the pytest node ids that run it, each a relative path under `tests/`, then `::` and the
+rest); `X` ids are for tests beyond the contract's, with their own expectation; each gate's result;
 every place the contract and the code disagree or the contract left a choice, with the choice you
 made (`choices`); the ranges read beyond the pack; anything not done.
+
+The proof that the tests are red and green comes from running them, not from the report. After the
+commit, write the contract you received to a file under `$TMPDIR` and run the report through the
+verifier, which runs each test at the base commit (with the final test files) and at your commit,
+and then the whole suite at your commit; it checks the committed tree, not your working tree.
+Send the report only on exit 0:
+
+    python3 tools/audit/verify_red_green.py --contract "$TMPDIR/contract.json" <<'EOF'
+    {the JSON document}
+    EOF
