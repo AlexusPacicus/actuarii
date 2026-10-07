@@ -65,6 +65,33 @@ Cada herramienta de escritura se corresponde con una propuesta así:
 * **Límite declarado:** es una lista negra sobre el árbol sintáctico; frena al perfil A. El perfil B
   tiene otros caminos (`pickle`, extensiones nativas). No es un sandbox.
 
+### 4.1 Dónde se comprueba (decisión del autor, 2026-10-07)
+
+Al preparar el contrato de F4b apareció un hueco en la comprobación hecha solo en el validador. El
+validador aplica el cambio al fichero tal como está al proponer, pero el recibo de F4a no ata ese
+estado. Dos recibos validados sobre el mismo fichero (`import aa_bb`: `aa_` → `subp` y `bb` →
+`rocess`) son limpios por separado y, aplicados uno tras otro, escriben `import subprocess`. Lo mismo
+con las ediciones de un `MultiEdit`. Además, el validador no sabe si la propuesta es un `Edit` o un
+`Write` sobre un fichero existente: la puerta no ata la cita de un `Write`.
+
+**Decisión:** la comprobación que decide está en la puerta.
+
+* **En la puerta (autoritativa):** el hook `PreToolUse` conoce la herramienta, su entrada y el fichero
+  actual. Calcula el resultado exacto de `Edit` (con `replace_all`), `MultiEdit` (ediciones en orden)
+  o `Write`, lo analiza con `ast` y deniega si no es Python válido para el intérprete del hook o si
+  introduce primitivas respecto al fichero actual. Solo en rutas gobernadas y ficheros `.py`.
+* **En el validador (aviso temprano):** la misma comprobación, con el mismo módulo
+  (`tools/boundary_validator/primitives.py`), sobre los dos resultados posibles (la cita sustituida
+  por el bloque, y el bloque entero). No emite un recibo que la puerta va a rechazar.
+* **Referencia:** si el fichero actual no existe o no es Python válido, la referencia es el conjunto
+  vacío y se comprueba el resultado entero. Un primer cambio que rompe la sintaxis no abre el segundo.
+* **Si la herramienta no puede aplicar el cambio** (un `old_string` que no está en el fichero), no
+  escribe nada: la puerta no comprueba primitivas y decide solo por el recibo.
+* **Límites que se declaran:** la puerta analiza con la versión de Python que ejecuta los hooks, así
+  que una sintaxis más nueva que esa se deniega; entre la puerta y la escritura, el fichero puede
+  cambiar por `Bash` (ya declarado); las rutas no gobernadas y los ficheros que no son `.py` no se
+  comprueban.
+
 ## 5. Lo que cambia para el agente
 
 * Cada escritura gobernada necesita su propuesta con el texto literal: la cita es el `old_string` y el
