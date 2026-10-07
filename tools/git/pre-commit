@@ -1,0 +1,6 @@
+#!/bin/sh
+top=$(git rev-parse --show-toplevel) || {
+    echo "[commit_integrity] cannot find the top level of the repository; the commit is refused" >&2
+    exit 1
+}
+exec python3 "$top/tools/git/commit_integrity.py"

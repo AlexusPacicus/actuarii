@@ -30,6 +30,7 @@ GATE = ROOT / "tools" / "boundary_validator" / "hook_gate.py"
 HOOK = ROOT / "tools" / "hooks" / "require_boundary_validation.py"
 PROJECT_CONFIG = ROOT / "tools" / "project_config.py"
 PRIMITIVES = ROOT / "tools" / "boundary_validator" / "primitives.py"
+COMMIT_INTEGRITY = ROOT / "tools" / "git" / "commit_integrity.py"
 
 GATE_MODULE = "tools.boundary_validator.hook_gate"
 PRIMITIVES_MODULE = "tools.boundary_validator.primitives"
@@ -124,7 +125,9 @@ def test_security_project_configuration_imports_only_the_standard_library():
 
 
 @pytest.mark.parametrize(
-    "path", [GATE, PROJECT_CONFIG, PRIMITIVES, HOOK], ids=["gate", "project_config", "primitives", "hook"]
+    "path",
+    [GATE, PROJECT_CONFIG, PRIMITIVES, HOOK, COMMIT_INTEGRITY],
+    ids=["gate", "project_config", "primitives", "hook", "commit_integrity"],
 )
 def test_security_gate_modules_postpone_annotations_for_a_system_python_3_9(path):
     assert _postpones_annotations(path)

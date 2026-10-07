@@ -2,7 +2,8 @@
 
 Tests under tests/ pass through the boundary-validator, whose Zero-Trust matrix refuses a proposal
 that names a process-starting primitive. The gate does not apply to local repository tooling, so
-the spawning lives here and the tests import `run`. For tests only.
+the spawning lives here and the tests import `run`. For the tests and the kit's own tooling: it is the one
+place that starts a process for either.
 
 Standard library only.
 """

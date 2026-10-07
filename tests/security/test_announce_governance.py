@@ -3,6 +3,8 @@
 The text is built from tools/project_config, so it cannot diverge from what the gates apply. In-process tests
 capture stdout; only the import-failure tests spawn the hook, with an isolated interpreter.
 """
+import json
+import os
 import sys
 from pathlib import Path
 
@@ -199,3 +201,155 @@ def test_a_project_configuration_that_cannot_be_imported_is_announced_with_exit_
     assert "could not be imported" in done.stdout
     assert "denies every Edit/Write" in done.stdout
     assert cause in done.stdout
+
+
+# T7: the Bash sandbox and the commit-integrity hook are announced, and neither can make the announcement fail
+
+HOOK_SOURCE = "tools/git/pre-commit"
+HOOK_TEXT = b"#!/bin/sh\nexit 0\n"
+DIRECTORY = object()
+
+
+@pytest.fixture
+def kit_root(tmp_path, monkeypatch):
+    """A repository standing in for the real one: the announcement reads its settings and its hooks directory."""
+    for name in list(os.environ):
+        if name.startswith("GIT_"):
+            monkeypatch.delenv(name)
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    root = tmp_path / "root"
+    (root / "tools" / "git").mkdir(parents=True)
+    (root / HOOK_SOURCE).write_bytes(HOOK_TEXT)
+    assert run_process.run(["git", "init", "-q"], cwd=root).returncode == 0
+    monkeypatch.setattr(announce_governance, "REPO_ROOT", root)
+    return root
+
+
+def write_settings(root, content):
+    path = root / ".claude" / "settings.json"
+    if content is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if content is DIRECTORY:
+        path.mkdir()
+    elif isinstance(content, bytes):
+        path.write_bytes(content)
+    else:
+        path.write_text(content if isinstance(content, str) else json.dumps(content), encoding="utf-8")
+
+
+def install_hook(root, content=HOOK_TEXT, mode=0o755, where=".git/hooks"):
+    path = root / where / "pre-commit"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+    path.chmod(mode)
+
+
+def line_starting(text, start):
+    return next(line for line in text.splitlines() if line.startswith(start))
+
+
+def test_an_enabled_sandbox_is_announced_as_on(config_file, kit_root, capsys):
+    config_file(VALID)
+    write_settings(kit_root, {"sandbox": {"enabled": True}})
+    assert line_starting(announce(capsys), "  Bash sandbox:").startswith("  Bash sandbox: on")
+
+
+@pytest.mark.parametrize("content", [
+    pytest.param(None, id="no-file"),
+    pytest.param(DIRECTORY, id="unreadable"),
+    pytest.param(b"\xff\xfe", id="not-utf-8"),
+    pytest.param("{", id="not-json"),
+    pytest.param([], id="array"),
+    pytest.param({}, id="no-sandbox-key"),
+    pytest.param({"sandbox": {}}, id="no-enabled-key"),
+    pytest.param({"sandbox": {"enabled": False}}, id="disabled"),
+    pytest.param({"sandbox": {"enabled": "true"}}, id="enabled-as-text"),
+    pytest.param({"sandbox": {"enabled": 1}}, id="enabled-as-number"),
+    pytest.param({"sandbox": True}, id="sandbox-not-an-object"),
+])
+def test_anything_but_an_enabled_sandbox_is_announced_as_off(config_file, kit_root, capsys, content):
+    config_file(VALID)
+    write_settings(kit_root, content)
+    assert line_starting(announce(capsys), "  Bash sandbox:").startswith("  Bash sandbox: off")
+
+
+def test_the_declared_limit_holds_with_and_without_the_sandbox(config_file, capsys):
+    config_file(VALID)
+    line = line_starting(announce(capsys), "  Declared limit:")
+    assert "with the Bash sandbox on, Bash cannot write the governed paths" in line
+    assert "with it off, writes made through Bash do not pass these gates" in line
+
+
+def test_an_installed_hook_is_announced_as_installed(config_file, kit_root, capsys):
+    config_file(VALID)
+    install_hook(kit_root)
+    assert line_starting(announce(capsys), "  Commit integrity hook:").startswith(
+        "  Commit integrity hook: installed"
+    )
+
+
+def test_the_hook_git_would_run_is_the_one_checked_when_core_hooks_path_is_set(config_file, kit_root, capsys):
+    config_file(VALID)
+    assert run_process.run(["git", "config", "core.hooksPath", "custom"], cwd=kit_root).returncode == 0
+    install_hook(kit_root, where="custom")
+    assert "  Commit integrity hook: installed" in announce(capsys)
+
+
+@pytest.mark.parametrize("installed", [
+    pytest.param(None, id="absent"),
+    pytest.param({"content": b"#!/bin/sh\nexit 1\n"}, id="other-content"),
+    pytest.param({"mode": 0o644}, id="not-executable"),
+])
+def test_a_hook_that_is_missing_changed_or_not_executable_is_not_installed_and_the_way_is_given(
+    config_file, kit_root, capsys, installed
+):
+    config_file(VALID)
+    if installed is not None:
+        install_hook(kit_root, **installed)
+    line = line_starting(announce(capsys), "  Commit integrity hook:")
+    assert line.startswith("  Commit integrity hook: not installed")
+    assert f"copy {HOOK_SOURCE} to .git/hooks/pre-commit and make it executable" in line
+
+
+def test_a_directory_that_is_not_a_repository_is_announced_as_cannot_tell(config_file, kit_root, tmp_path, monkeypatch, capsys):
+    config_file(VALID)
+    plain = tmp_path / "plain"
+    (plain / "tools" / "git").mkdir(parents=True)
+    (plain / HOOK_SOURCE).write_bytes(HOOK_TEXT)
+    monkeypatch.setattr(announce_governance, "REPO_ROOT", plain)
+    assert line_starting(announce(capsys), "  Commit integrity hook:").startswith(
+        "  Commit integrity hook: cannot tell"
+    )
+
+
+def test_a_missing_hook_source_is_announced_as_cannot_tell(config_file, kit_root, capsys):
+    config_file(VALID)
+    (kit_root / HOOK_SOURCE).unlink()
+    assert line_starting(announce(capsys), "  Commit integrity hook:").startswith(
+        "  Commit integrity hook: cannot tell"
+    )
+
+
+def test_a_git_that_cannot_start_is_announced_as_cannot_tell(config_file, kit_root, tmp_path, monkeypatch, capsys):
+    config_file(VALID)
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    monkeypatch.setenv("PATH", str(empty))
+    assert line_starting(announce(capsys), "  Commit integrity hook:").startswith(
+        "  Commit integrity hook: cannot tell"
+    )
+
+
+def test_an_error_while_asking_git_is_announced_as_cannot_tell_and_the_announcement_still_succeeds(
+    config_file, kit_root, monkeypatch, capsys
+):
+    config_file(VALID)
+
+    def broken(argv, **kwargs):
+        raise RuntimeError("git went away")
+
+    monkeypatch.setattr(run_process, "run", broken)
+    line = line_starting(announce(capsys), "  Commit integrity hook:")
+    assert line.startswith("  Commit integrity hook: cannot tell") and "git went away" in line
