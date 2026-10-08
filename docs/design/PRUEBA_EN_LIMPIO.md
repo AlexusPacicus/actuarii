@@ -60,4 +60,21 @@ porque la latencia del modelo entra en los pasos 6 y 7.
 
 ## 5. Resultados
 
-(Vacío hasta la primera medida.)
+### Linux (CI), 2026-10-08
+
+Primera ejecución del workflow `CI` (`.github/workflows/ci.yml`) en GitHub Actions, sobre `e8f0d5d`,
+en `ubuntu-24.04` con Python 3.11. Criterio de §4: que la secuencia pase. **Pasa.**
+
+| Paso | Resultado | Duración |
+|---|---|---|
+| Instalar dependencias (`pydantic==2.13.3`, `pytest==9.1.1`) | success | 5 s |
+| Secuencia de la prueba en limpio (3 tests del instalador) | success | 2 s |
+| Suite completa | success | 50 s |
+| Trabajo entero | success | 59 s |
+
+Los tiempos son los que registra GitHub por paso, con resolución de un segundo. El número de tests que
+pasaron o se saltaron en Linux no se anotó en esta ejecución.
+
+### macOS (persona)
+
+(Vacío hasta la medida.)
