@@ -7,7 +7,8 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
 ## 2026-10-08
 
-Escrita al cerrar la sesión, que siguió a la del 7. Suite: 2976 en verde, sin cambios de código.
+Dos sesiones. La primera siguió a la del 7, sin cambios de código; la segunda adelantó la fase 2.
+Suite: de 2976 a 3063 en verde.
 
 **Hecho**
 * DEVLOG creado, con las entradas del 5 al 7 y la regla de escribirlo al cerrar cada sesión
@@ -18,13 +19,53 @@ Escrita al cerrar la sesión, que siguió a la del 7. Suite: 2976 en verde, sin 
   del agente entero (`@anthropic-ai/sandbox-runtime` o un contenedor), con la configuración sacada de
   `.actuarii.json`; y un intermediario de escritura por MCP, que escribe las rutas gobernadas tras
   comprobar la propuesta, de modo que la frontera no dependa de los hooks de cada entorno.
+* Fase 2, adelantada desde el 12 de octubre:
+  * Decisiones de la fase y protocolo de la prueba en limpio, commiteados antes de medir (`f65f53a`;
+    `docs/design/PRUEBA_EN_LIMPIO.md`).
+  * Instalador, `tools/install.py` (`4d615e2`): copia el kit, fusiona `settings.json` con su
+    `sandbox` y `.mcp.json`, instala el `pre-commit` y añade `.data/` al `.gitignore`. Comprueba
+    todo antes de escribir; con un choque no escribe nada; una segunda ejecución no cambia nada.
+    Biblioteca estándar, Python 3.9. 57 tests, uno de punta a punta: en un repositorio recién
+    instalado, el hook copiado deniega sin recibo y permite con el recibo del validador copiado.
+  * Corrección del hito 1 (`70304b3`): sin base de auditoría, el hook de escritura deniega con su
+    regla y la llamada a `validate_proposal`, en vez de «unable to open database file». Las
+    consultas de `hook_gate` siguen fallando sin base, como fijaban sus tests.
+  * `LICENSE` (texto oficial de Apache-2.0, de dos copias locales independientes e idénticas,
+    SHA-256 `cfc7749b…3d30`) y `NOTICE` (`b38dcbd`); `pyproject.toml` de la v0.1.0 (`7e99ee7`).
+  * Cada cambio de código, por contrato validado al implementador (`sonnet`), con
+    `verify_red_green.py` repetido por el chat principal antes de fusionar: salió 0 las tres veces.
+* Marco del README en `docs/PLAN.md` (`6b6e275`) y casos de partida de la 2b reducida, el instalador
+  y el navegador integrado (`b936cb6`).
 
 **Decidido (autor)**
 * El núcleo independiente del proveedor va a la v0.2 o a la v1; antes del lanzamiento no se hace. El
   README de la v0.1 dice la dirección en una frase.
+* La fase 2 es solo lo que dice el plan. El kit en cualquier directorio, quitar `pydantic` y el plugin
+  van a «Ideas para la v0.2»; lo de `pydantic`, con la cifra de la prueba cronometrada.
+* Distribución de la v0.1: un instalador en Python que copia el kit en `tools/` y se para si algo
+  choca. Autoría solo con el nombre, sin correo.
+* Marco del README, que viene de Triarii: un LLM comete la falacia de von Neumann a nivel semántico;
+  no se evita la inyección, se le quita al LLM la autoridad. Las neuronas proponen y las reglas
+  disponen.
+
+**Salió mal y se aprendió**
+* El instalador sacó un fallo real: en un repositorio recién instalado, la primera denegación no decía
+  qué hacer. Se corrigió antes de medir, como manda el protocolo.
+* El primer arreglo propuesto cambiaba `hook_gate`, contra una decisión fijada en tres tests (un
+  rastro que falta no se puede verificar). Leer antes los tests movió el arreglo al hook.
+* El primer plan de la fase mezclaba cosas fuera del plan; el autor lo vio y se recortó.
+* Errores del chat principal: dijo «no tengo red» cuando solo `Bash` no la tiene (el navegador
+  integrado sí sale; con él se podía comprobar `LICENSE` contra apache.org); y un
+  `ls .venv/bin/python3` que el hook denegó con razón, por nombrar un intérprete por su ruta.
+* El navegador integrado es una vía a la web fuera del sandbox donde decide el modelo, no una regla, y
+  `AGENTS.md` §9 no lo declara: caso para la 2b.
 
 **Siguiente**
-* Fase 2, el empaquetado, desde el 12 de octubre (traspaso en `docs/PLAN.md`).
+* Crear el repositorio privado en GitHub (autor) y el contrato de la CI en Linux.
+* La prueba en limpio cronometrada (autor), con `docs/design/PRUEBA_EN_LIMPIO.md`.
+* Opcional: comprobar `LICENSE` contra apache.org con el navegador.
+* La 2b reducida, con sus pautas commiteadas antes.
+* Borrar las ramas fusionadas `fase2/instalador`, `fase2/rastro-ausente` y `fase2/pyproject`.
 
 ## 2026-10-07
 
