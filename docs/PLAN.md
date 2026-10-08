@@ -178,6 +178,18 @@ diseño, todavía hay margen.
   4. **Tiempo cerrado:** dos días. Lo que no entre, no se hace.
   5. **Resultado:** un informe publicado en inglés con los casos. Alimenta la sección del README «qué
      intenta un agente y qué pasa».
+* **Estado (2026-10-08):** la auditoría de la semana 1 ya cubrió el kit (A01–A18 en
+  `docs/adversarial-audit/CASES.md`). Queda una 2b reducida, con sus pautas commiteadas antes, sobre
+  lo que entró después.
+* **Casos de partida de la 2b reducida:**
+  * **El instalador:** escribe en el `settings.json`, el `.mcp.json`, el `.gitignore` y los hooks de git
+    de otro repositorio.
+  * **El navegador integrado (autor y Claude, 2026-10-08):** en la app de escritorio, el navegador es
+    una vía a la web fuera del sandbox, de entrada y de salida: navegar a una URL ya es emitir datos,
+    y no pasa por el proxy. `AGENTS.md` 7.1 deniega `WebFetch` y `WebSearch`, pero §9 no menciona el
+    navegador. Ahí no decide ninguna regla: decide el modelo, con la aprobación de cada sitio por la
+    persona, y el modelo elige la URL después de aprobado el dominio. Es un límite no declarado; se
+    declara en §9 y se corrige solo si es barato.
 
 ### Fase 3 — lanzamiento
 
