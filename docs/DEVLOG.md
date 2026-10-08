@@ -36,6 +36,17 @@ Suite: de 2976 a 3063 en verde.
     `verify_red_green.py` repetido por el chat principal antes de fusionar: salió 0 las tres veces.
 * Marco del README en `docs/PLAN.md` (`6b6e275`) y casos de partida de la 2b reducida, el instalador
   y el navegador integrado (`b936cb6`).
+* Repositorio privado en GitHub, `AlexusPacicus/actuarii`, creado por el autor con `gh`.
+* CI en Linux (`e8f0d5d`): acciones fijadas por SHA, Python 3.11, la secuencia de la prueba en limpio
+  como paso propio y la suite. Primera ejecución en verde: 3 tests de la secuencia en 2 s y la suite
+  en 50 s, 3055 pasan y 14 se saltan (los casos que piden un sistema de ficheros que no distinga
+  mayúsculas, por la cuenta de sus condiciones). Resultados en `docs/design/PRUEBA_EN_LIMPIO.md` §5.
+* Enmienda de la prueba en limpio antes de medir (`27b0ef5`): destino un clon de `noticias` en
+  `v3-exp`, y el agente recibe solo la tarea. Comparación de configuraciones (sin gobierno, gobierno
+  por instrucción, Actuarii) apuntada en `docs/design/COSTE.md` §6, sin medir.
+* Guía de instalación, `INSTALL.md` (`f79ac08`).
+* Ensayo de la prueba en limpio en macOS sobre `noticias`, sin cifra: el agente pidió el recibo por
+  su cuenta y escribió; salieron siete roces de la guía y del instalador y un fallo del kit (§5).
 
 **Decidido (autor)**
 * El núcleo independiente del proveedor va a la v0.2 o a la v1; antes del lanzamiento no se hace. El
@@ -47,6 +58,10 @@ Suite: de 2976 a 3063 en verde.
 * Marco del README, que viene de Triarii: un LLM comete la falacia de von Neumann a nivel semántico;
   no se evita la inyección, se le quita al LLM la autoridad. Las neuronas proponen y las reglas
   disponen.
+* En las pruebas, el agente recibe solo la tarea: ni procedimiento ni autoridad ni gobernanza en el
+  texto. Si no, no se distingue la regla de la obediencia.
+* El hito 1 del ensayo (ninguna denegación) es un error de formulación del protocolo: el agente no
+  gobierna, así que lo que se observa es el registro del kit, no la conducta del agente.
 
 **Salió mal y se aprendió**
 * El instalador sacó un fallo real: en un repositorio recién instalado, la primera denegación no decía
@@ -59,13 +74,31 @@ Suite: de 2976 a 3063 en verde.
   `ls .venv/bin/python3` que el hook denegó con razón, por nombrar un intérprete por su ruta.
 * El navegador integrado es una vía a la web fuera del sandbox donde decide el modelo, no una regla, y
   `AGENTS.md` §9 no lo declara: caso para la 2b.
+* El ensayo encontró lo que los tests no veían: el `pre-commit` del kit rechaza sus propios enlaces
+  del shim, así que un kit instalado no se podía commitear. Los tests del instalador no commitean en
+  el destino; la secuencia de la CI tampoco.
+* Los primeros textos del protocolo daban al agente instrucciones de procedimiento («sigue el
+  procedimiento que te indica la denegación»); lo vio el autor y se enmendaron antes de medir.
+* Errores del chat principal en el cierre: afirmó que los 14 saltados de Linux eran todos por
+  mayúsculas antes de comprobarlo (se corrigió contando las condiciones antes de subirlo); la guía
+  salió con tres huecos que el ensayo encontró en minutos; y anotó como decisión del autor una
+  clasificación del hito 1 que el autor no había tomado («ajeno a ello» se refería a la nota oculta
+  de Claude Code). Se corrigió antes de subirlo: ante una respuesta ambigua, se pregunta.
 
 **Siguiente**
-* Crear el repositorio privado en GitHub (autor) y el contrato de la CI en Linux.
-* La prueba en limpio cronometrada (autor), con `docs/design/PRUEBA_EN_LIMPIO.md`.
-* Opcional: comprobar `LICENSE` contra apache.org con el navegador.
+* Corregir antes de repetir la medida, por contrato: los nombres `python` y `python3.11` del shim como
+  ficheros normales y no enlaces, con un test de que son idénticos; un commit en el destino con el
+  hook instalado en los tests del instalador y en la secuencia de la CI; la salida de `--dry-run`
+  sin pasos siguientes.
+* Corregir `INSTALL.md`: dónde clonar, rutas explícitas, entorno en un clon sin `.venv` y cómo leer
+  `pip check`.
+* Commitear la nueva formulación del hito 1 (propuesta en §5: un `EXECUTE_SAFE` en el rastro antes de
+  cada escritura gobernada) antes de repetir la medida.
+* Repetir la medida en macOS desde un clon nuevo de `noticias`, cronometrada y sin ayuda del chat.
+* El caso real sin cronómetro (§4b) y la comparación de configuraciones (`COSTE.md` §6).
 * La 2b reducida, con sus pautas commiteadas antes.
-* Borrar las ramas fusionadas `fase2/instalador`, `fase2/rastro-ausente` y `fase2/pyproject`.
+* Opcional: comprobar `LICENSE` contra apache.org con el navegador.
+* Borrar las ramas fusionadas `fase2/*` y la copia de ensayo `/Users/test/Documents/noticias-prueba`.
 
 ## 2026-10-07
 

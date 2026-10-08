@@ -110,6 +110,47 @@ nombra ningún fichero, así que no hay nada que denegar. Las otras causas de sa
 `dash` ausentes, `/usr/bin/python3` ausente) no se dan en `ubuntu-24.04`. Cuenta deducida del código y
 coincidente con el total; los motivos impresos se leen con `pytest -rs`.
 
-### macOS (persona)
+### macOS (persona), intento 1, 2026-10-08: ensayo, sin cifra
 
-(Vacío hasta la medida.)
+No vale como medida: hubo varias intervenciones del chat (cómo clonar, la ruta del instalador, cómo
+seguir tras cada roce) y no se cronometraron los pasos. Destino: clon de `noticias` en `v3-exp`
+(`1676538`); instalador desde Actuarii en `f79ac08`; Claude Code 2.1.291, Sonnet 5.5, modo automático
+(el modo por defecto de esa versión).
+
+**Hitos**
+* **Hito 1, no observado.** El agente no intentó escribir sin recibo: con el anuncio de la sesión y la
+  skill `boundary-validator`, pidió el recibo y escribió. Ninguna denegación.
+* **Hito 2, alcanzado** en unos 17 s desde el texto del paso 6. En el rastro del destino, un solo
+  recibo: `2026-10-08 16:00:14 | EXECUTE_SAFE | DOC | AGENTS.md`; `AGENTS.md` contiene `# Prueba`.
+* **Clasificación (autor, 2026-10-08, después de ver el resultado):** error de formulación del
+  protocolo, no del kit ni de la guía. El hito 1 pedía observar una denegación en la conducta del
+  agente, pero el agente no gobierna: propone, y el kit decide. Lo que hay que observar es el registro
+  del kit, no lo que muestre el agente. La denegación está probada en los tests y en la secuencia de
+  la CI (arriba).
+* **Para la próxima medida** el hito 1 se reformula y se commitea antes de medir. Propuesta: la
+  escritura gobernada tiene en el rastro del destino un `EXECUTE_SAFE` para ese fichero anterior a
+  ella, y no hay ninguna escritura gobernada sin recibo.
+
+**Roces y fallos**
+1. No había guía: solo el docstring del instalador y su salida. Corregido antes de medir
+   (`INSTALL.md`, `f79ac08`).
+2. `INSTALL.md` paso 1 no dice dónde clonar Actuarii: dos clones anidados, uno dentro de Actuarii y
+   otro dentro del destino.
+3. `INSTALL.md` paso 2 no da rutas explícitas ni deja claro que el destino es otro repositorio: se
+   lanzó `tools/install.py` desde el destino y sin argumento.
+4. El instalador con `--dry-run` imprime «write:» y los pasos siguientes («commit the installed
+   files») como si hubiera instalado: se pasó a commitear sin instalar.
+5. **Fallo del kit:** el `pre-commit` instalado rechaza los enlaces `tools/bin/python` y
+   `tools/bin/python3.11` del propio kit («not a regular file»): un kit recién instalado no se puede
+   commitear con su hook. En Actuarii no saltó porque los enlaces se commitearon antes que el hook, y
+   los tests del instalador no commitean en el destino. Rodeo del ensayo: los dos enlaces quedaron sin
+   commitear (`39474bf` en el destino).
+6. `INSTALL.md` paso 5 supone un `.venv` del proyecto; un clon no lo trae. `pip` actuó sobre el Python
+   global (pyenv 3.11.6), que ya tenía `pydantic 2.13.3`.
+7. `pip check` en ese Python global lista conflictos ajenos al kit; el único de pydantic es de
+   `semantic-kernel` (pide `<2.12`). La guía no dice cómo leerlo.
+8. Ajeno al kit: la sesión empezó con el login caducado (`/login`).
+
+**Pendiente de este intento:** el texto del anuncio de la sesión no se anotó (sandbox activo y hook
+instalado, sin comprobar en el destino). La nota oculta de la pantalla de inicio («1 more notice
+hidden») era de Claude Code, ajena al kit.
