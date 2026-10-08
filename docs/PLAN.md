@@ -187,6 +187,15 @@ diseño, todavía hay margen.
   después.
 * **README en inglés:**
   * El problema.
+    * **Marco (autor, 2026-10-08; viene de Triarii, de una hackathon anterior):** un LLM comete la
+      falacia de von Neumann a nivel semántico. Recibe instrucciones y datos por el mismo canal, el
+      contexto, y no los distingue de forma fiable. La inyección de prompt no se evita: se le quita al
+      LLM la autoridad. Las neuronas proponen y las reglas disponen; una regla determinista fuera del
+      modelo decide, lo haya convencido lo que lo haya convencido.
+    * Es el párrafo de entrada: explica por qué existe el kit sin presentarlo como «guardrails»,
+      hueco saturado según `docs/prior-art/PRIOR_ART.md`.
+    * De ahí sale la tabla de qué canal decide quién (sandbox, hook con recibo, regla de permisos o
+      el propio modelo). Los canales donde decide el modelo son los límites declarados.
   * Qué impide el kit y qué no: la lista de límites declarados es lo que lo hace creíble.
   * Instalación.
   * Un caso real: la línea base de Qwen3 o la puerta del motor sobre P1 en Traianus (2026-10-05),
