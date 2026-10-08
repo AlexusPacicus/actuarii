@@ -72,8 +72,14 @@ en `ubuntu-24.04` con Python 3.11. Criterio de §4: que la secuencia pase. **Pas
 | Suite completa | success | 50 s |
 | Trabajo entero | success | 59 s |
 
-Los tiempos son los que registra GitHub por paso, con resolución de un segundo. El número de tests que
-pasaron o se saltaron en Linux no se anotó en esta ejecución.
+Los tiempos son los que registra GitHub por paso, con resolución de un segundo. Según el log de pytest,
+la secuencia dio «3 passed in 0.87s» y la suite «3055 passed, 14 skipped in 49.24s». En macOS pasan los
+3069 sin saltos. Los 14 saltados en Linux son, por la cuenta de sus condiciones en el código, los casos
+que piden un sistema de ficheros que no distinga mayúsculas: 3 en `test_contract_context_hook.py`, 2 + 4
+en `test_hook_case_identity.py` y 5 en `test_commit_integrity.py`. En ext4 una variante de grafía no
+nombra ningún fichero, así que no hay nada que denegar. Las otras causas de salto de la suite (`bash` o
+`dash` ausentes, `/usr/bin/python3` ausente) no se dan en `ubuntu-24.04`. Cuenta deducida del código y
+coincidente con el total; los motivos impresos se leen con `pytest -rs`.
 
 ### macOS (persona)
 
