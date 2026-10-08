@@ -328,6 +328,24 @@ cual.
    `docs/prior-art/PRIOR_ART.md`: no hay nada igual; se ajusta la presentación, no el kit. Deja abierta
    una decisión para la fase 2: distribuir como plugin, como `install.sh` o de las dos formas.
 
+## Decisiones de la fase 2 (autor, 2026-10-08)
+
+1. **Alcance:** la fase 2 es lo que dice su sección y lo que añade el traspaso del 2026-10-07, nada más.
+   Lo que la revisión del código sugirió fuera de eso va a «Ideas para la v0.2».
+2. **Distribución en la v0.1:** un instalador que copia el kit dentro del repositorio de destino; el
+   plugin, en la v0.2. Motivo: el shim solo deja ejecutar scripts commiteados en `HEAD` del propio
+   repositorio, el kit se gobierna a sí mismo porque está en `governed_paths`, y la clave `sandbox` y
+   el `pre-commit` se escriben en el proyecto de todos modos. Un plugin vive fuera del repositorio.
+3. **Forma del instalador:** un script de Python de la biblioteca estándar, que importa con un Python
+   3.9 de sistema como los hooks, y no un `install.sh`: tiene que fusionar `settings.json` y
+   `.mcp.json` sin pisar nada, y eso en `sh` no se hace bien.
+4. **Dónde copia el kit:** en `tools/`, como en este repositorio. Si el destino ya tiene `tools/`, o
+   cualquier otra cosa que el instalador escribiría, se para, dice qué choca y no escribe nada.
+5. **Dependencia:** el validador y el contrato de delegación siguen necesitando `pydantic`; el
+   instalador y la guía piden un entorno que lo tenga, y la prueba cronometrada incluye prepararlo.
+6. **La prueba en limpio** sigue el protocolo de `docs/design/PRUEBA_EN_LIMPIO.md`, commiteado antes
+   de la primera medida.
+
 ## Traspaso (2026-10-07, cierre de la semana 1 de trabajo)
 
 * **Estado:** `main` limpio, suite en 2976 verdes. Todas las correcciones de la auditoría están
@@ -409,6 +427,17 @@ cual.
   `permissions.allow`, un solo proceso para los hooks de escritura, arranque de Python más ligero).
 * **Revisor ciego con `Bash`**, como otro proceso con `denyRead` fuera del paquete
   (`docs/design/SANDBOX.md` §4).
+* **Distribución como plugin** (decisión 2 de la fase 2), junto con el núcleo independiente del
+  proveedor.
+* **Kit en cualquier directorio (revisión de la fase 2, 2026-10-08):** `project_config.KIT_DIR` ya
+  sale de la ubicación del módulo, pero `tools/` sigue escrito tal cual en `.claude/settings.json`,
+  `.mcp.json`, `tools/git/pre-commit`, `HOOK_SOURCE` de `announce_governance.py` y
+  `deny_python_escapes.py`. Con eso resuelto, el instalador podría copiar el kit en `.actuarii/` y no
+  chocar con un `tools/` ajeno. Necesita un test que instale con otro nombre y ejecute los hooks.
+* **Kit solo con la biblioteca estándar (revisión de la fase 2, 2026-10-08):** quitar `pydantic` de
+  `tools/boundary_validator/` y de `tools/audit/delegation_contract.py`. Instalar sería copiar, y
+  `requires-python` podría bajar a 3.9. Se decide con la cifra de la prueba en limpio: si preparar el
+  entorno pesa en los 5 minutos, hay motivo.
 
 ## Reglas de trabajo heredadas
 
