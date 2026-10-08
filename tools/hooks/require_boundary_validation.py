@@ -71,6 +71,8 @@ if str(REPO_ROOT) not in sys.path:
 
 try:
     from tools.boundary_validator.hook_gate import (
+        _db_path,
+        audit_trail_exists,
         governing_rule,
         has_any_receipt,
         has_receipt,
@@ -355,6 +357,16 @@ def main(
                         "the gate cannot tell which receipt covers what it writes.\n"
                     )
                     return 2
+            if not audit_trail_exists():
+                sys.stderr.write(
+                    f"[require_boundary_validation] {target} is governed by {verdict.rule} "
+                    f"(source: {verdict.source}) and has no recent EXECUTE_SAFE receipt: there is no "
+                    f"audit trail yet ({_db_path()} does not exist; the validator creates it on its "
+                    "first call). Call mcp__boundary-validator__validate_proposal with "
+                    f"target_file={target}, then retry.\n"
+                )
+                return 2
+            if writer:
                 if all(
                     has_receipt(str(target), block, grounding, verdict.window_seconds)
                     for grounding, block in needed
