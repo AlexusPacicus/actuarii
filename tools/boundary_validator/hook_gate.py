@@ -31,6 +31,7 @@ gate cannot compare.
 """
 from __future__ import annotations
 
+import os
 import sqlite3
 from contextlib import closing
 from pathlib import Path
@@ -70,6 +71,16 @@ def _db_path() -> Path:
     """
     path = Path(AUDIT_DB_PATH)
     return path if path.is_absolute() else REPO_ROOT / path
+
+
+def audit_trail_exists() -> bool:
+    """True if something exists at the audit database path, usable or not.
+
+    It only tells a trail that has not been started (the validator creates the
+    database on its first call) from one that cannot be read; it creates nothing
+    and the receipt queries still raise on whatever they cannot use.
+    """
+    return os.path.lexists(_db_path())
 
 
 def has_recent_execute_safe(file_path: str, window_seconds: int = project_config.DEFAULT_WINDOW) -> bool:

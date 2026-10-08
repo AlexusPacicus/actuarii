@@ -240,6 +240,9 @@ def test_before_the_validator_has_ever_run_the_installed_gate_still_denies(insta
     denied = hook_run(installed, home, write_payload(installed, "AGENTS.md", "# Rules\n"))
     assert denied.returncode == 2, denied.stderr
     assert not (installed / ".data").exists()
+    assert "AGENTS.md is governed by" in denied.stderr
+    assert "(source: .actuarii.json)" in denied.stderr
+    assert "mcp__boundary-validator__validate_proposal" in denied.stderr
 
 
 def test_the_installed_kit_denies_an_unreceipted_write_and_allows_it_after_the_targets_own_receipt(installed, home):
