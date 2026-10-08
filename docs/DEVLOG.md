@@ -5,6 +5,27 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-08
+
+Escrita al cerrar la sesión, que siguió a la del 7. Suite: 2976 en verde, sin cambios de código.
+
+**Hecho**
+* DEVLOG creado, con las entradas del 5 al 7 y la regla de escribirlo al cerrar cada sesión
+  (`d1d67c4`, del 7).
+* Idea para la v0.2 apuntada en `docs/PLAN.md` (`c74dc54`): un núcleo independiente del proveedor,
+  para que cualquier entorno de agentes se enganche y las reglas se ejecuten en un paquete. Tres
+  piezas: adaptadores finos por entorno sobre una decisión central; el sandbox del sistema por fuera
+  del agente entero (`@anthropic-ai/sandbox-runtime` o un contenedor), con la configuración sacada de
+  `.actuarii.json`; y un intermediario de escritura por MCP, que escribe las rutas gobernadas tras
+  comprobar la propuesta, de modo que la frontera no dependa de los hooks de cada entorno.
+
+**Decidido (autor)**
+* El núcleo independiente del proveedor va a la v0.2 o a la v1; antes del lanzamiento no se hace. El
+  README de la v0.1 dice la dirección en una frase.
+
+**Siguiente**
+* Fase 2, el empaquetado, desde el 12 de octubre (traspaso en `docs/PLAN.md`).
+
 ## 2026-10-07
 
 Escrita al cerrar la sesión. Suite: de 2350 a 2976 en verde.
