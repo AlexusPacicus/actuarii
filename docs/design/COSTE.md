@@ -115,3 +115,27 @@ deja de costar un arranque de Python por escritura. Lo que hay que resolver ante
 **Estimación** (a comprobar, no a dar por hecha): unos 200 ms de validador y unos 150 ms de hooks,
 por debajo de 500 ms en total. **Fuera de este diseño:** quitar la llamada al validador (el recibo es
 la garantía) o cachear recibos (rompería que el recibo ata un cambio exacto).
+
+## 6. Comparación con otras configuraciones (propuesta del autor, 2026-10-08; sin medir)
+
+Idea: medir lo que cuesta gobernar con reglas en código frente a gobernar con instrucciones, sobre la
+misma tarea. No se da por hecho que Actuarii ahorre tokens: los ahorra en instrucciones de gobierno en
+el contexto y en turnos de corrección, y los gasta en propuestas (tokens de salida, los caros), en el
+anuncio de la sesión y en las denegaciones. Puede salir a favor o en contra; el argumento del kit es
+que la regla se cumple, y la comparación mide las dos cosas.
+
+* **Configuraciones:**
+  * **A, sin gobierno:** el repositorio tal cual.
+  * **B, gobierno por instrucción:** las mismas reglas que impone Actuarii, escritas en `CLAUDE.md`
+    (lo más común; según `docs/prior-art/PRIOR_ART.md`, el plugin de AGT y otros además inyectan
+    contexto al abrir sesión o en cada operación).
+  * **C, Actuarii:** el kit instalado, sin instrucciones de gobierno en el texto.
+* **Tarea:** la del caso real de `docs/design/PRUEBA_EN_LIMPIO.md` §4b, con su texto único, sobre el
+  mismo clon de `noticias`, mismo modelo, sesión nueva cada vez.
+* **Medidas, de la transcripción:** tokens exactos de `usage` (entrada, entrada en caché, salida),
+  no caracteres entre 4; turnos; tiempo; y si cada regla se mantuvo (una escritura en una ruta
+  gobernada sin recibo cuenta como regla rota en B, y en C no puede ocurrir por diseño).
+* **Antes de medir, se commitean:** el texto de `CLAUDE.md` de B, el número de ejecuciones por
+  configuración (una sola es indicativa, no una cifra para el README) y la regla de lectura.
+* **Cuándo:** después de la prueba en limpio. Si no cabe antes del 25 de octubre, va a la v0.2 y el
+  README no afirma nada sobre ahorro.
