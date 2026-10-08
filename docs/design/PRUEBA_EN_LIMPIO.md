@@ -66,6 +66,8 @@ ya medida en §5.
 * **Principio:** el texto que recibe el agente es solo la tarea. Nada de procedimiento, autoridad ni
   gobernanza: eso lo pone el kit (el anuncio de la sesión, las denegaciones), no el texto. Si el texto
   lo pusiera, la prueba no distinguiría entre la regla y la obediencia.
+* **Guía:** `INSTALL.md`, escrito antes de la medida porque solo existían el docstring del
+  instalador y su salida. Que no existiera es el primer roce, anotado antes de medir.
 * **Destino (paso 1):** en vez de un directorio vacío con `git init`, un clon local recién hecho de
   `noticias` (motor de búsqueda y resumen de papers del autor) en la rama `v3-exp`, commit `1676538`.
   El clon no trae configuración de agentes: el `.claude/`, `AGENTS.md` y `CLAUDE.md` de
