@@ -376,6 +376,22 @@ cual.
 
 ## Ideas para la v0.2
 
+* **Núcleo independiente del proveedor (autor, 2026-10-07):** que cualquier entorno de agentes se
+  enganche y las reglas se ejecuten en un paquete. Tres piezas:
+  * **Adaptadores:** la decisión «¿se permite esta escritura?» queda en una función central y cada
+    entorno (Claude Code, un plugin de OpenCode…) tiene un adaptador fino que traduce su evento. Un
+    entorno sin hooks previos a cada herramienta no se puede vigilar así.
+  * **El sandbox por fuera:** el kit lanza el agente entero dentro de `@anthropic-ai/sandbox-runtime`
+    (sobre el que está construido el de Claude Code) o de un contenedor con las rutas gobernadas en solo
+    lectura, con la configuración sacada de `.actuarii.json`. Dependencia nueva de npm: necesita la
+    aprobación del autor y comprobar si es estable.
+  * **Intermediario de escritura por MCP:** con el proceso entero dentro, tampoco las herramientas de
+    ficheros del agente escriben las rutas gobernadas; el agente propone por MCP y un proceso fuera
+    del sandbox comprueba recibo, cita y primitivas y escribe él. La frontera deja de depender de los
+    hooks de cada entorno. Encaja con el proceso residente de `docs/design/COSTE.md` §5.
+
+  Tamaño de v0.2 o v1. El README de la v0.1 dice la dirección en una frase: hoy funciona con Claude
+  Code, y las reglas ya están separadas del entorno.
 * **Plantilla de script para los tests (autor, 2026-10-07):** llevar la verificación de A15 (la fase
   roja en el commit base y la verde en el final, ejecutadas por código y no declaradas) a una
   plantilla de script reutilizable que compruebe de forma determinista la reproducibilidad (la misma
