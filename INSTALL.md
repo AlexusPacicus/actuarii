@@ -12,9 +12,16 @@ nothing.
 * For the Claude Code session: a Python 3.11 environment with `pydantic==2.13.3`. The validator that
   issues receipts needs it, and it runs with the `python3` on your `PATH` when Claude Code starts.
 
+Two repositories take part: the **Actuarii clone**, where the installer comes from, and **your
+repository**, where the kit goes. The examples use `~/src/actuarii` and `~/src/your-repo`; use your
+own paths.
+
 ## 1. Get Actuarii
 
+Clone it next to your repository, never inside it:
+
 ```bash
+cd ~/src
 git clone https://github.com/AlexusPacicus/actuarii.git
 ```
 
@@ -23,20 +30,25 @@ under its `tools/` would be copied too.
 
 ## 2. Check what the installer would do
 
-From the Actuarii clone, with the path of your repository's top level:
+Run the installer of the clone, from the clone, with the top level of your repository as its only
+argument:
 
 ```bash
-python3 tools/install.py --dry-run /path/to/your/repo
+cd ~/src/actuarii
+python3 tools/install.py --dry-run ~/src/your-repo
 ```
 
-It prints what it would write and what it would skip. Nothing is written. Exit status 1 means
-conflicts, listed one per line; exit status 2 means the target is not the top level of a git working
-tree.
+It prints what it would write and what it would skip, and ends with `dry run: nothing was written`.
+Exit status 1 means conflicts, listed one per line; exit status 2 means the target is not the top
+level of a git working tree, or is the clone itself.
 
 ## 3. Install
 
+The same command without `--dry-run`:
+
 ```bash
-python3 tools/install.py /path/to/your/repo
+cd ~/src/actuarii
+python3 tools/install.py ~/src/your-repo
 ```
 
 It writes:
@@ -57,10 +69,12 @@ settings; add it yourself if you want it.
 
 ## 4. Commit what was installed
 
-The Python shim only runs scripts committed in `HEAD`, and the hooks are scripts.
+The Python shim only runs scripts committed in `HEAD`, and the hooks are scripts. Make this commit in
+a terminal, before you open Claude Code: inside a session the shim is first on the `PATH`, and it would
+refuse the commit check itself, which is not in `HEAD` yet.
 
 ```bash
-cd /path/to/your/repo
+cd ~/src/your-repo
 git add tools .claude .mcp.json .actuarii.json .gitignore
 git commit -m "Install Actuarii"
 ```
@@ -70,18 +84,24 @@ The `pre-commit` hook runs on this commit already.
 ## 5. Prepare the Python environment
 
 Claude Code starts the validator with the `python3` on your `PATH`, so that interpreter needs
-`pydantic==2.13.3`. Two ways:
+`pydantic==2.13.3`. Pick one:
 
-* **Your project's environment,** if `pydantic==2.13.3` fits its other requirements:
+* **Your project's environment,** if it has one and `pydantic==2.13.3` fits its other requirements.
+  A fresh clone has no `.venv`: create it the way your project says, then:
 
   ```bash
+  cd ~/src/your-repo
   source .venv/bin/activate
   pip install pydantic==2.13.3
   pip check
   ```
 
-* **A separate environment,** if it does not. Then Bash commands in the session (your tests, your
-  scripts) also run with this interpreter, so it needs your project's dependencies too:
+  `pip check` lists every broken requirement of that environment, including old ones that have
+  nothing to do with Actuarii. Only a line that names `pydantic` concerns it: some package of yours
+  needs another version. Then use a separate environment.
+
+* **A separate environment,** otherwise. Bash commands in the session (your tests, your scripts) also
+  run with this interpreter, so it needs your project's dependencies too:
 
   ```bash
   python3.11 -m venv ~/.venvs/actuarii
