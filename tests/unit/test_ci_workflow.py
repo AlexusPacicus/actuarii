@@ -30,9 +30,10 @@ SETUP_PYTHON = "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # 
 PYTEST_PIN = "pytest==9.1.1"
 CLEAN_ROOM_NAME = "Clean-room sequence (docs/design/PRUEBA_EN_LIMPIO.md, section 4)"
 CLEAN_ROOM_TESTS = [
-    "test_a_fresh_install_copies_every_kit_file_with_its_bytes_executable_bit_and_links",
+    "test_a_fresh_install_copies_every_kit_file_with_its_bytes_and_executable_bit",
     "test_before_the_validator_has_ever_run_the_installed_gate_still_denies",
     "test_the_installed_kit_denies_an_unreceipted_write_and_allows_it_after_the_targets_own_receipt",
+    "test_the_installed_kit_is_committed_with_its_own_hook_and_head_holds_the_shim_names_as_equal_executables",
 ]
 FIELD = r"(?m)^\s+(name|uses|run|persist-credentials|python-version): (.+)$"
 

@@ -3,7 +3,8 @@
 # python_script_dirs of .actuarii.json lists.
 #
 # First on the PATH (tools/hooks/session_python_gate.sh), this shim stands in for python, python3 and
-# python3.11 (the two other names are links to this file). It decides by argv alone. Permitted:
+# python3.11 (the two other names are links to this file here, and copies of it where the installer put the
+# kit). It decides by argv alone. Permitted:
 #   --version, -V or -VV as the only argument;
 #   options from the closed set -B -E -I -O -OO -q -s -S -u, each a separate argument, then a script,
 #   then any arguments (the script's own, never inspected). The script must be a regular file and not

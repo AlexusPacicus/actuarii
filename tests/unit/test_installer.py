@@ -8,6 +8,7 @@ writes nothing.
 import copy
 import json
 import os
+import shutil
 import stat
 import sys
 from pathlib import Path
@@ -22,6 +23,7 @@ INSTALLER = CLONE / "tools" / "install.py"
 SYSTEM_PYTHON = Path("/usr/bin/python3")
 SYSTEM_PATH = "/usr/bin:/bin"
 PREFIX = "actuarii install: "
+DRY_RUN_CLOSING = "dry run: nothing was written"
 KIT_TREES = ("tools", ".claude/agents", ".claude/skills")
 SERVER = "boundary-validator"
 CLONE_SETTINGS = json.loads((CLONE / ".claude" / "settings.json").read_text(encoding="utf-8"))
@@ -103,7 +105,8 @@ def kit_paths():
 
 
 def is_executable(path):
-    return bool(os.lstat(path).st_mode & stat.S_IXUSR)
+    """The executable bit of the file itself; of the file a link resolves to, for a link."""
+    return bool(os.stat(path).st_mode & stat.S_IXUSR)
 
 
 def write_json(path, value, indent=2):
@@ -135,21 +138,28 @@ def installed(target, home):
 # T1 ---------------------------------------------------------------------------------------------------------------
 
 
-def test_a_fresh_install_copies_every_kit_file_with_its_bytes_executable_bit_and_links(target, home):
+def test_a_fresh_install_copies_every_kit_file_with_its_bytes_and_executable_bit(target, home):
     kit = kit_paths()
-    assert [path for path in kit if (CLONE / path).is_symlink()], "the clone has no link to copy"
+    assert [path for path in kit if (CLONE / path).is_symlink()], "the clone has no link to resolve"
     assert [path for path in kit if is_executable(CLONE / path)], "the clone has no executable to copy"
     done = install(target, home)
     assert done.returncode == 0, done.stderr
     for path in kit:
         source, copy_ = CLONE / path, target / path
-        if source.is_symlink():
-            assert copy_.is_symlink(), f"{path} is not a link"
-            assert os.readlink(copy_) == os.readlink(source), path
-        else:
-            assert not copy_.is_symlink(), f"{path} is a link"
-            assert copy_.read_bytes() == source.read_bytes(), path
-            assert is_executable(copy_) == is_executable(source), path
+        assert not copy_.is_symlink(), f"{path} is a link"
+        assert copy_.is_file(), f"{path} is not a regular file"
+        assert copy_.read_bytes() == source.read_bytes(), path
+        assert is_executable(copy_) == is_executable(source), path
+
+
+def test_the_installed_interpreter_names_of_the_shim_are_executable_copies_of_it(installed):
+    shim = installed / "tools" / "bin" / "python3"
+    for name in ("python", "python3.11"):
+        path = installed / "tools" / "bin" / name
+        assert not path.is_symlink(), name
+        assert path.is_file(), name
+        assert os.access(path, os.X_OK), name
+        assert path.read_bytes() == shim.read_bytes(), name
 
 
 def test_a_fresh_install_writes_the_example_configuration_that_the_copied_project_config_accepts(target, home):
@@ -203,6 +213,86 @@ def test_the_sandbox_values_of_the_installer_are_the_ones_the_settings_test_pins
     sandbox = read_json(target / ".claude" / "settings.json")["sandbox"]
     assert {key: sandbox[key] for key in STRICT} == STRICT
     assert sandbox["filesystem"] == {"denyWrite": expected_deny_write(EXAMPLE_CONFIG)}
+
+
+GIT_IDENTITY = ("-c", "user.name=Tester", "-c", "user.email=tester@example.org", "-c", "commit.gpgsign=false")
+SHIM_NAMES = ("tools/bin/python", "tools/bin/python3", "tools/bin/python3.11")
+
+
+def test_the_installed_kit_is_committed_with_its_own_hook_and_head_holds_the_shim_names_as_equal_executables(installed, home):
+    person = environment(home, f"{Path(sys.executable).parent}:{SYSTEM_PATH}")
+    added = run(["git", "add", "-A"], cwd=installed, env=person, timeout=60.0)
+    assert added.returncode == 0, added.stderr
+    committed = run(["git", *GIT_IDENTITY, "commit", "-q", "-m", "install the kit"], cwd=installed, env=person, timeout=120.0)
+    assert committed.returncode == 0, committed.stdout + committed.stderr
+    listed = run(["git", "ls-tree", "HEAD", "--", *SHIM_NAMES], cwd=installed, env=person, timeout=60.0)
+    assert listed.returncode == 0, listed.stderr
+    entries = {line.split("\t")[1]: line.split("\t")[0].split() for line in listed.stdout.splitlines()}
+    assert sorted(entries) == sorted(SHIM_NAMES)
+    assert {tuple(entry[:2]) for entry in entries.values()} == {("100755", "blob")}
+    assert len({entry[2] for entry in entries.values()}) == 1
+
+
+def make_clone(tmp_path):
+    """A copy of what the installer reads from the clone, links kept as links, under tmp_path/clone."""
+    clone = tmp_path / "clone"
+    ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
+    for tree in KIT_TREES:
+        shutil.copytree(CLONE / tree, clone / tree, symlinks=True, ignore=ignore)
+    for name in ("pyproject.toml", ".mcp.json", ".claude/settings.json"):
+        shutil.copy2(CLONE / name, clone / name)
+    (tmp_path / "outside.txt").write_text("outside\n", encoding="utf-8")
+    return clone
+
+
+def install_from(clone, target, home):
+    return run([sys.executable, str(clone / "tools" / "install.py"), str(target)], env=environment(home), timeout=120.0)
+
+
+BAD_LINKS = [
+    ("tools/linked-nowhere", "nowhere"),
+    ("tools/linked-loop", "linked-loop"),
+    ("tools/linked-directory", "bin"),
+    (".claude/agents/linked-directory", "../skills"),
+    ("tools/linked-config", "../pyproject.toml"),
+    ("tools/linked-outside", "../../outside.txt"),
+]
+
+
+@pytest.mark.parametrize("relative, destination", BAD_LINKS, ids=[case[0] for case in BAD_LINKS])
+def test_a_link_in_a_kit_tree_that_is_not_a_regular_file_inside_the_kit_trees_exits_two_names_it_and_writes_nothing(
+        tmp_path, target, home, relative, destination):
+    clone = make_clone(tmp_path)
+    (clone / relative).symlink_to(destination)
+    before = snapshot(target)
+    done = install_from(clone, target, home)
+    assert done.returncode == 2, done.stderr
+    assert done.stderr.startswith(PREFIX)
+    assert relative in done.stderr
+    assert len(done.stderr.splitlines()) == 1
+    assert snapshot(target) == before
+
+
+def test_a_link_that_resolves_to_a_regular_file_inside_the_kit_trees_is_installed_as_a_file_with_the_bytes_and_mode_of_its_target(
+        tmp_path, target, home):
+    clone = make_clone(tmp_path)
+    links = {
+        "tools/linked.py": ("__init__.py", "tools/__init__.py"),
+        ".claude/agents/linked.py": ("../../tools/__init__.py", "tools/__init__.py"),
+        "tools/chained.py": ("linked.py", "tools/__init__.py"),
+        "tools/linked-run": ("bin/python3", "tools/bin/python3"),
+    }
+    for relative, (destination, _) in links.items():
+        (clone / relative).symlink_to(destination)
+    done = install_from(clone, target, home)
+    assert done.returncode == 0, done.stderr
+    for relative, (_, resolved) in links.items():
+        copy_ = target / relative
+        assert not copy_.is_symlink(), relative
+        assert copy_.is_file(), relative
+        assert copy_.read_bytes() == (clone / resolved).read_bytes(), relative
+        assert is_executable(copy_) == is_executable(clone / resolved), relative
+    assert is_executable(target / "tools/linked-run")
 
 
 # T2 ---------------------------------------------------------------------------------------------------------------
@@ -294,6 +384,12 @@ def kit_link_that_is_a_file(target):
     path.write_text("python3\n", encoding="utf-8")
 
 
+def kit_file_that_is_a_link(target):
+    path = target / "tools" / "bin" / "python"
+    path.parent.mkdir(parents=True)
+    path.symlink_to("python3")
+
+
 def tools_that_is_a_file(target):
     (target / "tools").write_text("not a directory\n", encoding="utf-8")
 
@@ -325,7 +421,8 @@ def non_executable_pre_commit(target, home=None):
 CONFLICTS = [
     ("a-different-kit-file", different_kit_file, "tools/project_config.py"),
     ("a-directory-where-a-kit-file-goes", kit_file_that_is_a_directory, "tools/project_config.py"),
-    ("a-file-where-a-kit-link-goes", kit_link_that_is_a_file, "tools/bin/python"),
+    ("a-file-where-a-kit-link-goes", kit_link_that_is_a_file, "tools/bin/python: exists with other content"),
+    ("a-link-where-a-kit-file-goes", kit_file_that_is_a_link, "tools/bin/python: exists and is not a regular file"),
     ("a-file-where-the-kit-directory-goes", tools_that_is_a_file, "tools: "),
     ("settings-that-are-not-an-object", settings_with(["not", "an", "object"]), ".claude/settings.json"),
     ("settings-with-comments", raw_settings('// a comment\n{"permissions": {}}\n'), ".claude/settings.json"),
@@ -521,10 +618,26 @@ def test_a_dry_run_writes_nothing_and_reports_the_plan_the_real_run_then_carries
     assert snapshot(target) == before
     real = install(target, home)
     assert real.returncode == 0, real.stderr
-    assert dry.stdout.splitlines()[1:] == real.stdout.splitlines()[1:]
-    assert dry.stdout.splitlines()[0] != real.stdout.splitlines()[0]
+    dry_lines, real_lines = dry.stdout.splitlines(), real.stdout.splitlines()
+    assert dry_lines[0] != real_lines[0]
+    assert dry_lines[-1] == DRY_RUN_CLOSING
+    assert dry_lines[1:-1] == real_lines[1:real_lines.index("next steps:")]
     assert dry.stderr == real.stderr
     assert snapshot(target) != before
+
+
+def test_a_dry_run_prints_no_next_steps_and_a_real_run_still_prints_them(target, home):
+    dry = install(target, home, "--dry-run")
+    assert dry.returncode == 0, dry.stderr
+    assert "next steps" not in dry.stdout
+    assert "commit the installed files" not in dry.stdout
+    assert dry.stdout.count(DRY_RUN_CLOSING) == 1
+    real = install(target, home)
+    assert real.returncode == 0, real.stderr
+    assert DRY_RUN_CLOSING not in real.stdout
+    assert "next steps:" in real.stdout
+    assert "commit the installed files" in real.stdout
+    assert real.stdout.splitlines()[-1].startswith("  3. open Claude Code in ")
 
 
 def test_a_dry_run_reports_the_conflicts_and_the_exit_status_of_the_real_run(target, home):
@@ -546,6 +659,7 @@ def test_a_dry_run_over_an_installed_repository_says_there_is_nothing_to_do(inst
     dry = install(installed, home, "--dry-run")
     assert dry.returncode == 0, dry.stderr
     assert "nothing to do" in dry.stdout
+    assert dry.stdout.splitlines()[-1] == DRY_RUN_CLOSING
     assert snapshot(installed) == before
 
 

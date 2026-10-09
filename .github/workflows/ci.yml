@@ -25,6 +25,6 @@ jobs:
       - name: Install dependencies
         run: pip install pydantic==2.13.3 pytest==9.1.1
       - name: Clean-room sequence (docs/design/PRUEBA_EN_LIMPIO.md, section 4)
-        run: pytest tests/unit/test_installer.py::test_a_fresh_install_copies_every_kit_file_with_its_bytes_executable_bit_and_links tests/unit/test_installer.py::test_before_the_validator_has_ever_run_the_installed_gate_still_denies tests/unit/test_installer.py::test_the_installed_kit_denies_an_unreceipted_write_and_allows_it_after_the_targets_own_receipt
+        run: pytest tests/unit/test_installer.py::test_a_fresh_install_copies_every_kit_file_with_its_bytes_and_executable_bit tests/unit/test_installer.py::test_before_the_validator_has_ever_run_the_installed_gate_still_denies tests/unit/test_installer.py::test_the_installed_kit_denies_an_unreceipted_write_and_allows_it_after_the_targets_own_receipt tests/unit/test_installer.py::test_the_installed_kit_is_committed_with_its_own_hook_and_head_holds_the_shim_names_as_equal_executables
       - name: Full suite
         run: pytest tests

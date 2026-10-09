@@ -8,7 +8,10 @@ The target must be the top level of a git working tree and not the clone itself;
 and nothing is written. It receives, from the clone's working tree:
 
 * every file under tools/ (without __pycache__ and *.pyc) and under .claude/agents/ and .claude/skills/, with its
-  bytes and executable bit; a symbolic link is recreated as a link with the same target;
+  bytes and executable bit, always as a regular file: the kit's own pre-commit hook refuses a link. A symbolic link
+  of the clone is installed as the regular file it resolves to, with that file's bytes and executable bit, provided
+  it resolves to a regular file inside those trees; any other link (dangling, in a loop, to a directory or to
+  something outside them) is a problem of the clone: exit status 2, the path on stderr, nothing written;
 * .actuarii.json, when absent, with an example configuration;
 * .claude/settings.json, with the clone's own `hooks` and a strict `sandbox`, merged into what is there;
 * .mcp.json, with the clone's boundary-validator server, merged into what is there;
@@ -45,6 +48,7 @@ if str(CLONE) not in sys.path:
 from tools.audit import run_process
 
 PREFIX = "actuarii install: "
+DRY_RUN_CLOSING = "dry run: nothing was written"
 KIT_TREES = ("tools", ".claude/agents", ".claude/skills")
 SERVER = "boundary-validator"
 CONFIG_NAME = ".actuarii.json"
@@ -82,7 +86,6 @@ class Write:
     path: Path
     content: Optional[bytes] = None
     mode: Optional[int] = None
-    link: Optional[str] = None
 
 
 class Plan:
@@ -135,8 +138,22 @@ def check_target(argument: str) -> Path:
     return target
 
 
+def check_link(path: Path, roots: list[Path]) -> None:
+    """A link of the clone is installed as the regular file it resolves to, which must lie inside the kit trees."""
+    label = path.relative_to(CLONE).as_posix()
+    try:
+        resolved_mode = os.stat(path).st_mode
+    except OSError as exc:
+        raise Problem(f"{label}: a link of the clone that does not resolve ({exc.strerror})") from exc
+    if not stat.S_ISREG(resolved_mode):
+        raise Problem(f"{label}: a link of the clone to something that is not a regular file")
+    if not any(root in Path(os.path.realpath(path)).parents for root in roots):
+        raise Problem(f"{label}: a link of the clone that resolves outside the kit trees")
+
+
 def kit_files() -> list[Path]:
     found = []
+    roots = [Path(os.path.realpath(CLONE / tree)) for tree in KIT_TREES]
     for tree in KIT_TREES:
         if not (CLONE / tree).is_dir():
             raise Problem(f"the clone has no {tree} directory")
@@ -144,7 +161,12 @@ def kit_files() -> list[Path]:
             dirs[:] = [name for name in dirs if name != "__pycache__"]
             for name in dirs + files:
                 path = Path(current) / name
-                if not name.endswith(".pyc") and (path.is_symlink() or path.is_file()):
+                if name.endswith(".pyc"):
+                    continue
+                if path.is_symlink():
+                    check_link(path, roots)
+                    found.append(path.relative_to(CLONE))
+                elif path.is_file():
                     found.append(path.relative_to(CLONE))
     return sorted(found)
 
@@ -205,26 +227,14 @@ def plan_file(plan: Plan, label: str, destination: Path, content: bytes, mode: i
             plan.skips.append(label)
 
 
-def plan_link(plan: Plan, label: str, destination: Path, link: str) -> None:
-    if not os.path.lexists(destination):
-        plan.writes.append(Write(label, destination, link=link))
-    elif destination.is_symlink() and os.readlink(destination) == link:
-        plan.skips.append(label)
-    else:
-        plan.conflict(label, f"exists and is not a link to {link}")
-
-
 def plan_kit(plan: Plan, target: Path) -> None:
     for relative in kit_files():
         label = relative.as_posix()
         source, destination = CLONE / relative, target / relative
         if blocked(plan, target, destination):
             continue
-        if source.is_symlink():
-            plan_link(plan, label, destination, os.readlink(source))
-        else:
-            executable = bool(os.lstat(source).st_mode & stat.S_IXUSR)
-            plan_file(plan, label, destination, source.read_bytes(), 0o755 if executable else 0o644)
+        executable = bool(os.stat(source).st_mode & stat.S_IXUSR)
+        plan_file(plan, label, destination, source.read_bytes(), 0o755 if executable else 0o644)
 
 
 def plan_config(plan: Plan, target: Path) -> None:
@@ -357,9 +367,6 @@ def build_plan(target: Path) -> Plan:
 
 def apply(write: Write) -> None:
     write.path.parent.mkdir(parents=True, exist_ok=True)
-    if write.link is not None:
-        os.symlink(write.link, write.path)
-        return
     write.path.write_bytes(write.content)
     if write.mode is not None:
         os.chmod(write.path, write.mode)
@@ -389,12 +396,13 @@ def report(plan: Plan, target: Path, dry_run: bool) -> str:
         lines += ["skip (already as the kit needs it):"] + [f"  {label}" for label in plan.skips]
     if not plan.writes:
         lines.append("nothing to do: the kit is already installed")
-    lines += [
+    next_steps = [
         "next steps:",
         "  1. commit the installed files; the Python shim only runs scripts committed in HEAD",
         f"  2. start Claude Code from an environment whose python3 has pydantic=={pydantic_pin()}",
         f"  3. open Claude Code in {target}; accept the folder trust and the {SERVER} server",
     ]
+    lines += [DRY_RUN_CLOSING] if dry_run else next_steps
     return "\n".join(lines) + "\n"
 
 
