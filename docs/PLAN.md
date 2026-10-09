@@ -442,6 +442,16 @@ cual.
   tests del contrato y deje la suite entera a la CI, para proyectos con suites largas; exigir que
   falle cada identificador de un test rojo, no solo el conjunto; y que `run_process.py` ofrezca su
   error de tiempo agotado, para que el verificador no lo tome de `run_process.subprocess`.
+* **Operaciones sin canal gobernado (autor, 2026-10-09):** el único canal gobernado es escribir contenido
+  (`Edit` y `Write` con recibo). Todo lo demás sobre una ruta gobernada cae en la persona: el sandbox lo
+  bloquea y no hay recibo que lo autorice. Eso incluye:
+  * borrar, renombrar o cambiar el modo o el tipo de un fichero;
+  * las órdenes de git que reescriben el árbol (`merge`, `switch`, `restore`).
+
+  Es fricción para cualquier usuario del kit, no solo aquí. Encaja en el intermediario de escritura por
+  MCP: recibos también para esas operaciones. El README de la v0.1 lo declara como fricción conocida. Ya
+  se evita una parte: si `main` no se ha movido desde la rama, el chat la avanza por fast-forward
+  (`git branch -f main <rama>` y `git switch main`), sin reescribir el árbol y dentro del sandbox.
 * **Formato del mensaje del commit** (prefijo de una lista cerrada, tipo frente a rutas, plantilla,
   sin atribución), en el `pre-commit` (`docs/design/SANDBOX.md` §9).
 * **Coste por escritura gobernada:** el diseño de `docs/design/COSTE.md` §5 (validador en

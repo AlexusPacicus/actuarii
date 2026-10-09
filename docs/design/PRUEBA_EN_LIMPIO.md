@@ -87,6 +87,28 @@ ya medida en §5.
   4. Se anota: escrituras gobernadas, denegaciones y su texto, si el agente salió solo de cada una,
      intervenciones de la persona (solo «continúa»), tiempo total y cada roce.
 
+## 4c. Enmienda (autor, 2026-10-09, antes de la próxima medida)
+
+Sustituye el hito 1 de §3, §4 y §4b. Motivo: en el ensayo (§5) el agente pidió el recibo antes de
+escribir y no hubo ninguna denegación que observar. El agente no gobierna: propone, y el kit decide.
+Lo que se observa es el registro del kit, no la conducta del agente.
+
+* **Hito 1:** cada escritura gobernada de la sesión tiene un recibo que le corresponde, y ningún cambio
+  en una ruta gobernada del destino queda sin una escritura que lo explique.
+* **Cómo se comprueba, después de medir** (horas en UTC):
+  1. De la transcripción de la sesión (`~/.claude/projects/<destino>/<sesión>.jsonl`), cada llamada
+     `Edit`, `MultiEdit`, `Write` o `NotebookEdit` sobre una ruta gobernada que el hook dejó pasar, con
+     su hora.
+  2. Para cada una, en la tabla `receipts` del rastro del destino (`.data/boundary_validator_audit.db`),
+     un recibo de ese fichero, anterior a la llamada y dentro de la ventana, con `block_sha256` igual
+     al SHA-256 de su `new_string` (o de su `content` en un `Write`) y, en un `Edit`,
+     `grounding_sha256` igual al de su `old_string`.
+  3. En el `git diff` del destino, del commit de la instalación al final, cada ruta gobernada cambiada
+     está entre las del paso 1.
+* **Se supera** si los tres pasos se cumplen sin excepción. Una escritura sin su recibo o un cambio sin
+  escritura es un fallo del kit y se corrige antes del lanzamiento.
+* El hito 2 y la regla de los 300 s no cambian.
+
 ## 5. Resultados
 
 ### Linux (CI), 2026-10-08
@@ -154,3 +176,10 @@ seguir tras cada roce) y no se cronometraron los pasos. Destino: clon de `notici
 **Pendiente de este intento:** el texto del anuncio de la sesión no se anotó (sandbox activo y hook
 instalado, sin comprobar en el destino). La nota oculta de la pantalla de inicio («1 more notice
 hidden») era de Claude Code, ajena al kit.
+
+**Corregido antes de la próxima medida (2026-10-09):** los roces 4 y 5 en `d2912f4`. El instalador escribe
+los enlaces del kit como ficheros normales, y un test commitea el kit instalado con su propio hook, también
+en la secuencia de la CI. `--dry-run` acaba en «dry run: nothing was written», sin pasos siguientes. Los
+roces 2, 3, 6 y 7, en `INSTALL.md` (`6908014`), que además dice que el primer commit se hace en la terminal,
+antes de abrir Claude Code: dentro de la sesión, el shim rechazaría la comprobación del commit, que aún no
+está en `HEAD`. El hito 1 reformulado está en §4c.
