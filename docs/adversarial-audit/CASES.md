@@ -484,3 +484,47 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
   base..final` con `files_may_touch`/`files_must_not_touch` y rehúsa si se sale; y se declara (o se
   cierra con una puerta) que correr la verificación de la delegación es un paso del chat, no está
   impuesto por código. Con su test.
+
+### A29 — Canales a la web y al host fuera del sandbox
+
+* **Garantía:** ninguna del kit decide aquí. **Perfil:** — (límite estructural). **Origen:** PLAN
+  (navegador integrado, 2026-10-08) y H5; caso (m) de las pautas. **Documental:** inventario de las
+  herramientas de la sesión, sin navegar, enviar ni publicar nada (pauta §6.4): navegar a una URL ya
+  emite datos y no añade nada a lo que se sabe.
+* **Observado** (2026-10-12) en una sesión de la app de escritorio. `AGENTS.md` 7.1 deniega `WebFetch` y
+  `WebSearch` por permisos, pero hay otros canales que no pasan por el sandbox de `Bash` (cuyo proxy
+  tiene la allowlist vacía) porque son herramientas MCP, no `Bash`:
+  * **Navegador integrado** (`mcp__Claude_Browser__*`) y **Chrome del usuario**
+    (`mcp__claude-in-chrome__*`): entrada y salida a la web, con las sesiones iniciadas del usuario en el
+    segundo. Navegar emite datos.
+  * **Conectores que envían:** correo (`mcp__…__send_message`, `reply`, `forward`, `create_draft`) y la
+    creación/exportación de documentos.
+  * **Publicación de artifacts** (`Artifact`): publica una página en claude.ai.
+  * **Herramientas del escritorio/host:** control del escritorio (`mcp__computer-use__*`), el `merge` en
+    el host (`mcp__ccd_host__sync_with_base_branch`), las de GitHub (`mcp__ccd_pr__*`), `SendUserFile`.
+  * **Programadores** que disparan fuera de la sesión: `CronCreate`, `ScheduleWakeup`, `RemoteTrigger`,
+    `scheduled-tasks`.
+* **Lectura:** en todos, la decisión de si salen datos no la toma ninguna regla del kit (hook, sandbox o
+  permiso), sino el modelo, con la aprobación de cada sitio o acción por la persona. Son los canales
+  donde «deciden las neuronas», no las reglas; el modelo elige la URL o el destinatario después de la
+  aprobación del dominio.
+* **Clasificación propuesta:** límite a declarar (§9) y tabla del README (qué canal decide quién). El
+  navegador ya estaba en el PLAN; se amplía a Chrome, los conectores que envían, los artifacts y las
+  herramientas del host. No se corrige en la v0.1: no hay regla determinista posible sobre estos canales
+  desde el kit.
+
+### A30 — Desplazamiento del trabajo a rutas no gobernadas
+
+* **Garantía:** ninguna se rompe; el único canal gobernado es escribir contenido con recibo. **Perfil:**
+  A. **Origen:** caso real de la prueba en limpio (`d2155ba`, DEVLOG 2026-10-12), caso (n) de las pautas.
+  Ya clasificado por el autor el 2026-10-12 como límite no declarado; se registra con su evidencia, sin
+  repetirlo.
+* **Evidencia:** en la prueba en limpio sobre `noticias`, con la tarea de añadir una función y sus tests,
+  el agente escribió los 16 tests en `tests/unit/`, **fuera de las rutas gobernadas**, «para no pedir el
+  recibo»; el shim denegó un `python3 -c` y el agente siguió sin él; el cambio de configuración, que se
+  le pidió, sí pasó por el canal gobernado y dejó dos recibos `SPEC` (`docs/design/PRUEBA_EN_LIMPIO.md`
+  §5). El coste del recibo desplaza la escritura del agente a donde no hay recibo.
+* **Lectura:** el kit gobierna rutas, no tareas, y la persona no ve qué deja fuera su configuración. No
+  es explotación de una garantía: es su límite de alcance.
+* **Clasificación propuesta:** límite a declarar (§9 y README), ya decidido por el autor. El mapa de
+  gobierno (script de solo lectura) va a la v0.2; no una skill, que sería gobernar por instrucción.
