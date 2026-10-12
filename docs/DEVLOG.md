@@ -39,6 +39,15 @@ Sesión de tarde: la auditoría 2b reducida. Doce casos nuevos (A19–A30) en `C
 **Decidido**
 * La clasificación de cada caso es propuesta; la cierra el autor. De prioridad 1, (a) y (c) salieron C1,
   como se temía; no queda ningún C1 nuevo inesperado fuera de ellos.
+* **Arreglo de A19 y A20 por contrato:** se empezó a preparar al cierre y se pasa a otra sesión. Decisión
+  del autor sobre la parte del MCP de A19: **venv fuera del repositorio, impuesto** — los hooks llevan
+  `-I` (seguro: los tres que importan `tools.*` insertan `REPO_ROOT`, los otros tres son solo-stdlib, y
+  el shim acepta `-I`); el validador rehúsa arrancar si su `site-packages` está dentro de la raíz del
+  repo; INSTALL.md hace del venv fuera el predeterminado. (`pydantic_core` es compilado y no se puede
+  vendorizar: la vía «solo stdlib» queda para la v0.2.) A20: el instalador resuelve el destino del hook
+  y, si cae fuera del target, lo registra como conflicto sin escribir nada, y avisa del `core.hooksPath`.
+  Pendiente para la próxima sesión: enumerar los tests que fijan las cadenas de comando de los hooks
+  (6.4) antes de redactar el contrato de A19.
 
 **Salió mal y se aprendió**
 * El primer testigo de (a) se corrompió: `printf` interpretó los `%` del `sitecustomize.py`. La primera
