@@ -297,3 +297,30 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
   stdlib; el shim lo acepta); para el MCP, que no puede usar `-S`, un `.venv` fuera del repositorio
   (`INSTALL.md` §108 ya lo ofrece) y/o gobernar y `denyWrite` el `.venv` del repo y/o vendorizar
   `pydantic` bajo `tools/` con `-I`.
+
+### A20 — El instalador escribe el `pre-commit` fuera del destino
+
+* **Promesa:** I1 (no escribe nada fuera del repositorio de destino). **Perfil:** A. **Origen:**
+  auditoría informal del 2026-10-10 (hallazgo 1), caso (c) de las pautas.
+* **Intento:** instalar sobre un repositorio cuyo git tiene un `core.hooksPath` **global y absoluto**
+  (una carpeta de hooks compartida por todos los repositorios del usuario).
+* **Reproducido** (2026-10-12), con `--dry-run`, en un `HOME` y un repositorio desechables del scratchpad
+  (`$TMPDIR/caseC1`), nunca con la configuración real de git del autor:
+  * `.gitconfig` del `HOME` desechable con `core.hooksPath = .../caseC1/shared-hooks`.
+  * `plan_pre_commit` (`tools/install.py:330-336`) hace `destination = target / shown`, con `shown` la
+    salida de `git rev-parse --git-path hooks/pre-commit`. Con el `hooksPath` absoluto, `shown` es
+    absoluto (`.../caseC1/shared-hooks/pre-commit`), y en Python `target / "/abs"` da `/abs`: el destino
+    cae fuera del target.
+  * `blocked` (`tools/install.py:201-207`) solo examina ancestros que tienen `target` como padre, así
+    que no ve el destino de fuera; el `--dry-run` lista entre las escrituras
+    `/tmp/claude-501/caseC1/shared-hooks/pre-commit`, fuera de `/private/tmp/claude-501/caseC1/target`.
+* **Consecuencia:** el `pre-commit` del kit, ahora en la carpeta global, corre en **todos** los
+  repositorios del usuario. Hace `exec python3 "$top/tools/git/commit_integrity.py"`
+  (`tools/git/pre-commit:6`) con `$top` el toplevel del repositorio que se commitea; en cualquier otro
+  sin el kit, ese fichero no existe y el commit se rechaza. El test del instalador solo cubre un
+  `hooksPath` relativo.
+* **Clasificación propuesta:** C1. Rompe I1 y, además, puede bloquear los commits de todos los demás
+  repositorios del usuario; solo se dispara con un `core.hooksPath` global absoluto, no por defecto.
+  Corrección: el instalador resuelve el destino del hook y comprueba que esté dentro del target; si no,
+  lo registra como conflicto (no escribe nada, I2) y avisa de que hay un `core.hooksPath` que lleva los
+  hooks fuera del repositorio. Un test con `hooksPath` absoluto.
