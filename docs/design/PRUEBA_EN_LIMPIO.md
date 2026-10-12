@@ -221,3 +221,60 @@ repositorio, solo scripts commiteados; sandbox de `Bash` activo; hook de integri
 
 El autor no notó ningún otro roce. **Corregido antes de la próxima medida:** el roce 1 en `INSTALL.md`. El
 mensaje del instalador y el roce 2 son código y quedan para la 2b reducida.
+
+### macOS (persona), intento 3, 2026-10-12
+
+Sin ayuda del chat entre el clon de `noticias` y el hito 2, con el texto fijo de §4b. Destino: clon de
+`noticias` en `v3-exp` (`1676538`) en `~/Documents/noticias-medida-2`. Instalador desde
+`~/Documents/actuarii-medida` en `fcd8053`. Claude Code 2.1.296, Sonnet 5.5, modo automático. El anuncio de
+la sesión es el del intento 2: sandbox activo y hook instalado.
+
+**Desviaciones del protocolo**
+* **Sin cronómetro.** Los tiempos salen del registro: el reflog del destino, las fechas de los ficheros
+  escritos, el commit y la transcripción de la sesión. El reflog marca el final de cada orden de git, no su
+  comienzo; el clon de `noticias` es local y tarda menos de un segundo.
+* **Paso 1 de la guía repetido:** a las 12:34:15 se clonó Actuarii otra vez, desde GitHub (`7aab204`) y
+  **dentro del destino** (`noticias-medida-2/actuarii/`, sin trackear), aunque la guía dice «never inside
+  it». El instalador se ejecutó después desde `actuarii-medida`, no desde ese clon. Según §2, el clon de
+  Actuarii no cuenta, pero cayó dentro del tiempo y no se puede separar de la lectura de la guía.
+
+**Tiempos** (hora local, UTC+2)
+
+| Hora | Paso | Desde el anterior |
+|---|---|---|
+| 12:32:04 | 1. Clon de `noticias` | — |
+| 12:34:15 | Clon de Actuarii desde GitHub, dentro del destino | 2 min 11 s |
+| 12:38:13 | 2–3. `--dry-run` e instalación (fecha de los ficheros escritos) | 3 min 58 s |
+| 12:40:39 | 4. Commit de la instalación (`44e9e20`), con su `pre-commit` | 2 min 26 s |
+| 12:41:42 | 5. Entorno y apertura de Claude Code (primera entrada de la transcripción) | 1 min 3 s |
+| 12:42:07.692 | 6. Texto fijo | 25,7 s |
+| 12:42:16.837 | 7. Hito 2 | 9,1 s |
+| | **Total** | **612,8 s (10 min 13 s)** |
+
+Sin el tramo del clon de Actuarii, el total queda en 481,8 s. El entorno ya tenía `pydantic 2.13.3` (el
+Python global de pyenv, como en el intento 1), así que el paso 2 de §3 costó casi nada.
+
+**Hitos**
+* **Hito 1 (§4c): se cumple.**
+  1. Una sola escritura gobernada que el hook dejó pasar: `Write` de `AGENTS.md` a las 10:42:16.659 UTC.
+  2. Recibo `d012c13e-967b-4429-bcd3-487a246303b6`, `AGENTS.md`, a las 10:42:15 UTC: anterior y dentro de
+     la ventana. Su `block_sha256` (`5e01ded5…da36`) es el del `content` del `Write` y el del fichero en
+     disco (`# Prueba\n`); `grounding_sha256` es el de la cita vacía.
+  3. Desde `44e9e20`, la única ruta gobernada cambiada es `AGENTS.md`. Los patrones se comparan desde la
+     raíz, así que el `actuarii/` anidado no está gobernado.
+* **Hito 2: alcanzado**, a los 9,1 s del texto fijo. El agente cargó `validate_proposal` y la skill por su
+  cuenta, pidió el recibo (`DOC`, cita vacía) y escribió. Sin ningún «continúa».
+* **Regla de §4:** los dos hitos se dan como se describen; el hito 2 llega después de 300 s, con y sin el
+  tramo del clon de Actuarii.
+
+**Roces:** el paso 1 de la guía repetido, y hecho dentro del destino (arriba). El autor no notó ningún otro.
+
+**Lectura de los tiempos (Claude):** el agente tarda 35 s desde que arranca la sesión hasta el hito 2. El
+resto es la persona con la guía: leerla y ejecutar el instalador (unos 4 min) y el commit (unos 2 min y
+medio). `pydantic` no pesa aquí, porque ya estaba instalado, así que esta medida no informa sobre la idea
+«kit solo con la biblioteca estándar».
+
+**Decisión (autor, 2026-10-12, después de ver el resultado):**
+* El intento 3 vale como la medida en macOS, con los tiempos del registro en lugar del cronómetro.
+* Pasa de los 300 s. Se acepta la cifra y el README la declara tal cual: unos 8 a 10 minutos, de los que el
+  agente tarda unos 35 s. Antes del lanzamiento no se optimiza la instalación.
