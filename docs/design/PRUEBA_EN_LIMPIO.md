@@ -183,3 +183,41 @@ en la secuencia de la CI. `--dry-run` acaba en «dry run: nothing was written»,
 roces 2, 3, 6 y 7, en `INSTALL.md` (`6908014`), que además dice que el primer commit se hace en la terminal,
 antes de abrir Claude Code: dentro de la sesión, el shim rechazaría la comprobación del commit, que aún no
 está en `HEAD`. El hito 1 reformulado está en §4c.
+
+### macOS (persona), intento 2, 2026-10-12: segundo ensayo, sin cifra
+
+Empezó como medida. Pasó a ensayo en el paso 3: tras dos errores con el instalador, el autor pidió ayuda
+al chat, y desde ahí el chat guio cada paso. Además, el texto del paso 6 no fue el fijo de §4b sino
+«crea AGENTS.md», y los pasos no se cronometraron. Un intento anterior, el 2026-10-09, no pasó del
+clon de `noticias` y no cuenta.
+
+Destino: clon de `noticias` en `v3-exp` (`1676538`); instalador desde Actuarii en `e0291db`; commit de la
+instalación en el destino `09588b1`, a las 10:23:30 UTC; Claude Code 2.1.294, Sonnet 5.5, modo automático.
+
+**Anuncio de la sesión** (pendiente del intento 1): reglas de `.actuarii.json`; gobernados `.actuarii.json`,
+`AGENTS.md`, `CLAUDE.md`, `.claude/**`, `.mcp.json` y `tools/**`; ventana de 900 s; Python en todo el
+repositorio, solo scripts commiteados; sandbox de `Bash` activo; hook de integridad instalado.
+
+**Hitos**
+* **Commit de la instalación con su propio `pre-commit`:** pasa (el fallo 5 del intento 1, corregido en
+  `d2912f4`).
+* **Hito 1 (§4c): se cumple.** Primera aplicación del método.
+  1. En la transcripción, una sola escritura gobernada que el hook dejó pasar: `Write` de `AGENTS.md`,
+     10:26:11.370 UTC.
+  2. En `receipts`, el recibo `d39beba6-dba8-46d6-b6ae-4bb49587872b`, `AGENTS.md`, 10:26:05 UTC: anterior
+     a la escritura y dentro de la ventana. Su `block_sha256` (`6c5b22ca…0f91`) es el SHA-256 del `content`
+     del `Write` y el del fichero en disco; `grounding_sha256` es el de la cita vacía de un fichero nuevo.
+  3. Desde `09588b1`, la única ruta gobernada cambiada es `AGENTS.md`, sin trackear.
+* **Hito 2: alcanzado** a los 22,9 s del texto del paso 6 (10:25:48.608 → 10:26:11.541 UTC). El agente
+  cargó `validate_proposal` y la skill `boundary-validator` por su cuenta, leyó el README y escribió una
+  guía de 53 líneas, porque el texto no fijaba el contenido.
+
+**Roces y fallos**
+1. **Guía:** en el argumento del instalador se confundieron el clon y el destino, y se usó tal cual la ruta
+   del ejemplo (`python3 tools/install.py --dry-run ~/src/actuarii-medida`). El instalador respondió
+   «no such directory», que no dice qué esperaba. Después, una errata ajena al kit (`python 3`).
+2. **Kit, menor:** el instalador copia en el destino `tools/install.py` y `tools/audit/check_impact.py`, que
+   allí no hacen falta (el segundo, código muerto según la auditoría informal del 2026-10-10).
+
+El autor no notó ningún otro roce. **Corregido antes de la próxima medida:** el roce 1 en `INSTALL.md`. El
+mensaje del instalador y el roce 2 son código y quedan para la 2b reducida.

@@ -13,8 +13,8 @@ nothing.
   issues receipts needs it, and it runs with the `python3` on your `PATH` when Claude Code starts.
 
 Two repositories take part: the **Actuarii clone**, where the installer comes from, and **your
-repository**, where the kit goes. The examples use `~/src/actuarii` and `~/src/your-repo`; use your
-own paths.
+repository**, where the kit goes. The examples write them as `~/src/actuarii` and `~/src/your-repo`.
+Those paths are placeholders: replace each one with where that repository is on your machine.
 
 ## 1. Get Actuarii
 
@@ -30,8 +30,8 @@ under its `tools/` would be copied too.
 
 ## 2. Check what the installer would do
 
-Run the installer of the clone, from the clone, with the top level of your repository as its only
-argument:
+You run the installer from the Actuarii clone and give it one argument: the top level of **your
+repository**, the one that receives the kit. The argument is never the Actuarii clone.
 
 ```bash
 cd ~/src/actuarii
@@ -40,7 +40,8 @@ python3 tools/install.py --dry-run ~/src/your-repo
 
 It prints what it would write and what it would skip, and ends with `dry run: nothing was written`.
 Exit status 1 means conflicts, listed one per line; exit status 2 means the target is not the top
-level of a git working tree, or is the clone itself.
+level of a git working tree, or is the clone itself. `no such directory` means the path you gave does
+not exist: check that it is your repository's path, not the one from the example.
 
 ## 3. Install
 
