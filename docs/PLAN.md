@@ -452,6 +452,17 @@ cual.
   MCP: recibos también para esas operaciones. El README de la v0.1 lo declara como fricción conocida. Ya
   se evita una parte: si `main` no se ha movido desde la rama, el chat la avanza por fast-forward
   (`git branch -f main <rama>` y `git switch main`), sin reescribir el árbol y dentro del sandbox.
+* **Mapa de gobierno (autor, 2026-10-12):** en el caso real de la prueba en limpio, el agente escribió los
+  tests fuera de las rutas gobernadas «para no pedir el recibo» (`docs/design/PRUEBA_EN_LIMPIO.md` §5). El
+  kit gobierna rutas, no tareas, y la persona no ve qué deja fuera su configuración. Se propone un script de
+  solo lectura que lea `.actuarii.json` y `.claude/settings.json` y muestre:
+  * el árbol del repositorio con lo gobernado y lo no gobernado;
+  * las rutas gobernadas sin su entrada en `denyWrite`;
+  * los directorios con código o tests que quedan fuera.
+
+  No se hace con una skill: sería gobernar por instrucción. Alternativa de fondo, para valorar con su coste
+  (`docs/design/COSTE.md`): gobernar todo por defecto, con una lista de excepciones en vez de una lista de
+  rutas gobernadas. En la v0.1, el límite se declara en `AGENTS.md` §9 y en el README.
 * **Formato del mensaje del commit** (prefijo de una lista cerrada, tipo frente a rutas, plantilla,
   sin atribución), en el `pre-commit` (`docs/design/SANDBOX.md` §9).
 * **Coste por escritura gobernada:** el diseño de `docs/design/COSTE.md` §5 (validador en
