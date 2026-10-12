@@ -278,6 +278,8 @@ medio). `pydantic` no pesa aquí, porque ya estaba instalado, así que esta medi
 * El intento 3 vale como la medida en macOS, con los tiempos del registro en lugar del cronómetro.
 * Pasa de los 300 s. Se acepta la cifra y el README la declara tal cual: unos 8 a 10 minutos, de los que el
   agente tarda unos 35 s. Antes del lanzamiento no se optimiza la instalación.
+* **Revisada por el autor el mismo día:** la instalación pasa a ser una sola orden antes del lanzamiento,
+  después de la 2b, y se vuelve a medir. Detalle en `docs/PLAN.md`, «Instalación en una orden».
 
 ### macOS (persona), caso real de §4b, 2026-10-12
 

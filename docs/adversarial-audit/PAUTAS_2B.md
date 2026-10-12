@@ -138,6 +138,9 @@ su mensaje «no such directory».
   `AGENTS.md`. Entre ellas, el desplazamiento a rutas no gobernadas y la corrección del anuncio (decisión
   del autor del 2026-10-12).
 * **Viernes 16:** el informe en inglés y el cierre de la fase 2.
+* **Enmienda (autor, 2026-10-12, antes de empezar):** el jueves 15 y el viernes 16 entra además la
+  instalación en una orden (`docs/PLAN.md`); el informe pasa al lunes 19. La ventana de la auditoría (el
+  martes 13 y el miércoles 14) no cambia.
 
 ## 6. Decisiones que el autor toma antes de empezar
 

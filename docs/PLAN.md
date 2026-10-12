@@ -367,6 +367,27 @@ cual.
 6. **La prueba en limpio** sigue el protocolo de `docs/design/PRUEBA_EN_LIMPIO.md`, commiteado antes
    de la primera medida.
 
+### Instalación en una orden (autor, 2026-10-12)
+
+Revisa la decisión de la misma mañana de no optimizar la instalación antes del lanzamiento
+(`docs/design/PRUEBA_EN_LIMPIO.md` §5). Motivo: la medida en macOS dio 612,8 s, y el agente solo tardó 35
+s de ellos. El resto fue la persona siguiendo la guía.
+
+* **Qué:** `tools/install.py` lo hace todo con una sola orden:
+  * comprueba, instala y escribe la configuración;
+  * pregunta solo qué rutas gobernar además de las mínimas (`AGENTS.md`, `CLAUDE.md`, `.claude/**`,
+    `.mcp.json` y `tools/**`), y escribe a la vez `governed_paths` y sus entradas de `denyWrite`;
+  * pregunta antes de hacer el commit de la instalación en el destino;
+  * comprueba que el `python3` con el que arrancará Claude Code tenga `pydantic==2.13.3`. Si no lo tiene,
+    dice en qué intérprete lo instalaría y pide permiso antes de ejecutar `pip install`;
+  * tiene un modo sin preguntas, con las rutas por argumento, para la CI y los tests.
+* **Fuera:** enseñar el árbol del repositorio para elegir. Eso es el mapa de gobierno de la v0.2.
+* **Cuándo:** después de la 2b, para que las correcciones de sus casos sobre el instalador ((c) y (f) de
+  `docs/adversarial-audit/PAUTAS_2B.md`) entren en el diseño nuevo. Dos contratos al implementador
+  (jueves 15 y viernes 16) y una nueva medida en macOS, con su enmienda del protocolo commiteada antes. El
+  informe de la 2b pasa al lunes 19, y la fase 3 empieza un día más tarde.
+* **Comparación de configuraciones** (`docs/design/COSTE.md` §6): pasa a la v0.2.
+
 ## Traspaso (2026-10-07, cierre de la semana 1 de trabajo)
 
 * **Estado:** `main` limpio, suite en 2976 verdes. Todas las correcciones de la auditoría están
