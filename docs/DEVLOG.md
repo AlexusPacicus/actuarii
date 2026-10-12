@@ -5,6 +5,128 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-10
+
+Una sesión, sin cambios en el repositorio. Entrada reconstruida el 12 a partir de la transcripción y del
+resumen que dejó la sesión fuera del repositorio
+(`~/.claude/plans/haz-una-auditor-a-del-serialized-stream.md`).
+
+**Hecho**
+* Auditoría informal de solo lectura sobre `main` en `e0291db`, pedida por el autor para gastar los
+  créditos de la semana. No es la 2b reducida, que necesita sus pautas commiteadas antes de empezar, y
+  ningún punto tiene todavía un caso reproducible. Se interrumpió al ir a comprobar si hay un `.venv`
+  dentro del repositorio.
+* Comprobado leyendo el código:
+  1. Con un `core.hooksPath` global absoluto, el instalador escribe el `pre-commit` en esa carpeta
+     compartida, fuera del destino (`tools/install.py:330-336`). En cualquier otro repositorio del
+     usuario, el hook no encuentra `tools/git/commit_integrity.py` y rechaza todos los commits. El test
+     solo cubre una ruta relativa.
+  2. El anuncio de la sesión puede mentir (G13): afirma que `Bash` no escribe las rutas gobernadas
+     mirando solo `sandbox.enabled`, sin comprobar que `denyWrite` cubra cada ruta de `governed_paths`,
+     ni `.claude/settings.local.json`, ni `excludedCommands`.
+  3. Un repositorio instalado queda más débil que este: sin `"disableAllHooks": false` (una de las
+     medidas de A09), y se acepta un `sandbox` previo con `excludedCommands`, `allowWrite` o `network`,
+     que `tests/security/test_sandbox_settings.py` prohíbe aquí.
+  4. `.data/` no está gobernado: un `Write` vacía la base de auditoría sin recibo. `denyWrite` no cubre
+     sus ficheros `-wal` ni `-shm`.
+  5. A18 sigue abierto: unos `params` o `arguments` que no son un objeto tiran el servidor MCP
+     (`validator.py:340-345`), y no hay test.
+  6. AGENTS 6.2 está marcado **[enforced]**, pero nada obliga a ejecutar `delegation_contract.py` ni
+     `verify_red_green.py`, y el verificador no compara el diff con los ficheros que el contrato permite
+     tocar.
+  7. Una ruta gobernada que es un enlace simbólico no gobierna nada: la puerta, el sandbox y el
+     `pre-commit` deciden por el destino del enlace.
+  8. Menores: identificadores de Traianus en los tests; `check_impact.py` sin uso; `subprocess`
+     importado fuera de `run_process.py`; `except sqlite3.Error: pass` en el validador; patrones del
+     registro de contratos sin validar; dos falsos positivos del hook de `Bash` reproducidos (A06 y
+     `ls .venv/bin/python3`); y la redacción de §9 sobre la lista de primitivas, que sugiere que solo
+     pasan rodeos indirectos.
+* Hipótesis sin probar:
+  * **H1, la más grave:** con el intérprete en un `.venv` dentro del repositorio, un `.pth` o un
+    `sitecustomize.py` escrito en su `site-packages` se ejecuta en cada hook y en el servidor MCP, que
+    corren fuera del sandbox, y anula todas las puertas. `-I` no lo impide y `-S` sí.
+  * H2: renombrar desde `Bash` el directorio que contiene una ruta en `denyWrite`.
+  * H3: un enlace duro desde una ruta no gobernada a un fichero gobernado.
+  * H4: un `Glob` con llaves que sale del paquete de la revisión ciega.
+  * H5: más canales fuera del sandbox además del navegador (conectores, Chrome, artifacts y las
+    herramientas del escritorio que hacen `merge` en el host).
+
+**Salió mal y se aprendió**
+* Lo encontrado quedó solo en la conversación y en un fichero fuera del repositorio. Esta entrada lo
+  trae al repositorio hasta que pase a casos de `docs/adversarial-audit/CASES.md`.
+
+**Siguiente**
+* Commitear las pautas de la 2b reducida con estos puntos y los del PLAN como casos de partida; después,
+  cada uno como caso reproducible en un clon desechable, clasificado y, si rompe una garantía, corregido
+  por contrato. H1 va primero.
+
+## 2026-10-09
+
+Una sesión, de tarde. Se corrigió lo que dejó el ensayo del 8 y se preparó la medida en macOS. Suite: de
+3069 a 3080 en verde en macOS. Entrada reconstruida el 12 a partir de `git log` y de la transcripción
+de la sesión.
+
+**Hecho**
+* Fallo del kit y roce 4 del ensayo, por contrato al implementador (`sonnet`) en la rama
+  `fase2/shim-ficheros` (`d2912f4`):
+  * Los enlaces del shim se quedan como enlaces en Actuarii, ya commiteados. El instalador escribe en
+    el destino un fichero normal con los bytes y el bit de ejecución de aquello a lo que apunta el
+    enlace. Rechaza con código 2, sin escribir nada, un enlace que no resuelve a un fichero normal de
+    los árboles del kit.
+  * Un test instala el kit y lo commitea con su propio `pre-commit`; entra también en la secuencia de
+    la CI.
+  * `--dry-run` acaba en «dry run: nothing was written», sin pasos siguientes.
+  * `verify_red_green.py` repetido por el chat principal salió 0: los seis grupos de tests fallan en la
+    base y pasan en el commit final.
+* `main` avanzó por fast-forward dentro del sandbox (`git branch -f main <rama>` y `git switch main`),
+  sin ninguna orden del autor, porque `main` no se había movido desde la rama. Ramas `fase2/*`
+  borradas.
+* `INSTALL.md` (`6908014`): dónde clonar, rutas explícitas, el primer commit del kit instalado en la
+  terminal antes de abrir Claude Code (dentro de la sesión, el shim rechaza `commit_integrity.py`
+  hasta que está en `HEAD`), un entorno sin `.venv` y cómo leer `pip check`.
+* Hito 1 de la prueba en limpio reformulado antes de medir (`e0291db`; `PRUEBA_EN_LIMPIO.md` §4c):
+  se comprueba por el registro del kit (la transcripción, la tabla `receipts` por hash y el
+  `git diff` del destino), no por la conducta del agente. En §5, qué roces del ensayo quedan corregidos
+  y dónde.
+* Idea para la v0.2 en `docs/PLAN.md` (`e0291db`): las operaciones sobre rutas gobernadas sin canal
+  gobernado.
+* Medida en macOS preparada: copia del ensayo borrada, clon de Actuarii en `~/Documents/actuarii-medida`
+  (`e0291db`) y clon de `noticias` en `~/Documents/noticias-medida` (`v3-exp`, `1676538`). El clon de
+  `noticias` es el paso 1 de la secuencia cronometrada. La medida no siguió: en el destino no hay nada
+  instalado ni ninguna sesión de Claude Code. Sin cifra.
+
+**Decidido (autor)**
+* Las operaciones sobre una ruta gobernada que no son escribir contenido (borrar, renombrar o cambiar
+  el modo o el tipo de un fichero, y los `merge`, `switch` y `restore` que reescriben el árbol) no
+  tienen canal gobernado y caen siempre en la persona. Es fricción para cualquier usuario del kit: va a
+  la v0.2, dentro del intermediario de escritura por MCP, y el README de la v0.1 la declara.
+* El hito 1, tal como quedó en §4c.
+
+**Salió mal y se aprendió**
+* El primer contrato convertía los enlaces del shim en ficheros dentro de Actuarii. Eso obligaba a
+  borrar en `tools/**`, que desde el sandbox solo puede hacer el autor, con una pausa del implementador
+  a mitad de camino. El autor señaló que había demasiadas peticiones para él. Se enmendó el contrato:
+  convierte el instalador, que ya ejecuta la persona fuera de la sesión. El implementador ya había
+  empezado a tocar `test_python_gate.py` y la enmienda le pidió dejarlo como en la base. Lección: al
+  diseñar un contrato, contar qué pasos caen en la persona y buscar el diseño que no los necesite.
+* De ahí salió la fricción general del kit (decisión de arriba), y también la vía que la evita en parte:
+  avanzar `main` por fast-forward dentro del sandbox cuando no se ha movido.
+* La formulación del hito 1 propuesta el 8 («ninguna escritura gobernada sin recibo») no se podía
+  comprobar con el rastro: el hook no registra sus decisiones, solo quedan los recibos. Se fijó el
+  método concreto antes de medir.
+* El commit `e0291db`, que solo toca documentos, se hizo con `test_ci_workflow.py` en verde (el único
+  test que los lee) y no con la suite entera. La suite había pasado en `6908014`.
+* Los tres commits del día no se subieron: `main` quedó 3 por delante de `origin`, y la CI no ha
+  ejecutado todavía el test del commit con el hook.
+
+**Siguiente**
+* `git push`, para que la CI compruebe `d2912f4`.
+* La medida cronometrada en macOS desde un clon nuevo de `noticias`, siguiendo solo `INSTALL.md`; después,
+  la comprobación del hito 1 según §4c.
+* El caso real sin cronómetro (§4b) y la 2b reducida, con sus pautas commiteadas antes.
+* Liberar disco: quedaban unos 6 GiB libres (97 %), y `verify_red_green.py` crea worktrees temporales.
+* Decidir si las ramas heredadas de Traianus siguen en el repositorio antes de hacerlo público.
+
 ## 2026-10-08
 
 Dos sesiones. La primera siguió a la del 7, sin cambios de código; la segunda adelantó la fase 2.
