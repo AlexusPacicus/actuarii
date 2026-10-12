@@ -392,3 +392,61 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
   herramienta: con el lock puesto, denegar todo patrón que el hook no pueda acotar estáticamente
   (prefijo estático vacío con caracteres glob, o `..` en cualquier parte, también dentro de llaves o
   clases). Con su test.
+
+### A24 — El anuncio afirma «Bash cannot write the governed paths» sin comprobar `denyWrite`
+
+* **Garantía:** G13. **Perfil:** — (es veracidad del anuncio). **Origen:** auditoría informal del
+  2026-10-10 (hallazgo 2), caso (d) de las pautas.
+* **Mecanismo, confirmado al leer:** `_sandbox_line` (`announce_governance.py:58-66`) devuelve «Bash cannot
+  write the governed paths» con solo `sandbox.enabled is True`. No comprueba que `denyWrite` cubra cada
+  `governed_path`, no lee `.claude/settings.local.json` y no mira `excludedCommands`/`allowWrite`.
+* **Reproducido** (2026-10-12) por `Bash`, con respaldo/`trap`, sobre las dos rutas gobernadas de Actuarii
+  que no están en `denyWrite` (`.claude/**` y `.mcp.json`):
+  * `tests/_caseD_probe.txt` (en `denyWrite`) → bloqueado; raíz no gobernada → escrita.
+  * `.claude/agents/_caseD_probe.txt` y un `append` a `.mcp.json` → **ambos bloqueados** por el sandbox:
+    el harness protege `.claude/**` y `.mcp.json` aunque Actuarii no los liste en `denyWrite`.
+* **Lectura:** en Actuarii el anuncio acierta por el harness, no porque lo verifique. La afirmación se
+  vuelve falsa en cuanto se gobierna una ruta propia (p. ej. `nodes/**`, `src/**`) sin su entrada en
+  `denyWrite` y que el harness no proteja: el anuncio seguiría diciendo «Bash cannot write the governed
+  paths» mientras `Bash` la escribe. No pudo reproducirse en vivo porque Actuarii no tiene ninguna ruta
+  gobernada así; el sandbox de esta sesión es el de Actuarii, no el de otro repositorio.
+* **Clasificación propuesta:** C2. Ya decidida la corrección (DEVLOG 2026-10-12): el anuncio compara
+  `denyWrite` con `governed_paths` y nombra las que queden sin cubrir; además debería leer
+  `settings.local.json` y `excludedCommands`. Con su test.
+
+### A25 — El rastro de auditoría: `denyWrite` cubre el fichero, no `.data/` ni los `-wal`/`-shm`
+
+* **Garantía:** G17 («ni en la base de auditoría»). **Perfil:** B. **Origen:** auditoría informal del
+  2026-10-10 (hallazgo 4, H2), caso (e) de las pautas.
+* **Reproducido** (2026-10-12) por `Bash`, con `trap`, sin tocar la base ni sus `-wal`/`-shm` reales:
+  * `.data/_caseE_probe.txt` (fichero nuevo en `.data/`) → **escrito** (`exit 0`): `.data/` como
+    directorio es escribible por `Bash`.
+  * `append` a `.data/boundary_validator_audit.db` → bloqueado (`exit 1`): el único cubierto.
+  * `denyWrite` solo lista `./.data/boundary_validator_audit.db`.
+* **Lectura:** como `.data/` es escribible, los `-wal`/`-shm` (que `denyWrite` no cubre) y nuevos ficheros
+  se pueden escribir por `Bash`; borrar el `-wal` o renombrar `.data/` (parte de la raíz, escribible)
+  corrompe o reinicia el rastro sin tocar el fichero protegido. El borrado del `-wal` y el renombrado del
+  directorio no se ejecutaron (romperían el validador vivo): inferidos.
+* **Clasificación propuesta:** C2. Corrección: `denyWrite` del directorio `.data/` entero (o, al menos, la
+  base más sus `-wal`/`-shm`). Con su test.
+
+### A26 — Una ruta gobernada que es un enlace simbólico se gobierna por el destino
+
+* **Garantía:** G3, G15. **Perfil:** A (persona que configura mal); no alcanzable por el agente. **Origen:**
+  auditoría informal del 2026-10-10 (hallazgo 7), caso (g) de las pautas.
+* **Mecanismo:** el gate resuelve el enlace. `canonical` (`require_boundary_validation.py:131`) hace
+  `Path(target).resolve()` y decide el gobierno por el destino re-deletreado.
+* **Reproducido** (2026-10-12) por `Bash`, con `trap`:
+  * Un enlace de nombre **no gobernado** (`docs/_caseG_gov.md → ../AGENTS.md`, y otro a
+    `../pyproject.toml`) → el gate lo **gobierna** (`exit 2`, pide recibo para el destino). Dirección
+    segura: no se esquiva el gobierno escribiendo a través de un enlace de nombre inocente.
+  * La dirección peligrosa —una ruta gobernada que es un enlace a un destino no gobernado— se gobernaría
+    por el destino (no gobernado) y se escribiría sin recibo. Pero crear ese enlace no es alcanzable por
+    el agente: `ln -s` bajo `tools/` (en `denyWrite`) → bloqueado (`exit 1`); `Write`/`Edit` sobre una
+    ruta gobernada pide recibo y no crea enlaces. Solo surge si la **persona** configura una ruta
+    gobernada como enlace.
+  * El `pre-commit` no «decide por el destino»: rechaza un enlace en una ruta gobernada («not a regular
+    file», comprobado al leer `commit_integrity.py` y en A22). Matiza el hallazgo 7.
+* **Clasificación propuesta:** límite a declarar (§9), no C1/C2: no es explotable por el agente. Se
+  declara que una ruta gobernada que es un enlace simbólico se gobierna por su destino, y que el
+  `pre-commit` rechaza enlaces en rutas gobernadas.
