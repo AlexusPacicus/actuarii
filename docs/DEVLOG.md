@@ -5,6 +5,70 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-12
+
+Sesión de mañana; por la tarde sigue otra. Suite: 3080 en verde, sin cambios de código. Se cerró la
+prueba en limpio en macOS y quedaron aprobadas las pautas de la 2b reducida.
+
+**Hecho**
+* Entradas del 9 y del 10 de este DEVLOG, reconstruidas de las transcripciones (`7aab204`). Los
+  hallazgos de la auditoría informal del 10, que solo estaban fuera del repositorio, entran en él. Push;
+  la CI pasa en verde con el commit del kit instalado con su hook (`d2912f4`).
+* Segundo ensayo de la prueba en limpio, sin cifra (`fcd8053`). Empezó como medida y pasó a ensayo
+  cuando el autor pidió ayuda con el argumento del instalador. Primera aplicación del método del hito 1
+  por el registro (§4c): se cumple. `INSTALL.md` corregido: el argumento es el repositorio de destino, y
+  las rutas de los ejemplos hay que sustituirlas.
+* **Medida en macOS** (`5631c5f`): los dos hitos se cumplen; 612,8 s en total, de los que el agente tarda
+  35 s; pasa de los 300 s. Sin cronómetro: los tiempos salen del reflog, de las fechas de los ficheros y
+  de la transcripción.
+* **Caso real** (`d2155ba`): el agente escribió los 16 tests en `tests/unit/`, fuera de las rutas
+  gobernadas, «para no pedir el recibo». El shim denegó un `python3 -c` y el agente siguió sin él. El
+  cambio de configuración, que se pidió al agente en vez de hacerlo a mano, pasó por el canal gobernado
+  y dejó dos recibos `SPEC`.
+* Pautas de la 2b reducida, aprobadas y commiteadas antes de empezar (`aeafeb5`): G14–G17, las promesas
+  del instalador I1–I4 y 14 casos por riesgo. Entre ellos, la copia redirigida, con el módulo, el texto
+  y las tres ejecuciones fijados antes.
+* Instalación en una orden, decidida y apuntada en `docs/PLAN.md` (`acffc36`).
+
+**Decidido (autor)**
+* La medida del intento 3 vale, con los tiempos del registro en lugar del cronómetro.
+* Primero se aceptó la cifra sin optimizar (opción a). Revisado el mismo día: la instalación pasa a ser
+  una orden antes del lanzamiento, después de la 2b, y se vuelve a medir. Pregunta solo las rutas extra,
+  con su `denyWrite`, y pregunta antes de commitear. Comprueba `pydantic==2.13.3` y pide permiso antes
+  de instalarlo. El informe de la 2b pasa al lunes 19.
+* «El kit gobierna rutas, no tareas» es un límite no declarado. Se declara en la v0.1 (`AGENTS.md` §9 y
+  README), sin una skill, porque sería gobernar por instrucción. El anuncio se corrige en la 2b para que
+  nombre las rutas gobernadas sin `denyWrite`. El mapa de gobierno va a la v0.2.
+* La comparación de configuraciones (`COSTE.md` §6) va a la v0.2.
+* Las cinco decisiones previas de la 2b, tal como las proponían las pautas: martes y miércoles; el caso
+  (a) en vivo con un `.venv` que crea el autor; el caso (b) como está; el caso (m) documental; y el
+  informe en inglés.
+
+**Salió mal y se aprendió**
+* El recap de la mañana no vio la sesión del 10 ni que la medida del 9 se había parado tras el clon:
+  salió de `git log` y del DEVLOG. Lección: antes de un recap, leer las transcripciones de las sesiones
+  posteriores a la última entrada.
+* Las rutas de ejemplo de `INSTALL.md` (`~/src/actuarii`, `~/src/your-repo`) se tomaron tal cual, y el
+  clon y el destino se confundieron en el argumento.
+* En la medida se repitió el paso 1 de la guía: Actuarii se clonó otra vez, desde GitHub y dentro del
+  destino, aunque la guía dice «never inside it». El protocolo da el clon por hecho y la guía empieza
+  por él; los dos documentos no casan.
+* Desviaciones del protocolo: la medida, sin cronómetro; el ensayo 2, con el texto «crea AGENTS.md» y
+  no el fijo; la preparación del caso real, pedida al agente y no hecha a mano. Todas quedan anotadas en
+  §5. Los tiempos del registro resultaron más precisos por paso que un cronómetro.
+* El chat sospechó que el `denyWrite` del instalador dejaba fuera `.claude/**` y `.mcp.json`. Antes de
+  anotarlo, leyó el test que fija esa exclusión como diseño: esas rutas las protege el propio sandbox.
+* El caso real enseñó algo que las pruebas a nivel de hook no ven: el coste del recibo desplaza la
+  escritura del agente. La 2b lo prueba con la copia redirigida.
+
+**Siguiente**
+* Esta tarde, o mañana como fijan las pautas: la 2b, empezando por el caso (a). El autor prepara
+  `~/Documents/noticias-2b` con el kit instalado y un `.venv` dentro.
+* Jueves 15 y viernes 16: correcciones C1, declaraciones de §9 en un solo cambio de `AGENTS.md`, los dos
+  contratos del instalador en una orden y la nueva medida, con su enmienda del protocolo antes.
+* Pendiente del autor: qué hacer con las ramas heredadas de
+  Traianus antes de hacer público el repositorio.
+
 ## 2026-10-10
 
 Una sesión, sin cambios en el repositorio. Entrada reconstruida el 12 a partir de la transcripción y del
