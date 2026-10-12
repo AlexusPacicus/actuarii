@@ -5,7 +5,69 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
-## 2026-10-12
+## 2026-10-12 (tarde)
+
+Sesión de tarde: la auditoría 2b reducida. Doce casos nuevos (A19–A30) en `CASES.md`, sección «2b
+(2026-10-13)». Sin cambios de código; todo en `docs/`.
+
+**Hecho**
+* **Caso (a), A19 (C1), confirmado en vivo** (`f436964`): código en el arranque del intérprete. Con el
+  `.venv` dentro del repo, un `sitecustomize.py` testigo plantado en su `site-packages` se ejecutó en
+  11 procesos (hooks y servidor MCP) fuera del sandbox, en una sesión abierta desde el `.venv` activado
+  sobre `noticias-2b`. El validador no puede usar `-S` porque necesita `pydantic`: la carga se ejecuta
+  siempre. El montaje que recomienda `INSTALL.md` es el vulnerable.
+* **Casos en el scratchpad**, con `trap`/respaldos, sin tocar nada real:
+  * A20 (c, C1, `a234a5e`): el instalador escribe el `pre-commit` fuera del destino con un
+    `core.hooksPath` global absoluto; rompe I1 y puede bloquear los commits de los demás repos.
+  * A21 (l, C3, `8cc5df4`): A18 reabierto; un `params`/`arguments` no-dict no vacío tumba el servidor MCP.
+  * A22 (k, OK, `8cc5df4`): integridad del commit; media preparación, modo y grafía rechazados.
+  * A23 (i, C2, `8cc5df4`): `Glob` con llaves esquiva el análisis estático del confinamiento de la
+    revisión ciega; el hook permitió `{..,x}/**` con `path` dentro del paquete.
+  * A24 (d, C2, `433edc2`): el anuncio afirma «Bash cannot write the governed paths» sin comprobar
+    `denyWrite`; en Actuarii acierta por el harness, miente para una ruta propia sin su `denyWrite`.
+  * A25 (e, C2, `433edc2`): `.data/` escribible por `Bash`; solo el fichero `.db` está en `denyWrite`.
+  * A26 (g, límite, `433edc2`): una ruta gobernada que es enlace simbólico se gobierna por el destino;
+    no alcanzable por el agente y el `pre-commit` rechaza enlaces en rutas gobernadas.
+  * A27 (h, OK, `16f3791`): el sandbox bloquea crear un enlace duro a un fichero gobernado.
+  * A28 (j, C2, `16f3791`): nada obliga a correr `verify_red_green.py` (6.2 se sobreafirma) y el
+    verificador no compara el diff con `files_may_touch`/`files_must_not_touch`.
+  * A29 (m, límite, `a8ad593`): inventario documental de los canales a la web/host fuera del sandbox
+    (navegador, Chrome, conectores que envían, artifacts, host, programadores).
+  * A30 (n, límite, `a8ad593`): el desplazamiento del trabajo a rutas no gobernadas, con la evidencia de
+    la prueba en limpio.
+
+**Decidido**
+* La clasificación de cada caso es propuesta; la cierra el autor. De prioridad 1, (a) y (c) salieron C1,
+  como se temía; no queda ningún C1 nuevo inesperado fuera de ellos.
+
+**Salió mal y se aprendió**
+* El primer testigo de (a) se corrompió: `printf` interpretó los `%` del `sitecustomize.py`. La primera
+  ejecución en vivo no valía. Se rehízo con un heredoc entrecomillado. Lección: no construir Python con
+  `printf`.
+* La primera sesión de (a) no arrancó desde el `.venv` activado, así que el testigo no disparó; el
+  intérprete de los hooks no era el del `.venv`. Hay que abrir `claude` desde la terminal con el `.venv`
+  activado (`which python3` → el del `.venv`).
+* El test de (g) usó al principio `ln -s AGENTS.md`, un enlace **relativo** a `docs/AGENTS.md` (que no
+  existe); se rehízo con `../AGENTS.md`.
+* Los gates se aplican también al auditor: `deny_python_escapes` (R1/R2) bloqueó varias veces el `Bash`
+  de esta sesión (`.venv/bin/python3` por ruta, un `python3 -c` sobrante). El `rm` suelto lo deniega la
+  política (7.1); la limpieza se hizo con `trap` dentro de comandos aprobados.
+* El test de (A23) necesita poner el lock de la revisión real; se creó y borró dentro de un solo comando
+  con `trap` para no confinar la propia sesión. Quedó un instante tras el comando; se borró enseguida y
+  se comprobó `.data/` limpio. Riesgo a recordar: un `review_lock.json` colgado confina los `Read`.
+* Dos matices que afinan los hallazgos informales: en (d) el harness sí protege `.claude/**` y
+  `.mcp.json` (el problema es el anuncio no verificando, que muerde a rutas propias del adoptante); en
+  (g) el `pre-commit` no «decide por el destino», sino que **rechaza** el enlace.
+
+**Siguiente**
+* **(b)** la copia redirigida, en vivo (lo prepara el autor: clon `noticias-2b` restaurado, tres
+  ejecuciones desde el mismo commit). Es el único de prioridad 1 que falta.
+* Los **menores** (§3 de las pautas) agrupados como limpieza/falsos positivos, y la tabla **Resumen** de
+  `CASES.md`, que sigue acabando en A12, por extender a A13–A30.
+* El **informe en inglés** (lunes 19, según la enmienda de las pautas).
+* Limpiar `~/Documents/noticias-2b` del caso (a): el `sitecustomize.py` del `.venv` y `~/caseA_witness.log`.
+
+## 2026-10-12 (mañana)
 
 Sesión de mañana; por la tarde sigue otra. Suite: 3080 en verde, sin cambios de código. Se cerró la
 prueba en limpio en macOS y quedaron aprobadas las pautas de la 2b reducida.
