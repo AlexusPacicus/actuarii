@@ -324,3 +324,71 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
   Corrección: el instalador resuelve el destino del hook y comprueba que esté dentro del target; si no,
   lo registra como conflicto (no escribe nada, I2) y avisa de que hay un `core.hooksPath` que lleva los
   hooks fuera del repositorio. Un test con `hooksPath` absoluto.
+
+### A21 — A18 sigue abierto: un `params`/`arguments` no-dict no vacío tumba el servidor MCP
+
+* **Garantía:** ninguna se rompe (sin servidor no hay recibos y las escrituras gobernadas se deniegan,
+  falla cerrado); es DoS. **Perfil:** A y B. **Origen:** auditoría informal del 2026-10-10 (hallazgo 5),
+  caso (l) de las pautas. Reabre A18, que F5 cerró solo en parte.
+* **Intento:** por stdio, una petición `tools/call` con `params` o `arguments` que es una lista no vacía.
+* **Reproducido** (2026-10-12), lanzando el servidor commiteado en el scratchpad y dándole la línea por
+  stdin:
+  * `{"method":"tools/call","params":[1]}` → `AttributeError: 'list' object has no attribute 'get'` en
+    `params.get("name")` (`validator.py:341`), `exit 1`.
+  * `{"method":"tools/call","params":{"name":"validate_proposal","arguments":[1]}}` → el mismo en
+    `arguments.get("proposal")` (`validator.py:345`), `exit 1`.
+  * En ambos, la segunda línea del lote (un `ping` válido) no llega a responderse: el servidor murió.
+* **Causa:** `params = req.get("params") or {}` (340) y `arguments = params.get("arguments") or {}` (344)
+  solo salvan el caso falsy; un no-dict no vacío pasa el `or {}`. El bucle de `main` (379) llama a
+  `handle_request` sin `try/except`, así que la excepción sale y termina el bucle stdio. `initialize`
+  tiene el mismo patrón en 320-321. F5 cubrió `arguments` nulo y los tipos de `proposal`/`target_file`
+  (347-350), no un `params`/`arguments` no-dict no vacío. No hay test.
+* **Clasificación propuesta:** C3, como A18. Corrección: envolver `handle_request` en el bucle con un
+  `try/except` que devuelva -32603 y siga (defensa en profundidad), y comprobar con `isinstance` que
+  `params` y `arguments` son objetos antes de usarlos (-32602). Con su test.
+
+### A22 — Integridad del commit: media preparación, modo y grafía (OK)
+
+* **Garantía:** G15. **Perfil:** A y B. **Origen:** caso (k) de las pautas.
+* **Reproducido** (2026-10-12) invocando el script commiteado `tools/git/commit_integrity.py` con `cwd`
+  en un repositorio desechable (`$TMPDIR/caseK2`) cuyo `tools/gov.py` gobierna la config de Actuarii
+  (`tools/**`). Tres intentos y un control:
+  * Media preparación (`git add -p` simulado): se prepara un contenido, el disco tiene otro → rechazado,
+    «the staged content differs from the file on disk». `exit 1`.
+  * Cambio de modo: preparado 644, disco 755 → rechazado, «the staged mode differs from the file on
+    disk». `exit 1`.
+  * Grafía: preparado `TOOLS/gov.py` (que esquivaría el patrón `tools/**`) con el disco en `tools/` en
+    un sistema insensible a mayúsculas (macOS) → rechazado antes de la comprobación de gobierno, «the
+    staged spelling differs from the name on disk: 'TOOLS' is listed as 'tools'». `exit 1`.
+  * Control: cambio entero y legítimo (preparado == disco) → `exit 0`, sin falso positivo.
+* **Lectura:** el hook rechaza los tres y nombra la regla y la fuente; la comprobación de grafía va antes
+  que la de gobierno, así que una variante de mayúsculas no esquiva un `governed_path`. Un fichero
+  gobernado nuevo **sin preparar** no es una violación de G15: simplemente no entra en el commit, y el
+  hook no obliga a incluirlo (correcto).
+* **Clasificación propuesta:** OK.
+
+### A23 — `Glob` con llaves esquiva el análisis estático del confinamiento de la revisión ciega
+
+* **Garantía:** G11. **Perfil:** B. **Origen:** auditoría informal del 2026-10-10 (H4), caso (i) de las
+  pautas.
+* **Intento:** con el lock de la revisión puesto, un `Glob` con `path` dentro del paquete y un patrón de
+  llaves que esconde un `..` (`{..,x}/**`), para que el hook no lo marque y la herramienta, al expandir
+  las llaves, lea `../**` fuera del paquete.
+* **Reproducido** (2026-10-12) dando por stdin al hook commiteado `confine_review_reads.py` tres cargas,
+  con un lock temporal en `.data/review_lock.json` apuntando a un paquete del scratchpad, creado y
+  borrado con `trap` dentro de un solo comando (ninguna herramienta gobernada entre medias, para no
+  confinar la sesión; el lock quedó borrado al salir, comprobado):
+  * `path` dentro del paquete, `pattern={..,x}/**` → **permitido** (`exit 0`): el hook no lo deniega.
+  * control, `pattern=../outside.txt` → denegado (`exit 2`, «parent-directory segment»).
+  * control, sin `path` (base fuera del paquete) → denegado (`exit 2`, «outside the review package»).
+* **Causa:** `_has_parent_segment` solo mira si `..` es un componente **literal** de `Path(pattern).parts`;
+  en `{..,x}/**` el componente es `"{..,x}"`, no `".."`. `_static_prefix` corta en el primer componente
+  con un carácter glob (`{` incluido), así que el prefijo estático es vacío y no añade objetivo por el
+  patrón. Con `path` dentro del paquete, el único objetivo es `base`, que está dentro → permitido.
+* **En vivo:** inferido. La explotabilidad depende de que la herramienta `Glob` expanda las llaves a
+  `../**`; no se pudo probar desde esta sesión (no tiene la herramienta `Glob`, y poner un lock real
+  confinaría su propio `Read`). El hook, que es lo gobernado, no acota el patrón de llaves.
+* **Clasificación propuesta:** C2. El confinamiento no debe depender de la semántica de glob de la
+  herramienta: con el lock puesto, denegar todo patrón que el hook no pueda acotar estáticamente
+  (prefijo estático vacío con caracteres glob, o `..` en cualquier parte, también dentro de llaves o
+  clases). Con su test.
