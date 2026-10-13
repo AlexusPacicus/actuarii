@@ -82,6 +82,12 @@ verde en cada commit. Sin push.
   dónde se escapa.
 * **Orden de lanzamiento:** A19 → A20 → (c) → A34, desde el jueves. Las pautas no dejan corregir durante la
   auditoría.
+* **Ya escrita esta entrada:**
+  * El objetivo de la v0.1 es demostrar que hace falta un middleware para usar agentes de forma segura. La
+    prueba es la 2b; la forma, el monitor de referencia de `ENTORNO_PROPIO.md`.
+  * El entorno de internet va separado del de código, con su propia regla de salida, porque pedir una URL ya
+    es emitir datos. Triarii, el proyecto de la hackathon de mayo, queda como antecedente: capacidades por
+    efecto físico, punycode y credenciales en un proxy (`758df0b`).
 
 **Salió mal y se aprendió**
 * **La decisión del 12 ponía `-I` en los hooks**, aunque el DEVLOG del 10 ya decía que `-I` no impide A19.
