@@ -568,9 +568,13 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
   persona en cada `git commit`. El módulo plantado puede cargar después el verdadero, y la puerta sigue
   decidiendo como siempre. Con perfil A, un `inspect.py` o un `logging.py` propio del destino en la raíz
   rompe las puertas: los hooks deniegan (falla cerrado) y el validador no arranca.
-* **Clasificación propuesta:** C1. Corrección, en el contrato de A19: `sys.path.append` en lugar de
-  `insert(0, …)`, y en el validador, `pydantic` y `logging` importados antes de añadir la raíz. Con sus
-  tests sobre un kit instalado en `tmp_path`, nunca en la raíz real.
+* **Clasificación propuesta:** C1. Corrección, en el contrato de A19 (`ARRANQUE_PUERTAS.md` §5.2):
+  * la raíz entra en `sys.path` solo para `import tools` y sale enseguida;
+  * los submódulos del kit se cargan por `tools.__path__`, y ningún otro import busca en la raíz.
+
+  No vale con poner la raíz al final: el `site-packages` de pyenv 3.11.6 en esta máquina tiene un paquete
+  `tools` (`deepcode_hku`) que taparía el del kit en el validador. Con sus tests sobre un kit instalado
+  en `tmp_path`, nunca en la raíz real.
 
 ### A32 — El intérprete de las puertas se busca en un `PATH` con directorios del repositorio
 

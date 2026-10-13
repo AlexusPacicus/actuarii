@@ -77,8 +77,10 @@ agente que una puerta lee es la que valida: la carga del hook o la propuesta.
 ### 5.1 Un lanzador, con `/bin/sh` por ruta absoluta
 
 * Lanzador nuevo, gobernado: `tools/hooks/launch.sh`.
-  * Quita del `PATH` las entradas relativas y las que, resueltas físicamente, caen dentro de la raíz del
-    proyecto o en un directorio temporal.
+  * Quita del `PATH` las entradas vacías o relativas, las que no resuelven a un directorio y las que,
+    resueltas físicamente, caen dentro de la raíz del proyecto.
+  * No quita los directorios temporales. Nadie pone en su `PATH` uno que el sandbox deje escribir, y
+    quitarlos todos dejaría fuera los `tmp_path` de pytest en Linux. Se declara (§6).
   * Exporta el `PATH` limpio, para que lo hereden también `git` y los demás hijos.
   * Hace `exec python3 -I -S` sobre el hook que recibe como argumento. Solo acepta hooks de
     `tools/hooks/`.
@@ -90,14 +92,19 @@ agente que una puerta lee es la que valida: la carga del hook o la propuesta.
 * El servidor MCP arranca igual: `/bin/sh` con un lanzador que hace `exec python3 -I`, sin `-S` (§5.3).
 * `/bin/sh` existe en macOS y en Linux. En Windows nativo no hay sandbox y ya está declarado.
 
-### 5.2 Hooks y `commit_integrity.py`: `-I -S`, y la raíz al final
+### 5.2 Hooks y `commit_integrity.py`: `-I -S`, y la raíz solo para importar `tools`
 
 * Las puertas usan solo la biblioteca estándar (por eso importan con el Python 3.9 del sistema, AGENTS
   §9), así que `-S` no les quita nada. `-I` y `-S` existen en 3.9.
-* `sys.path.append(str(REPO_ROOT))` en lugar de `insert(0, …)`:
-  * con `-I -S`, `sys.path` contiene solo la biblioteca estándar del intérprete;
-  * la raíz va detrás y solo aporta `tools`, que no existe en la biblioteca estándar;
+* La raíz entra en `sys.path` solo para `import tools`:
+  * se pone la primera, se importa el paquete y se quita (si ya estaba, no se toca);
+  * los submódulos del kit se cargan por `tools.__path__`, sin buscar en `sys.path`;
+  * ningún otro import, estándar o de terceros, busca en la raíz, se haga cuando se haga;
   * un fichero de la raíz con el nombre de un módulo estándar deja de cargarse.
+* **Por qué no al final:** el intérprete de esta máquina (pyenv 3.11.6) tiene en su `site-packages` un
+  paquete `tools` de primer nivel, el de `deepcode_hku`. Con la raíz al final, el validador importaría
+  ese `tools` en lugar del kit. Con `-S` los hooks no lo ven, pero el validador sí.
+* Mismo patrón en `tools/install.py`, que la persona ejecuta fuera del sandbox desde el clon.
 
 ### 5.3 Validador: `-I` sin `-S`, con otro orden de arranque
 
@@ -110,15 +117,17 @@ agente que una puerta lee es la que valida: la carga del hook o la propuesta.
 * Por tanto, con un `site-packages` escribible, la carga se ejecuta antes que la primera línea del
   validador. **La defensa es dónde está el entorno, no una comprobación**: fuera del repositorio, que el
   sandbox no deja escribir a `Bash`, y fuera del alcance de las herramientas de ficheros (§6).
-* Orden de arranque de `validator.py`:
+* Orden de arranque de `validator.py` cuando se ejecuta como programa:
   1. Solo biblioteca estándar.
-  2. **Guarda:** si alguna entrada de `sys.path` cae dentro de `REPO_ROOT`, rehúsa arrancar y dice por
-     qué. Lo que haya en esa entrada ya se ha ejecutado antes de esta línea, así que es una guarda de
-     configuración, no una defensa. Falla cerrado: sin servidor no hay recibos.
-  3. `logging` y `pydantic`, antes de que la raíz esté en `sys.path`.
-  4. `sys.path.append(str(REPO_ROOT))` e imports de `tools.*`.
-  5. Si `tools` no viene de `REPO_ROOT/tools`, rehúsa: un paquete `tools` del `site-packages` taparía
-     el del kit.
+  2. **Guarda:** si alguna entrada de `sys.path` cae dentro de `REPO_ROOT`, fuera del directorio del
+     kit (`tools/`, gobernado), rehúsa arrancar y dice por qué. Lo que haya en esa entrada ya se ha
+     ejecutado antes de esta línea, así que es una guarda de configuración, no una defensa. Falla
+     cerrado: sin servidor no hay recibos.
+  3. `logging` y `pydantic`, sin la raíz en `sys.path`.
+  4. `import tools` con la raíz puesta solo para ese import (§5.2). Si `tools` no viene de
+     `REPO_ROOT/tools` (por ejemplo, porque un `.pth` lo importó antes desde el `site-packages`), rehúsa.
+  5. Los submódulos de `tools`.
+* Importado como módulo (los tests), no comprueba nada al importarse y se comporta como hoy.
 
 ### 5.4 El entorno de Actuarii, fuera del repositorio (decidido)
 
@@ -160,6 +169,9 @@ agente que una puerta lee es la que valida: la carga del hook o la propuesta.
   * `INSTALL.md` recomienda `denyWrite` para el `.venv` de un proyecto que lo tenga dentro (sin red en
     el sandbox, el agente tampoco puede instalar paquetes en él);
   * se declara en §9.
+* **Un directorio temporal en el `PATH`.** El lanzador no lo quita (§5.1). Si la persona pone en su
+  `PATH` un directorio que el sandbox deja escribir a `Bash` (`/tmp/claude…`), se suplanta como uno del
+  repositorio. Se declara.
 * **El intérprete lo elige el estado del repositorio.** Con un gestor de versiones en el `PATH` (aquí,
   pyenv 2.6.12), un `.python-version` en la raíz, sin gobernar, cambia el intérprete de las puertas.
   pyenv solo deja elegir versiones instaladas, que quedan fuera del alcance del agente. Con §5.2, los
@@ -183,11 +195,14 @@ agente que una puerta lee es la que valida: la carga del hook o la propuesta.
     cargan.
   * Un `python3`, un `sh` y un `git` falsos en un directorio de la raíz, primero en el `PATH`: ninguna
     orden de hook ni el `pre-commit` los ejecutan.
-  * El validador rehúsa arrancar con una entrada de `sys.path` dentro de la raíz, con un paquete `tools`
-    en su `site-packages` y con un `$ACTUARII_PYTHON` dentro de la raíz.
+  * El validador rehúsa arrancar con una entrada de `sys.path` dentro de la raíz y con un `tools` que
+    un `.pth` haya importado antes desde fuera del kit.
+  * Con un paquete `tools` en su `site-packages`, el validador arranca y usa el del kit.
+  * El lanzador rehúsa un `$ACTUARII_PYTHON` relativo o dentro de la raíz.
 * **Orden de las ediciones (AGENTS 6.5):**
   1. `launch.sh` nuevo, antes de que ninguna orden lo use.
-  2. El `append` en los hooks y en `commit_integrity.py`: vale con las órdenes de antes y de después.
+  2. La raíz solo para `import tools` en los hooks, `commit_integrity.py` e `install.py`: vale con las
+     órdenes de antes y de después.
   3. `validator.py` y su lanzador.
   4. Las órdenes de `.claude/settings.json`, `.mcp.json` y `opencode.jsonc`, con sus tests.
   5. `tools/git/pre-commit`.
