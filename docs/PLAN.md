@@ -209,6 +209,16 @@ diseño, todavía hay margen.
     * De ahí sale la tabla de qué canal decide quién (sandbox, hook con recibo, regla de permisos o
       el propio modelo). Los canales donde decide el modelo son los límites declarados.
   * Qué impide el kit y qué no: la lista de límites declarados es lo que lo hace creíble.
+    * **El objetivo de la v0.1 (autor, 2026-10-13): demostrar que hace falta un middleware** para usar
+      agentes de forma segura.
+      * Gobernar con los mecanismos de la propia herramienta (hooks, sandbox, permisos) se queda corto.
+      * La prueba es el informe de la 2b: ninguno de sus casos fue una regla mal escrita, todos fueron
+        caminos que rodeaban la regla.
+      * La forma de la solución es un monitor de referencia: aislamiento para que se invoque siempre, fuera
+        del alcance del agente y pequeño. Está en `docs/design/ENTORNO_PROPIO.md`, con Triarii como
+        antecedente (la hackathon de mayo de 2026: capacidades por efecto físico, credenciales en un proxy).
+      * La v0.1 sigue siendo útil por sí misma con agentes cooperativos (procedimiento, recibos, contratos).
+        Se presenta como prototipo, no como frontera de seguridad.
     * **La frontera de la v0.1 es prestada (autor, 2026-10-13):** viene de Claude Code. El README dice por
       dónde se escapa (los casos A19–A35 de la 2b, con lo corregido y lo declarado) y por qué la v0.2
       construye un entorno propio, independiente del proveedor (`docs/design/ENTORNO_PROPIO.md`).
