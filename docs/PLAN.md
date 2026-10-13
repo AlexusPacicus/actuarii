@@ -209,6 +209,10 @@ diseño, todavía hay margen.
     * De ahí sale la tabla de qué canal decide quién (sandbox, hook con recibo, regla de permisos o
       el propio modelo). Los canales donde decide el modelo son los límites declarados.
   * Qué impide el kit y qué no: la lista de límites declarados es lo que lo hace creíble.
+    * **La frontera de la v0.1 es prestada (autor, 2026-10-13):** viene de Claude Code. El README dice por
+      dónde se escapa (los casos A19–A35 de la 2b, con lo corregido y lo declarado) y por qué la v0.2
+      construye un entorno propio, independiente del proveedor (`docs/design/ENTORNO_PROPIO.md`).
+    * Las revisiones ciegas de Traianus no se presentan como ciegas sin decir lo que recibieron (A34).
   * Instalación.
   * Un caso real: la línea base de Qwen3 o la puerta del motor sobre P1 en Traianus (2026-10-05),
     del protocolo congelado al resultado, con los commits.
@@ -527,6 +531,12 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
 
   Tamaño de v0.2 o v1. El README de la v0.1 dice la dirección en una frase: hoy funciona con Claude
   Code, y las reglas ya están separadas del entorno.
+  * **Decidido (autor, 2026-10-13):** el entorno aislado propio se construye en la v0.2, no antes del
+    lanzamiento. La v0.1 sale el 25 como «motor de reglas más adaptador de Claude Code», sin parches de
+    Claude Code más allá de los contratos ya escritos (A19–A32, A20, la opción (c) con A33, A34, y A35 en el
+    contrato del instalador).
+  * Diseño, commiteado antes de cualquier prototipo: `docs/design/ENTORNO_PROPIO.md`. Los casos de las dos
+    auditorías son su batería de prueba.
 * **Plantilla de script para los tests (autor, 2026-10-07):** llevar la verificación de A15 (la fase
   roja en el commit base y la verde en el final, ejecutadas por código y no declaradas) a una
   plantilla de script reutilizable que compruebe de forma determinista la reproducibilidad (la misma
