@@ -688,3 +688,23 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
   * sin instantánea de git mientras se revisa;
   * lo que quede, como el mensaje de encargo que escribe el modelo, se declara en §9, y la skill
     `blind-review` lo dice.
+
+### A35 — Las credenciales de la persona se pueden leer desde la sesión
+
+* **Garantía:** ninguna declarada; es la parte de entrada del principio 2 (`docs/PLAN.md`, «Principios de
+  diseño»). **Perfil:** B. **Origen:** el caso por registrar del PLAN (2026-10-13). Entra en la 2b con la
+  decisión de corregirlo del autor (2026-10-13).
+* **Comprobado** (2026-10-13), sin leer ningún contenido: dentro del sandbox, `Bash` puede abrir `~/.ssh` y
+  `~/.config/gh` (`test -r`); en esta máquina no existen `~/.aws`, `~/.gnupg`, `~/.netrc` ni
+  `~/.git-credentials`. El sandbox no tiene `denyRead`, y ninguna regla de permisos limita la herramienta
+  `Read` fuera del repositorio.
+* **Lectura:** con una salida sin regla (A29, o un fichero del repositorio que la persona sube) se juntan los
+  tres ingredientes de una exfiltración: datos privados al alcance, contenido no fiable y una salida.
+* **Clasificación propuesta:** C2. Corrección (autor, 2026-10-13), en el contrato del instalador en una
+  orden, para Actuarii y para los destinos:
+  * `sandbox.filesystem.denyRead` sobre los directorios de secretos conocidos, que cubre `Bash`;
+  * reglas `Read(...)` de denegación sobre los mismos, que cubren la herramienta `Read`, y la diferencia con
+    `opencode.jsonc` declarada en AGENTS 7.1.
+
+  `permissions.blockReadsOutsideWorkingDirectories` no vale tal cual: quita a `Bash` la lectura de
+  `~/.pyenv`.

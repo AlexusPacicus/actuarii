@@ -459,8 +459,9 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
     * **Reglas `Read(...)` de denegación**, que cubren la herramienta `Read`: AGENTS 7.1 exige el mismo
       perímetro de permisos en `opencode.jsonc`, y su test de paridad no tiene forma de expresarlas. Haría
       falta declarar la diferencia en 7.1.
-  * La autorización de la v0.1 era para el primer ajuste. Al no valer, la vía queda pendiente del autor,
-    fuera del contrato de A34.
+  * **Decidido (autor, 2026-10-13):** `denyRead` y las reglas `Read(...)` de denegación, en el contrato del
+    instalador en una orden, para Actuarii y para los destinos, con la diferencia declarada en AGENTS 7.1.
+    Registrado como A35 en `CASES.md`.
 
 ## Traspaso (2026-10-07, cierre de la semana 1 de trabajo)
 
