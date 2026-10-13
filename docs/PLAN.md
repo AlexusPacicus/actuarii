@@ -284,6 +284,16 @@ Los *actuarii* levantan las actas; Traianus es el archivo donde quedan.
     rodeo.
 * **Primer piloto posible:** las notas de memoria del propio proyecto como corpus, con la regla
   escrita antes.
+  * **El corpus ya se está formando (autor, 2026-10-13):** la memoria bajo código de Actuarii,
+    `.claude/memory/`, con un recibo por escritura y la historia en git (decisión en «Principios de
+    diseño»).
+  * Cuando llegue la fase 4, cada fichero pasa a `POST /ingesta` y la aprobación del autor a
+    `/consolidar`. No se pierde nada.
+  * Los ficheros no muestran σ²: el autor puede aprobarlos sin ver lo que se mide (condiciones de
+    método, abajo).
+  * Antes del lanzamiento, nada de Traianus. El 2026-10-13 el motor seguía sin una consulta que no
+    escriba (solo `/ingesta`, que escribe, y `/relations`, que lee lo ya guardado), y el kit bloquea su
+    cliente HTTP (la tensión de diseño de arriba).
 
 #### Criterio de utilidad (autor y Claude, 2026-10-06)
 
@@ -419,6 +429,20 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
 * **El entorno de Actuarii, fuera del repositorio (autor, 2026-10-13):** `INSTALL.md` deja una sola
   opción. El instalador en una orden comprueba `pydantic` con el intérprete y las opciones con que
   arrancará el servidor (`ARRANQUE_PUERTAS.md` §5.4).
+* **La memoria del agente es obligatoria (autor, 2026-10-13).** Sin memoria no vale; si la normal no se
+  puede, una bajo código.
+  * **En Actuarii, bajo código:** un fichero por recuerdo en `.claude/memory/`, con su índice
+    `MEMORY.md`, que `CLAUDE.md` y `opencode.jsonc` cargan.
+    * Cada escritura pide recibo, porque `.claude/**` está gobernado.
+    * `Bash` no la toca: el sandbox protege `.claude/`.
+    * Git guarda cada versión.
+    * La memoria normal de Claude Code queda denegada por la opción (c).
+    * No hace falta código del kit: es configuración.
+  * **En los repositorios donde se instala el kit:** la memoria normal de ese proyecto queda permitida
+    por defecto, como excepción en `writable_outside_root`, para no romperle la memoria a nadie.
+    `INSTALL.md` explica cómo pasar a la memoria bajo código.
+  * Es el puente hacia la fase 4 (Traianus como memoria de agentes): falta la aprobación de cada
+    recuerdo antes de que cuente.
 * **Caso por registrar: la lectura de credenciales.**
   * Ninguna regla del kit limita que `Bash` o `Read` lean `~/.ssh`, `~/.aws` o el token de `gh`. El
     sandbox no tiene `denyRead` ni `credentials` (`docs/design/SANDBOX.md` §2).

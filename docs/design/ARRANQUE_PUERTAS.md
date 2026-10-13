@@ -274,12 +274,17 @@ con el mismo alcance que `Bash`. Las demás clases de herramienta no cambian.
   sabe si escriben. Con esta regla se romperían las que solo leen una ruta, como publicar una página o enviar
   un fichero. Se declara.
 * **Excepciones:**
-  * El instalador escribe `["/tmp/claude-*/*/*/scratchpad/**"]`: el scratchpad de cada sesión, y no el resto de
-    `/tmp/claude-*`, donde Claude Code guarda la salida de las tareas en segundo plano. El sandbox protege esa
-    salida de `Bash`.
-  * Actuarii: la misma, más `~/.claude/plans/**` (pendiente del autor).
-  * La memoria de Claude Code (`~/.claude/projects/…/memory/`) queda denegada: lo que se escribe ahí entra en
-    el contexto de las sesiones siguientes sin que nadie lo apruebe (PLAN, «Como memoria de agentes»).
+  * El instalador escribe dos:
+    * el scratchpad de cada sesión, `/tmp/claude-*/*/*/scratchpad/**`, y no el resto de `/tmp/claude-*`. Ahí
+      Claude Code guarda la salida de las tareas en segundo plano, que el sandbox protege de `Bash`;
+    * la memoria normal de ese proyecto, `~/.claude/projects/<proyecto>/memory/**`, porque la memoria es
+      obligatoria (autor, 2026-10-13).
+  * `<proyecto>` es la ruta resuelta del destino con cada carácter que no sea una letra o una cifra ASCII
+    cambiado por `-`, que es la convención de Claude Code. Si no coincidiera, la escritura se deniega con un
+    mensaje que nombra la clave, y la persona añade la entrada.
+  * Actuarii: el scratchpad y `~/.claude/plans/**` (pendiente del autor). Su memoria es la bajo código de
+    `.claude/memory/` (PLAN, «Principios de diseño»), así que la normal queda denegada. Lo que se escribe en
+    la normal entra en las sesiones siguientes sin recibo ni historia.
 * **El anuncio** dice dónde escriben fuera las herramientas de ficheros y qué no escriben nunca dentro.
 * **Orden de las ediciones:** una clave obligatoria nueva invalida la configuración, y con una configuración
   inválida la puerta deniega toda escritura en el repositorio salvo `.actuarii.json`. Por eso van primero
