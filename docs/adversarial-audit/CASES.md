@@ -642,7 +642,7 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
 
 * **Garantía:** G11 (AGENTS 5.1, marcada **[enforced]**: ciega por construcción). **Perfil:** A: nadie lo
   provoca, lo hace el harness. **Origen:** encontrado el 2026-10-13 al responder si las revisiones ciegas
-  necesitan una memoria aparte. Entra en la 2b: pendiente del autor.
+  necesitan una memoria aparte. Entra en la 2b por decisión del autor (2026-10-13).
 * **Mecanismo:** antes de la primera herramienta, Claude Code mete en el contexto de cada subagente
   `CLAUDE.md`, con sus importaciones, y el índice de la memoria automática del proyecto.
   `confine_review_reads.py` solo confina `Read`, `Grep` y `Glob`, y no ve lo que se inyecta así.
@@ -663,8 +663,28 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
     herramientas, no lo que el harness le da.
   * Las revisiones ciegas de Traianus no fueron ciegas respecto a lo que contenían la memoria y `CLAUDE.md`
     en ese momento. El caso de Traianus del README no puede presentarlas como ciegas sin decirlo.
-* **Clasificación propuesta:** C1: rompe una garantía marcada **[enforced]**. Corrección, a diseñar:
-  * la revisión corre como un proceso aparte, fuera del repositorio, sin la memoria ni las instrucciones
-    del proyecto;
-  * las reglas de la auditoría van en el paquete, no en una memoria;
-  * hasta entonces, se declara en §9 y la skill `blind-review` lo dice.
+* **Lo que dice la documentación de Claude Code** (leída el 2026-10-13 con el navegador integrado:
+  code.claude.com/docs/en/sub-agents, «What loads at startup»; …/memory; …/settings-reference):
+  * Un subagente que no es una bifurcación recibe:
+    * su prompt de sistema;
+    * el mensaje de encargo, que escribe el agente principal;
+    * todos los `CLAUDE.md` que carga la conversación principal (`~/.claude/CLAUDE.md`, reglas,
+      `CLAUDE.local.md` y lo que importan);
+    * una instantánea de git con la rama, el estado y los commits recientes;
+    * las skills de su campo `skills`.
+  * `omitClaudeMd: true` en la definición del subagente (desde la v2.1.271) quita los `CLAUDE.md` del
+    usuario, del proyecto y locales. Los de la política gestionada siguen cargándose.
+  * La memoria automática de la conversación principal no se carga en los subagentes en las versiones
+    actuales. Las transcripciones de Traianus muestran que en las versiones de entonces sí se cargaba.
+  * El campo `memory` de un subagente le da una memoria propia y le activa `Read`, `Write` y `Edit`: un
+    revisor con memoria dejaría de ser de solo lectura.
+  * La instantánea de git no se puede quitar a un subagente en concreto. `includeGitInstructions: false`
+    (o `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS` para una sesión) la quita a toda la sesión, junto con las
+    instrucciones de commit y PR de Claude Code.
+* **Clasificación propuesta:** C1: rompe una garantía marcada **[enforced]**. Corrección:
+  * las reglas de la auditoría van en el paquete (procedimiento y documentos base), no en una memoria del
+    revisor (autor, 2026-10-13);
+  * `omitClaudeMd: true` y ningún campo `memory` en `blind-reviewer`, con su test;
+  * sin instantánea de git mientras se revisa;
+  * lo que quede, como el mensaje de encargo que escribe el modelo, se declara en §9, y la skill
+    `blind-review` lo dice.
