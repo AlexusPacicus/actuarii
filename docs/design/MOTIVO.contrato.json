@@ -1,0 +1,122 @@
+{
+  "schema_version": "delegation/1",
+  "task_id": "motivo-en-el-acta",
+  "title": "Every proposal carries its rationale, and no EXECUTE_SAFE is issued without its record",
+  "branch": "v01/motivo",
+  "base_commit": "148961e73f211a4e0a664277b0e1505d63e2ebc4",
+  "attribution": null,
+  "context": {
+    "task": "The v0.1 is presented as 'work records for coding agents: every action leaves a record that it happened, and why'. Today the record of a proposal holds its intent class, file, decision and abort flag, but no reason, and an EXECUTE_SAFE is issued even when its record cannot be written. This task adds a required Rationale to the proposal, records it with every decision taken on a valid proposal, and issues no EXECUTE_SAFE without its record.",
+    "sources": [
+      {"path": "AGENTS.md", "select": [
+        {"clause": "2.1"}, {"clause": "2.2"}, {"clause": "6.3"}, {"clause": "6.4"},
+        {"clause": "8.1"}, {"clause": "8.2"}, {"clause": "8.4"}]},
+      {"path": "tools/boundary_validator/schemas/proposals.py", "select": [
+        {"symbol": "AgentMutationProposal"}, {"symbol": "build_response_format"}]},
+      {"path": "tools/boundary_validator/validator.py", "select": [
+        {"symbol": "AUDIT_LOG_DDL"}, {"symbol": "_persist_audit"}, {"symbol": "RECEIPTS_DDL"},
+        {"symbol": "_persist_receipt"}, {"symbol": "_finalize"}, {"symbol": "validate_proposal"},
+        {"symbol": "TOOL_DEFINITION"}]},
+      {"path": "tools/boundary_validator/hook_gate.py", "select": [
+        {"lines": "1-31"}, {"symbol": "has_recent_execute_safe"}, {"symbol": "_recent_receipts"}]},
+      {"path": ".claude/skills/boundary-validator/SKILL.md", "select": [{"lines": "1-42"}]},
+      {"path": "tests/conftest.py", "select": [{"symbol": "isolate_audit_db"}]},
+      {"path": "tests/security/test_audit_database.py", "select": [
+        {"symbol": "_doc_proposal"},
+        {"symbol": "test_the_validator_fails_open_when_the_audit_database_cannot_be_written"}]},
+      {"path": "tests/security/test_structured_outputs.py", "select": [{"symbol": "VALID"}]}
+    ]
+  },
+  "problem": "The audit trail is meant to be the record of what an agent did and why, but a proposal has no field for why: audit_log stores case_id, timestamp, intent_class, target_file, decision and safety_abort. The record can also be missing behind an EXECUTE_SAFE: _persist_audit swallows every sqlite3.Error (AGENTS 8.4), the audit row and the receipt are written in two separate connections, and test_the_validator_fails_open_when_the_audit_database_cannot_be_written pins an EXECUTE_SAFE for a database that cannot be written. Adding a column to audit_log has a further trap: an existing database (this repository's .data/ and every installed target) has the old table, so a plain INSERT with the new column would fail and, under the swallowed error, every row would be lost without a word.",
+  "decisions": [
+    "D1 AgentMutationProposal gains a required field Rationale: a string of 1 to 1000 characters that contains at least one character that is not whitespace. Its schema description says what it is for: why the change is made, in words the person who reads the record understands; it is recorded with the decision, and nothing checks that it is true. It is required like the other fields, so build_response_format and the MCP inputSchema, both generated from the model, list it among the required properties; no schema is written by hand.",
+    "D2 A proposal without Rationale, or with one that is not a string, is empty, is only whitespace or is longer than 1000 characters, is a schema violation: INVALID_JSON, exactly as any other schema violation today, and no receipt. A NUL inside it stays ABORTED_VIOLATES_ZERO_TRUST through the existing check.",
+    "D3 audit_log gains a column `rationale TEXT`. Every decision taken on a proposal that passed the schema records its Rationale there byte for byte, the refusals included (Safety_Abort other than NONE, target mismatch, grounding failure, a primitive or a parse failure of a .py result). A decision taken before the schema passes (a NUL, invalid JSON, a schema violation) records NULL.",
+    "D4 An audit database whose audit_log lacks the column is migrated in place by the validator before its next write (ALTER TABLE audit_log ADD COLUMN rationale TEXT), keeping every row it has. The hook keeps opening the database read-only and does not change: the receipts table keeps its columns, and a receipt reaches its rationale through its case_id.",
+    "D5 An EXECUTE_SAFE exists only with its record: its audit_log row, with the rationale, and its receipts row are written in one SQLite transaction. When that transaction fails, neither row remains and the validator returns {\"status\": \"QUARANTINED\", \"final_decision\": \"ABORTED_NOT_RECORDED\", \"case_id\": <the case id>, \"reason\": \"the audit trail could not be written, so no receipt was issued\"}; the reason carries no path.",
+    "D6 A refusal whose audit row cannot be written is still returned as it is, and the failure is written to stderr as one line that starts with `[boundary-validator]` and carries no path; it is no longer silenced (AGENTS 8.4). stdout stays the JSON-RPC channel.",
+    "D7 test_the_validator_fails_open_when_the_audit_database_cannot_be_written pins the behaviour D5 removes. It changes to expect ABORTED_NOT_RECORDED and no receipt, under a name that says so. This is a change of the specification made by this contract, not a test changed to hide a failure (AGENTS 8.2).",
+    "D8 _persist_receipt(case_id, target_file, grounding_sha256, block_sha256) keeps its signature, because tests plant receipts with it. _persist_audit keeps its five positional parameters and gains a sixth, rationale, that defaults to None. Any new helper for the transaction of D5 is private to validator.py.",
+    "D9 The hook (tools/hooks/require_boundary_validation.py), hook_gate.py and primitives.py do not change.",
+    "D10 Every text that tells an agent how to build a proposal names Rationale: AGENTS.md 2.2; both copies of the boundary-validator skill, which stay byte for byte identical (tests/unit/test_agent_docs.py), with Rationale in their description and their list of fields and ABORTED_NOT_RECORDED after EXECUTE_SAFE in their list of outcomes; both copies of the tdd-cycle skill, identical too; .claude/agents/implementer.md, with one sentence saying that the Rationale says why the change is made, in a sentence a person can read; the description of TOOL_DEFINITION; and the docstring of AgentMutationProposal. In those texts, and only there, '5 Radicals' becomes 'the proposal schema', because the fields are no longer five. Test docstrings, docs/ and examples/ keep their wording.",
+    "D11 Every existing test that builds a proposal adds a Rationale to it, so that its expectation stays exactly as it is (AGENTS 6.4). They are the files in files_may_touch under tests/ other than tests/security/test_rationale.py. Nothing else changes in them, except the test of D7. The new tests go in tests/security/test_rationale.py.",
+    "D12 During this task the session's boundary-validator server is the one that started with the session, on the base commit's code: the proposals you send it keep the base schema, without Rationale, or it refuses them as INVALID_JSON. Do not restart or reconnect it. Every test runs the new code in its own process and its own audit database (isolate_audit_db, tmp_path); none touches .data/.",
+    "D13 No new dependency and no new network, process or code-loading primitive; sqlite3 as today.",
+    "D14 Gates: red-first, each red test seen failing for its stated reason before the change that makes it pass; full-suite, `pytest tests/` exits 0 at the commit; verify-red-green, tools/audit/verify_red_green.py exits 0 on the report."
+  ],
+  "behaviours": [
+    {"id": "B1", "statement": "A proposal that is valid today and also carries a Rationale gets EXECUTE_SAFE, and the audit_log row of its case_id holds that Rationale byte for byte."},
+    {"id": "B2", "statement": "A proposal without Rationale, or with \"\", with \"  \\n\\t\", with 1001 characters or with a number, gets INVALID_JSON and no receipt; a Rationale of exactly 1000 characters passes."},
+    {"id": "B3", "statement": "A proposal that passes the schema and is then refused (Safety_Abort BOUNDARY_VIOLATION, a target mismatch, a grounding failure, a primitive in a .py result) records its Rationale in its audit_log row; a proposal refused as INVALID_JSON records NULL."},
+    {"id": "B4", "statement": "build_response_format(AgentMutationProposal) and the inputSchema that tools/list returns over the MCP server list Rationale among the required properties of the proposal."},
+    {"id": "B5", "statement": "An audit database created with the base commit's tables (audit_log without the rationale column, holding rows, and receipts) is migrated by the next validation: its old rows keep their values, the new row holds its rationale, and the hook still finds the new receipt in it."},
+    {"id": "B6", "statement": "When the audit database cannot be written, the validator returns ABORTED_NOT_RECORDED with no path in its reason, and the database holds no receipt and no EXECUTE_SAFE row for that case."},
+    {"id": "B7", "statement": "When the receipt cannot be inserted after the audit row (a receipts table that rejects the insert), neither the audit row nor the receipt remains, and the decision is ABORTED_NOT_RECORDED."},
+    {"id": "B8", "statement": "AGENTS.md 2.2, both boundary-validator skills and .claude/agents/implementer.md name Rationale; every property of AgentMutationProposal is named in AGENTS.md 2.2 and in the boundary-validator skill."},
+    {"id": "B9", "statement": "A receipt planted with _persist_receipt still lets the hook allow exactly its Edit and nothing else, as today."}
+  ],
+  "tests": [
+    {"id": "T1", "must_catch": "a proposal accepted without a Rationale, or with an empty, blank, non-string or over-long one; or a 1000-character one refused", "expectation": "red", "reason": "at base the schema has no Rationale: a proposal that carries one is INVALID_JSON as an extra field, and one without it is EXECUTE_SAFE"},
+    {"id": "T2", "must_catch": "an EXECUTE_SAFE or a refusal after the schema whose audit row does not hold the proposal's Rationale, or an INVALID_JSON row that holds anything but NULL", "expectation": "red", "reason": "at base audit_log has no rationale column"},
+    {"id": "T3", "must_catch": "a strict response format or an MCP inputSchema that does not require Rationale", "expectation": "red", "reason": "at base the model has no Rationale property"},
+    {"id": "T4", "must_catch": "an old audit database that loses its rows, is not migrated, or stops serving receipts to the hook", "expectation": "red", "reason": "at base a proposal with a Rationale is refused, so no new row with its rationale lands in the old database"},
+    {"id": "T5", "must_catch": "an EXECUTE_SAFE issued when its record cannot be written, or a reason that names a path", "expectation": "red", "reason": "at base the validator swallows the error and returns EXECUTE_SAFE, as the test of D7 pins"},
+    {"id": "T6", "must_catch": "an audit row left behind when its receipt cannot be inserted", "expectation": "red", "reason": "at base the audit row is committed in its own connection before the receipt is attempted"},
+    {"id": "T7", "must_catch": "a text that tells an agent how to build a proposal without naming Rationale, or a property of the model missing from AGENTS.md 2.2 or the skill", "expectation": "red", "reason": "at base neither the model nor any of those texts has Rationale"},
+    {"id": "T8", "must_catch": "a change in how the hook matches a receipt planted with _persist_receipt", "expectation": "guard", "reason": "the hook and the receipts table do not change, so this already holds at base and must keep holding"}
+  ],
+  "files_may_touch": [
+    "tools/boundary_validator/schemas/proposals.py",
+    "tools/boundary_validator/validator.py",
+    "AGENTS.md",
+    ".claude/skills/boundary-validator/SKILL.md",
+    ".opencode/skills/boundary-validator/SKILL.md",
+    ".claude/skills/tdd-cycle/SKILL.md",
+    ".opencode/skills/tdd-cycle/SKILL.md",
+    ".claude/agents/implementer.md",
+    "tests/security/test_rationale.py",
+    "tests/security/test_audit_database.py",
+    "tests/security/test_boundary_validator.py",
+    "tests/security/test_content_receipt.py",
+    "tests/security/test_db_isolation.py",
+    "tests/security/test_gate_primitives.py",
+    "tests/security/test_hook_case_identity.py",
+    "tests/security/test_hook_gate.py",
+    "tests/security/test_security.py",
+    "tests/security/test_structured_outputs.py",
+    "tests/security/test_tridenguard_dual_boundary.py",
+    "tests/security/test_validator_target_and_grounding.py",
+    "tests/security/test_write_gate_tools.py",
+    "tests/security/test_zero_trust_matrix.py",
+    "tests/unit/test_installer.py"
+  ],
+  "files_must_not_touch": [
+    "CLAUDE.md",
+    "INSTALL.md",
+    ".actuarii.json",
+    ".mcp.json",
+    "opencode.jsonc",
+    "docs/**",
+    "examples/**",
+    "tools/hooks/**",
+    "tools/boundary_validator/hook_gate.py",
+    "tools/boundary_validator/primitives.py",
+    "tools/project_config.py",
+    "tools/install.py",
+    "tools/git/**",
+    "tools/bin/**",
+    "tools/audit/**",
+    "tests/conftest.py",
+    "tests/unit/test_agent_docs.py",
+    ".claude/settings.json",
+    ".claude/memory/**",
+    ".github/**"
+  ],
+  "gates": [
+    "red-first",
+    "full-suite",
+    "verify-red-green"
+  ],
+  "commit_message": "feat(validador): cada propuesta lleva su motivo, y no hay EXECUTE_SAFE sin su acta",
+  "report_schema": "delegation-report/2"
+}

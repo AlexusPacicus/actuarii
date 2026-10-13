@@ -209,16 +209,21 @@ diseño, todavía hay margen.
     * De ahí sale la tabla de qué canal decide quién (sandbox, hook con recibo, regla de permisos o
       el propio modelo). Los canales donde decide el modelo son los límites declarados.
   * Qué impide el kit y qué no: la lista de límites declarados es lo que lo hace creíble.
-    * **El objetivo de la v0.1 (autor, 2026-10-13): demostrar que hace falta un middleware** para usar
-      agentes de forma segura.
-      * Gobernar con los mecanismos de la propia herramienta (hooks, sandbox, permisos) se queda corto.
-      * La prueba es el informe de la 2b: ninguno de sus casos fue una regla mal escrita, todos fueron
-        caminos que rodeaban la regla.
-      * La forma de la solución es un monitor de referencia: aislamiento para que se invoque siempre, fuera
-        del alcance del agente y pequeño. Está en `docs/design/ENTORNO_PROPIO.md`, con Triarii como
-        antecedente (la hackathon de mayo de 2026: capacidades por efecto físico, credenciales en un proxy).
-      * La v0.1 sigue siendo útil por sí misma con agentes cooperativos (procedimiento, recibos, contratos).
-        Se presenta como prototipo, no como frontera de seguridad.
+    * **El objetivo de la v0.1 (autor, 2026-10-13, revisado el mismo día): actas de trabajo para agentes de
+      código.**
+      * La frase del README: «Work records for coding agents. Every action leaves a record that it happened,
+        and why. Built for settings where traceability comes first.» En español: «Actas de trabajo para
+        agentes de código. Cada actuación deja constancia de que se hizo y de por qué. Para entornos donde la
+        trazabilidad es lo primero.»
+      * La seguridad frente a un agente adversario no es de esta versión. Sustituye al objetivo anterior del
+        mismo día, «demostrar que hace falta un middleware para usar agentes de forma segura», que pasa a ser
+        la motivación de la v0.2, con su forma de monitor de referencia (`docs/design/ENTORNO_PROPIO.md`, con
+        Triarii como antecedente).
+      * El «por qué» lo hace verdad un campo `Rationale` obligatorio en la propuesta, guardado con cada
+        decisión, y ningún `EXECUTE_SAFE` sin su acta (`docs/design/MOTIVO.contrato.json`).
+      * Propuesta, sin decidir: el primer límite del README, justo debajo de la frase, dice que solo deja acta
+        lo que pasa por el canal gobernado (escrituras en rutas gobernadas, delegaciones, contexto servido,
+        revisiones); lo que hace `Bash` y lo que va a rutas no gobernadas, no (A30).
     * **La frontera de la v0.1 es prestada (autor, 2026-10-13):** viene de Claude Code. El README dice por
       dónde se escapa (los casos A19–A35 de la 2b, con lo corregido y lo declarado) y por qué la v0.2
       construye un entorno propio, independiente del proveedor (`docs/design/ENTORNO_PROPIO.md`).
