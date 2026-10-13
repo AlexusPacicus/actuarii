@@ -388,6 +388,46 @@ s de ellos. El resto fue la persona siguiendo la guía.
   informe de la 2b pasa al lunes 19, y la fase 3 empieza un día más tarde.
 * **Comparación de configuraciones** (`docs/design/COSTE.md` §6): pasa a la v0.2.
 
+## Principios de diseño (autor y Claude, 2026-10-13)
+
+Salen de la 2b. Los fallos más graves (A19, A31 y A32) no vienen de lo que el agente hace dentro del
+sandbox, sino de lo que corre fuera y se fía de lo que el agente escribe.
+
+1. **El agente, aislado.** Lo que ejecuta o escribe no hace daño por defecto.
+   * Hoy el sandbox solo envuelve `Bash`.
+   * Las herramientas de ficheros quedan con el mismo alcance gracias a la puerta (decisión de abajo).
+   * Las herramientas MCP, el navegador y los conectores quedan fuera (A29).
+2. **Toda salida pasa por una regla.**
+   * Tienen regla: las escrituras gobernadas (recibo), la red de `Bash` (proxy con la lista vacía) y
+     `git push` y `merge` (la persona).
+   * Donde no puede haber regla, se declara quién decide: la persona o el modelo. Es la tabla del README
+     «qué canal decide quién».
+3. **Lo que corre fuera no se fía de lo que el agente escribe.**
+   * Las puertas (hooks, validador y `pre-commit`) tienen que estar fuera para tener autoridad.
+   * Ni su intérprete, ni el código que cargan, ni las órdenes que lanzan pueden salir de donde el agente
+     escribe. La única entrada del agente que leen es la que validan.
+   * Un sandbox con una puerta que importa código del agente tiene una salida. El diseño está en
+     `docs/design/ARRANQUE_PUERTAS.md`.
+
+**Entrada y salida:** el kit no evita la inyección (marco del README); le quita la autoridad. Una
+exfiltración necesita tres cosas a la vez: datos privados al alcance, contenido no fiable en el contexto y
+una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
+
+* **Las herramientas de ficheros fuera de la raíz (autor, 2026-10-13):** la puerta deniega por defecto,
+  con excepciones en `.actuarii.json`. Es la opción (c) de `ARRANQUE_PUERTAS.md` §6. Va en un contrato
+  aparte, antes del lanzamiento.
+* **El entorno de Actuarii, fuera del repositorio (autor, 2026-10-13):** `INSTALL.md` deja una sola
+  opción. El instalador en una orden comprueba `pydantic` con el intérprete y las opciones con que
+  arrancará el servidor (`ARRANQUE_PUERTAS.md` §5.4).
+* **Caso por registrar: la lectura de credenciales.**
+  * Ninguna regla del kit limita que `Bash` o `Read` lean `~/.ssh`, `~/.aws` o el token de `gh`. El
+    sandbox no tiene `denyRead` ni `credentials` (`docs/design/SANDBOX.md` §2).
+  * Con una salida sin regla (A29, o un fichero del repositorio que la persona sube) se completa la
+    exfiltración.
+  * Cerrarlo es barato: `sandbox.filesystem.denyRead` y reglas `Read(...)` de denegación sobre esos
+    directorios.
+  * Pendiente del autor: si se registra en la 2b y si entra en la v0.1.
+
 ## Traspaso (2026-10-07, cierre de la semana 1 de trabajo)
 
 * **Estado:** `main` limpio, suite en 2976 verdes. Todas las correcciones de la auditoría están
