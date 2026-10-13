@@ -153,12 +153,7 @@ agente que una puerta lee es la que valida: la carga del hook o la propuesta.
     una lista de excepciones en `.actuarii.json`. Quedan con el mismo alcance que `Bash`.
   * Cierra, para esas herramientas, el entorno de Actuarii de fuera, `~/.zshrc` y `~/.claude/settings.json`.
     El kit deja aplicar en la sesión los cambios de los ajustes del usuario (`block_config_changes.py:7`).
-  * Contrato aparte. Puntos que fija:
-    * el nombre de la clave y si cambia la versión del esquema (`actuarii-config/1`);
-    * qué hace el mínimo incorporado sin configuración (propuesta: denegar, como todo lo que no se puede
-      verificar);
-    * qué herramientas cuentan como escritura (la clasificación que ya tiene la puerta, F2);
-    * los tests que construyen el formato de la configuración (AGENTS 6.4).
+  * Contrato aparte. El diseño está en §10.
   * Coste: lo que Claude Code escribe fuera por su cuenta necesita una excepción declarada. Son los
     planes en `~/.claude/plans/`, la memoria en `~/.claude/projects/…/memory/` y el scratchpad. Decide el
     autor qué excepciones lleva este repositorio.
@@ -253,3 +248,42 @@ agente que una puerta lee es la que valida: la carga del hook o la propuesta.
 * **Lo que queda de §6: la opción (c),** en un contrato aparte.
 * **`INSTALL.md`, solo con el entorno fuera del repositorio** (§5.4).
 * **Pendiente:** el caso de la lectura de credenciales (`docs/PLAN.md`, «Principios de diseño»).
+
+## 10. La opción (c) y A33: diseño para el contrato
+
+Las herramientas de ficheros (`Edit`, `MultiEdit`, `Write` y `NotebookEdit`, la clase 1 de la puerta) quedan
+con el mismo alcance que `Bash`. Las demás clases de herramienta no cambian.
+
+* **Fuera de la raíz:** se deniegan, salvo que una entrada de la clave nueva `writable_outside_root` cubra la
+  ruta resuelta.
+  * La clave es obligatoria, como todas, y es una lista que puede estar vacía. El esquema sigue en
+    `actuarii-config/1`: el formato aún no se ha publicado, y el error de una configuración sin ella nombra la
+    clave que falta.
+  * Cada entrada es absoluta o empieza por `~/` (la casa del proceso del hook), con `*` y `**` como en
+    `governed_paths`. No admite `..`, barras invertidas, caracteres de control ni otros comodines.
+  * Se compara con la ruta resuelta, enlaces incluidos: un enlace dentro de una excepción que apunte fuera de
+    ella no pasa. La parte fija de la entrada, hasta el primer comodín, también se resuelve (`/tmp` es
+    `/private/tmp` en macOS).
+  * Sin `.actuarii.json` no hay excepciones. Con la configuración inválida se deniega, porque no se puede leer
+    la lista.
+* **Dentro de la raíz, siempre denegado a las herramientas de ficheros:** `.git` y `.git/**`, `.vscode/**` e
+  `.idea/**` (A33).
+  * Es lo que el sandbox protege de `Bash` porque hace ejecutar algo a la persona más tarde.
+  * Ningún recibo lo autoriza; lo edita la persona.
+* **Las herramientas de clase 3** (MCP y desconocidas) no cambian: fuera de la raíz pasan, porque la puerta no
+  sabe si escriben. Con esta regla se romperían las que solo leen una ruta, como publicar una página o enviar
+  un fichero. Se declara.
+* **Excepciones:**
+  * El instalador escribe `["/tmp/claude-*/*/*/scratchpad/**"]`: el scratchpad de cada sesión, y no el resto de
+    `/tmp/claude-*`, donde Claude Code guarda la salida de las tareas en segundo plano. El sandbox protege esa
+    salida de `Bash`.
+  * Actuarii: la misma, más `~/.claude/plans/**` (pendiente del autor).
+  * La memoria de Claude Code (`~/.claude/projects/…/memory/`) queda denegada: lo que se escribe ahí entra en
+    el contexto de las sesiones siguientes sin que nadie lo apruebe (PLAN, «Como memoria de agentes»).
+* **El anuncio** dice dónde escriben fuera las herramientas de ficheros y qué no escriben nunca dentro.
+* **Orden de las ediciones:** una clave obligatoria nueva invalida la configuración, y con una configuración
+  inválida la puerta deniega toda escritura en el repositorio salvo `.actuarii.json`. Por eso van primero
+  los tests, después `project_config.py` y enseguida `.actuarii.json`. Al revés, el cargador de hoy rechaza
+  la clave desconocida y `project_config.py` queda sin poder escribirse.
+* **En la sesión que aplica el cambio:** el hook se relee en cada llamada, así que fuera del repositorio se
+  escribe con `Bash` (por ejemplo, el contrato para el verificador en `$TMPDIR`), no con `Write`.
