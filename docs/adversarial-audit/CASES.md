@@ -620,8 +620,8 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
 ### A33 — Las herramientas de ficheros escriben lo que el sandbox protege de `Bash`: git y el IDE
 
 * **Garantía:** G15 (el `pre-commit`), G17 y la de fondo (las reglas disponen). **Perfil:** B.
-  **Origen:** encontrado el 2026-10-13 al redactar el contrato de la opción (c). Entra en la 2b: pendiente
-  del autor.
+  **Origen:** encontrado el 2026-10-13 al redactar el contrato de la opción (c). Entra en la 2b por decisión
+  del autor (2026-10-13).
 * **Intento:** con `Write` o `Edit`, cambiar ficheros que hacen ejecutar algo a la persona, sin sandbox:
   * `.git/hooks/pre-commit`: la comprobación de integridad que la persona ejecuta en cada commit;
   * `.git/config`: `core.hooksPath`, `core.fsmonitor` o alias, órdenes que git ejecuta como la persona;
@@ -637,3 +637,34 @@ clon de `noticias` en `v3-exp` con el kit instalado y commiteado (`53679af`) y u
   `pre-commit` es una puerta del kit.
 * **Clasificación propuesta:** C1. Corrección, en el contrato de la opción (c)
   (`ARRANQUE_PUERTAS.md` §10): las herramientas de ficheros nunca escriben `.git`, `.vscode` ni `.idea`.
+
+### A34 — La revisión ciega recibe la memoria y las instrucciones del proyecto antes de leer nada
+
+* **Garantía:** G11 (AGENTS 5.1, marcada **[enforced]**: ciega por construcción). **Perfil:** A: nadie lo
+  provoca, lo hace el harness. **Origen:** encontrado el 2026-10-13 al responder si las revisiones ciegas
+  necesitan una memoria aparte. Entra en la 2b: pendiente del autor.
+* **Mecanismo:** antes de la primera herramienta, Claude Code mete en el contexto de cada subagente
+  `CLAUDE.md`, con sus importaciones, y el índice de la memoria automática del proyecto.
+  `confine_review_reads.py` solo confina `Read`, `Grep` y `Glob`, y no ve lo que se inyecta así.
+* **Comprobado al leer transcripciones** (2026-10-13), sin ejecutar nada:
+  * Hay 6 transcripciones de `instrument-auditor`, el revisor ciego de Traianus, en
+    `~/.claude/projects/…-Traianus/*/subagents/`. Las 6 contienen `Contents of …/Traianus/CLAUDE.md`,
+    `…/AGENTS.md` y el índice de la memoria automática (`~/.claude/projects/…-Traianus/memory/MEMORY.md`). La
+    revisada a fondo (sesión `942f8565`) contiene además `docs/audit/AUDIT.md`.
+  * Ese índice traía resultados previos (p. ej. «real Sammon gain 39.4%, not 86.07%»), el estado de los
+    planes y de los pilotos, y notas personales del autor.
+  * Un `implementer` de Actuarii recibió `Contents of …/Actuarii/CLAUDE.md`: el mecanismo vale para los
+    subagentes de este repositorio. El `blind-reviewer` de Actuarii no se ha ejecutado nunca.
+* **En Actuarii, hoy:** `CLAUDE.md` importa `AGENTS.md`, `docs/PLAN.md` (decisiones, hipótesis y cifras
+  medidas, como 612,8 s o 1875 ms) y, desde `e2d4275`, `.claude/memory/MEMORY.md`. Todo llegaría al
+  `blind-reviewer`.
+* **Lectura:**
+  * 5.1 promete más de lo que hace: la ceguera por construcción cubre lo que el revisor lee con
+    herramientas, no lo que el harness le da.
+  * Las revisiones ciegas de Traianus no fueron ciegas respecto a lo que contenían la memoria y `CLAUDE.md`
+    en ese momento. El caso de Traianus del README no puede presentarlas como ciegas sin decirlo.
+* **Clasificación propuesta:** C1: rompe una garantía marcada **[enforced]**. Corrección, a diseñar:
+  * la revisión corre como un proceso aparte, fuera del repositorio, sin la memoria ni las instrucciones
+    del proyecto;
+  * las reglas de la auditoría van en el paquete, no en una memoria;
+  * hasta entonces, se declara en §9 y la skill `blind-review` lo dice.

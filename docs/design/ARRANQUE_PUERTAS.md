@@ -246,6 +246,8 @@ agente que una puerta lee es la que valida: la carga del hook o la propuesta.
   Claude. El autor lo aceptó sin dominar el detalle, con esa condición.
 * **A31 y A32 entran en esta auditoría.**
 * **Lo que queda de §6: la opción (c),** en un contrato aparte.
+* **A33 entra en esta auditoría;** Actuarii permite `~/.claude/plans/**`; el instalador se niega con un
+  `core.hooksPath` en el árbol de trabajo (`.husky`), y esos proyectos integran el `pre-commit` a mano (A20).
 * **`INSTALL.md`, solo con el entorno fuera del repositorio** (§5.4).
 * **Pendiente:** el caso de la lectura de credenciales (`docs/PLAN.md`, «Principios de diseño»).
 
@@ -282,7 +284,7 @@ con el mismo alcance que `Bash`. Las demás clases de herramienta no cambian.
   * `<proyecto>` es la ruta resuelta del destino con cada carácter que no sea una letra o una cifra ASCII
     cambiado por `-`, que es la convención de Claude Code. Si no coincidiera, la escritura se deniega con un
     mensaje que nombra la clave, y la persona añade la entrada.
-  * Actuarii: el scratchpad y `~/.claude/plans/**` (pendiente del autor). Su memoria es la bajo código de
+  * Actuarii: el scratchpad y `~/.claude/plans/**` (autor, 2026-10-13). Su memoria es la bajo código de
     `.claude/memory/` (PLAN, «Principios de diseño»), así que la normal queda denegada. Lo que se escribe en
     la normal entra en las sesiones siguientes sin recibo ni historia.
 * **El anuncio** dice dónde escriben fuera las herramientas de ficheros y qué no escriben nunca dentro.
