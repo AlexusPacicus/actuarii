@@ -5,6 +5,146 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-13
+
+Una sesión larga, primer día de la ventana de la 2b. Empezó como puesta al día y acabó en cuatro contratos
+listos, cinco casos nuevos (A31–A35) y el diseño del entorno propio para la v0.2. Sin cambios de código del
+kit: documentos, contratos, configuración (`CLAUDE.md`, `opencode.jsonc`) y la memoria nueva. Suite: 3080 en
+verde en cada commit. Sin push.
+
+**Hecho**
+* Puesta al día y línea base: `main` en `f9b8990`, 3080 en verde.
+* **Decisión de A19 rehecha** (`d33c63a`, corregida en `629b6e1`; `docs/design/ARRANQUE_PUERTAS.md`):
+  * `-I` no impide A19: en el `site.py` de 3.11.6, `sitecustomize` se ejecuta también con `-I`. Solo `-S`
+    lo evita.
+  * Las puertas pasan a arrancar con un lanzador llamado con `/bin/sh` por ruta absoluta, que quita del
+    `PATH` los directorios del repositorio, y con `-I -S`.
+  * La raíz entra en `sys.path` solo para `import tools`.
+  * El validador va con `-I` y una guarda de configuración.
+* **A31** (C1): las puertas ponen la raíz delante de la biblioteca estándar; un `dataclasses.py` en la raíz
+  se ejecuta en cada hook, en el validador y en el `pre-commit` de la persona. Reproducido a nivel de hook
+  en un clon del scratchpad, con aprobación del autor porque salta el shim.
+* **A32** (C1): con el `.venv` del repositorio activado, el `python3`, el `sh` y el `git` de las puertas se
+  buscan en `.venv/bin`, que `Bash` escribe dentro del sandbox (probado). Ni `-I` ni `-S` sirven.
+  Reproducido igual que A31.
+* **A33** (C1, `3db5647`): `Write` escribe `.git/hooks/pre-commit`, `.git/config` y `.vscode/tasks.json` sin
+  recibo; el sandbox se los impide a `Bash`. Probado con cargas al hook y sondas que no escriben nada.
+* **A34** (C1, `2b5fb05`, `24c1e19`): la revisión ciega no es ciega por construcción.
+  * Las 6 transcripciones del auditor de Traianus contienen `CLAUDE.md`, `AGENTS.md` y el índice de la
+    memoria automática, con resultados previos.
+  * La documentación de Claude Code confirma qué recibe un subagente: `CLAUDE.md`, la instantánea de git y
+    el mensaje de encargo. `omitClaudeMd` e `includeGitInstructions` quitan los dos primeros.
+* **A35** (C2, `653985a`): `Bash` abre `~/.ssh` y `~/.config/gh` dentro del sandbox. Comprobado con
+  `test -r`, sin leer nada.
+* **Principios de diseño** en `docs/PLAN.md` (`ea17f20`): el agente aislado; toda salida pasa por una regla;
+  lo que corre fuera no se fía de lo que el agente escribe.
+* **Cuatro contratos validados en código, con su paquete de contexto servido; ninguno lanzado:**
+  * A19, A31 y A32 (`5f0df76`);
+  * A20 (`6f103ea`): el `pre-commit` solo dentro del `.git` del destino;
+  * la opción (c) con A33 (`6f103ea`): las herramientas de ficheros con el alcance de `Bash`;
+  * A34 en su parte de la v0.1 (`2b652fd`).
+* **Memoria bajo código** (`e2d4275`): tres recuerdos y su índice en `.claude/memory/`, cada uno con su
+  recibo, cargados por `CLAUDE.md` y `opencode.jsonc`.
+* **Documentación de Claude Code** leída con el navegador integrado: memoria, subagentes, ajustes, referencia
+  de ajustes, sandbox y entornos aislados.
+* **Diseño del entorno aislado propio para la v0.2** (`0bfa1d0`, `docs/design/ENTORNO_PROPIO.md`):
+  * el agente entero en un entorno;
+  * un intermediario MCP fuera que valida y escribe;
+  * revisión ciega y delegación en entornos aparte;
+  * adaptadores finos;
+  * los casos de las auditorías como batería de prueba.
+
+**Decidido (autor)**
+* La decisión revisada de A19 sustituye a la del 12, aceptada con una condición: los tests nuevos tienen
+  que salir rojos en la base y verdes al final.
+* A31, A32, A33, A34 y A35 entran en la 2b.
+* **Opción (c):**
+  * las herramientas de ficheros no escriben fuera de la raíz salvo `writable_outside_root`, y nunca `.git`,
+    `.vscode` ni `.idea`;
+  * Actuarii permite el scratchpad y `~/.claude/plans/**`;
+  * el instalador permite el scratchpad y la memoria normal del destino.
+* **El entorno de Actuarii, fuera del repositorio:** `INSTALL.md` deja una sola opción, y
+  `ACTUARII_PYTHON` permite trabajar con el entorno del proyecto activado.
+* **El instalador se niega con un `core.hooksPath` en el árbol** (`.husky`): esos proyectos integran el
+  hook a mano.
+* **La memoria del agente es obligatoria:**
+  * en Actuarii, bajo código y desde ya;
+  * en los destinos, la normal, permitida;
+  * es el corpus del piloto de la fase 4, y antes del lanzamiento no se toca Traianus.
+* **Revisión ciega:**
+  * el revisor no tiene memoria, y las reglas de auditoría van en el paquete;
+  * en la v0.1: `omitClaudeMd`, `includeGitInstructions: false` y el candado que lo exige;
+  * en la v0.2: el mensaje de encargo comprobado por código, el veredicto validado y un proceso aparte.
+* **Credenciales:** `denyRead` del sandbox y reglas `Read(...)` de denegación, en el contrato del
+  instalador, con la diferencia con OpenCode declarada en AGENTS 7.1.
+* **El entorno aislado propio, independiente del proveedor, va en la v0.2.** La v0.1 sale el 25 sin más
+  parches de Claude Code que los contratos ya escritos. El README cuenta que su frontera es prestada y por
+  dónde se escapa.
+* **Orden de lanzamiento:** A19 → A20 → (c) → A34, desde el jueves. Las pautas no dejan corregir durante la
+  auditoría.
+
+**Salió mal y se aprendió**
+* **La decisión del 12 ponía `-I` en los hooks**, aunque el DEVLOG del 10 ya decía que `-I` no impide A19.
+  Lección: comprobar la semántica de una opción en el código fuente antes de decidir con ella.
+* **El primer diseño ponía la raíz al final de `sys.path` (`d33c63a`).** Al preparar el contrato apareció
+  en el `site-packages` de pyenv un paquete `tools` ajeno (`deepcode_hku`) que habría tapado el kit en el
+  validador de esta misma sesión. Se corrigió antes del contrato (`629b6e1`). Lección: mirar el intérprete
+  real antes de fijar un orden de importación.
+* **El mismo diseño quitaba del `PATH` los directorios temporales.** Eso dejaría fuera los `tmp_path` de
+  pytest en Linux. Se declaró en su lugar.
+* **`629b6e1` se commiteó antes de pasar la suite;** se pasó después y salió en verde. Es la regla de siempre
+  y se volvió a saltar.
+* **Se propuso `blockReadsOutsideWorkingDirectories` para las credenciales y el autor lo aprobó.** La sección
+  enlazada de la documentación decía que, con el sandbox, también quita a `Bash` la lectura de `~/.pyenv`.
+  Se retiró antes de redactarlo. Lección: leer las secciones enlazadas de un ajuste antes de proponerlo.
+* **La primera propuesta para (c) dejaba a Claude sin memoria en Actuarii.** El autor la rechazó: sin
+  memoria no vale. De ahí salió la memoria bajo código.
+* **El índice de la memoria nombraba Traianus;** el test de la fase 1 que mantiene genérico el kit lo
+  rechazó, y se corrigió el texto, no el test.
+* **Dos garantías marcadas **[enforced]** prometen más de lo que hacen:** 5.1 (A34) y 6.2 (A28). La de la
+  revisión ciega solo se descubrió al preguntar por su memoria. Lección: lo que un agente «ve» se comprueba
+  contra lo que el harness le inyecta, no solo contra las herramientas que puede llamar.
+* **Roces con las propias puertas:** el hook de `Bash` denegó con razón una ruta que contenía `python3.11` y
+  `ls .venv/bin/python3` (el falso positivo ya conocido), y una expresión regular que no podía tokenizar. Un
+  bucle de zsh no partió una lista, y `ls` leyó como opción un directorio que empezaba por `-`.
+
+**Siguiente**
+* **Miércoles 14, lo que queda de la 2b:**
+  * el caso (b), la copia redirigida en vivo, que prepara el autor;
+  * los menores;
+  * la tabla «Resumen» de `CASES.md` hasta A35;
+  * limpiar `~/Documents/noticias-2b`.
+* **Desde el jueves 15, los contratos en orden,** con la base renovada y validados otra vez en el momento de
+  lanzarlos. Pasos de la persona después de A19:
+  * abrir una sesión nueva (o reconectar el MCP);
+  * volver a copiar `.git/hooks/pre-commit`;
+  * actualizar `noticias-2b` a mano.
+* **El cambio único de `AGENTS.md`:**
+  * 1.1: con la configuración inválida, también se deniega fuera de la raíz;
+  * la regla nueva de las herramientas de ficheros (opción (c) y A33);
+  * 5.1 (A34) y 6.2 (A28);
+  * 7.1 y 7.3: las credenciales (A35);
+  * en §9:
+    * los enlaces en rutas gobernadas (A26);
+    * los canales fuera del sandbox (A29);
+    * rutas, no tareas (A30);
+    * la terminal de la persona y su `PATH` (A32);
+    * los temporales en el `PATH`;
+    * `.python-version`;
+    * las herramientas de clase 3 fuera de la raíz;
+    * en la revisión ciega: el mensaje de encargo, el `CLAUDE.md` de la organización y las versiones
+      anteriores a la 2.1.271.
+* **Los dos contratos del instalador en una orden:**
+  * las credenciales;
+  * `ACTUARII_PYTHON` y la comprobación de `pydantic` con `-I`;
+  * reescribir `INSTALL.md` (el entorno fuera, la memoria).
+
+  Después, la nueva medida en macOS.
+* **Sin contrato todavía, para decidir si se corrigen o se declaran:** A21, A23, A24, A25 y A28.
+* **El informe de la 2b en inglés,** el lunes 19.
+* **Disco:** quedan 4,0 GiB, y el verificador crea *worktrees* temporales.
+* **El push de los commits de hoy.**
+
 ## 2026-10-12 (tarde)
 
 Sesión de tarde: la auditoría 2b reducida. Doce casos nuevos (A19–A30) en `CASES.md`, sección «2b
