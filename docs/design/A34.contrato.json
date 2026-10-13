@@ -1,0 +1,94 @@
+{
+  "schema_version": "delegation/1",
+  "task_id": "a34-revision-ciega-v01",
+  "title": "The blind reviewer starts without CLAUDE.md, memory or git snapshot, and the review lock requires it (A34, v0.1)",
+  "branch": "fase2b/a34-revision-ciega",
+  "base_commit": "24c1e19eb8494f231e354b24c93af849efdc4cde",
+  "attribution": null,
+  "context": {
+    "task": "Close the v0.1 part of A34: Claude Code puts the project's CLAUDE.md (with AGENTS.md, docs/PLAN.md and .claude/memory/MEMORY.md through its imports) and a git status snapshot with recent commit subjects into every subagent's context before its first tool call, so the blind reviewer is not blind by construction.",
+    "sources": [
+      {"path": "AGENTS.md", "select": [
+        {"clause": "5.1"}, {"clause": "5.2"}, {"clause": "6.4"}, {"clause": "8.1"}, {"clause": "8.3"}, {"clause": "8.4"}]},
+      {"path": "docs/adversarial-audit/CASES.md", "select": [
+        {"heading": "A34 — La revisión ciega recibe la memoria y las instrucciones del proyecto antes de leer nada"}]},
+      {"path": ".claude/agents/blind-reviewer.md", "select": [{"lines": "1-27"}]},
+      {"path": ".claude/skills/blind-review/SKILL.md", "select": [{"heading": "Rules"}]},
+      {"path": ".claude/settings.json", "select": [{"match": "\"(disableAllHooks|enableAllProjectMcpServers|sandbox)\""}]},
+      {"path": "tools/audit/build_review_package.py", "select": [
+        {"lines": "1-18"}, {"symbol": "LOCK_PATH"}, {"symbol": "write_lock"}, {"symbol": "_configured_review"}, {"symbol": "main"}]},
+      {"path": "tests/unit/test_agent_docs.py", "select": [
+        {"symbol": "test_the_blind_reviewer_is_read_only_by_construction"}, {"symbol": "test_the_skills_of_both_tools_are_the_same_set_and_identical"}]},
+      {"path": "tests/unit/test_review_package.py", "select": [
+        {"symbol": "cli"}, {"symbol": "test_building_from_the_configuration_writes_the_package_and_the_lock"}]},
+      {"path": "tests/security/test_contract_context_hook.py", "select": [{"match": "set\\(current\\) =="}]}
+    ]
+  },
+  "problem": "AGENTS 5.1 marks the blind review [enforced]: while the review lock is set, tools/hooks/confine_review_reads.py denies every Read, Grep and Glob outside the package. But Claude Code gives a non-fork subagent, before its first tool call, every CLAUDE.md the main conversation loads (here AGENTS.md, docs/PLAN.md with decisions and measured figures, and the governed memory index) and a git status snapshot with recent commit subjects, which can carry results. Six transcripts of Traianus' blind auditor show CLAUDE.md, AGENTS.md and the auto-memory index (with prior results) in its context (CASES.md, A34). Claude Code's documentation (read 2026-10-13) gives the switches: `omitClaudeMd: true` in a subagent's definition (v2.1.271 or later) drops the user, project and local CLAUDE.md files; `includeGitInstructions: false` drops the git snapshot for the whole session; a subagent's `memory` field gives it its own memory and turns on Read, Write and Edit.",
+  "decisions": [
+    "D1 Scope, v0.1 (author, 2026-10-13): the reviewer's definition, the git snapshot off in Actuarii, the review lock refused unless both hold, and the skill's text. Out of scope, v0.2: a hook that checks the delegation message, a verdict validated in code, a reviewer run as a separate process. The credentials case is separate.",
+    "D2 The reviewer's definition, .claude/agents/blind-reviewer.md, has exactly four frontmatter keys: name (blind-reviewer), description, `tools: Read, Grep, Glob` and `omitClaudeMd: true`. No memory (it would turn on Write and Edit), no skills, no mcpServers, no hooks, no other key: each can add context or tools. Audit rules live in the package (procedure and base documents of the review configuration), never in a memory of the reviewer (author, 2026-10-13).",
+    "D3 Its body gains one paragraph, after the bullet about the review package: its context starts, by configuration, without the project's CLAUDE.md files, memory or git snapshot; if its context holds any of them, or the delegation message states an expected or a prior result, it says so in the blindness statement and stops.",
+    "D4 .claude/settings.json gains `\"includeGitInstructions\": false`: no git snapshot for any agent of the session, and no built-in commit and pull request instructions, which Actuarii replaces with its own (docs/PLAN.md, inherited working rules). The ConfigChange hook blocks the change from applying to the running session: expected, it applies to the next one.",
+    "D5 `build_review_package.py build --lock` checks, before writing anything, that the review will be blind by configuration: (a) the reviewer's definition exists, its frontmatter parses (the lines between the first `---` line and the next one, each `key: value`; standard library only) and is exactly D2; (b) the effective includeGitInstructions is the JSON boolean false, taken from the first of .claude/settings.local.json, .claude/settings.json and ~/.claude/settings.json that sets the key. A settings file that exists and is not a valid JSON object fails the check. The environment variable CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS is not accepted: the agent controls the builder's environment. Managed settings are not read.",
+    "D6 When the check fails, the builder writes one stderr line per unmet guarantee, naming the file and the key, writes neither the package nor the lock, and exits 1. Without --lock it behaves as today: a package nobody reviews under the lock confines nothing. unlock is unchanged.",
+    "D7 The locations the builder checks are module attributes next to LOCK_PATH, so tests repoint them; never environment variables (the convention of tools/project_config.py).",
+    "D8 The blind-review skill (both copies, .claude and .opencode, byte for byte) replaces its `Blind by construction` rule with what holds, by configuration and in code (the confinement of reads, no CLAUDE.md, no memory, no git snapshot, the lock refused otherwise), and what is declared: the delegation message, which the executing agent writes; a managed-policy CLAUDE.md; Claude Code versions before 2.1.271, which ignore omitClaudeMd without an error. It adds a rule: audit rules live in the package; a lesson from a review becomes a governed change to the procedure, approved by the author, never a note of the reviewer. No mention of any project by name (the existing test).",
+    "D9 examples/traianus/agents/instrument-auditor.md gains `omitClaudeMd: true`, so the example is not the vulnerable form.",
+    "D10 Gates: red-first, each red test seen failing for its stated reason before the change that makes it pass; full-suite, `pytest tests/` exits 0 at the commit; verify-red-green, tools/audit/verify_red_green.py exits 0 on the report.",
+    "D11 This contract is launched after the A19-A31-A32, A20 and option (c) ones are merged (A19 and (c) touch tests/security/test_contract_context_hook.py too); its base commit is stamped then. The AGENTS.md wording of 5.1 and the section 9 declarations come in the single AGENTS.md change, not here."
+  ],
+  "behaviours": [
+    {"id": "B1", "statement": ".claude/agents/blind-reviewer.md has exactly the D2 frontmatter and the D3 paragraph; the rest of its body is unchanged."},
+    {"id": "B2", "statement": ".claude/settings.json sets includeGitInstructions to false; its other keys and values are unchanged."},
+    {"id": "B3", "statement": "`build --lock` refuses as D6 says when the reviewer's definition is missing, does not parse, lacks omitClaudeMd: true, has any key beyond D2's (memory, skills, mcpServers, hooks, …), or has other tools; and when the effective includeGitInstructions is not false (unset everywhere, true at the winning level, or a local true over a project false), or a settings file it reads is not a valid JSON object."},
+    {"id": "B4", "statement": "With a compliant reviewer and an effective false (also a project false over a user true), `build --lock` writes the package and the lock exactly as today."},
+    {"id": "B5", "statement": "`build` without --lock and `unlock` behave as today."},
+    {"id": "B6", "statement": "The blind-review skill carries the D8 text, identical in .claude and .opencode."}
+  ],
+  "tests": [
+    {"id": "T1", "must_catch": "a reviewer definition without omitClaudeMd: true, with a memory, skills or any key beyond D2's, with other tools, or without the D3 paragraph", "expectation": "red", "reason": "today the definition has no omitClaudeMd and no such paragraph"},
+    {"id": "T2", "must_catch": "settings without includeGitInstructions false, or with another set of top-level keys", "expectation": "red", "reason": "today the key is absent and the pinned set of top-level keys does not include it"},
+    {"id": "T3", "must_catch": "a review lock set although the reviewer would receive CLAUDE.md, a memory, other tools or a git snapshot, or a refusal that writes a package or a lock, or a check that trusts the environment variable", "expectation": "red", "reason": "today build --lock checks nothing about the reviewer or the settings"},
+    {"id": "T4", "must_catch": "a change to a compliant build --lock, to build without --lock, or to unlock", "expectation": "guard", "reason": "these behave as B4 and B5 at the base commit, given a compliant reviewer and settings in the fixture"},
+    {"id": "T5", "must_catch": "a blind-review skill that still claims blindness by construction without naming what is declared, or copies that differ", "expectation": "red", "reason": "today the skill's rule claims blindness by construction and names no declared channel"}
+  ],
+  "files_may_touch": [
+    ".claude/agents/blind-reviewer.md",
+    ".claude/settings.json",
+    ".claude/skills/blind-review/SKILL.md",
+    ".opencode/skills/blind-review/SKILL.md",
+    "tools/audit/build_review_package.py",
+    "examples/traianus/agents/instrument-auditor.md",
+    "tests/security/test_blind_review_isolation.py",
+    "tests/unit/test_agent_docs.py",
+    "tests/unit/test_review_package.py",
+    "tests/security/test_contract_context_hook.py"
+  ],
+  "files_must_not_touch": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "INSTALL.md",
+    ".actuarii.json",
+    "docs/**",
+    ".claude/memory/**",
+    ".claude/agents/implementer.md",
+    "tools/hooks/**",
+    "tools/boundary_validator/**",
+    "tools/project_config.py",
+    "tools/install.py",
+    "tools/git/**",
+    "tools/bin/**",
+    ".mcp.json",
+    "opencode.jsonc",
+    "tests/conftest.py",
+    ".github/**"
+  ],
+  "gates": [
+    "red-first",
+    "full-suite",
+    "verify-red-green"
+  ],
+  "commit_message": "fix(revisión ciega): el revisor sin CLAUDE.md, memoria ni git, y el candado lo exige (A34)",
+  "report_schema": "delegation-report/2"
+}

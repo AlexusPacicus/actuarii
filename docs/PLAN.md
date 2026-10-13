@@ -448,9 +448,19 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
     sandbox no tiene `denyRead` ni `credentials` (`docs/design/SANDBOX.md` §2).
   * Con una salida sin regla (A29, o un fichero del repositorio que la persona sube) se completa la
     exfiltración.
-  * Cerrarlo es barato: `sandbox.filesystem.denyRead` y reglas `Read(...)` de denegación sobre esos
-    directorios.
-  * Pendiente del autor: si se registra en la 2b y si entra en la v0.1.
+  * Vías revisadas con la documentación (2026-10-13):
+    * **`permissions.blockReadsOutsideWorkingDirectories: true`** (desde la v2.1.257): con el sandbox
+      activo también quita a `Bash` la lectura de todo el directorio personal, salvo los directorios de
+      trabajo, el temporal de la sesión y partes de `~/.claude`. Aquí Python y `pytest` viven en
+      `~/.pyenv` y dejarían de funcionar; reabrirlos solo se puede desde los ajustes del usuario. **No vale
+      tal cual.**
+    * **`sandbox.filesystem.denyRead`** sobre los directorios de secretos conocidos (`~/.ssh`, `~/.aws`,
+      `~/.config/gh`, `~/.gnupg`, `~/.netrc`, `~/.git-credentials`…): cubre `Bash` y es una lista.
+    * **Reglas `Read(...)` de denegación**, que cubren la herramienta `Read`: AGENTS 7.1 exige el mismo
+      perímetro de permisos en `opencode.jsonc`, y su test de paridad no tiene forma de expresarlas. Haría
+      falta declarar la diferencia en 7.1.
+  * La autorización de la v0.1 era para el primer ajuste. Al no valer, la vía queda pendiente del autor,
+    fuera del contrato de A34.
 
 ## Traspaso (2026-10-07, cierre de la semana 1 de trabajo)
 
