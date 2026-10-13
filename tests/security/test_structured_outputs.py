@@ -23,7 +23,7 @@ SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "tools" / "boundary_validato
 TARGET = "docs/strict-input-probe.md"
 VALID = (
     '{"Intent_Class": "DOC", "Target_File": "docs/strict-input-probe.md", "Topological_Grounding": "y", '
-    '"Implementation_Block": "z", "Safety_Abort": "NONE"}'
+    '"Implementation_Block": "z", "Safety_Abort": "NONE", "Rationale": "A test proposal."}'
 )
 
 
@@ -141,6 +141,7 @@ def test_structured_outputs_SEC_M_18_safety_gate_still_blocks():
             "Implementation_Block": "dangerous",
             "Topological_Grounding": "x",
             "Safety_Abort": "RISK_HIGH",
+            "Rationale": "A test proposal.",
         })
     )
     assert decision["status"] == "QUARANTINED"

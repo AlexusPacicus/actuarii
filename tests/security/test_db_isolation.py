@@ -25,7 +25,8 @@ from tools.boundary_validator.validator import validate_proposal
 def test_audit_persists_to_isolated_db(isolate_audit_db):
     decision = validate_proposal(
         '{"Intent_Class":"DOC","Target_File":"docs/x.md",'
-        '"Topological_Grounding":"q","Implementation_Block":"b","Safety_Abort":"NONE"}',
+        '"Topological_Grounding":"q","Implementation_Block":"b","Safety_Abort":"NONE",'
+        '"Rationale":"A test proposal."}',
         "docs/x.md",
     )
     assert decision["final_decision"] == "EXECUTE_SAFE"
@@ -53,6 +54,7 @@ def test_unknown_intent_class_cannot_skip_grounding():
         "Topological_Grounding": "esta-cota-no-existe-en-ningun-archivo",
         "Implementation_Block": "print('hola')",
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
     }))
     assert decision["status"] == "QUARANTINED"
     assert decision["final_decision"] == "INVALID_JSON"
@@ -68,6 +70,7 @@ def test_extra_fields_rejected_strict_schema():
         "Topological_Grounding": "q",
         "Implementation_Block": "b",
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
         "injected": "field",
     }))
     assert decision["status"] == "QUARANTINED"

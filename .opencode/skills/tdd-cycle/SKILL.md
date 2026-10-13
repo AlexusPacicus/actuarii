@@ -27,8 +27,9 @@ until the current phase passes its gate.
 - **One phase at a time:** red must be red before writing the fix; green must pass before
   refactoring.
 - **Governed files pass the boundary-validator:** before editing a governed path, emit a
-  5 Radicals proposal (`Intent_Class` `TEST` for tests, `FIX` or `REFACTOR` for code, grounded in
-  the target file) and call `validate_proposal` with the file as `target_file`.
+  proposal (`Intent_Class` `TEST` for tests, `FIX` or `REFACTOR` for code, grounded in the target
+  file, with a `Rationale` that says why the change is made) and call `validate_proposal` with the
+  file as `target_file`.
 - **Tests run through their own entry point** (`pytest`), never through inline Python.
 - **Do not edit tests to mask a failing feature, nor source to chase a broken test.**
 - **A test that cannot fail catches nothing:** for each test, know what it would catch and why it

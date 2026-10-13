@@ -32,7 +32,8 @@ Bounds:
   `content`. The governed paths and the receipt window are announced at the start of the session
   and come from `.actuarii.json`. Pass the path in the tool's separate `target_file` argument, not
   only inside the proposal: the receipt is logged against that argument, and without it the hook
-  denies the write.
+  denies the write. The `Rationale` of each proposal says why the change is made, in a sentence a
+  person can read.
 - **When a contract changes a hook,** order the edits so that each one leaves it working: the new
   module and its import first, the code that uses them after. A half-made hook is the one in force.
 - **Invariants stay:** no new dependency, no new network or process primitive in a governed Python

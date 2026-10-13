@@ -142,10 +142,12 @@ def test_the_second_of_two_chained_receipts_is_checked_against_the_file_the_firs
     put("src/a.py", "import aa_bb\n")
     first = validate_proposal(json.dumps({
         "Intent_Class": "FIX", "Target_File": "src/a.py", "Topological_Grounding": "aa_",
-        "Implementation_Block": "subp", "Safety_Abort": "NONE"}), "src/a.py")
+        "Implementation_Block": "subp", "Safety_Abort": "NONE",
+        "Rationale": "A test proposal."}), "src/a.py")
     second = validate_proposal(json.dumps({
         "Intent_Class": "FIX", "Target_File": "src/a.py", "Topological_Grounding": "bb",
-        "Implementation_Block": "rocess", "Safety_Abort": "NONE"}), "src/a.py")
+        "Implementation_Block": "rocess", "Safety_Abort": "NONE",
+        "Rationale": "A test proposal."}), "src/a.py")
     assert first["final_decision"] == second["final_decision"] == "EXECUTE_SAFE"
     assert run(*edit(repo, "src/a.py", "aa_", "subp")) == 0
     put("src/a.py", "import subpbb\n")
@@ -328,6 +330,7 @@ def test_a_tool_of_the_third_class_keeps_the_receipt_per_file_and_no_primitive_c
     tool_input = {"path": str(repo / "src" / "a.py"), "content": "import subprocess"}
     assert run("mcp__fs__write_file", tool_input) == 2
     clean = json.dumps({"Intent_Class": "DOC", "Target_File": "src/a.py", "Topological_Grounding": "value",
-                        "Implementation_Block": "other", "Safety_Abort": "NONE"})
+                        "Implementation_Block": "other", "Safety_Abort": "NONE",
+                        "Rationale": "A test proposal."})
     assert validate_proposal(clean, "src/a.py")["final_decision"] == "EXECUTE_SAFE"
     assert run("mcp__fs__write_file", tool_input) == 0

@@ -48,6 +48,7 @@ def proposal(target=TARGET, grounding=OLD, block=NEW, intent="DOC", abort="NONE"
         "Topological_Grounding": grounding,
         "Implementation_Block": block,
         "Safety_Abort": abort,
+        "Rationale": "A test proposal.",
     })
 
 
@@ -175,11 +176,11 @@ def test_the_receipt_table_is_in_the_database_the_gate_resolves(isolate_audit_db
     assert len(receipts(isolate_audit_db)) == 1
 
 
-def test_a_receipt_that_cannot_be_written_leaves_the_validator_total_and_the_write_denied(isolate_audit_db, gate):
+def test_a_receipt_that_cannot_be_written_leaves_no_execute_safe_and_the_write_denied(isolate_audit_db, gate):
     with closing(sqlite3.connect(isolate_audit_db)) as conn, conn:
         conn.execute("CREATE TABLE receipts (unrelated TEXT)")
     decision = validate_proposal(proposal(), TARGET)
-    assert decision["final_decision"] == "EXECUTE_SAFE"
+    assert decision["final_decision"] == "ABORTED_NOT_RECORDED"
     assert gate(edit()) == 2
 
 

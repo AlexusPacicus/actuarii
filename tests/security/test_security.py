@@ -16,7 +16,8 @@ def test_boundary_validator_gate():
         "Target_File": str(ROOT / "tools" / "boundary_validator" / "validator.py"),
         "Implementation_Block": "x = 1",
         "Topological_Grounding": "def validate_proposal(",
-        "Safety_Abort": "NONE"
+        "Safety_Abort": "NONE",
+        "Rationale": "A test proposal."
     })
     decision = validate_proposal(valid_prop, str(ROOT / "tools" / "boundary_validator" / "validator.py"))
     assert decision["status"] == "VALIDATED"

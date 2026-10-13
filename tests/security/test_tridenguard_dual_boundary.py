@@ -26,6 +26,7 @@ def _grounded_proposal(target: str = "app.py") -> str:
         "Implementation_Block": "update threshold",
         "Topological_Grounding": GROUNDING_MARKER,
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
     })
 
 
@@ -72,6 +73,7 @@ def test_security_SEC_M_09_null_byte_in_implementation_block():
         "Implementation_Block": "import req\u0000uests",
         "Topological_Grounding": "",
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
     })
     decision = validate_proposal(proposal)
     assert decision["status"] == "QUARANTINED"
@@ -99,6 +101,7 @@ def test_security_SEC_M_11_non_utf8_file_no_crash(tmp_path):
         "Implementation_Block": "update threshold",
         "Topological_Grounding": "café",
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
     })
     decision = validate_proposal(proposal, str(src))
     assert isinstance(decision, dict)

@@ -24,6 +24,7 @@ def _grounded_proposal(target: str = str(GROUNDED_FILE)) -> str:
         "Implementation_Block": "update_threshold = 1",
         "Topological_Grounding": GROUNDING_QUOTE,
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
     })
 
 
@@ -39,6 +40,7 @@ def test_security_SEC_M_02_safety_abort_blocks():
         "Implementation_Block": "dangerous change",
         "Topological_Grounding": "x",
         "Safety_Abort": "RISK_HIGH",
+        "Rationale": "A test proposal.",
     })
     decision = validate_proposal(proposal)
     assert decision["status"] == "QUARANTINED"
@@ -57,6 +59,7 @@ def test_security_SEC_M_04_literal_grounding_required():
         "Implementation_Block": "update threshold",
         "Topological_Grounding": "this_citation_does_not_exist_in_the_code_xyz",
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
     })
     decision = validate_proposal(proposal_bad, str(GROUNDED_FILE))
     assert decision["status"] == "QUARANTINED"
@@ -81,6 +84,7 @@ def test_security_SEC_M_07_mutating_intent_requires_target_file():
             "Implementation_Block": "update threshold",
             "Topological_Grounding": "auto_calibrate_critical_threshold()",
             "Safety_Abort": "NONE",
+            "Rationale": "A test proposal.",
         })
         decision = validate_proposal(proposal)
         assert decision["status"] == "QUARANTINED", intent

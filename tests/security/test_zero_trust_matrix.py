@@ -26,6 +26,7 @@ def _doc_proposal(block: str) -> str:
         "Implementation_Block": block,
         "Topological_Grounding": "docs",
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
     })
 
 
@@ -106,6 +107,7 @@ def _py_proposal(target, grounding, block, intent="FIX", abort="NONE"):
         "Topological_Grounding": grounding,
         "Implementation_Block": block,
         "Safety_Abort": abort,
+        "Rationale": "A test proposal.",
     })
 
 

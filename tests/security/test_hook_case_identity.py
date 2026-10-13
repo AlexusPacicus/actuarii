@@ -265,7 +265,7 @@ def audit():
         quote = file.read_text(encoding="utf-8")[:20] if file.exists() else ""
         decision = validate_proposal(json.dumps({
             "Intent_Class": "DOC", "Target_File": target, "Topological_Grounding": quote,
-            "Implementation_Block": quote, "Safety_Abort": "NONE",
+            "Implementation_Block": quote, "Safety_Abort": "NONE", "Rationale": "A test proposal.",
         }), target)
         assert decision["final_decision"] == "EXECUTE_SAFE"
 

@@ -31,6 +31,7 @@ def _doc_proposal(target_file: str) -> str:
         "Topological_Grounding": _quote_of(target_file),
         "Implementation_Block": "b",
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
     })
 
 
@@ -118,6 +119,7 @@ def test_non_execute_safe_decision_does_not_count():
         "Topological_Grounding": "q",
         "Implementation_Block": "b",
         "Safety_Abort": "BOUNDARY_VIOLATION",
+        "Rationale": "A test proposal.",
     }), target)
     assert decision["final_decision"] == "BLOCKED_BY_SAFETY_GATE"
 

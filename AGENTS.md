@@ -39,10 +39,12 @@ with the exact file as its separate `target_file` argument. **[enforced]** The h
 difference is another change. A tool the gate does not know that names a governed path needs a
 receipt for that file. The denial names the rule, its source and the call that resolves it.
 
-2.2 A proposal **MUST** conform to the strict 5 Radicals schema
+2.2 A proposal **MUST** conform to the strict proposal schema
 (`tools/boundary_validator/schemas/proposals.py`): `Intent_Class` (`FIX`, `REFACTOR`, `TEST`,
-`DOC`, `SPEC`, `AUDIT`), `Target_File`, `Topological_Grounding`, `Implementation_Block` and
-`Safety_Abort`, sent as an object, with `target_file` naming the same file as `Target_File`.
+`DOC`, `SPEC`, `AUDIT`), `Target_File`, `Topological_Grounding`, `Implementation_Block`,
+`Rationale` (1 to 1000 characters that say why the change is made, in words the person who reads
+the audit trail understands; it is recorded with the decision and nothing checks that it is true)
+and `Safety_Abort`, sent as an object, with `target_file` naming the same file as `Target_File`.
 **[enforced]**
 
 2.3 When the target file exists, the `Topological_Grounding` **MUST** be a quote present byte by

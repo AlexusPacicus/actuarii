@@ -4,7 +4,7 @@ import json
 import hashlib
 import uuid
 import sqlite3
-from contextlib import closing
+from contextlib import closing, contextmanager
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -28,27 +28,56 @@ CREATE TABLE IF NOT EXISTS audit_log (
     intent_class TEXT,
     target_file TEXT,
     decision TEXT NOT NULL,
-    safety_abort TEXT
+    safety_abort TEXT,
+    rationale TEXT
 )
 """
 
+# What can stop a record from being written: the database, its directory, or a text it cannot hold.
+RECORD_ERRORS = (sqlite3.Error, OSError, UnicodeError)
+
+
+def _audit_failure(error: Exception) -> None:
+    # The kind of error and no path; stdout is the JSON-RPC channel.
+    sys.stderr.write(f"[boundary-validator] audit trail not written ({type(error).__name__})\n")
+    sys.stderr.flush()
+
+
+@contextmanager
+def _audit_transaction():
+    """One SQLite transaction on the audit database, committed whole or rolled back whole.
+
+    The audit_log of a database created before the rationale column existed gets the column here, keeping its rows.
+    """
+    db_path = hook_gate._db_path()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    with closing(sqlite3.connect(db_path)) as conn:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        with conn:
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute(AUDIT_LOG_DDL)
+            if "rationale" not in [column[1] for column in conn.execute("PRAGMA table_info(audit_log)")]:
+                conn.execute("ALTER TABLE audit_log ADD COLUMN rationale TEXT")
+            yield conn
+
+
+def _insert_audit(conn: sqlite3.Connection, case_id: str, decision: str, intent_class: str,
+                  target_file: str, safety_abort: str, rationale: str | None) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO audit_log "
+        "(case_id, intent_class, target_file, decision, safety_abort, rationale) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        (case_id, intent_class, target_file, decision, safety_abort, rationale),
+    )
+
 
 def _persist_audit(case_id: str, decision: str, intent_class: str = "",
-                   target_file: str = "", safety_abort: str = "") -> None:
+                   target_file: str = "", safety_abort: str = "", rationale: str | None = None) -> None:
     try:
-        db_path = hook_gate._db_path()
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        with closing(sqlite3.connect(db_path)) as conn, conn:
-            conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute(AUDIT_LOG_DDL)
-            conn.execute(
-                "INSERT OR IGNORE INTO audit_log "
-                "(case_id, intent_class, target_file, decision, safety_abort) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (case_id, intent_class, target_file, decision, safety_abort),
-            )
-    except sqlite3.Error:
-        pass  # Fail-open on logging: never block the gate due to audit failure
+        with _audit_transaction() as conn:
+            _insert_audit(conn, case_id, decision, intent_class, target_file, safety_abort, rationale)
+    except RECORD_ERRORS as error:
+        _audit_failure(error)
 
 
 RECEIPTS_DDL = """
@@ -66,20 +95,36 @@ def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _insert_receipt(conn: sqlite3.Connection, case_id: str, target_file: str,
+                    grounding_sha256: str, block_sha256: str) -> None:
+    conn.execute(RECEIPTS_DDL)
+    conn.execute(
+        "INSERT OR IGNORE INTO receipts "
+        "(case_id, target_file, grounding_sha256, block_sha256) VALUES (?, ?, ?, ?)",
+        (case_id, target_file, grounding_sha256, block_sha256),
+    )
+
+
 def _persist_receipt(case_id: str, target_file: str, grounding_sha256: str, block_sha256: str) -> None:
     try:
-        db_path = hook_gate._db_path()
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        with closing(sqlite3.connect(db_path)) as conn, conn:
-            conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute(RECEIPTS_DDL)
-            conn.execute(
-                "INSERT OR IGNORE INTO receipts "
-                "(case_id, target_file, grounding_sha256, block_sha256) VALUES (?, ?, ?, ?)",
-                (case_id, target_file, grounding_sha256, block_sha256),
-            )
-    except sqlite3.Error:
-        pass  # No receipt, no write: the hook denies a governed write it finds no receipt for
+        with _audit_transaction() as conn:
+            _insert_receipt(conn, case_id, target_file, grounding_sha256, block_sha256)
+    except RECORD_ERRORS as error:
+        _audit_failure(error)
+
+
+def _record_execute_safe(case_id: str, intent_class: str, target_file: str, safety_abort: str,
+                         rationale: str, grounding_sha256: str, block_sha256: str) -> dict:
+    """The EXECUTE_SAFE decision, issued only when its audit row and its receipt are written in one transaction."""
+    try:
+        with _audit_transaction() as conn:
+            _insert_audit(conn, case_id, "EXECUTE_SAFE", intent_class, target_file, safety_abort, rationale)
+            _insert_receipt(conn, case_id, target_file, grounding_sha256, block_sha256)
+    except RECORD_ERRORS as error:
+        _audit_failure(error)
+        return {"status": "QUARANTINED", "final_decision": "ABORTED_NOT_RECORDED", "case_id": case_id,
+                "reason": "the audit trail could not be written, so no receipt was issued"}
+    return {"status": "VALIDATED", "final_decision": "EXECUTE_SAFE", "case_id": case_id, "and_gate_ok": True}
 
 
 def _grounding_failure() -> dict:
@@ -89,10 +134,10 @@ def _grounding_failure() -> dict:
 
 
 def _finalize(decision: dict, intent: str = "", target_file: str = "",
-              safety_abort: str = "") -> dict:
+              safety_abort: str = "", rationale: str | None = None) -> dict:
     case_id = decision.get("case_id", str(uuid.uuid4()))
     _persist_audit(case_id, decision.get("final_decision", ""), intent,
-                   target_file, safety_abort)
+                   target_file, safety_abort, rationale)
     return decision
 
 
@@ -173,6 +218,7 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
         return _finalize({"status": "QUARANTINED", "final_decision": "INVALID_JSON",
                           "case_id": str(uuid.uuid4())})
 
+    rationale = None
     try:
         # Post-parse sanitization (SEC-M-09): JSON-escaped NUL \u0000, invisible in the raw string.
         if any("\x00" in str(proposal.get(k, "")) for k in proposal):
@@ -198,21 +244,22 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
 
         intent = model.Intent_Class.value
         safety_abort = model.Safety_Abort.value
+        rationale = model.Rationale
 
         if safety_abort != "NONE":
             return _finalize({"status": "QUARANTINED", "final_decision": "BLOCKED_BY_SAFETY_GATE",
-                              "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort)
+                              "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort, rationale)
 
         # A receipt binds one file: the call's target_file MUST be the file the
         # proposal names.
         if not _same_file(model.Target_File, target_file_path):
             return _finalize({"status": "QUARANTINED", "final_decision": "ABORTED_TARGET_MISMATCH",
-                              "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort)
+                              "case_id": str(uuid.uuid4())}, intent, target_file_path, safety_abort, rationale)
 
         # Dual Boundary: canonicalization + physical containment within the repo.
         resolved = _resolve_in_root(target_file_path)
         if not resolved.is_relative_to(REPO_ROOT):
-            return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
+            return _finalize(_grounding_failure(), intent, target_file_path, safety_abort, rationale)
 
         # SEC-M-07 (no fail-open): a file that exists MUST be cited literally,
         # whatever the intent; a file that does not exist cannot be cited, so
@@ -227,9 +274,9 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
             else:
                 grounded = not grounding
             if not grounded:
-                return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
+                return _finalize(_grounding_failure(), intent, target_file_path, safety_abort, rationale)
         elif intent in ["REFACTOR", "FIX", "AUDIT"]:
-            return _finalize(_grounding_failure(), intent, target_file_path, safety_abort)
+            return _finalize(_grounding_failure(), intent, target_file_path, safety_abort, rationale)
 
         # A receipt binds what the proposal says: the hashes come before the decision, so text that cannot
         # be hashed is never an EXECUTE_SAFE.
@@ -241,15 +288,12 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
                                          model.Implementation_Block)
             if refusal is not None:
                 abort = "SYNTAX_ERROR" if refusal["final_decision"] == "BLOCKED_BY_SAFETY_GATE" else safety_abort
-                return _finalize(refusal, intent, target_file_path, abort)
-        decision = _finalize({"status": "VALIDATED", "final_decision": "EXECUTE_SAFE",
-                              "case_id": case_id, "and_gate_ok": True},
-                             intent, target_file_path, safety_abort)
-        _persist_receipt(case_id, target_file_path, grounding_sha256, block_sha256)
-        return decision
+                return _finalize(refusal, intent, target_file_path, abort, rationale)
+        return _record_execute_safe(case_id, intent, target_file_path, safety_abort, rationale,
+                                    grounding_sha256, block_sha256)
     except Exception:
         # Total function: the validator NEVER raises exceptions (fail-closed).
-        return _finalize(_grounding_failure())
+        return _finalize(_grounding_failure(), rationale=rationale)
 
 
 # ---------------------------------------------------------------------------
@@ -286,9 +330,10 @@ TOOL_DEFINITION = {
     "name": "validate_proposal",
     "description": (
         "BoundaryValidator Zero-Trust Gate: evaluates a neuro-symbolic proposal "
-        "(5 Radicals) and returns the deterministic gate decision "
+        "(the proposal schema, with the Rationale that says why the change is made) and returns "
+        "the deterministic gate decision "
         "(EXECUTE_SAFE | ABORTED_GROUNDING_FAILED | ABORTED_VIOLATES_ZERO_TRUST | "
-        "BLOCKED_BY_SAFETY_GATE | INVALID_JSON | ABORTED_TARGET_MISMATCH)."
+        "BLOCKED_BY_SAFETY_GATE | INVALID_JSON | ABORTED_TARGET_MISMATCH | ABORTED_NOT_RECORDED)."
     ),
     "inputSchema": _input_schema(),
 }

@@ -323,7 +323,7 @@ def write_payload(target, name, content):
 
 def proposal_for(name, content):
     return {"Intent_Class": "SPEC", "Target_File": name, "Topological_Grounding": "",
-            "Implementation_Block": content, "Safety_Abort": "NONE"}
+            "Implementation_Block": content, "Safety_Abort": "NONE", "Rationale": "A test proposal."}
 
 
 def test_before_the_validator_has_ever_run_the_installed_gate_still_denies(installed, home):

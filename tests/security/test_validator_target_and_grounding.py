@@ -16,7 +16,8 @@ from tools.boundary_validator.validator import handle_request, validate_proposal
 INTENTS = ["FIX", "REFACTOR", "TEST", "DOC", "SPEC", "AUDIT"]
 MUTATING = ["FIX", "REFACTOR", "AUDIT"]
 FREE = ["TEST", "DOC", "SPEC"]
-RADICALS = {"Intent_Class", "Target_File", "Topological_Grounding", "Implementation_Block", "Safety_Abort"}
+RADICALS = {"Intent_Class", "Target_File", "Topological_Grounding", "Implementation_Block", "Safety_Abort",
+            "Rationale"}
 CONTENT = "alpha beta gamma\n"
 
 
@@ -33,6 +34,7 @@ def _proposal(intent="DOC", target="a.txt", quote="alpha", safety="NONE", block=
         "Topological_Grounding": quote,
         "Implementation_Block": block,
         "Safety_Abort": safety,
+        "Rationale": "A test proposal.",
     })
 
 

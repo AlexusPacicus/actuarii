@@ -51,7 +51,8 @@ def gate(monkeypatch, config_file):
 
 def grant(target):
     proposal = json.dumps({"Intent_Class": "DOC", "Target_File": target, "Topological_Grounding": "q",
-                           "Implementation_Block": "b", "Safety_Abort": "NONE"})
+                           "Implementation_Block": "b", "Safety_Abort": "NONE",
+                           "Rationale": "A test proposal."})
     assert validate_proposal(proposal, target)["final_decision"] == "EXECUTE_SAFE"
 
 

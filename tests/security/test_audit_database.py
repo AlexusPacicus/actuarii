@@ -28,6 +28,7 @@ def _doc_proposal(target_file: str) -> str:
         "Topological_Grounding": "q",
         "Implementation_Block": "b",
         "Safety_Abort": "NONE",
+        "Rationale": "A test proposal.",
     })
 
 
@@ -97,7 +98,7 @@ def test_the_gate_fails_closed_when_the_audit_table_is_missing(tmp_path, monkeyp
         has_recent_execute_safe(str(ROOT / "AGENTS.md"))
 
 
-def test_the_validator_fails_open_when_the_audit_database_cannot_be_written(tmp_path, monkeypatch):
+def test_the_validator_issues_no_execute_safe_when_the_audit_database_cannot_be_written(tmp_path, monkeypatch):
     monkeypatch.setattr(hook_gate, "AUDIT_DB_PATH", tmp_path)
     decision = validate_proposal(_doc_proposal("docs/x.md"), "docs/x.md")
-    assert decision["final_decision"] == "EXECUTE_SAFE"
+    assert decision["final_decision"] == "ABORTED_NOT_RECORDED"

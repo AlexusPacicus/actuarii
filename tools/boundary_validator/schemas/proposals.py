@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class IntentClass(str, Enum):
@@ -22,7 +22,8 @@ class SafetyAbort(str, Enum):
 
 class AgentMutationProposal(BaseModel):
     """
-    Structured Output Schema for Agent Mutation Proposals (5 Radicals).
+    Structured Output Schema for Agent Mutation Proposals: the intent, the file, the quote that grounds the
+    change, the change itself, the safety flag and the Rationale that says why the change is made.
     Enforces strict JSON schema validation at the LLM inference layer.
     """
 
@@ -48,6 +49,22 @@ class AgentMutationProposal(BaseModel):
         ...,
         description="High-level safety status flag emitted by the proposing agent.",
     )
+    Rationale: str = Field(
+        ...,
+        min_length=1,
+        max_length=1000,
+        description=(
+            "Why the change is made, in words the person who reads the record understands: 1 to 1000 "
+            "characters, not only whitespace. It is recorded with the decision; nothing checks that it is true."
+        ),
+    )
+
+    @field_validator("Rationale")
+    @classmethod
+    def rationale_has_a_visible_character(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Rationale must contain at least one character that is not whitespace")
+        return value
 
 
 def build_response_format(
