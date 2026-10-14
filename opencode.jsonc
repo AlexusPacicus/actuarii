@@ -4,7 +4,7 @@
   "small_model": "opencode/deepseek-v4-flash-free",
   "instructions": [
     "AGENTS.md",
-    "docs/PLAN.md",
+    "docs/ESTADO.md",
     ".claude/memory/MEMORY.md"
   ],
   "mcp": {

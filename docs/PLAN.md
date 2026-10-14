@@ -221,6 +221,11 @@ diseño, todavía hay margen.
         Triarii como antecedente).
       * El «por qué» lo hace verdad un campo `Rationale` obligatorio en la propuesta, guardado con cada
         decisión, y ningún `EXECUTE_SAFE` sin su acta (`docs/design/MOTIVO.contrato.json`).
+      * **El acta en git (autor, 2026-10-14).** La revisión de otro agente mostró que el rastro registra que se
+        pidió escribir, no que se escribió, y que vive en una base local que git ignora. Un hook `commit-msg`
+        añade al mensaje de cada commit, como *trailers*, los motivos de los recibos de sus ficheros
+        gobernados. Solo registra, no bloquea. Entra en los contratos del instalador en una orden, y es la única
+        función nueva antes del lanzamiento.
       * Propuesta, sin decidir: el primer límite del README, justo debajo de la frase, dice que solo deja acta
         lo que pasa por el canal gobernado (escrituras en rutas gobernadas, delegaciones, contexto servido,
         revisiones); lo que hace `Bash` y lo que va a rutas no gobernadas, no (A30).
@@ -558,6 +563,13 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
     A35 para el informe del lunes 19.
   * Diseño, commiteado antes de cualquier prototipo: `docs/design/ENTORNO_PROPIO.md`. Los casos de las dos
     auditorías son su batería de prueba.
+* **Campos de la propuesta con nombres llanos (autor, 2026-10-14):** `old_string`, `new_string` o `reason`, en
+  lugar de `Topological_Grounding` e `Implementation_Block`. Antes del lanzamiento solo se limpia la jerga de
+  las descripciones y del README.
+* **Una intención por tarea y un registro después de escribir (revisión de otro agente, 2026-10-14):** una sola
+  llamada declara la intención y el motivo de una tarea, y un hook `PostToolUse` registra cada escritura con su
+  diff, enlazada a esa intención. Da el mismo «por qué» sin emitir dos veces el contenido y sin el incentivo a
+  escribir donde no queda acta (A30).
 * **Plantilla de script para los tests (autor, 2026-10-07):** llevar la verificación de A15 (la fase
   roja en el commit base y la verde en el final, ejecutadas por código y no declaradas) a una
   plantilla de script reutilizable que compruebe de forma determinista la reproducibilidad (la misma
@@ -630,7 +642,5 @@ Vienen de la memoria de la sesión de Traianus y una sesión nueva aquí no las 
 
 ## Cómo empezar la sesión nueva
 
-1. Abrir Claude Code con `/Users/test/Documents/Actuarii` como carpeta. `CLAUDE.md` carga
-   `AGENTS.md` y este plan.
-2. Leer el anuncio de la sesión: el sandbox tiene que estar activo y el hook de integridad instalado.
-3. Primer mensaje: «Lee el traspaso de `docs/PLAN.md` y empieza la fase 2.»
+Desde el 2026-10-14 (autor), `CLAUDE.md` carga `AGENTS.md`, `docs/ESTADO.md` y el índice de la memoria; este
+plan ya no se carga en cada sesión y se lee cuando hace falta. Cómo empezar está en `docs/ESTADO.md`.
