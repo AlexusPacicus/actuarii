@@ -5,6 +5,84 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-14 (noche)
+
+Tercera sesión del miércoles. Se cerró la sonda del `denyWrite`; se escribió el ROADMAP, que el autor corrigió
+y decidió entero, y se reescribió la historia sin la información personal y con el correo *noreply* de GitHub,
+en un repositorio nuevo. Ningún cambio de código. Suite: 3278 en verde.
+
+**Hecho**
+* **La sonda del `denyWrite`:** desde `Bash`, abrir `.claude/memory/MEMORY.md` para añadir cero bytes da
+  `operation not permitted`, y el sha queda igual. El hueco de la memoria queda cerrado en una sesión con los
+  ajustes nuevos.
+* **`docs/ROADMAP.md`** (`2891230`, `b66417b`):
+  * los criterios de la v0.1, V1–V9, cada uno con su comprobación, su corte y lo que pasa si no se cumple el 25;
+  * cómo se cuenta la señal, la puerta del 22 de noviembre y los criterios de la v0.2;
+  * las decisiones D1–D7, todas tomadas.
+* **La memoria de Claude Code, comprobada** con su documentación (code.claude.com/docs/en/memory, con el
+  navegador integrado) y con las transcripciones:
+  * `autoMemoryEnabled: false` la apaga en un proyecto, y `autoMemoryDirectory` la mueve, pero solo con una
+    ruta absoluta;
+  * la memoria normal de Actuarii está vacía desde el 5 de octubre;
+  * de 31 transcripciones de subagentes, ninguna recibió la memoria automática, y 6 recibieron el índice de
+    `.claude/memory/` a través de `CLAUDE.md`.
+* **La historia, reescrita** con `git filter-repo`, sobre todas las ramas y etiquetas locales:
+  * se quitó la información personal que fijó el autor: nueve líneas de cuatro ficheros en la versión actual,
+    y diez variantes a lo largo de la historia. La lista no se guarda en el repositorio;
+  * el correo de los 288 commits pasa a la dirección *noreply* de GitHub;
+  * antes, un ensayo en copias desechables: ningún término queda en la historia, el diff es solo de esas
+    líneas y la suite pasa;
+  * la pasada real la lanzó el autor, después de guardar una copia local de la carpeta entera;
+  * las 120 citas de commits de `docs/` se rehicieron con el mapa de `filter-repo` (`b837223`). Cada una apunta
+    al commit con el mismo asunto que antes. La cita del HEAD de Traianus (`49d2434`) queda como estaba;
+  * en GitHub, el repositorio viejo pasa a `actuarii-antiguo` y el autor empujó `main` a un `actuarii` nuevo,
+    privado. Solo `main`: las ramas y las etiquetas viejas se quedan en local.
+
+**Decidido (autor)**
+* **D1, el acta en git:** compara el contenido del commit con el que dejaron las escrituras con recibo y lo
+  dice («coincide» o «cambió fuera del canal»). El resultado esperado lo calcula la puerta que ya corre antes
+  de cada escritura, sin hook `PostToolUse`. La puerta pasa a escribir en la base y, si no puede guardar,
+  deniega.
+* **D2, la historia:** se quita lo personal que fijó el autor, también de la historia, con una frase de
+  `.claude/memory/autor.md`. Va en un repositorio nuevo, porque GitHub sirve los commits viejos por su hash.
+* **D3:** el primer límite del README, justo debajo de la frase, es A30.
+* **D4:** A33 y A34 no se cuentan a Anthropic. Son comportamiento documentado de Claude Code; el README los
+  describe con su versión, como límites del kit.
+* **D5:** `autoMemoryEnabled: false` en todo el proyecto, no solo para las revisiones ciegas, que ya no reciben
+  ninguna de las dos memorias. Va en un contrato pequeño, después del instalador, con la corrección de la línea
+  de `MEMORY.md` que dice que la opción (c) la deniega. La memoria bajo código se publica el 25.
+* **D6:** el marco del README explica por qué las reglas viven fuera del modelo; la seguridad frente a un
+  agente adversario es la v0.2.
+* **D7:** las propuestas de V2–V9 y de §3–§5 del ROADMAP, aceptadas.
+* El correo de los commits, la dirección *noreply* de GitHub, también en la configuración global de git.
+* `git filter-repo` en una copia desechable antes de la pasada real (AGENTS 4.3: Python no commiteado).
+
+**Salió mal y se aprendió**
+* **El ensayo no reproducía el estado.** `cp -R` no conserva las fechas, así que `filter-repo` tomó por reciente
+  la marca de la extracción del 5 de octubre y continuó aquella pasada sin preguntar. El mapa de las copias no
+  era el de la pasada real: el primer script rehízo por error el hash de Traianus, y su comprobación no habría
+  visto una cita sin mapa. Lo destapó la pregunta de la pasada real. El script se reforzó: cada hash se
+  resuelve contra la copia de seguridad y se busca exacto en el mapa. Además, cada cita se comprobó por su
+  asunto. Lección: un ensayo reproduce el estado que lee la herramienta, no solo la orden.
+* **La orden que se dio al autor no avisaba de la pregunta de `filter-repo`,** y se contestó con una tecla de
+  flecha. `filter-repo` toma como «no» todo lo que no es `y`, que aquí era lo correcto. Lección: antes de dar
+  una orden interactiva, leer en el código de la herramienta qué pregunta y qué hace con cada respuesta.
+* El borrador del ROADMAP salió de 211 líneas, no de una o dos páginas como se dijo.
+* El resumen del cierre contó solo esta sesión; el autor recordó que el miércoles tuvo tres. `ESTADO.md`
+  recoge el día entero.
+
+**Siguiente**
+* **El autor:** la CI en verde del repositorio nuevo; después, borrar `actuarii-antiguo` y, cuando esté
+  conforme, la copia local de antes de reescribir. El push de este cierre.
+* **Jueves 15 y viernes 16: el instalador en una orden (V2), en dos contratos.**
+  * El primero lleva lo que el kit necesita en el destino: el perímetro, `includeGitInstructions`, el
+    `denyWrite` y `pydantic`.
+  * El segundo, las preguntas y el `commit-msg` con D1. Cambia la puerta, así que ordena sus ediciones según
+    AGENTS 6.5. Tiene que buscar los tests que fijan que la puerta abre la base solo para leer.
+* **Después del instalador:** el contrato de D5. El domingo 18, la medida en macOS (V4).
+* **Lunes 19:** la tabla «Resumen» de `CASES.md` (V5).
+* Disco: 14 GiB libres.
+
 ## 2026-10-14 (tarde)
 
 Segunda sesión del miércoles, después de reiniciar Claude Code. El validador con el motivo y el perímetro nuevo ya

@@ -2,9 +2,10 @@
 
 Lo que una sesión nueva necesita saber, y nada más. Se actualiza al cerrar cada sesión, junto con la entrada
 del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en `docs/PLAN.md`, que se lee
-cuando hace falta y no se carga en cada sesión (autor, 2026-10-14).
+cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
+puerta del 22 de noviembre y la v0.2 están en `docs/ROADMAP.md`.
 
-Actualizado: 2026-10-14.
+Actualizado: 2026-10-14, noche.
 
 ## La v0.1
 
@@ -15,7 +16,8 @@ Actualizado: 2026-10-14.
   propio (`docs/design/ENTORNO_PROPIO.md`). AGENTS.md §9 declara lo que la v0.1 no cubre.
 * **Publicación:** el 25 de octubre, esté como esté. El repositorio es privado hasta entonces.
 * **Señal de éxito, comprometida:** en las cuatro semanas siguientes, 5 personas ajenas que lo instalan o
-  abren una issue, o una conversación de trabajo. Si no llega, se revisa con datos, sin reencuadrar.
+  abren una issue, o una conversación de trabajo. Si no llega, se revisa con datos, sin reencuadrar. Cómo se
+  cuenta, en el ROADMAP §3.
 
 ## Dónde estamos
 
@@ -24,41 +26,43 @@ Actualizado: 2026-10-14.
   * el perímetro de permisos;
   * A20, A31 y A34;
   * AGENTS.md v2.2.0;
-  * cada ruta gobernada con su `denyWrite`, sin exenciones (el hueco de `.claude/memory/`).
+  * cada ruta gobernada con su `denyWrite`, sin exenciones, comprobado con una sonda;
+  * el ROADMAP, con D1–D7 decididas;
+  * la historia reescrita sin la información personal y con el correo *noreply*, en un repositorio nuevo
+    de GitHub (V8).
 
-  Suite y CI en verde. El detalle, con sus commits, en el DEVLOG.
-* Pendiente, en este orden:
-  1. **La sonda del `denyWrite`:** desde `Bash`, abrir `.claude/memory/MEMORY.md` para escribir tiene que salir
-     denegado. Sirve una orden que añada cero bytes y compare el sha antes y después.
-  2. **El ROADMAP** (`docs/ROADMAP.md`), decidido por el autor el 2026-10-14. Lo redacta Claude y lo corrige el
-     autor antes de commitearlo, antes de los contratos del instalador. Recoge los criterios de la v0.1 (cada
-     uno con su comprobación y lo que pasa si no se cumple el 25), la ventana de señal y cómo se cuenta, la
-     puerta del 22 de noviembre y los criterios de la v0.2.
-  3. **El instalador en una orden** (dos contratos). Lleva a los destinos el perímetro nuevo, el motivo e
-     `includeGitInstructions`, y reescribe `INSTALL.md`.
-  4. **El acta en git** (autor, 2026-10-14): un hook `commit-msg` añade al mensaje de cada commit los motivos
-     de los recibos de sus ficheros gobernados. Solo registra, no bloquea. Entra con el instalador, que lo
-     instala.
-  5. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md`** hasta A35: lo corregido y lo declarado.
-     Pasa a ser la sección de límites del README.
-  6. **El README** en inglés, con el caso de Traianus y la instalación.
-  7. **Antes de abrir el repositorio:** revisar la historia (la información personal de `docs/PLAN.md`, las
-     ramas viejas de Traianus) y el texto para HN y Reddit.
+  Suite en verde (3278). El detalle, con sus commits, en el DEVLOG.
+* Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
+  1. **El instalador en una orden (V2),** en dos contratos. El primero lleva lo que el kit necesita en el
+     destino: el perímetro, `includeGitInstructions`, el `denyWrite` y `pydantic`. El segundo, las preguntas
+     y el acta en git. Reescribe `INSTALL.md`.
+  2. **El acta en git (V3, D1),** en el segundo contrato. Un hook `commit-msg` añade los motivos de los recibos
+     y dice si el contenido del commit coincide con el que dejaron las escrituras con recibo. El resultado
+     esperado lo calcula la puerta, que pasa a escribir en la base y deniega si no puede guardarlo.
+  3. **La memoria automática de Claude Code, apagada (D5):** `autoMemoryEnabled: false`, con su test y la
+     corrección de la línea de `.claude/memory/MEMORY.md` sobre la opción (c). Va en un contrato pequeño.
+  4. **La medida en macOS (V4),** del autor, como tarde el domingo 18.
+  5. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
+     límites del README.
+  6. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6).
+  7. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
 
 ## Calendario hasta el 25
 
 | Cuándo | Qué |
 |---|---|
-| Miércoles 14 | El hueco de la memoria (hecho) |
-| Jueves 15 | El ROADMAP; después, el primer contrato del instalador |
+| Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
 | Jueves 15 y viernes 16 | El instalador con el acta en git; el README empieza el viernes |
+| Sábado 17 y domingo 18 | El contrato de la memoria; la medida en macOS (el autor) |
 | Lunes 19 | La tabla «Resumen» y la sección de límites |
 | Martes 20 a jueves 22 | El README |
-| Viernes 23 y sábado 24 | Revisión de la historia y texto para HN y Reddit |
+| Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
 | Domingo 25 | Publicar |
 
 ## Decisiones vigentes
 
+* Los criterios del ROADMAP no mueven la fecha del 25. Un cambio de criterio lo decide el autor y queda en el
+  DEVLOG con su motivo.
 * La seguridad frente a un agente adversario no es de esta versión. A19, A32, la opción (c) con A33 y A35
   pasan a la v0.2; A21, A23, A24, A25 y A28 quedan declarados en §9 sin corregir.
 * Los campos de la propuesta se renombran con nombres llanos en la v0.2. Antes del lanzamiento solo se
@@ -87,11 +91,16 @@ Actualizado: 2026-10-14.
   ser una copia vieja: el motivo se envía igual.
 * **Se commitea solo si `pytest` sale con 0,** comprobando su código de salida. Antes de una suite completa,
   se mira el espacio en disco.
-* **Sin atribución a Claude** en commits ni PR.
+* **Sin atribución a Claude** en commits ni PR. El correo de los commits es la dirección *noreply* de GitHub.
+* **La historia se reescribió el 2026-10-14:** los hashes de antes ya no existen, y las citas de `docs/` están
+  rehechas. El repositorio de GitHub es el nuevo; el viejo, `actuarii-antiguo`, se borra cuando la CI del
+  nuevo salga en verde.
 * **Python:** solo scripts commiteados, a través del shim; `pytest` por su propio punto de entrada.
 * **El DEVLOG,** al cerrar cada sesión, con la fecha del reloj y no la de la conversación.
 * **Las ideas que se salen del camino** se apuntan en el PLAN y esperan.
-* **La memoria del agente** es la de `.claude/memory/`, bajo código, con un recibo por escritura.
+* **La memoria del agente** es la de `.claude/memory/`, bajo código, con un recibo por escritura. Se publica
+  el 25: los recuerdos se escriben sabiéndolo. La memoria automática de Claude Code no se usa, y el contrato
+  de D5 la apaga.
 
 ## Cómo empezar una sesión
 
