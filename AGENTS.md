@@ -214,6 +214,11 @@ The enforcement above does not cover:
   `eval`, assembled interpreter paths, login shells that rebuild `PATH` and quoting nested more
   than one level pass it, and a quoted argument can read as an assignment. With the sandbox on, a
   way around it reaches neither the network nor the governed paths.
+* **Read-only commands that are not.** Some commands of the allow list of 7.1 write or start a
+  program through their own options, without a prompt: `sort -o` and `sort --compress-program`,
+  `uniq` with an output file, and `sed -n` with its `w` command and, in GNU `sed`, its `e` command,
+  which runs a shell command. With the sandbox on, they reach neither the network nor the governed
+  paths.
 * **No session gate.** Without `CLAUDE_ENV_FILE` the shim is not put on the `PATH`; the session
   hook says so on stderr.
 * **The session announcement** informs; it cannot block anything.
