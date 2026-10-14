@@ -5,6 +5,75 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-15
+
+Una sesión, el jueves, después de reiniciar Claude Code. El validador con el motivo y el perímetro nuevo ya
+rigen; los tres contratos que se quedan en la v0.1 están implementados y verificados, y AGENTS.md pasa a la
+v2.2.0. Suite: de 3166 a 3278 en verde. Sin push: lo lanza el autor.
+
+**Hecho**
+* **Al arrancar:** el servidor MCP nuevo exige el motivo. Lo comprobó una sonda sobre
+  `docs/probe-rationale.md`, que no existe. La base real se migró al primer uso y conserva sus 392 filas. El
+  esquema de `validate_proposal` que muestra la sesión es una copia vieja, sin `Rationale`; el servidor acepta
+  el campo igual.
+* `main` avanzado sin merge hasta `2fd0b9f`, el final de la cadena del motivo y del perímetro.
+* Las decisiones de hoy, anotadas en el PLAN (`d61b2c3`).
+* **A20** (`f06b826`): el `pre-commit` solo se escribe dentro del `.git` propio del destino. Son conflicto, sin
+  escribir nada: un `core.hooksPath` global o que sale del destino, un directorio de hooks del árbol de
+  trabajo, un *worktree* enlazado y un `.git` que es un fichero. Verificado: T1–T5 y X1 rojos, T6 y X2 de
+  guarda, suite 3177.
+* **A31** (`2f8a898`; contrato `024bd2f` y su ampliación `69f18a7`): la raíz entra en `sys.path` solo para
+  `import tools` y sale enseguida. Vale para los nueve scripts: los tres hooks, `commit_integrity.py`, el
+  validador, el instalador y los tres de auditoría. En los hooks va dentro del `try` que deniega. Verificado:
+  T1–T4, X3 y X4 rojos, T5, X1 y X2 de guarda, suite 3233.
+* **A34** (`6430ca8`; contrato `1f743b3` y `4f8e3d6`):
+  * el revisor ciego lleva `omitClaudeMd: true`, y los ajustes, `includeGitInstructions: false`;
+  * `build --lock` no pone el candado si falta alguno de los dos;
+  * la skill separa lo que se cumple de lo que solo se declara.
+  * Verificado: T1–T3, T5 y X1 rojos, T4 de guarda, suite 3278.
+* **AGENTS.md v2.2.0** (`8356518`):
+  * 5.1 dice lo que cumple la revisión ciega;
+  * 6.2 pierde su [enforced];
+  * §9 declara lo que deja acta (A30), el arranque de las puertas (A19, A32), las herramientas de ficheros
+    (A33), las credenciales (A35), los canales sin regla (A29), los enlaces (A26), lo que sigue recibiendo el
+    revisor (A34), y A21, A23, A24, A25 (en «Forged logs») y A28.
+
+**Decidido (autor)**
+* Se quedan A20, A31 y A34. A19, A32, la opción (c) con A33 y A35 pasan a la v0.2, declarados.
+* La 2b se cierra sin el caso (b); para el informe queda la tabla «Resumen» de `CASES.md`.
+* A21, A23, A24, A25 y A28 se declaran en §9, sin contrato.
+* El push, sí. Lo lanza el autor, porque el sandbox no deja salir a la red a `Bash`.
+
+**Salió mal y se aprendió**
+* **A31 se paró a medias.** Dos tests fijaban las importaciones de los scripts y el contrato no los listaba:
+  es la segunda vez en dos días que falla AGENTS 6.4. Lección: además de los tests que construyen un formato y
+  de los que fijan un comportamiento, hay que buscar los que leen el código como texto (las importaciones, el
+  patrón de una cabecera). Antes de A34 se buscó así, y apareció `test_root_off_sys_path.py` (D13).
+* **La ampliación de A31 se commiteó después del resultado, no antes.** La copia de trabajo tenía el trabajo
+  del implementador a medias, y la suite no pasaba. Es una desviación de AGENTS 8.6, anotada aquí.
+* **Al retomar la conversación, el esquema de la herramienta que ve la sesión es una copia vieja.** La sonda
+  lo resolvió, y los contratos lo avisan: D10 de A20, D8 de A31 y D12 de A34.
+* **Un selector `paragraph` de `context_pack` no encuentra un elemento de lista que no abre bloque.** Se usó
+  un rango de líneas.
+* **El candado de A34 lee la cabecera del revisor línea a línea, no como YAML.** Lo encontró su
+  implementador, y queda declarado en §9.
+
+**Siguiente**
+* El push: 17 commits.
+* **La sesión siguiente arranca sin la foto de git** (`includeGitInstructions: false`); el anuncio de la
+  sesión sigue diciendo lo que rige.
+* **Viernes 16: los dos contratos del instalador en una orden.**
+  * Sin A35.
+  * Llevan a los destinos el perímetro nuevo, el motivo e `includeGitInstructions`: sin él, `build --lock` no
+    pone el candado en un destino (D5 de A34).
+  * Reescriben `INSTALL.md`, con el entorno fuera del repositorio.
+  * Después, la nueva medida en macOS.
+* La tabla «Resumen» de `CASES.md` hasta A35, con lo corregido y lo declarado, para el informe del lunes 19.
+* `examples/traianus/skills/instrument-audit/SKILL.md` sigue diciendo «Blind by construction».
+* Sin la opción (c), la memoria normal de Claude Code sigue abierta; falta decidir cómo se evita o se declara.
+* El README.
+* Disco: 6,0 GiB libres.
+
 ## 2026-10-14
 
 Una sesión, abierta la noche del 13 después de la entrada de ese día y seguida el 14. Empezó con una revisión
