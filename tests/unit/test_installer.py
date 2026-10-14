@@ -72,6 +72,23 @@ def precommit_path(target, home):
     return target / done.stdout.strip()
 
 
+def run_git(home, cwd, *arguments):
+    done = run(["git", *arguments], cwd=cwd, env=environment(home), timeout=60.0)
+    assert done.returncode == 0, done.stderr
+
+
+def make_linked_worktree(main, path, home):
+    run_git(home, main, *GIT_IDENTITY, "commit", "-q", "--allow-empty", "-m", "base")
+    run_git(home, main, "worktree", "add", "-q", str(path), "-b", "linked")
+    return path.resolve()
+
+
+def make_repository_with_git_directory_elsewhere(path, git_directory, home):
+    path.mkdir(parents=True)
+    run_git(home, path, "init", "-q", "--separate-git-dir", str(git_directory), str(path))
+    return path.resolve()
+
+
 def snapshot(root):
     """Every entry under root with its kind, mode and content; of .git only the hooks directory."""
     entries = {}
@@ -193,14 +210,112 @@ def test_a_fresh_install_puts_the_pre_commit_hook_where_git_reports_it(target, h
     assert stat.S_IMODE(os.lstat(hook).st_mode) == 0o755
 
 
-def test_the_pre_commit_hook_goes_to_the_hooks_path_that_git_is_configured_with(target, home):
-    done = run(["git", "config", "core.hooksPath", "custom-hooks"], cwd=target, env=environment(home), timeout=60.0)
-    assert done.returncode == 0, done.stderr
+def assert_hook_conflict(done, *needles):
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert done.stderr.startswith(PREFIX)
+    for needle in needles:
+        assert needle in done.stderr, needle
+
+
+@pytest.mark.parametrize("options", [(), ("--dry-run",)], ids=["real-run", "dry-run"])
+def test_an_absolute_global_hooks_path_outside_the_target_is_a_conflict_and_nothing_is_written(tmp_path, target, home, options):
+    shared = tmp_path / "shared-hooks"
+    shared.mkdir()
+    (home / ".gitconfig").write_text(f"[core]\n\thooksPath = {shared}\n", encoding="utf-8")
+    before = snapshot(target)
+    done = install(target, home, *options)
+    assert_hook_conflict(done, "core.hooksPath", str(shared.resolve() / "pre-commit"))
+    assert snapshot(target) == before
+    assert not any(shared.iterdir())
+
+
+def test_a_relative_hooks_path_that_leaves_the_target_is_a_conflict_and_nothing_is_written(tmp_path, target, home):
+    shared = tmp_path / "shared-hooks"
+    shared.mkdir()
+    run_git(home, target, "config", "core.hooksPath", "../shared-hooks")
+    before = snapshot(target)
+    done = install(target, home)
+    assert_hook_conflict(done, "core.hooksPath", "../shared-hooks", str(shared.resolve() / "pre-commit"))
+    assert snapshot(target) == before
+    assert not any(shared.iterdir())
+
+
+def test_a_hooks_path_inside_the_working_tree_is_a_conflict_and_nothing_is_written(target, home):
+    run_git(home, target, "config", "core.hooksPath", "custom-hooks")
+    before = snapshot(target)
+    done = install(target, home)
+    assert_hook_conflict(done, "core.hooksPath", "custom-hooks")
+    assert snapshot(target) == before
+    assert not (target / "custom-hooks").exists()
+
+
+def test_a_hooks_path_that_goes_through_the_git_directory_and_back_out_is_a_conflict_and_nothing_is_written(target, home):
+    run_git(home, target, "config", "core.hooksPath", ".git/../custom-hooks")
+    before = snapshot(target)
+    done = install(target, home)
+    assert_hook_conflict(done, "core.hooksPath", str(target / "custom-hooks" / "pre-commit"))
+    assert snapshot(target) == before
+    assert not (target / "custom-hooks").exists()
+
+
+def test_a_linked_worktree_as_target_is_a_conflict_and_nothing_is_written_in_it_nor_in_the_main_repository(tmp_path, target, home):
+    main = target
+    worktree = make_linked_worktree(main, tmp_path / "worktree", home)
+    before_worktree, before_main = snapshot(worktree), snapshot(main)
+    done = install(worktree, home)
+    assert_hook_conflict(done, "git directory", str(main / ".git" / "hooks" / "pre-commit"))
+    assert snapshot(worktree) == before_worktree
+    assert snapshot(main) == before_main
+    assert not (main / ".git" / "hooks" / "pre-commit").exists()
+
+
+def test_a_target_whose_git_directory_is_elsewhere_is_a_conflict_and_nothing_is_written(tmp_path, home):
+    git_directory = tmp_path / "separate.git"
+    separate = make_repository_with_git_directory_elsewhere(tmp_path / "separate", git_directory, home)
+    assert separate.joinpath(".git").is_file()
+    before = snapshot(separate)
+    done = install(separate, home)
+    assert_hook_conflict(done, "git directory", str(git_directory.resolve() / "hooks" / "pre-commit"))
+    assert snapshot(separate) == before
+    assert not (git_directory / "hooks" / "pre-commit").exists()
+
+
+@pytest.mark.parametrize("configured", [lambda target: ".git/custom-hooks", lambda target: str(target / ".git" / "custom-hooks")],
+                         ids=["relative", "absolute"])
+def test_the_pre_commit_hook_goes_to_a_hooks_path_inside_the_git_directory_and_a_second_run_changes_nothing(target, home, configured):
+    run_git(home, target, "config", "core.hooksPath", configured(target))
     assert install(target, home).returncode == 0
-    hook = target / "custom-hooks" / "pre-commit"
+    hook = target / ".git" / "custom-hooks" / "pre-commit"
     assert hook.read_bytes() == PRE_COMMIT_SOURCE.read_bytes()
-    assert os.access(hook, os.X_OK)
+    assert stat.S_IMODE(os.lstat(hook).st_mode) == 0o755
     assert precommit_path(target, home) == hook
+    modified = os.lstat(hook).st_mtime_ns
+    second = install(target, home)
+    assert second.returncode == 0, second.stderr
+    assert "nothing to do" in second.stdout
+    assert os.lstat(hook).st_mtime_ns == modified
+
+
+def test_a_hooks_path_that_reaches_the_git_directory_through_a_link_is_accepted(tmp_path, target, home):
+    alias = tmp_path / "alias"
+    alias.symlink_to(target)
+    run_git(home, target, "config", "core.hooksPath", str(alias / ".git" / "custom-hooks"))
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    assert (target / ".git" / "custom-hooks" / "pre-commit").read_bytes() == PRE_COMMIT_SOURCE.read_bytes()
+
+
+@pytest.mark.parametrize("where", ["inside", "outside"])
+def test_a_git_hooks_directory_that_is_a_link_is_still_a_conflict_and_nothing_is_written(tmp_path, target, home, where):
+    hooks = target / ".git" / "hooks"
+    real = target / ".git" / "real-hooks" if where == "inside" else tmp_path / "elsewhere"
+    hooks.rename(real)
+    hooks.symlink_to(real)
+    before = snapshot(target)
+    done = install(target, home)
+    assert_hook_conflict(done, ".git/hooks")
+    assert snapshot(target) == before
+    assert not (real / "pre-commit").exists()
 
 
 def test_a_fresh_install_ignores_the_data_directory(target, home):

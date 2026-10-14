@@ -15,7 +15,9 @@ and nothing is written. It receives, from the clone's working tree:
 * .actuarii.json, when absent, with an example configuration;
 * .claude/settings.json, with the clone's own `hooks` and a strict `sandbox`, merged into what is there;
 * .mcp.json, with the clone's boundary-validator server, merged into what is there;
-* the pre-commit hook, where `git rev-parse --git-path hooks/pre-commit` says it goes;
+* the pre-commit hook, where `git rev-parse --git-path hooks/pre-commit` says it goes, provided that is inside the
+  target's own `.git` directory: a hooks path anywhere else (a global or escaping core.hooksPath, a hooks directory of
+  the working tree, the git directory of a linked worktree or of a submodule) is a conflict;
 * a `.data/` line in .gitignore.
 
 Everything is checked before the first write. A destination that already holds exactly what the kit needs is
@@ -327,12 +329,35 @@ def plan_json(plan: Plan, target: Path, label: str, merge) -> None:
         plan.writes.append(Write(label, destination, content=dumps(merged)))
 
 
+def hook_problem(target: Path, destination: Path) -> str:
+    """Why the hook must not go to the destination, or an empty string when it may: only inside the target's own .git."""
+    own = target / ".git"
+    resolved = Path(os.path.realpath(destination.parent)) / destination.name
+    own_git_directory = Path(os.path.realpath(git(["rev-parse", "--absolute-git-dir"], target))) == own
+    if own_git_directory and own in resolved.parents:
+        return ""
+    hooks_path = git(["config", "--default", "", "--get", "core.hooksPath"], target)
+    if hooks_path:
+        cause = (f"core.hooksPath ({hooks_path}) puts the hooks there; unset it, "
+                 "or wire the kit's pre-commit into those hooks by hand")
+    else:
+        cause = (f"the git directory of the target is not {own} (a linked worktree, or a git directory elsewhere, "
+                 "as in a submodule or --separate-git-dir), so its hooks belong to another repository; "
+                 "install from the main working tree")
+    return f"the hook would go to {resolved}, outside {own}: {cause}"
+
+
 def plan_pre_commit(plan: Plan, target: Path) -> None:
     shown = git(["rev-parse", "--git-path", HOOK_GIT_PATH], target)
     if not shown:
         raise Problem("git did not say where the pre-commit hook goes")
     destination = target / shown
-    if not blocked(plan, target, destination):
+    if blocked(plan, target, destination):
+        return
+    problem = hook_problem(target, destination)
+    if problem:
+        plan.conflict(shown, problem)
+    else:
         plan_file(plan, shown, destination, (CLONE / PRE_COMMIT_SOURCE).read_bytes(), 0o755)
 
 
