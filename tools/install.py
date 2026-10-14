@@ -79,7 +79,6 @@ STRICT = {
     "allowUnsandboxedCommands": False,
     "autoAllowBashIfSandboxed": False,
 }
-SELF_PROTECTED = (".claude/**", ".mcp.json")
 AUDIT_DB_ENTRY = "./.data/boundary_validator_audit.db"
 CONFIG_ENTRY = "./" + CONFIG_NAME
 
@@ -201,8 +200,7 @@ def clone_hooks_and_server() -> tuple[dict, dict]:
 
 
 def deny_write_entries() -> list[str]:
-    governed = [path for path in EXAMPLE_CONFIG["governed_paths"] if path not in SELF_PROTECTED]
-    entries = {"./" + path.removesuffix("/**") for path in governed}
+    entries = {"./" + path.removesuffix("/**") for path in EXAMPLE_CONFIG["governed_paths"]}
     return sorted(entries | {CONFIG_ENTRY, AUDIT_DB_ENTRY})
 
 

@@ -17,7 +17,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SETTINGS = REPO_ROOT / ".claude" / "settings.json"
 CONFIG = REPO_ROOT / ".actuarii.json"
 
-SELF_PROTECTED = (".claude/**", ".mcp.json")
 STRICT = {
     "enabled": True,
     "failIfUnavailable": True,
@@ -35,8 +34,8 @@ def deny_entry(governed_path):
 
 def expected_deny_write(config):
     """The paths of the configuration, the configuration file and the registry (always governed) and the
-    audit database; `.claude/**` and `.mcp.json` are protected by the sandbox itself."""
-    governed = [path for path in config["governed_paths"] if path not in SELF_PROTECTED]
+    audit database; every governed path has its entry, none is exempt."""
+    governed = list(config["governed_paths"])
     if config["contract_registry"] is not None:
         governed.append(config["contract_registry"])
     return sorted({deny_entry(path) for path in governed} | {CONFIG_ENTRY, AUDIT_DB})
@@ -180,8 +179,12 @@ def test_a_governed_path_removed_from_the_configuration_leaves_an_unexplained_en
 def test_deny_entries_are_dot_slash_paths_without_the_trailing_glob():
     config = {"governed_paths": ["tests/**", "AGENTS.md", ".claude/**", ".mcp.json", "tools/**"],
               "contract_registry": None}
-    assert expected_deny_write(config) == sorted(["./tests", "./AGENTS.md", "./tools", CONFIG_ENTRY, AUDIT_DB])
+    assert expected_deny_write(config) == sorted(
+        ["./tests", "./AGENTS.md", "./.claude", "./.mcp.json", "./tools", CONFIG_ENTRY, AUDIT_DB]
+    )
 
 
-def test_the_configuration_read_lists_the_two_paths_the_sandbox_protects_by_itself():
-    assert all(path in committed_config()["governed_paths"] for path in SELF_PROTECTED)
+def test_every_governed_path_of_the_committed_configuration_has_its_deny_write_entry():
+    deny_write = committed_settings()["sandbox"]["filesystem"]["denyWrite"]
+    missing = [path for path in committed_config()["governed_paths"] if deny_entry(path) not in deny_write]
+    assert missing == []

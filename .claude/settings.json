@@ -119,6 +119,8 @@
         "./CLAUDE.md",
         "./tests",
         "./tools",
+        "./.claude",
+        "./.mcp.json",
         "./opencode.jsonc",
         "./pyproject.toml",
         "./.actuarii.json",
