@@ -10,7 +10,11 @@ commit, the record, the procedure, the base documents, the denied prefixes, each
 unresolved citations. Without a configured review, or with an invalid configuration, nothing is built.
 
 While the lock exists, tools/hooks/confine_review_reads.py confines Read, Grep and Glob to the
-package, so blindness holds by construction.
+package. `build --lock` first checks that the reviewer will also start without the project's CLAUDE.md files,
+memory and git snapshot, by configuration: its definition (.claude/agents/blind-reviewer.md) has exactly the keys
+name, description, tools (Read, Grep, Glob) and omitClaudeMd (true), and includeGitInstructions is false in the first
+of .claude/settings.local.json, .claude/settings.json and ~/.claude/settings.json that sets it. Otherwise it writes
+one line per unmet guarantee to stderr, writes neither the package nor the lock, and exits 1.
 
     build_review_package.py build --record <records>/<record>.md --commit <sha> --out <dir> --lock
     build_review_package.py unlock
@@ -39,6 +43,15 @@ from tools import project_config  # noqa: E402
 from tools.project_config import ReviewConfig  # noqa: E402
 
 LOCK_PATH = REPO_ROOT / ".data" / "review_lock.json"
+REVIEWER_PATH = REPO_ROOT / ".claude" / "agents" / "blind-reviewer.md"
+SETTINGS_PATHS = (
+    REPO_ROOT / ".claude" / "settings.local.json",
+    REPO_ROOT / ".claude" / "settings.json",
+    Path.home() / ".claude" / "settings.json",
+)
+REVIEWER_FIELDS = {"name": "blind-reviewer", "tools": "Read, Grep, Glob", "omitClaudeMd": "true"}
+GIT_KEY = "includeGitInstructions"
+FRONT_MATTER_LINE = re.compile(r"([A-Za-z][A-Za-z0-9_-]*):(?: +(.*))?")
 ALWAYS_DENIED = (".data/",)
 PATH_RE = re.compile(r"(?<![\w./-])[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.*-]+)+")
 
@@ -117,6 +130,63 @@ def clear_lock(lock_path: Path) -> None:
     lock_path.unlink(missing_ok=True)
 
 
+def parse_front_matter(text: str) -> dict[str, str]:
+    lines = text.splitlines()
+    if not lines or lines[0] != "---" or "---" not in lines[1:]:
+        raise ValueError("it does not start with a front matter between two --- lines")
+    fields: dict[str, str] = {}
+    for number, line in enumerate(lines[1:lines.index("---", 1)], start=2):
+        match = FRONT_MATTER_LINE.fullmatch(line)
+        if match is None:
+            raise ValueError(f"line {number} is not key: value")
+        key = match.group(1)
+        if key in fields:
+            raise ValueError(f"line {number} repeats the key {key}")
+        fields[key] = (match.group(2) or "").strip()
+    return fields
+
+
+def reviewer_gaps(path: Path) -> list[str]:
+    try:
+        fields = parse_front_matter(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return [f"{path}: the blind reviewer's definition does not exist"]
+    except (OSError, ValueError) as exc:
+        return [f"{path}: the blind reviewer's definition cannot be read as front matter ({exc})"]
+    gaps = [f"{path}: key {key} is not allowed in the blind reviewer's definition: it can add context or tools"
+            for key in fields if key != "description" and key not in REVIEWER_FIELDS]
+    gaps += [f"{path}: key {key} must be {value}"
+             for key, value in REVIEWER_FIELDS.items() if fields.get(key) != value]
+    if not fields.get("description"):
+        gaps.append(f"{path}: key description must be set")
+    return gaps
+
+
+def git_snapshot_gaps(paths: tuple[Path, ...]) -> list[str]:
+    unreadable: list[str] = []
+    values: list[tuple[Path, object]] = []
+    for path in paths:
+        try:
+            settings = json.loads(path.read_text(encoding="utf-8"))
+        except (FileNotFoundError, NotADirectoryError):
+            continue
+        except (OSError, ValueError) as exc:
+            unreadable.append(f"{path}: {GIT_KEY} cannot be checked, the file cannot be read as JSON ({exc})")
+            continue
+        if not isinstance(settings, dict):
+            unreadable.append(f"{path}: {GIT_KEY} cannot be checked, the file is not a JSON object")
+        elif GIT_KEY in settings:
+            values.append((path, settings[GIT_KEY]))
+    if unreadable:
+        return unreadable
+    if not values:
+        return [f"{GIT_KEY} must be false and none of {', '.join(str(path) for path in paths)} sets it"]
+    path, value = values[0]
+    if value is False:
+        return []
+    return [f"{path}: key {GIT_KEY} must be false, it is {json.dumps(value)}"]
+
+
 def git_reader(commit: str) -> Reader:
     def read(path: str) -> bytes | None:
         spec = f"{commit}:{path}"
@@ -158,6 +228,10 @@ def main(argv: list[str]) -> int:
         return 0
     review = _configured_review()
     if review is None:
+        return 1
+    gaps = [*reviewer_gaps(REVIEWER_PATH), *git_snapshot_gaps(SETTINGS_PATHS)] if args.lock else []
+    if gaps:
+        sys.stderr.write("".join(f"{gap}\n" for gap in gaps))
         return 1
     selection = select_files(args.record, git_reader(args.commit), review)
     write_package(args.out, selection, args.commit, args.record, review)

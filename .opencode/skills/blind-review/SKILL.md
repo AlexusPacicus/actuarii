@@ -58,10 +58,25 @@ Identify the phase first: a record whose code does not exist yet is reviewed in 
 
 - **Read-only.** Never fix the record or the code yourself: report; the author changes it; the
   review runs again.
-- **Blind by construction** (Claude Code): the package is built by
-  `tools/audit/build_review_package.py build --lock` from the `review` key of `.actuarii.json`;
-  while the lock is set, `tools/hooks/confine_review_reads.py` denies every Read, Grep and Glob
-  outside the package. The caller clears the lock (`unlock`) when the verdict is in.
+- **What holds** (Claude Code), by configuration and in code:
+  - the package is built by `tools/audit/build_review_package.py build --lock` from the `review` key of
+    `.actuarii.json`; while the lock is set, `tools/hooks/confine_review_reads.py` denies every Read, Grep
+    and Glob outside the package. The caller clears the lock (`unlock`) when the verdict is in;
+  - the reviewer's definition sets `omitClaudeMd: true` and has no `memory`, skills, MCP servers or hooks,
+    so it starts without the project's `CLAUDE.md` files and without a memory of its own;
+  - `includeGitInstructions` is false in the settings, so no agent of the session gets the git snapshot;
+  - `build --lock` refuses, and writes neither the package nor the lock, unless that definition and that
+    setting are in place.
+- **What is declared, not enforced:**
+  - the delegation message, which the executing agent writes: nothing checks that it states no expected
+    result and no prior result;
+  - a managed-policy `CLAUDE.md`, which `omitClaudeMd` does not drop;
+  - Claude Code versions before 2.1.271, which ignore `omitClaudeMd` without an error.
+
+  If any of them puts an expected or a prior result in front of the reviewer, the review is not blind: the
+  reviewer says so in the blindness statement and stops.
+- **Audit rules live in the package.** A lesson from a review becomes a governed change to the procedure,
+  approved by the author; it is never a note in the reviewer's memory.
 - **No code execution** of any kind. The review is done by reading.
 - **No judgement of results.** If a result exists already, the review is late: say so in the
   verdict.

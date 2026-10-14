@@ -2,6 +2,7 @@
 name: instrument-auditor
 description: Blind, read-only reviewer of instrument audit records (step 2(a) of docs/methodology/METHODOLOGY.md). Use when an audit record under docs/methodology/instrument-audit/ needs a phase 1 or phase 2 review. Receives the record path, phase, commit and git gate facts from the caller; returns a PASS/CHANGES verdict with blocking and non-blocking items.
 tools: Read, Grep, Glob
+omitClaudeMd: true
 ---
 
 You review one instrument audit record, blind to the hypothesis it serves. Follow the procedure

@@ -9,6 +9,7 @@ import ast
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -219,8 +220,51 @@ def test_lock_round_trip(tmp_path):
 # the builder reads the configuration of the working tree when it builds
 
 
+REVIEWER_TEXT = (
+    "---\n"
+    "name: blind-reviewer\n"
+    "description: Blind, read-only reviewer: it changes no file.\n"
+    "tools: Read, Grep, Glob\n"
+    "omitClaudeMd: true\n"
+    "---\n"
+    "\n"
+    "You review one record.\n"
+)
+GIT_KEY = "includeGitInstructions"
+
+
+def _put(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(value if isinstance(value, str) else json.dumps(value), encoding="utf-8")
+
+
 @pytest.fixture
-def cli(monkeypatch, tmp_path):
+def blind(monkeypatch, tmp_path):
+    """A compliant reviewer's definition and project settings; the local and the user settings are absent."""
+    place = SimpleNamespace(
+        reviewer=tmp_path / "blind" / "agents" / "blind-reviewer.md",
+        local=tmp_path / "blind" / "project" / "settings.local.json",
+        project=tmp_path / "blind" / "project" / "settings.json",
+        user=tmp_path / "blind" / "user" / "settings.json")
+    _put(place.reviewer, REVIEWER_TEXT)
+    _put(place.project, {GIT_KEY: False})
+    monkeypatch.setattr(build_review_package, "REVIEWER_PATH", place.reviewer, raising=False)
+    monkeypatch.setattr(
+        build_review_package, "SETTINGS_PATHS", (place.local, place.project, place.user), raising=False)
+    return place
+
+
+def _refused(cli, tmp_path, capsys, path, key=None):
+    assert cli("--lock") == 1
+    lines = capsys.readouterr().err.splitlines()
+    assert len(lines) == 1, lines
+    assert str(path) in lines[0] and (key is None or key in lines[0])
+    assert not (tmp_path / "pkg").exists()
+    assert not (tmp_path / "lock").exists()
+
+
+@pytest.fixture
+def cli(monkeypatch, tmp_path, blind):
     monkeypatch.setattr(build_review_package, "LOCK_PATH", tmp_path / "lock" / "review_lock.json")
     monkeypatch.setattr(build_review_package, "git_reader", lambda commit: _repo())
 
@@ -238,6 +282,157 @@ def test_building_from_the_configuration_writes_the_package_and_the_lock(config_
     assert manifest["procedure"] == PROCEDURE and manifest["record"] == RECORD
     assert (tmp_path / "lock" / "review_lock.json").exists()
     assert "review lock set" in capsys.readouterr().out
+
+
+# the lock is refused unless the review is blind by configuration: no CLAUDE.md, no memory, no git snapshot
+
+
+def _without(line):
+    return REVIEWER_TEXT.replace(line + "\n", "")
+
+
+def _with(line):
+    return REVIEWER_TEXT.replace("omitClaudeMd: true\n", "omitClaudeMd: true\n" + line + "\n")
+
+
+REVIEWER_DEFECTS = {
+    "missing-file": (None, None),
+    "no-front-matter": ("You review one record.\n", None),
+    "front-matter-never-closed": (REVIEWER_TEXT.replace("---\n\n", "\n"), None),
+    "a-line-that-is-not-key-value": (_with("just a sentence"), None),
+    "a-repeated-key": (_with("tools: Read, Grep, Glob"), "tools"),
+    "no-omitClaudeMd": (_without("omitClaudeMd: true"), "omitClaudeMd"),
+    "omitClaudeMd-false": (REVIEWER_TEXT.replace("omitClaudeMd: true", "omitClaudeMd: false"), "omitClaudeMd"),
+    "omitClaudeMd-quoted": (REVIEWER_TEXT.replace("omitClaudeMd: true", 'omitClaudeMd: "true"'), "omitClaudeMd"),
+    "memory": (_with("memory: project"), "memory"),
+    "skills": (_with("skills: blind-review"), "skills"),
+    "mcpServers": (_with("mcpServers: docs"), "mcpServers"),
+    "hooks": (_with("hooks: none"), "hooks"),
+    "model": (_with("model: sonnet"), "model"),
+    "another-tool": (REVIEWER_TEXT.replace("Glob", "Glob, Bash"), "tools"),
+    "a-writing-tool": (REVIEWER_TEXT.replace("Glob", "Glob, Write"), "tools"),
+    "no-tools-line": (_without("tools: Read, Grep, Glob"), "tools"),
+    "another-name": (REVIEWER_TEXT.replace("name: blind-reviewer", "name: reviewer"), "name"),
+    "no-description": (_without("description: Blind, read-only reviewer: it changes no file."), "description"),
+}
+
+
+@pytest.mark.parametrize("text, key", REVIEWER_DEFECTS.values(), ids=list(REVIEWER_DEFECTS))
+def test_a_reviewer_that_would_get_the_project_context_or_other_tools_is_refused(
+        config_file, cli, blind, tmp_path, capsys, text, key):
+    _configure(config_file)
+    if text is None:
+        blind.reviewer.unlink()
+    else:
+        _put(blind.reviewer, text)
+    _refused(cli, tmp_path, capsys, blind.reviewer, key)
+
+
+SETTINGS_DEFECTS = {
+    "unset-everywhere": ("project", {}, "project"),
+    "true-in-the-project-file": ("project", {GIT_KEY: True}, "project"),
+    "true-in-the-local-file-over-a-false-project-file": ("local", {GIT_KEY: True}, "local"),
+    "the-string-false": ("project", {GIT_KEY: "false"}, "project"),
+    "null": ("project", {GIT_KEY: None}, "project"),
+    "zero": ("project", {GIT_KEY: 0}, "project"),
+    "an-invalid-project-file": ("project", "{", "project"),
+    "a-project-file-that-is-null": ("project", "null", "project"),
+    "a-project-file-that-is-a-list": ("project", [], "project"),
+    "an-invalid-local-file-over-a-false-project-file": ("local", "not json", "local"),
+    "an-invalid-user-file-under-a-false-project-file": ("user", "{", "user"),
+    "a-user-file-that-is-a-list-under-a-false-project-file": ("user", [], "user"),
+}
+
+
+@pytest.mark.parametrize("where, value, named", SETTINGS_DEFECTS.values(), ids=list(SETTINGS_DEFECTS))
+def test_an_effective_git_setting_that_is_not_false_or_a_settings_file_that_is_not_an_object_is_refused(
+        config_file, cli, blind, tmp_path, capsys, where, value, named):
+    _configure(config_file)
+    _put(getattr(blind, where), value)
+    _refused(cli, tmp_path, capsys, getattr(blind, named), GIT_KEY)
+
+
+def test_a_settings_path_that_is_a_directory_is_refused(config_file, cli, blind, tmp_path, capsys):
+    _configure(config_file)
+    blind.project.unlink()
+    blind.project.mkdir()
+    _refused(cli, tmp_path, capsys, blind.project, GIT_KEY)
+
+
+def test_the_environment_does_not_stand_in_for_the_setting(
+        config_file, cli, blind, tmp_path, capsys, monkeypatch):
+    _configure(config_file)
+    _put(blind.project, {})
+    monkeypatch.setenv("CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS", "1")
+    _refused(cli, tmp_path, capsys, blind.project, GIT_KEY)
+
+
+def test_every_unmet_guarantee_gets_its_own_line_and_nothing_is_written(config_file, cli, blind, tmp_path, capsys):
+    _configure(config_file)
+    _put(blind.reviewer, _with("memory: project").replace("omitClaudeMd: true\n", ""))
+    _put(blind.project, {GIT_KEY: True})
+    assert cli("--lock") == 1
+    lines = capsys.readouterr().err.splitlines()
+    assert len(lines) == 3, lines
+    assert sum("omitClaudeMd" in line and str(blind.reviewer) in line for line in lines) == 1
+    assert sum("memory" in line and str(blind.reviewer) in line for line in lines) == 1
+    assert sum(GIT_KEY in line and str(blind.project) in line for line in lines) == 1
+    assert not (tmp_path / "pkg").exists()
+    assert not (tmp_path / "lock").exists()
+
+
+# a compliant lock, a build without the lock and the unlock behave as they did
+
+
+@pytest.mark.parametrize("where, value", [
+    ("user", {GIT_KEY: True}),
+    ("local", {GIT_KEY: False}),
+    ("user", {GIT_KEY: False}),
+], ids=["project-false-over-user-true", "local-false-over-project-false", "user-false-beside-project-false"])
+def test_a_false_that_wins_writes_the_package_and_the_lock(config_file, cli, blind, tmp_path, where, value):
+    _configure(config_file)
+    _put(getattr(blind, where), value)
+    assert cli("--lock") == 0
+    assert (tmp_path / "pkg" / "MANIFEST.json").exists()
+    assert (tmp_path / "lock" / "review_lock.json").exists()
+
+
+def test_a_local_false_over_a_project_true_writes_the_package_and_the_lock(config_file, cli, blind, tmp_path):
+    _configure(config_file)
+    _put(blind.local, {GIT_KEY: False})
+    _put(blind.project, {GIT_KEY: True})
+    assert cli("--lock") == 0
+    assert (tmp_path / "lock" / "review_lock.json").exists()
+
+
+def test_the_files_the_repository_ships_pass_the_check_that_sets_the_lock(
+        config_file, cli, blind, tmp_path, monkeypatch):
+    _configure(config_file)
+    monkeypatch.setattr(
+        build_review_package, "REVIEWER_PATH", ROOT / ".claude" / "agents" / "blind-reviewer.md", raising=False)
+    monkeypatch.setattr(
+        build_review_package, "SETTINGS_PATHS", (blind.local, ROOT / ".claude" / "settings.json", blind.user),
+        raising=False)
+    assert cli("--lock") == 0
+    assert (tmp_path / "lock" / "review_lock.json").exists()
+
+
+def test_building_without_the_lock_checks_neither_the_reviewer_nor_the_settings(config_file, cli, blind, tmp_path):
+    _configure(config_file)
+    blind.reviewer.unlink()
+    _put(blind.project, {GIT_KEY: True})
+    assert cli() == 0
+    assert (tmp_path / "pkg" / "MANIFEST.json").exists()
+    assert not (tmp_path / "lock").exists()
+
+
+def test_unlock_clears_the_lock_whatever_the_reviewer_and_the_settings_say(config_file, cli, blind, tmp_path):
+    _configure(config_file)
+    assert cli("--lock") == 0
+    blind.reviewer.unlink()
+    _put(blind.project, {GIT_KEY: True})
+    assert build_review_package.main(["unlock"]) == 0
+    assert not (tmp_path / "lock" / "review_lock.json").exists()
 
 
 @pytest.mark.parametrize("with_file", [False, True], ids=["no-file", "review-null"])

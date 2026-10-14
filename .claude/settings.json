@@ -107,6 +107,7 @@
     ]
   },
   "enableAllProjectMcpServers": true,
+  "includeGitInstructions": false,
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": true,
