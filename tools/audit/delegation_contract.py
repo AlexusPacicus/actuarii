@@ -36,8 +36,14 @@ from pydantic import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(REPO_ROOT) not in sys.path:
+if str(REPO_ROOT) in sys.path:
+    import tools
+else:
     sys.path.insert(0, str(REPO_ROOT))
+    try:
+        import tools
+    finally:
+        sys.path.remove(str(REPO_ROOT))
 
 from tools.audit.context_pack import SpecError, parse_spec
 

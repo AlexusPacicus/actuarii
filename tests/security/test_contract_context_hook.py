@@ -631,7 +631,7 @@ def test_hook_imports_only_the_standard_library_and_the_project_configuration():
         elif isinstance(node, ast.ImportFrom):
             names.add("." * node.level + (node.module or ""))
     foreign = {name for name in names if name.split(".")[0] not in sys.stdlib_module_names}
-    assert foreign == {"tools.project_config"}, foreign
+    assert foreign == {"tools", "tools.project_config"}, foreign
 
 
 def test_hook_postpones_annotations_and_parses_as_python_39():

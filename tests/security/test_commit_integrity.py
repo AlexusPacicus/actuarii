@@ -36,7 +36,7 @@ CONFIG = {
 }
 PREFIX = "[commit_integrity]"
 RULE = 'governed_paths entry "gov/**"'
-ALLOWED_KIT_IMPORTS = {"tools.project_config", "tools.audit.run_process"}
+ALLOWED_KIT_IMPORTS = {"tools", "tools.project_config", "tools.audit.run_process"}
 
 
 @pytest.fixture(autouse=True)

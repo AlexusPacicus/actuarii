@@ -43,9 +43,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-CLONE = Path(__file__).resolve().parent.parent
-if str(CLONE) not in sys.path:
-    sys.path.insert(0, str(CLONE))
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) in sys.path:
+    import tools
+else:
+    sys.path.insert(0, str(REPO_ROOT))
+    try:
+        import tools
+    finally:
+        sys.path.remove(str(REPO_ROOT))
 
 from tools.audit import run_process
 
@@ -129,7 +135,7 @@ def check_target(argument: str) -> Path:
     if not target.is_dir():
         raise Problem(f"{argument}: not a directory")
     target = target.resolve()
-    if target == CLONE:
+    if target == REPO_ROOT:
         raise Problem(f"{target} is the clone the installer runs from; give another repository")
     try:
         top = git(["rev-parse", "--show-toplevel"], target)
@@ -142,7 +148,7 @@ def check_target(argument: str) -> Path:
 
 def check_link(path: Path, roots: list[Path]) -> None:
     """A link of the clone is installed as the regular file it resolves to, which must lie inside the kit trees."""
-    label = path.relative_to(CLONE).as_posix()
+    label = path.relative_to(REPO_ROOT).as_posix()
     try:
         resolved_mode = os.stat(path).st_mode
     except OSError as exc:
@@ -155,11 +161,11 @@ def check_link(path: Path, roots: list[Path]) -> None:
 
 def kit_files() -> list[Path]:
     found = []
-    roots = [Path(os.path.realpath(CLONE / tree)) for tree in KIT_TREES]
+    roots = [Path(os.path.realpath(REPO_ROOT / tree)) for tree in KIT_TREES]
     for tree in KIT_TREES:
-        if not (CLONE / tree).is_dir():
+        if not (REPO_ROOT / tree).is_dir():
             raise Problem(f"the clone has no {tree} directory")
-        for current, dirs, files in os.walk(CLONE / tree):
+        for current, dirs, files in os.walk(REPO_ROOT / tree):
             dirs[:] = [name for name in dirs if name != "__pycache__"]
             for name in dirs + files:
                 path = Path(current) / name
@@ -167,14 +173,14 @@ def kit_files() -> list[Path]:
                     continue
                 if path.is_symlink():
                     check_link(path, roots)
-                    found.append(path.relative_to(CLONE))
+                    found.append(path.relative_to(REPO_ROOT))
                 elif path.is_file():
-                    found.append(path.relative_to(CLONE))
+                    found.append(path.relative_to(REPO_ROOT))
     return sorted(found)
 
 
 def pydantic_pin() -> str:
-    found = re.search(r"pydantic==([0-9][0-9A-Za-z.]*)", (CLONE / "pyproject.toml").read_text(encoding="utf-8"))
+    found = re.search(r"pydantic==([0-9][0-9A-Za-z.]*)", (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     if found is None:
         raise Problem("the clone's pyproject.toml does not pin pydantic")
     return found.group(1)
@@ -182,7 +188,7 @@ def pydantic_pin() -> str:
 
 def clone_json(name: str) -> object:
     try:
-        return load_json(CLONE / name)
+        return load_json(REPO_ROOT / name)
     except Problem as exc:
         raise Problem(f"the clone's {name} {exc}") from exc
 
@@ -232,7 +238,7 @@ def plan_file(plan: Plan, label: str, destination: Path, content: bytes, mode: i
 def plan_kit(plan: Plan, target: Path) -> None:
     for relative in kit_files():
         label = relative.as_posix()
-        source, destination = CLONE / relative, target / relative
+        source, destination = REPO_ROOT / relative, target / relative
         if blocked(plan, target, destination):
             continue
         executable = bool(os.stat(source).st_mode & stat.S_IXUSR)
@@ -358,7 +364,7 @@ def plan_pre_commit(plan: Plan, target: Path) -> None:
     if problem:
         plan.conflict(shown, problem)
     else:
-        plan_file(plan, shown, destination, (CLONE / PRE_COMMIT_SOURCE).read_bytes(), 0o755)
+        plan_file(plan, shown, destination, (REPO_ROOT / PRE_COMMIT_SOURCE).read_bytes(), 0o755)
 
 
 def plan_gitignore(plan: Plan, target: Path) -> None:

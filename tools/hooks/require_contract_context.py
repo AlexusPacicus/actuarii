@@ -44,10 +44,16 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
 
 try:
+    if str(REPO_ROOT) in sys.path:
+        import tools
+    else:
+        sys.path.insert(0, str(REPO_ROOT))
+        try:
+            import tools
+        finally:
+            sys.path.remove(str(REPO_ROOT))
     from tools.project_config import CONFIG_NAME, ConfigError, load, path_matches
 except Exception as exc:  # fail-closed: a hook that cannot start must deny
     # An unhandled failure here exits 1, which the harness reads as a broken

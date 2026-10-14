@@ -30,8 +30,6 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
 
 PREFIX = "[commit_integrity]"
 RAW_ENTRY = re.compile(r":([0-7]{6}) ([0-7]{6}) ([0-9a-f]{40,64}) ([0-9a-f]{40,64}) ([A-Z])")
@@ -42,6 +40,14 @@ WAY_OUT = (
 )
 
 try:
+    if str(REPO_ROOT) in sys.path:
+        import tools
+    else:
+        sys.path.insert(0, str(REPO_ROOT))
+        try:
+            import tools
+        finally:
+            sys.path.remove(str(REPO_ROOT))
     from tools import project_config
     from tools.audit import run_process
 except Exception as exc:

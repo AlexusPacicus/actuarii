@@ -20,8 +20,6 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
 
 GATE_TOOL = "mcp__boundary-validator__validate_proposal"
 WHOLE_REPOSITORY = ". (the whole repository)"
@@ -30,6 +28,14 @@ HOOK_SOURCE = "tools/git/pre-commit"
 HOOK_PATH = "hooks/pre-commit"
 
 try:
+    if str(REPO_ROOT) in sys.path:
+        import tools
+    else:
+        sys.path.insert(0, str(REPO_ROOT))
+        try:
+            import tools
+        finally:
+            sys.path.remove(str(REPO_ROOT))
     import tools.project_config as project_config
     from tools.project_config import CONFIG_NAME, DEFAULT_WINDOW, ROOT, ConfigError, ProjectConfig, ReviewConfig, load
 except Exception as exc:
