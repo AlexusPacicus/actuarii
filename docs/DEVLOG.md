@@ -5,9 +5,9 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
-## 2026-10-15
+## 2026-10-14 (tarde)
 
-Una sesión, el jueves, después de reiniciar Claude Code. El validador con el motivo y el perímetro nuevo ya
+Segunda sesión del miércoles, después de reiniciar Claude Code. El validador con el motivo y el perímetro nuevo ya
 rigen; los tres contratos que se quedan en la v0.1 están implementados y verificados, y AGENTS.md pasa a la
 v2.2.0. Suite: de 3166 a 3278 en verde. Sin push: lo lanza el autor.
 
@@ -57,12 +57,17 @@ v2.2.0. Suite: de 3166 a 3278 en verde. Sin push: lo lanza el autor.
   un rango de líneas.
 * **El candado de A34 lee la cabecera del revisor línea a línea, no como YAML.** Lo encontró su
   implementador, y queda declarado en §9.
+* **Esta entrada y el PLAN salieron fechados el 2026-10-15, jueves, y era miércoles 14.** Se tomó el día del
+  mensaje del autor («estamos a jueves») sin mirar el reloj, aunque el sistema daba el 14. Lo vio la revisión
+  de otro agente; se corrigió aquí y en el PLAN. Los contratos de A20 (D9), A31 (D11) y A34 (D11) dicen
+  2026-10-15 para decisiones del 14: se dejan como se lanzaron. Lección: la fecha de un registro sale del reloj,
+  no de la conversación.
 
 **Siguiente**
 * El push: 17 commits.
 * **La sesión siguiente arranca sin la foto de git** (`includeGitInstructions: false`); el anuncio de la
   sesión sigue diciendo lo que rige.
-* **Viernes 16: los dos contratos del instalador en una orden.**
+* **Jueves 15: los dos contratos del instalador en una orden.**
   * Sin A35.
   * Llevan a los destinos el perímetro nuevo, el motivo e `includeGitInstructions`: sin él, `build --lock` no
     pone el candado en un destino (D5 de A34).

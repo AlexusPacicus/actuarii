@@ -444,7 +444,7 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
 
 * **Las herramientas de ficheros fuera de la raíz (autor, 2026-10-13):** la puerta deniega por defecto,
   con excepciones en `.actuarii.json`. Es la opción (c) de `ARRANQUE_PUERTAS.md` §6. Va en un contrato
-  aparte, antes del lanzamiento. **Pasa a la v0.2 (autor, 2026-10-15)**, con A33 declarado en §9.
+  aparte, antes del lanzamiento. **Pasa a la v0.2 (autor, 2026-10-14)**, con A33 declarado en §9.
 * **El entorno de Actuarii, fuera del repositorio (autor, 2026-10-13):** `INSTALL.md` deja una sola
   opción. El instalador en una orden comprueba `pydantic` con el intérprete y las opciones con que
   arrancará el servidor (`ARRANQUE_PUERTAS.md` §5.4).
@@ -481,7 +481,7 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
       falta declarar la diferencia en 7.1.
   * **Decidido (autor, 2026-10-13):** `denyRead` y las reglas `Read(...)` de denegación, en el contrato del
     instalador en una orden, para Actuarii y para los destinos, con la diferencia declarada en AGENTS 7.1.
-    Registrado como A35 en `CASES.md`. **Pasa a la v0.2 (autor, 2026-10-15)**, declarado en §9.
+    Registrado como A35 en `CASES.md`. **Pasa a la v0.2 (autor, 2026-10-14)**, declarado en §9.
 
 ## Traspaso (2026-10-07, cierre de la semana 1 de trabajo)
 
@@ -551,7 +551,7 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
     lanzamiento. La v0.1 sale el 25 como «motor de reglas más adaptador de Claude Code», sin parches de
     Claude Code más allá de los contratos ya escritos (A19–A32, A20, la opción (c) con A33, A34, y A35 en el
     contrato del instalador).
-  * **Revisado (autor, 2026-10-15):** con la seguridad fuera de la v0.1, de esos contratos se quedan los que
+  * **Revisado (autor, 2026-10-14):** con la seguridad fuera de la v0.1, de esos contratos se quedan los que
     rompen algo a quien instala el kit aunque nadie ataque: A20, A31 (el contrato de A19 se recorta a lo de
     `sys.path`) y A34. A19, A32, la opción (c) con A33 y A35 pasan a la v0.2 y se declaran en §9. La 2b se
     cierra sin el caso (b), porque A30 ya tiene su evidencia; queda la tabla «Resumen» de `CASES.md` hasta
