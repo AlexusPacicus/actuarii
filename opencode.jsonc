@@ -31,6 +31,23 @@
       "python3 tools/audit/*": "allow",
       "python3 tools/hooks/*": "allow",
       "python3 tools/boundary_validator/validator.py": "allow",
+      // pytest and read-only commands, allowed after the catch-all and rm (AGENTS 7.1)
+      "pytest": "allow",
+      "pytest *": "allow",
+      "ls": "allow",
+      "ls *": "allow",
+      "cat *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "wc *": "allow",
+      "grep *": "allow",
+      "df": "allow",
+      "df *": "allow",
+      "echo *": "allow",
+      "sed -n *": "allow",
+      "sort *": "allow",
+      "uniq *": "allow",
+      "diff *": "allow",
       // Safe read-only Git inspection
       "git status": "allow",
       "git status *": "allow",
@@ -65,7 +82,11 @@
       "git submodule *": "ask",
       "git rm *": "ask",
       "git worktree *": "ask"
-    }
+    },
+    // The validate_proposal tool of the MCP server boundary-validator, under the name OpenCode gives it:
+    // server and tool joined by an underscore. The name has not been checked by running OpenCode;
+    // if it does not match, OpenCode keeps asking.
+    "boundary-validator_validate_proposal": "allow"
   },
   "enabled_providers": [
     "opencode"

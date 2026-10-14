@@ -133,9 +133,14 @@ module and its import come before the code that uses them.
 ## 7. Permission perimeter
 
 7.1 `.claude/settings.json` (Claude Code) and `opencode.jsonc` (OpenCode) **MUST** stay identical
-in permission rules: read-only git commands and the scripts under `tools/` allowed; `rm`, inline
-Python, web fetch and web search denied; every other `Bash` call and every mutation asked.
-**[enforced by tests]** The `Bash` sandbox of 7.3 exists only in Claude Code.
+in permission rules: read-only git commands, the scripts under `tools/`, `pytest`, a closed list of
+read-only commands (`ls`, `cat`, `head`, `tail`, `wc`, `grep`, `df`, `echo`, `sed -n`, `sort`,
+`uniq`, `diff`) and the validator's own tool, `validate_proposal`, which writes only the audit
+trail, allowed; `rm`, inline Python, web fetch and web search denied; every other `Bash` call
+asked. **[enforced by tests]** What an allowed command writes through a redirection is not asked;
+inside the sandbox it never reaches a governed path (7.3). `Edit` and `Write` ask or not according
+to the permission mode the person chooses; on a governed path they need their receipt in any mode
+(2.1). The `Bash` sandbox of 7.3 exists only in Claude Code.
 
 7.2 Both harnesses load the same instructions: `CLAUDE.md` imports and the OpenCode
 `instructions` list name the same files. **[enforced by tests]**

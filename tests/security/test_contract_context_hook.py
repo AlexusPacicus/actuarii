@@ -651,6 +651,9 @@ PERMISSIONS = {
         "Bash(git status)", "Bash(git status *)", "Bash(git diff)", "Bash(git diff *)",
         "Bash(git log *)", "Bash(git show *)", "Bash(git rev-parse *)", "Bash(git grep *)",
         "Bash(git blame *)", "Bash(git ls-files *)",
+        "Bash(pytest)", "Bash(pytest *)", "Bash(ls)", "Bash(ls *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)",
+        "Bash(wc *)", "Bash(grep *)", "Bash(df)", "Bash(df *)", "Bash(echo *)", "Bash(sed -n *)", "Bash(sort *)",
+        "Bash(uniq *)", "Bash(diff *)", "mcp__boundary-validator__validate_proposal",
     ],
     "deny": ["WebFetch", "WebSearch", "Bash(rm *)", "Bash(python3 -c *)", "Bash(python3 -m *)"],
     "ask": [
@@ -676,7 +679,8 @@ def test_hook_follows_the_boundary_hook_for_every_tool():
 def test_registration_changes_nothing_else_in_settings():
     """Pinned at the commit that added the hook; a deliberate perimeter change updates it
     (the python gate wiring, 54c7f8c, is the second such change; the sandbox key, docs/design/SANDBOX.md
-    section 6, is the third)."""
+    section 6, is the third; pytest, the read-only commands and the validator's tool allowed without asking, the
+    perimetro-de-permisos contract, is the fourth)."""
     current = settings()
     assert current["permissions"] == PERMISSIONS
     parsed = [

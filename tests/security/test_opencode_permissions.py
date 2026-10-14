@@ -9,6 +9,8 @@ Coverage: SEC-M-13"""
 import re
 from pathlib import Path
 
+from tests.security.test_config_perimeter import READ_ONLY_ALLOW
+
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "opencode.jsonc"
 
@@ -77,3 +79,16 @@ def test_security_SEC_M_13_broad_catchall_precedes_narrow_rules():
         "bash matrix must be broad-first: '*' ask, then 'rm *' deny, "
         "then the narrow git allow rules"
     )
+
+
+def test_security_SEC_M_13_read_only_allows_follow_the_catchall_and_rm():
+    """SEC-M-13 (ordering): pytest and the read-only commands are allowed AFTER the catch-all '*' and 'rm *',
+    or the last matching rule would not be theirs."""
+    text = _config_text()
+    floor = max(text.index('"*": "ask"'), text.index('"rm *": "deny"'))
+    misplaced = []
+    for pattern in READ_ONLY_ALLOW:
+        found = re.search(rf'"{re.escape(pattern)}"\s*:\s*"allow"', text)
+        if found is None or found.start() < floor:
+            misplaced.append(pattern)
+    assert misplaced == [], f"allowed after '*' ask and 'rm *' deny: missing or earlier: {misplaced}"
