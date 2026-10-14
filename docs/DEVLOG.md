@@ -9,7 +9,9 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
 Segunda sesión del miércoles, después de reiniciar Claude Code. El validador con el motivo y el perímetro nuevo ya
 rigen; los tres contratos que se quedan en la v0.1 están implementados y verificados, y AGENTS.md pasa a la
-v2.2.0. Suite: de 3166 a 3278 en verde. Sin push: lo lanza el autor.
+v2.2.0. Después, una revisión de otro agente destapó un hueco en el sandbox y una fecha mal puesta; los dos
+quedaron corregidos, y las sesiones pasan a cargar un estado corto. Suite: de 3166 a 3278 en verde. Dos pushes
+del autor; la CI, en verde.
 
 **Hecho**
 * **Al arrancar:** el servidor MCP nuevo exige el motivo. Lo comprobó una sonda sobre
@@ -37,12 +39,38 @@ v2.2.0. Suite: de 3166 a 3278 en verde. Sin push: lo lanza el autor.
   * §9 declara lo que deja acta (A30), el arranque de las puertas (A19, A32), las herramientas de ficheros
     (A33), las credenciales (A35), los canales sin regla (A29), los enlaces (A26), lo que sigue recibiendo el
     revisor (A34), y A21, A23, A24, A25 (en «Forged logs») y A28.
+* **Primer push del autor** (`5d76865`). La CI en Linux, en verde en 1 min 17 s.
+* **Una revisión de otro agente**, que pegó el autor. Lo principal:
+  * el acta registra que se pidió escribir, no que se escribió. No hay hook después de la escritura, la base
+    es local, git la ignora, `Bash` puede tocar sus ficheros `-wal` y `-shm`, y no se enlaza con ningún
+    commit;
+  * el coste: el matcher `*` lanza dos procesos de Python en cada llamada a cualquier herramienta, también en
+    `Read` y `Grep`; y A30 es un argumento contra el diseño, no un límite más;
+  * el hueco de `.claude/memory/` y la fecha mal puesta, comprobados los dos con una sonda y con `git log`.
+* **Fechas corregidas** en esta entrada y en el PLAN (`d6ae943`).
+* **`docs/ESTADO.md`** (`644a901`): un estado corto que `CLAUDE.md` y `opencode.jsonc` cargan en lugar del
+  PLAN, que pasa a ser documento de consulta.
+* **El hueco de `.claude/memory/`** (contrato `f1bb253`, implementación `7ede75c`):
+  * cada ruta gobernada tiene su `denyWrite`, sin eximir `.claude/**` ni `.mcp.json`, aquí y en el
+    instalador;
+  * el test comprueba la regla de AGENTS 7.3 en vez de fijar la exención.
+  * Verificado: T1, T2 y X1 rojos, T3 de guarda, suite 3278. Falta la sonda en una sesión con los ajustes
+    nuevos.
+* **Segundo push del autor** (`7ede75c`).
 
 **Decidido (autor)**
 * Se quedan A20, A31 y A34. A19, A32, la opción (c) con A33 y A35 pasan a la v0.2, declarados.
 * La 2b se cierra sin el caso (b); para el informe queda la tabla «Resumen» de `CASES.md`.
 * A21, A23, A24, A25 y A28 se declaran en §9, sin contrato.
 * El push, sí. Lo lanza el autor, porque el sandbox no deja salir a la red a `Bash`.
+* **El acta en git:** sí, solo registrando. Un hook `commit-msg` añade a cada commit los motivos de los recibos
+  de sus ficheros gobernados. Entra en los contratos del instalador, y es la única función nueva antes del
+  lanzamiento.
+* Los campos de la propuesta se renombran con nombres llanos en la v0.2.
+* `CLAUDE.md` carga un estado corto en vez del PLAN.
+* **Una hoja de ruta** (`docs/ROADMAP.md`) con los criterios de la v0.1 y de la v0.2. Claude la redacta, el
+  autor la corrige, y se commitea antes de los contratos del instalador. Sirve para cortar el alcance y para
+  que la revisión del 22 de noviembre se haga contra algo escrito antes.
 
 **Salió mal y se aprendió**
 * **A31 se paró a medias.** Dos tests fijaban las importaciones de los scripts y el contrato no los listaba:
@@ -62,22 +90,33 @@ v2.2.0. Suite: de 3166 a 3278 en verde. Sin push: lo lanza el autor.
   de otro agente; se corrigió aquí y en el PLAN. Los contratos de A20 (D9), A31 (D11) y A34 (D11) dicen
   2026-10-15 para decisiones del 14: se dejan como se lanzaron. Lección: la fecha de un registro sale del reloj,
   no de la conversación.
+* **El hueco de `.claude/memory/` venía de un test que fijaba lo que creíamos que protege Claude Code**, en vez
+  de comprobarlo. El 12 se dio por hecho que su sandbox protege todo `.claude/`, y solo protege una parte.
+  Lección: lo que hace un tercero se comprueba con una sonda, no se fija en un test.
+* **La frase del README volvió a prometer más que el kit:** «every action leaves a record that it happened»,
+  cuando el acta registra la petición y no la escritura. Se corrige con el acta en git.
 
 **Siguiente**
-* El push: 17 commits.
-* **La sesión siguiente arranca sin la foto de git** (`includeGitInstructions: false`); el anuncio de la
-  sesión sigue diciendo lo que rige.
-* **Jueves 15: los dos contratos del instalador en una orden.**
+* **La sonda pendiente:** en una sesión con los ajustes nuevos, abrir `.claude/memory/MEMORY.md` para escribir
+  desde `Bash` tiene que salir denegado (D6 del contrato).
+* **El ROADMAP** (`docs/ROADMAP.md`). Lo redacta Claude y lo corrige el autor antes de commitearlo. Contiene:
+  * los criterios de la v0.1, cada uno con su forma de comprobarlo y con lo que pasa si no se cumple el 25;
+  * la ventana de señal y cómo se cuenta;
+  * la puerta del 22 de noviembre;
+  * la v0.2 con sus criterios: E1–E9, los casos A como batería de pruebas, el coste por debajo de 1 s, y
+    Claude Code y OpenCode.
+* **Jueves 15 y viernes 16: el instalador en una orden, con el acta en git.**
   * Sin A35.
-  * Llevan a los destinos el perímetro nuevo, el motivo e `includeGitInstructions`: sin él, `build --lock` no
-    pone el candado en un destino (D5 de A34).
-  * Reescriben `INSTALL.md`, con el entorno fuera del repositorio.
+  * Lleva a los destinos el perímetro nuevo, el motivo, `includeGitInstructions` (sin él, `build --lock` no
+    pone el candado en un destino, D5 de A34) y el hook `commit-msg`.
+  * Reescribe `INSTALL.md`, con el entorno fuera del repositorio.
   * Después, la nueva medida en macOS.
-* La tabla «Resumen» de `CASES.md` hasta A35, con lo corregido y lo declarado, para el informe del lunes 19.
+* La tabla «Resumen» de `CASES.md` hasta A35, con lo corregido y lo declarado, para el lunes 19.
+* El README, desde el viernes.
+* `docs/design/SANDBOX.md` §6 e `INSTALL.md` todavía describen la exención de `.claude/**`.
 * `examples/traianus/skills/instrument-audit/SKILL.md` sigue diciendo «Blind by construction».
 * Sin la opción (c), la memoria normal de Claude Code sigue abierta; falta decidir cómo se evita o se declara.
-* El README.
-* Disco: 6,0 GiB libres.
+* Disco: 15 GiB libres.
 
 ## 2026-10-14
 

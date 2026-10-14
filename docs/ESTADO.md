@@ -19,28 +19,38 @@ Actualizado: 2026-10-14.
 
 ## Dónde estamos
 
-* Hechos y verificados: el motivo (`Rationale`) en cada propuesta, el perímetro de permisos, A20, A31 y A34,
-  y AGENTS.md v2.2.0. Suite y CI en verde. El detalle, con sus commits, en el DEVLOG.
+* Hechos y verificados:
+  * el motivo (`Rationale`) en cada propuesta;
+  * el perímetro de permisos;
+  * A20, A31 y A34;
+  * AGENTS.md v2.2.0;
+  * cada ruta gobernada con su `denyWrite`, sin exenciones (el hueco de `.claude/memory/`).
+
+  Suite y CI en verde. El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden:
-  1. **El hueco de `.claude/memory/`:** `Bash` la escribe, porque el `denyWrite` exime `.claude/**`
-     (incumple AGENTS 7.3). Corrección: cada ruta gobernada con su entrada, sin excepciones, aquí y en el
-     instalador.
-  2. **El instalador en una orden** (dos contratos). Lleva a los destinos el perímetro nuevo, el motivo e
+  1. **La sonda del `denyWrite`:** desde `Bash`, abrir `.claude/memory/MEMORY.md` para escribir tiene que salir
+     denegado. Sirve una orden que añada cero bytes y compare el sha antes y después.
+  2. **El ROADMAP** (`docs/ROADMAP.md`), decidido por el autor el 2026-10-14. Lo redacta Claude y lo corrige el
+     autor antes de commitearlo, antes de los contratos del instalador. Recoge los criterios de la v0.1 (cada
+     uno con su comprobación y lo que pasa si no se cumple el 25), la ventana de señal y cómo se cuenta, la
+     puerta del 22 de noviembre y los criterios de la v0.2.
+  3. **El instalador en una orden** (dos contratos). Lleva a los destinos el perímetro nuevo, el motivo e
      `includeGitInstructions`, y reescribe `INSTALL.md`.
-  3. **El acta en git** (autor, 2026-10-14): un hook `commit-msg` añade al mensaje de cada commit los motivos
+  4. **El acta en git** (autor, 2026-10-14): un hook `commit-msg` añade al mensaje de cada commit los motivos
      de los recibos de sus ficheros gobernados. Solo registra, no bloquea. Entra con el instalador, que lo
      instala.
-  4. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md`** hasta A35: lo corregido y lo declarado.
+  5. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md`** hasta A35: lo corregido y lo declarado.
      Pasa a ser la sección de límites del README.
-  5. **El README** en inglés, con el caso de Traianus y la instalación.
-  6. **Antes de abrir el repositorio:** revisar la historia (la información personal de `docs/PLAN.md`, las
+  6. **El README** en inglés, con el caso de Traianus y la instalación.
+  7. **Antes de abrir el repositorio:** revisar la historia (la información personal de `docs/PLAN.md`, las
      ramas viejas de Traianus) y el texto para HN y Reddit.
 
 ## Calendario hasta el 25
 
 | Cuándo | Qué |
 |---|---|
-| Miércoles 14 | El hueco de la memoria |
+| Miércoles 14 | El hueco de la memoria (hecho) |
+| Jueves 15 | El ROADMAP; después, el primer contrato del instalador |
 | Jueves 15 y viernes 16 | El instalador con el acta en git; el README empieza el viernes |
 | Lunes 19 | La tabla «Resumen» y la sección de límites |
 | Martes 20 a jueves 22 | El README |
