@@ -6,7 +6,7 @@ noviembre se haga contra algo escrito antes. Las propuestas de Claude en V2–V9
 2026-10-14 (D7); lo que sigue abierto está en §6.
 
 El porqué de cada decisión está en `docs/PLAN.md`; el trabajo de cada día, en `docs/ESTADO.md`. Después del
-commit, un cambio de criterio lo decide el autor y queda en el DEVLOG con su motivo. El 22 de noviembre este
+commit, un cambio de criterio lo decide el autor y se añade a `docs/DECISIONES.md` con su motivo. El 22 de noviembre este
 documento solo se toca para anotar el resultado.
 
 ## 1. Tres fechas
@@ -177,7 +177,9 @@ recorta alcance. De «Ideas para la v0.2» del PLAN entra solo lo que haga falta
 
 ## 6. Decisiones pendientes
 
-Cada una lleva la recomendación de Claude y, si ya está tomada, la decisión del autor.
+Cada una lleva la recomendación de Claude y, si ya está tomada, la decisión del autor. Todas están tomadas y
+pasaron a `docs/DECISIONES.md`: D1 es ADR-016; D2, ADR-020; D3 y D6, ADR-018; D4, ADR-019; D5, ADR-010, y D7,
+ADR-017.
 
 * **D1. Que el acta registre la escritura, no solo la petición.**
   * El problema: el rastro guarda hashes, no el texto. Un `commit-msg` solo puede emparejar recibos y commit

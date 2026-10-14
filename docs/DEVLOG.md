@@ -9,7 +9,8 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
 Tercera sesión del miércoles. Se cerró la sonda del `denyWrite`; se escribió el ROADMAP, que el autor corrigió
 y decidió entero, y se reescribió la historia sin la información personal y con el correo *noreply* de GitHub,
-en un repositorio nuevo. Ningún cambio de código. Suite: 3278 en verde.
+en un repositorio nuevo. Al final, las decisiones pasaron a un registro que solo se amplía
+(`docs/DECISIONES.md`). Ningún cambio de código. Suite: 3278 en verde.
 
 **Hecho**
 * **La sonda del `denyWrite`:** desde `Bash`, abrir `.claude/memory/MEMORY.md` para añadir cero bytes da
@@ -36,7 +37,19 @@ en un repositorio nuevo. Ningún cambio de código. Suite: 3278 en verde.
   * las 120 citas de commits de `docs/` se rehicieron con el mapa de `filter-repo` (`b837223`). Cada una apunta
     al commit con el mismo asunto que antes. La cita del HEAD de Traianus (`49d2434`) queda como estaba;
   * en GitHub, el repositorio viejo pasa a `actuarii-antiguo` y el autor empujó `main` a un `actuarii` nuevo,
-    privado. Solo `main`: las ramas y las etiquetas viejas se quedan en local.
+    privado. Solo `main`: las ramas y las etiquetas viejas se quedan en local;
+  * la CI del repositorio nuevo, en verde, y el viejo, borrado por el autor (`449e204`).
+* **Una revisión sincera de Claude,** a petición del autor. Lo principal:
+  * el proceso se sigue comiendo al producto. Desde el 5 de octubre hay 106 commits de documentación frente a
+    24 de código, `docs/` tiene más líneas que el código del kit y el README tiene 0;
+  * el recibo decide poco, y lo que aporta es el motivo guardado;
+  * la adopción es el mayor riesgo para la señal.
+
+  De ahí salieron un resumen ordenado del estado y, en `ESTADO.md`, una regla hasta el 25, como recomendación de
+  Claude: cada tarea tiene que acercar el instalador o el README.
+* **`docs/DECISIONES.md`:** ADR-001 a ADR-020 recogen las decisiones en vigor, cada una con su fecha y dónde
+  está su razonamiento, y ADR-021 es el propio registro. `ESTADO.md` las lista, y el ROADMAP y el PLAN apuntan
+  a él.
 
 **Decidido (autor)**
 * **D1, el acta en git:** compara el contenido del commit con el que dejaron las escrituras con recibo y lo
@@ -56,6 +69,8 @@ en un repositorio nuevo. Ningún cambio de código. Suite: 3278 en verde.
 * **D7:** las propuestas de V2–V9 y de §3–§5 del ROADMAP, aceptadas.
 * El correo de los commits, la dirección *noreply* de GitHub, también en la configuración global de git.
 * `git filter-repo` en una copia desechable antes de la pasada real (AGENTS 4.3: Python no commiteado).
+* **ADR-021:** las decisiones del autor van en un registro que solo se amplía. Desde aquí, el DEVLOG las cita por
+  su número.
 
 **Salió mal y se aprendió**
 * **El ensayo no reproducía el estado.** `cp -R` no conserva las fechas, así que `filter-repo` tomó por reciente

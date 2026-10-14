@@ -3,7 +3,7 @@
 Lo que una sesión nueva necesita saber, y nada más. Se actualiza al cerrar cada sesión, junto con la entrada
 del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en `docs/PLAN.md`, que se lee
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
-puerta del 22 de noviembre y la v0.2 están en `docs/ROADMAP.md`.
+puerta del 22 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
 Actualizado: 2026-10-14, noche.
 
@@ -59,18 +59,33 @@ Actualizado: 2026-10-14, noche.
 | Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
 | Domingo 25 | Publicar |
 
-## Decisiones vigentes
+## Decisiones en vigor
 
-* Los criterios del ROADMAP no mueven la fecha del 25. Un cambio de criterio lo decide el autor y queda en el
-  DEVLOG con su motivo.
-* La seguridad frente a un agente adversario no es de esta versión. A19, A32, la opción (c) con A33 y A35
-  pasan a la v0.2; A21, A23, A24, A25 y A28 quedan declarados en §9 sin corregir.
-* Los campos de la propuesta se renombran con nombres llanos en la v0.2. Antes del lanzamiento solo se
-  limpia la jerga de las descripciones y del README.
-* Antes del lanzamiento no se hace nada de Traianus, ninguna mejora de gobernanza que no responda a un fallo
-  real y ninguna función fuera del plan, salvo el acta en git.
-* La distribución de la v0.1 es un instalador que copia el kit en `tools/` del destino; el plugin, en la
-  v0.2.
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor todas, de ADR-001 a ADR-021:
+
+| ADR | Decisión |
+|---|---|
+| 001 | Nombre, licencia y relación con Traianus |
+| 002 | Primero el kit; Traianus como memoria de agentes, solo con señal |
+| 003 | Se publica el 25 de octubre, esté como esté |
+| 004 | Lo que no se hace antes del lanzamiento |
+| 005 | La señal de éxito |
+| 006 | Repositorio privado hasta el 25 y un solo DEVLOG |
+| 007 | La distribución de la v0.1: un instalador que copia el kit |
+| 008 | La instalación en una orden, con el entorno fuera del repositorio |
+| 009 | La v0.1 son actas de trabajo; la seguridad, en la v0.2 |
+| 010 | La memoria del agente, bajo código; la automática de Claude Code, apagada |
+| 011 | El motivo, obligatorio, y ningún recibo sin acta |
+| 012 | El perímetro de permisos |
+| 013 | Qué correcciones de la auditoría entran en la v0.1 |
+| 014 | Los campos de la propuesta, con nombres llanos en la v0.2 |
+| 015 | Un estado corto al abrir cada sesión, en lugar del PLAN |
+| 016 | El acta en git |
+| 017 | El ROADMAP |
+| 018 | El README: su primer límite y su marco |
+| 019 | A33 y A34 no se cuentan a Anthropic |
+| 020 | La historia, sin lo personal y con el correo *noreply* |
+| 021 | Las decisiones van en este registro, que solo se amplía |
 
 ## Cómo se trabaja
 
@@ -97,6 +112,11 @@ Actualizado: 2026-10-14, noche.
   2026-10-14).
 * **Python:** solo scripts commiteados, a través del shim; `pytest` por su propio punto de entrada.
 * **El DEVLOG,** al cerrar cada sesión, con la fecha del reloj y no la de la conversación.
+* **Una decisión del autor** se añade al final de `docs/DECISIONES.md`, con el siguiente número, y se lista
+  arriba. El DEVLOG la cita por su número, sin copiarla. Una entrada vieja no se toca: si se revisa, la nueva
+  dice a cuál sustituye, y la vieja sale de la lista.
+* **Hasta el 25** (recomendación de Claude, 2026-10-14), cada tarea responde a una pregunta: ¿acerca el instalador o el README? Si no, se apunta en el
+  PLAN y espera. El único documento nuevo antes del lanzamiento es el README.
 * **Las ideas que se salen del camino** se apuntan en el PLAN y esperan.
 * **La memoria del agente** es la de `.claude/memory/`, bajo código, con un recibo por escritura. Se publica
   el 25: los recuerdos se escriben sabiéndolo. La memoria automática de Claude Code no se usa, y el contrato

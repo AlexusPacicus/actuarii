@@ -4,6 +4,9 @@ Escrito el 2026-10-05 en la sesión de Traianus que decidió la extracción. Es 
 primera sesión abierta en este repositorio. Las decisiones marcadas «autor» son del autor; el resto son
 propuestas.
 
+Desde el 2026-10-14 este plan es historia (ADR-021). Las decisiones nuevas se añaden a `docs/DECISIONES.md`, y
+aquí solo se apuntan las ideas que esperan, en «Ideas para la v0.2».
+
 ## Qué es
 
 Un kit para gobernar agentes de código con reglas que se cumplen en código, no por instrucción:
@@ -619,6 +622,10 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
   `tools/boundary_validator/` y de `tools/audit/delegation_contract.py`. Instalar sería copiar, y
   `requires-python` podría bajar a 3.9. Se decide con la cifra de la prueba en limpio: si preparar el
   entorno pesa en los 5 minutos, hay motivo.
+* **Rutas que solo admiten añadir (autor y Claude, 2026-10-14):** que el kit haga cumplir el «solo se añade»
+  de `docs/DECISIONES.md` (ADR-021): una regla de `.actuarii.json` por la que la puerta solo deja escribir al
+  final del fichero. Son actas que no se reescriben, la tesis de la v0.1 aplicada a sus propios
+  registros.
 
 ## Reglas de trabajo heredadas
 
