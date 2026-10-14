@@ -41,6 +41,8 @@
     "D7 For each script the test also runs the same input on a copy without the planted modules and asserts the same exit status and output, so that the fix changes what is imported, not what is decided.",
     "D8 The session's validator requires a Rationale in every proposal (AGENTS.md 2.2). The schema of validate_proposal shown in this session may be an older copy without it: include it anyway, or the proposal comes back INVALID_JSON. The running server keeps the code it started with; a change to validator.py reaches it at the next session.",
     "D9 No new dependency and no new network, process or code-loading primitive in a governed Python file; a test that starts a process uses tools/audit/run_process.py.",
+    "D11 Amendment (2026-10-15, after the first run stopped on it): two existing tests pin the non-standard imports of a script, and D1's bare `import tools` adds one. In tests/security/test_contract_context_hook.py, test_hook_imports_only_the_standard_library_and_the_project_configuration expects {\"tools\", \"tools.project_config\"}; in tests/security/test_commit_integrity.py, ALLOWED_KIT_IMPORTS gains \"tools\". Nothing else changes in those two files. It is a change of the specification made by D1, not a test changed to hide a failure (AGENTS 8.2).",
+    "D12 In the report, the cases of the T1 test that do not import a planted module at base (build_review_package.py and delegation_contract.py, which import their standard-library modules before the old insert) go under an X id with the expectation guard, not under T1, so that T1 holds only cases that are red at base.",
     "D10 Gates: red-first, each red test seen failing for its stated reason before the change that makes it pass; full-suite, `pytest tests/` exits 0 at the commit; hooks-every-environment, tests/security/test_hooks_without_shim.py passes; verify-red-green, tools/audit/verify_red_green.py exits 0 on the report."
   ],
   "behaviours": [
@@ -68,7 +70,9 @@
     "tools/audit/build_review_package.py",
     "tools/audit/delegation_contract.py",
     "tools/audit/verify_red_green.py",
-    "tests/security/test_root_off_sys_path.py"
+    "tests/security/test_root_off_sys_path.py",
+    "tests/security/test_contract_context_hook.py",
+    "tests/security/test_commit_integrity.py"
   ],
   "files_must_not_touch": [
     "AGENTS.md",
