@@ -5,6 +5,107 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-14
+
+Una sesión, abierta la noche del 13 después de la entrada de ese día y seguida el 14. Empezó con una revisión
+sincera del proyecto y acabó con dos contratos implementados y verificados, encadenados en la rama
+`v01/perimetro`, todavía fuera de `main`. Suite: de 3080 a 3166 en verde.
+
+**Hecho**
+* **Revisión del proyecto,** en el chat y sin documento. Lo principal:
+  * el recibo no decide nada que no decida ya el hook: la cita es el `old_string`, que `Edit` ya exige, y
+    `Intent_Class` y `Safety_Abort` los declara el propio agente;
+  * la tesis de la v0.1 prometía más de lo que hay: A20, A21, A23, A24 y A31 son fallos de implementación del
+    kit, no caminos alrededor de una regla;
+  * falta la literatura: las «tres cosas a la vez» del PLAN son la *lethal trifecta* de Simon Willison, y ni
+    CaMeL, ni el patrón dual LLM, ni los entornos aislados que ya existen están en `PRIOR_ART.md`;
+  * el proceso se come al producto: ningún cambio de código del kit del 9 al 13, y el README sin empezar;
+  * antes de hacer público el repositorio, `docs/PLAN.md` cuenta en la historia la situación personal del
+    autor, y A33 y A34 tocan comportamiento de Claude Code que convendría contar antes a Anthropic.
+* **El objetivo de la v0.1, reescrito** en `docs/PLAN.md` (`1222886`): actas de trabajo para agentes de código.
+* **Contrato del motivo** (`docs/design/MOTIVO.contrato.json`, `1222886`) e implementación (`0343a94`, `sonnet`):
+  * `Rationale` obligatorio en la propuesta (de 1 a 1000 caracteres, no solo espacios), guardado en
+    `audit_log` con cada decisión, también las denegadas;
+  * las bases de auditoría viejas se migran al primer uso, sin perder filas;
+  * ningún `EXECUTE_SAFE` sin su acta: el acta y el recibo van en una transacción y, si falla,
+    `ABORTED_NOT_RECORDED`, sin recibo;
+  * un fallo al escribir el rastro ya no se silencia: deja una línea en stderr, sin ruta;
+  * «5 Radicals» pasa a «the proposal schema» en AGENTS 2.2, las skills, el implementador y la descripción de
+    la herramienta.
+  * Verificado por el chat con `verify_red_green.py`: T1–T7 y X1–X2 rojos en la base, T8 de guarda, suite 3150.
+    El alcance (los 23 ficheros del contrato), comprobado a mano.
+* **Medida de los permisos** en la transcripción de ese implementador: 52 `Bash`, 51 `validate_proposal` y 60
+  `Edit` o `Write`; 161 llamadas caían en «preguntar». Con el perímetro nuevo, 70 (10 de ellas `Bash`); con
+  `acceptEdits`, 10.
+* **Contrato del perímetro** (`docs/design/PERIMETRO.contrato.json`, `a0d6df9` y `6e4ea39`) e implementación
+  (`ec2dc08`):
+  * sin preguntar en los dos entornos: `pytest`, `ls`, `cat`, `head`, `tail`, `wc`, `grep`, `df`, `echo`,
+    `sed -n`, `sort`, `uniq`, `diff` y `validate_proposal`;
+  * una lista cerrada, con su test; el resto de `Bash` sigue preguntando;
+  * en OpenCode, el validador va con el nombre `boundary-validator_validate_proposal`, sin comprobar ejecutando
+    OpenCode;
+  * AGENTS 7.1, reescrito.
+  * Verificado por el chat: T1, T2 y T4 rojos, T3 y T5 de guarda, suite 3166.
+* **AGENTS §9** (`bb86a87`): `sort`, `uniq` y `sed -n` escriben o ejecutan con sus opciones (en GNU `sed`, `e`
+  ejecuta una orden), sin preguntar; el sandbox las contiene. Lo vio el implementador del perímetro.
+
+**Decidido (autor)**
+* La seguridad frente a un agente adversario no es de esta versión. El objetivo anterior («demostrar que hace
+  falta un middleware») pasa a ser la motivación de la v0.2.
+* La frase de la v0.1: «Actas de trabajo para agentes de código. Cada actuación deja constancia de que se hizo
+  y de por qué. Para entornos donde la trazabilidad es lo primero.» En inglés: «Work records for coding agents.
+  Every action leaves a record that it happened, and why. Built for settings where traceability comes first.»
+* El motivo, obligatorio; sin acta no hay recibo; «the proposal schema» en vez de «5 Radicals»; el contrato se
+  lanza en su rama, dentro de la ventana de la 2b, y `main` se avanza el jueves.
+* Quitar los permisos que no deciden nada; la lista, ampliada con `echo`, `sed -n`, `sort`, `uniq` y `diff`; el
+  contrato, encadenado al del motivo.
+* Declarar en §9 lo de `sed` y `sort` en vez de quitarlas de la lista.
+
+**Sin decidir**
+* Qué contratos de seguridad se quedan. Propuesta: se quedan A20, A31 (recortando el contrato de A19 a lo de
+  `sys.path`) y A34; A19, A32, la opción (c) con A33 y A35 pasan a la v0.2, declarados. La memoria bajo código
+  contaba con que (c) denegara la memoria normal.
+* La auditoría con `/code-review ultra`. Recomendación: no hacerla ahora; si se hace, sobre la rama del
+  instalador en una orden, que es lo que toca el repositorio de otra persona.
+* El primer límite del README, justo debajo de la frase: solo deja acta lo que pasa por el canal gobernado
+  (A30).
+* El párrafo «Marco» del README en el PLAN (von Neumann, inyección) sigue en clave de seguridad.
+* Antes de hacer público: la información personal de `docs/PLAN.md` en la historia, las ramas de Traianus, y
+  contar A33 y A34 a Anthropic.
+
+**Salió mal y se aprendió**
+* **El contrato del motivo no listó un segundo test que fijaba el fail-open** (`test_content_receipt.py`). El
+  implementador lo cambió según D5 y lo dijo. Lección (AGENTS 6.4): buscar también los tests que fijan el
+  comportamiento que el contrato quita, no solo los que construyen el formato.
+* **El contrato del perímetro casi se lanza sin decir que el servidor de la sesión no acepta el motivo.** Se
+  añadió D12 (`6e4ea39`). Lección: al encadenar contratos, la sesión sigue con el servidor y los ajustes con que
+  arrancó, y el contrato siguiente tiene que decirlo.
+* **El primer mensaje de commit del perímetro pasaba de 100 caracteres;** lo paró `delegation_contract.py`.
+* **El primer recuento de permisos partía los `grep` con `\|` entre comillas.** Se rehízo quitando antes lo
+  entrecomillado.
+* **En T4, T5 y T6 del motivo, la base falla primero por otra razón:** allí una propuesta con motivo ya es
+  `INVALID_JSON`. El implementador comprobó la razón declarada con una copia de la base, fuera del verificador.
+  Es el límite «Red for the stated reason» de §9.
+* **Una lista «de solo lectura» se comprueba opción por opción** (`sort -o`, `uniq` con fichero de salida,
+  `sed` con `w` o `e`). Lo vio el implementador, no el contrato.
+* Restos fuera del repositorio: `$TMPDIR/basecopy` y `$TMPDIR/probe`, del implementador del motivo (`rm`
+  denegado).
+
+**Siguiente**
+* **Abrir una sesión nueva:** la copia de trabajo ya tiene los dos cambios, así que arranca con el validador que
+  exige el motivo y con el perímetro nuevo, y migra `.data/` en la primera validación. Medir otra vez la ida y
+  vuelta del validador (la hipótesis de `COSTE.md` §4) y los permisos de una tarea delegada.
+* **Jueves 15:** avanzar `main` hasta el final de `v01/perimetro` (`git branch -f main v01/perimetro` y
+  `git switch main`), si `main` no se ha movido.
+* Decidir la tabla de contratos de seguridad y, con ella, recortar el contrato de A19.
+* Lo que quedaba de la 2b para el miércoles: el caso (b), los menores, la tabla «Resumen» de `CASES.md` hasta
+  A35 y limpiar `~/Documents/noticias-2b`.
+* El instalador en una orden tiene que llevar a los destinos el perímetro nuevo y el validador con el motivo.
+* `docs/` y `examples/` siguen hablando de cinco radicales (`PROCESO.md`, `ENTORNO_PROPIO.md`, `PRIOR_ART.md`,
+  `RECIBO_CONTENIDO.md` y el `engine-implementer` de Traianus).
+* El README, esta semana.
+* Disco: 5,5 GiB libres.
+
 ## 2026-10-13
 
 Una sesión larga, primer día de la ventana de la 2b. Empezó como puesta al día y acabó en cuatro contratos
