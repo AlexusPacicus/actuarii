@@ -3,7 +3,7 @@
   "task_id": "denywrite-sin-exenciones",
   "title": "Every governed path gets its denyWrite entry, with no exemption for .claude/** or .mcp.json",
   "branch": "v01/denywrite-sin-exenciones",
-  "base_commit": "644a901ed6b6cb72ad3fe6f1c8de7d802b89674d",
+  "base_commit": "4c9be7a9023fbf5a3add71ab8d9986f1269a46c7",
   "attribution": null,
   "context": {
     "task": "Close the hole a review found on 2026-10-14: Bash can write .claude/memory/, a governed path, because the sandbox's denyWrite exempts .claude/** and .mcp.json on the belief that Claude Code protects them by itself. It protects only part of .claude. AGENTS 7.3 requires every governed path to have its denyWrite entry.",

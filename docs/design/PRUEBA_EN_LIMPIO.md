@@ -113,7 +113,7 @@ Lo que se observa es el registro del kit, no la conducta del agente.
 
 ### Linux (CI), 2026-10-08
 
-Primera ejecución del workflow `CI` (`.github/workflows/ci.yml`) en GitHub Actions, sobre `e8f0d5d`,
+Primera ejecución del workflow `CI` (`.github/workflows/ci.yml`) en GitHub Actions, sobre `a9709e5`,
 en `ubuntu-24.04` con Python 3.11. Criterio de §4: que la secuencia pase. **Pasa.**
 
 | Paso | Resultado | Duración |
@@ -136,7 +136,7 @@ coincidente con el total; los motivos impresos se leen con `pytest -rs`.
 
 No vale como medida: hubo varias intervenciones del chat (cómo clonar, la ruta del instalador, cómo
 seguir tras cada roce) y no se cronometraron los pasos. Destino: clon de `noticias` en `v3-exp`
-(`1676538`); instalador desde Actuarii en `f79ac08`; Claude Code 2.1.291, Sonnet 5.5, modo automático
+(`1676538`); instalador desde Actuarii en `943358c`; Claude Code 2.1.291, Sonnet 5.5, modo automático
 (el modo por defecto de esa versión).
 
 **Hitos**
@@ -155,7 +155,7 @@ seguir tras cada roce) y no se cronometraron los pasos. Destino: clon de `notici
 
 **Roces y fallos**
 1. No había guía: solo el docstring del instalador y su salida. Corregido antes de medir
-   (`INSTALL.md`, `f79ac08`).
+   (`INSTALL.md`, `943358c`).
 2. `INSTALL.md` paso 1 no dice dónde clonar Actuarii: dos clones anidados, uno dentro de Actuarii y
    otro dentro del destino.
 3. `INSTALL.md` paso 2 no da rutas explícitas ni deja claro que el destino es otro repositorio: se
@@ -177,10 +177,10 @@ seguir tras cada roce) y no se cronometraron los pasos. Destino: clon de `notici
 instalado, sin comprobar en el destino). La nota oculta de la pantalla de inicio («1 more notice
 hidden») era de Claude Code, ajena al kit.
 
-**Corregido antes de la próxima medida (2026-10-09):** los roces 4 y 5 en `d2912f4`. El instalador escribe
+**Corregido antes de la próxima medida (2026-10-09):** los roces 4 y 5 en `3c9faf7`. El instalador escribe
 los enlaces del kit como ficheros normales, y un test commitea el kit instalado con su propio hook, también
 en la secuencia de la CI. `--dry-run` acaba en «dry run: nothing was written», sin pasos siguientes. Los
-roces 2, 3, 6 y 7, en `INSTALL.md` (`6908014`), que además dice que el primer commit se hace en la terminal,
+roces 2, 3, 6 y 7, en `INSTALL.md` (`0f3118a`), que además dice que el primer commit se hace en la terminal,
 antes de abrir Claude Code: dentro de la sesión, el shim rechazaría la comprobación del commit, que aún no
 está en `HEAD`. El hito 1 reformulado está en §4c.
 
@@ -191,7 +191,7 @@ al chat, y desde ahí el chat guio cada paso. Además, el texto del paso 6 no fu
 «crea AGENTS.md», y los pasos no se cronometraron. Un intento anterior, el 2026-10-09, no pasó del
 clon de `noticias` y no cuenta.
 
-Destino: clon de `noticias` en `v3-exp` (`1676538`); instalador desde Actuarii en `e0291db`; commit de la
+Destino: clon de `noticias` en `v3-exp` (`1676538`); instalador desde Actuarii en `1b4c084`; commit de la
 instalación en el destino `09588b1`, a las 10:23:30 UTC; Claude Code 2.1.294, Sonnet 5.5, modo automático.
 
 **Anuncio de la sesión** (pendiente del intento 1): reglas de `.actuarii.json`; gobernados `.actuarii.json`,
@@ -200,7 +200,7 @@ repositorio, solo scripts commiteados; sandbox de `Bash` activo; hook de integri
 
 **Hitos**
 * **Commit de la instalación con su propio `pre-commit`:** pasa (el fallo 5 del intento 1, corregido en
-  `d2912f4`).
+  `3c9faf7`).
 * **Hito 1 (§4c): se cumple.** Primera aplicación del método.
   1. En la transcripción, una sola escritura gobernada que el hook dejó pasar: `Write` de `AGENTS.md`,
      10:26:11.370 UTC.
@@ -226,14 +226,14 @@ mensaje del instalador y el roce 2 son código y quedan para la 2b reducida.
 
 Sin ayuda del chat entre el clon de `noticias` y el hito 2, con el texto fijo de §4b. Destino: clon de
 `noticias` en `v3-exp` (`1676538`) en `~/Documents/noticias-medida-2`. Instalador desde
-`~/Documents/actuarii-medida` en `fcd8053`. Claude Code 2.1.296, Sonnet 5.5, modo automático. El anuncio de
+`~/Documents/actuarii-medida` en `32a4cb0`. Claude Code 2.1.296, Sonnet 5.5, modo automático. El anuncio de
 la sesión es el del intento 2: sandbox activo y hook instalado.
 
 **Desviaciones del protocolo**
 * **Sin cronómetro.** Los tiempos salen del registro: el reflog del destino, las fechas de los ficheros
   escritos, el commit y la transcripción de la sesión. El reflog marca el final de cada orden de git, no su
   comienzo; el clon de `noticias` es local y tarda menos de un segundo.
-* **Paso 1 de la guía repetido:** a las 12:34:15 se clonó Actuarii otra vez, desde GitHub (`7aab204`) y
+* **Paso 1 de la guía repetido:** a las 12:34:15 se clonó Actuarii otra vez, desde GitHub (`8a99dc6`) y
   **dentro del destino** (`noticias-medida-2/actuarii/`, sin trackear), aunque la guía dice «never inside
   it». El instalador se ejecutó después desde `actuarii-medida`, no desde ese clon. Según §2, el clon de
   Actuarii no cuenta, pero cayó dentro del tiempo y no se puede separar de la lectura de la guía.

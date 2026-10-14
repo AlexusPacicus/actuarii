@@ -100,7 +100,7 @@ pasa si no se cumple.
 **V8. Antes de abrir el repositorio.**
 * Qué:
   * la información personal que fijó el autor, fuera del árbol y de la historia de `main` (D2). Está en
-    `docs/PLAN.md`, `docs/DEVLOG.md` y `docs/adversarial-audit/PAUTAS.md` desde `7910a63`, y en
+    `docs/PLAN.md`, `docs/DEVLOG.md` y `docs/adversarial-audit/PAUTAS.md` desde `de8cabf`, y en
     `.claude/memory/autor.md`; la lista de términos no se guarda en el repositorio;
   * en `origin`, solo `main`.
 * Comprobación: `git log -p main` no contiene los términos que fije el autor, y `git ls-remote --heads origin`

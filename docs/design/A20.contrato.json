@@ -3,7 +3,7 @@
   "task_id": "a20-pre-commit-dentro-del-git",
   "title": "The installer writes the pre-commit hook only inside the target's own .git directory (A20)",
   "branch": "fase2b/a20-pre-commit",
-  "base_commit": "5f0df7639c8c37b19eb86825301440688fbdac4c",
+  "base_commit": "e6b9df4ff64f162623036a27fe92b18c110c1035",
   "attribution": null,
   "context": {
     "task": "Close A20: the installer joins the target with git's answer for hooks/pre-commit lexically, so an absolute or escaping hooks path writes the kit's pre-commit outside the target, where it can block every other repository's commits.",

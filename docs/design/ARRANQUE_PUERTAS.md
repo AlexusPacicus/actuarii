@@ -224,7 +224,7 @@ agente que una puerta lee es la que valida: la carga del hook o la propuesta.
 * Se salta el shim a propósito; el autor lo aprobó (AGENTS 4.3).
 * Corre dentro del sandbox: lo que prueba es el mecanismo, no la salida del sandbox. La salida la da que
   Claude Code ejecute las puertas fuera, como mostró A19 en vivo.
-* **Resultado (2026-10-13, clon de `f9b8990`):**
+* **Resultado (2026-10-13, clon de `6715a83`):**
 
   | Ejecución | Puerta | Testigo | Decisión de la puerta |
   |---|---|---|---|

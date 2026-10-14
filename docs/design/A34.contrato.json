@@ -3,7 +3,7 @@
   "task_id": "a34-revision-ciega-v01",
   "title": "The blind reviewer starts without CLAUDE.md, memory or git snapshot, and the review lock requires it (A34, v0.1)",
   "branch": "fase2b/a34-revision-ciega",
-  "base_commit": "24c1e19eb8494f231e354b24c93af849efdc4cde",
+  "base_commit": "c6b58aaa503b7e980d686f24ce4e7a8bf676cd89",
   "attribution": null,
   "context": {
     "task": "Close the v0.1 part of A34: Claude Code puts the project's CLAUDE.md (with AGENTS.md, docs/PLAN.md and .claude/memory/MEMORY.md through its imports) and a git status snapshot with recent commit subjects into every subagent's context before its first tool call, so the blind reviewer is not blind by construction.",

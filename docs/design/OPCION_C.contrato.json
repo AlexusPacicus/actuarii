@@ -3,7 +3,7 @@
   "task_id": "opcion-c-herramientas-de-ficheros",
   "title": "File tools get Bash's reach: denied outside the root unless configured, never in .git, .vscode or .idea (option c, A33)",
   "branch": "fase2b/opcion-c",
-  "base_commit": "5f0df7639c8c37b19eb86825301440688fbdac4c",
+  "base_commit": "e6b9df4ff64f162623036a27fe92b18c110c1035",
   "attribution": null,
   "context": {
     "task": "Option (c), decided by the author on 2026-10-13, and A33: the write gate lets Edit, MultiEdit, Write and NotebookEdit write anywhere outside the repository and, inside it, the git hooks and configuration and the IDE tasks that Claude Code's sandbox protects from Bash. The design is docs/design/ARRANQUE_PUERTAS.md section 10.",

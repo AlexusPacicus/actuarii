@@ -1,6 +1,6 @@
 # Actuarii: el proceso completo
 
-Para la revisión del autor (2026-10-07). Describe el kit tal como está en `main` (`2457da6`), con
+Para la revisión del autor (2026-10-07). Describe el kit tal como está en `main` (`0334c61`), con
 cada hallazgo de la auditoría (`docs/adversarial-audit/CASES.md`) marcado en el punto del flujo
 donde ocurre: **⚠ A0x**.
 
@@ -197,17 +197,17 @@ F5 → F6 → F7. Después, A15.
 
 | Corrección | Estado | Dónde |
 |---|---|---|
-| F1 | Hecha | `afe12bb` |
-| F2 | Hecha | `65f6d30` |
-| F3 | Hecha; comprobada en la llamada real (Claude Code convierte el texto JSON en objeto) | `47f29be` |
-| F4a | Hecha: el recibo ata el contenido exacto | `d87032d` |
-| F4b | Hecha: primitivas por `ast` sobre el resultado, decididas en la puerta (§4.1 de `docs/design/RECIBO_CONTENIDO.md`); la lista queda cerrada | `74177b4` |
-| F4c | Adelantada a la v0.1 en otra forma: el hook `pre-commit` de integridad (el índice de una ruta gobernada coincide con el disco, y cada ruta se escribe como en el disco) | `15c8ad0` |
-| Sandbox | Nueva, tras la auditoría: el sandbox de Claude Code corta la red de `Bash` y sus escrituras, movimientos y borrados en las rutas gobernadas (`docs/design/SANDBOX.md`, casos S1–S9). Cierra la parte de A10 que dependía de `Bash` | `750ac0c` |
-| F5 | Reducida a declarar la heurística (`AGENTS.md` §9, «Clever shell» y «Test runners»): con el sandbox, un rodeo del hook de `Bash` ya no llega a la red ni a las rutas gobernadas | `f4189ea` |
-| F6 | Hecha: las siete órdenes de hook dan la misma decisión con el shim, sin él y con el Python 3.9.6 del sistema | `1391323` |
-| F7 | Hecha en `AGENTS.md` v2.1.0 §9 | `f4189ea` |
-| A15 | Hecha: `tools/audit/verify_red_green.py` ejecuta los tests del informe en el commit base y en el final, más la suite entera, en worktrees temporales; el informe pasa a `delegation-report/2` | `a69f940` |
+| F1 | Hecha | `1059787` |
+| F2 | Hecha | `0ef7221` |
+| F3 | Hecha; comprobada en la llamada real (Claude Code convierte el texto JSON en objeto) | `a489919` |
+| F4a | Hecha: el recibo ata el contenido exacto | `7bb93c1` |
+| F4b | Hecha: primitivas por `ast` sobre el resultado, decididas en la puerta (§4.1 de `docs/design/RECIBO_CONTENIDO.md`); la lista queda cerrada | `1f4c1fd` |
+| F4c | Adelantada a la v0.1 en otra forma: el hook `pre-commit` de integridad (el índice de una ruta gobernada coincide con el disco, y cada ruta se escribe como en el disco) | `4ee3691` |
+| Sandbox | Nueva, tras la auditoría: el sandbox de Claude Code corta la red de `Bash` y sus escrituras, movimientos y borrados en las rutas gobernadas (`docs/design/SANDBOX.md`, casos S1–S9). Cierra la parte de A10 que dependía de `Bash` | `546730b` |
+| F5 | Reducida a declarar la heurística (`AGENTS.md` §9, «Clever shell» y «Test runners»): con el sandbox, un rodeo del hook de `Bash` ya no llega a la red ni a las rutas gobernadas | `cad6b77` |
+| F6 | Hecha: las siete órdenes de hook dan la misma decisión con el shim, sin él y con el Python 3.9.6 del sistema | `3764e40` |
+| F7 | Hecha en `AGENTS.md` v2.1.0 §9 | `cad6b77` |
+| A15 | Hecha: `tools/audit/verify_red_green.py` ejecuta los tests del informe en el commit base y en el final, más la suite entera, en worktrees temporales; el informe pasa a `delegation-report/2` | `293fbc9` |
 
 **Declarado (autor, 2026-10-07):** `.opencode/` (las skills de OpenCode) no está en `governed_paths`;
 se escribe sin recibo, también desde `Bash`. OpenCode se usa aquí solo para opinar, y el test que exige

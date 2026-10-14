@@ -80,7 +80,7 @@ kit se gobierna a sí mismo desde el primer commit.
   * `CLAUDE.md` con `@AGENTS.md` y `@docs/PLAN.md`.
 * **Hecho cuando:** `pytest tests/` está en verde en un entorno virtual sin `traianus`. Se anota el
   número de tests.
-* **Resultado (2026-10-05, `c23f421`):** 1497 pasan y 3 se saltan en un `.venv` con solo
+* **Resultado (2026-10-05, `9f5a5de`):** 1497 pasan y 3 se saltan en un `.venv` con solo
   `pydantic==2.13.3` y `pytest`. Se quitaron los tests del motor y los que leían documentos de
   Traianus; los de grounding apuntan a `tools/boundary_validator/validator.py`. Un test nuevo
   (`tests/unit/test_kit_independence.py`) impide que `tests/` o `tools/` vuelvan a importar
@@ -99,35 +99,35 @@ Por contrato JSON al implementador, test-first.
 * **Hooks:** se llaman con `$CLAUDE_PROJECT_DIR` y no dependen del directorio actual. Hace falta un
   test que haga `cd` y compruebe que siguen funcionando.
 * **Avance (2026-10-05):**
-  * Paso 1 (`cc81355`): las órdenes de hook usan `$CLAUDE_PROJECT_DIR`; fuera `spectral-math-engine`.
-  * Paso 2 (`4ec1912`, `151bacc`): `.actuarii.json` (JSON, no TOML: los hooks deben importar con un
+  * Paso 1 (`060db60`): las órdenes de hook usan `$CLAUDE_PROJECT_DIR`; fuera `spectral-math-engine`.
+  * Paso 2 (`fe9cdb9`, `f90181a`): `.actuarii.json` (JSON, no TOML: los hooks deben importar con un
     Python 3.9 de sistema) con `governed_paths` y `receipt_window_seconds`, leído por
     `tools/project_config.py`. Sin fichero se gobierna un mínimo incorporado (`.actuarii.json`,
     `AGENTS.md`, `CLAUDE.md`); con uno inválido se deniega todo dentro de la raíz. El propio fichero
     está siempre gobernado y cada denegación nombra su regla. Los 3 saltados de la fase 0 ya no
     existen: 1614 en verde, 0 saltados.
-  * Paso 3 (`af75004`), con dos decisiones del autor: el kit gobierna también `tools/hooks/**` y
+  * Paso 3 (`cc28486`), con dos decisiones del autor: el kit gobierna también `tools/hooks/**` y
     `tools/bin/**`; el shim lee `python_script_dirs` pidiéndoselo a `tools/project_config.py` con el
     intérprete real aislado (`-I`), una sola fuente de verdad. El directorio del kit está siempre
     permitido (si no, los hooks saldrían 126 y la puerta se abriría); con la configuración inválida
     solo ese. Sin fichero, todo el repositorio (solo scripts commiteados). 1683 en verde.
-  * Paso 4 (`8f49a81`): clave `contract_registry` (`null` o una ruta; aquí `null`), leída por el hook
+  * Paso 4 (`dbce321`): clave `contract_registry` (`null` o una ruta; aquí `null`), leída por el hook
     en cada llamada; el registro configurado está siempre gobernado. Una sola copia de
     `path_matches`, en `tools/project_config.py`. El registro de Traianus pasa intacto a
     `examples/traianus/contract_registry.json`. 1768 en verde.
-  * Paso 5 (`453fd01`): hook `SessionStart` que anuncia qué se gobierna y de dónde sale.
+  * Paso 5 (`387c6b6`): hook `SessionStart` que anuncia qué se gobierna y de dónde sale.
   * Paso 6, con decisiones del autor (2026-10-06):
-    * 6a (`1bce3ce`): la revisión ciega se configura con la clave `review`. La configuración completa
+    * 6a (`4368b50`): la revisión ciega se configura con la clave `review`. La configuración completa
       de Traianus está en `examples/traianus/actuarii.json`.
-    * 6b (`c199173`): fuera `check_doc_citations.py`; el contrato de delegación pierde `scope` y las
+    * 6b (`887b486`): fuera `check_doc_citations.py`; el contrato de delegación pierde `scope` y las
       gates de Traianus (una gate es un nombre libre validado); sin citas de cláusulas de `AGENTS`
       en `tools/` ni en `tests/`; permisos sin directorios inexistentes; OpenCode carga lo mismo que
       `CLAUDE.md`; `.gitignore` propio.
-    * 6c (`8fc0a41`, `56edf05`, `e52d951`): `AGENTS.md` genérico (v2.0.0) con sus límites
+    * 6c (`07c9fcd`, `445c89d`, `270aad3`): `AGENTS.md` genérico (v2.0.0) con sus límites
       declarados; subagentes `implementer` y `blind-reviewer`; skills `blind-review` y `tdd-cycle`
       genéricas, idénticas en `.claude/` y `.opencode/` (con test). Lo de Traianus pasa a
       `examples/traianus/`.
-  * **Fase 1 cerrada (2026-10-06, `28848f5`):** 1979 tests en verde. Fuera de `examples/`, `docs/` y
+  * **Fase 1 cerrada (2026-10-06, `a678a95`):** 1979 tests en verde. Fuera de `examples/`, `docs/` y
     los datos de los tests no queda ninguna mención a Traianus.
   * **Comprobaciones en una sesión nueva (2026-10-06):**
     * `cd` en Bash ya no rompe los hooks: con el directorio actual en `tools/hooks`, los hooks de
@@ -358,7 +358,7 @@ no se mueve la fecha de lanzamiento.
 
 | Semana | Fechas | Qué |
 |---|---|---|
-| 1 | 6–11 oct | Búsqueda previa, lo primero (un día como mucho). Cerrar la fase 1 (paso 5 hecho en `453fd01`; queda el paso 6). Cerrar las decisiones pendientes. |
+| 1 | 6–11 oct | Búsqueda previa, lo primero (un día como mucho). Cerrar la fase 1 (paso 5 hecho en `387c6b6`; queda el paso 6). Cerrar las decisiones pendientes. |
 | 2 | 12–18 oct | Fase 2: `pyproject.toml`, `LICENSE`, `NOTICE`, orden de instalación, prueba en un repo vacío con cronómetro (< 5 min), CI. |
 | 3 | 19–25 oct | Fase 3: README en inglés, documento del caso Traianus, texto corto para HN y Reddit. **Se publica el 25 de octubre, esté como esté**; lo que no esté listo pasa a la v0.2. |
 | 4–7 | 26 oct – 22 nov | Ventana de señal. Auditoría de ejemplo publicada (con el propio kit, sobre un repositorio ajeno; fallos de seguridad, primero en privado a sus mantenedores). Solo se arregla lo que pidan usuarios reales. |
@@ -494,15 +494,15 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
   cerradas; la tabla con sus commits está en `docs/process/PROCESO.md` §9. El kit tal como es lo
   describe `AGENTS.md` v2.1.0.
 * **Hecho desde el traspaso anterior (2026-10-06):**
-  * F4b, primitivas por `ast` decididas en la puerta (`74177b4`); la lista queda cerrada.
+  * F4b, primitivas por `ast` decididas en la puerta (`1f4c1fd`); la lista queda cerrada.
   * Sandbox de Claude Code como frontera de `Bash`: red, escrituras, movimientos y borrados en las
-    rutas gobernadas (`750ac0c`; prueba S1–S9 en `docs/design/SANDBOX.md`).
-  * Integridad del commit con el hook `pre-commit` (`15c8ad0`), instalado en este repositorio.
-  * `AGENTS.md` v2.1.0, la skill `boundary-validator` y la plantilla `implementer` al día (`f4189ea`,
-    `429d5ff`).
-  * F6, los hooks con y sin el shim y con el Python 3.9.6 del sistema (`a21fbfc`).
+    rutas gobernadas (`546730b`; prueba S1–S9 en `docs/design/SANDBOX.md`).
+  * Integridad del commit con el hook `pre-commit` (`4ee3691`), instalado en este repositorio.
+  * `AGENTS.md` v2.1.0, la skill `boundary-validator` y la plantilla `implementer` al día (`cad6b77`,
+    `0fc8cf9`).
+  * F6, los hooks con y sin el shim y con el Python 3.9.6 del sistema (`a391b0e`).
   * A15, la fase roja y la verde comprobadas en código con `tools/audit/verify_red_green.py` y el
-    informe `delegation-report/2` (`17a05e1`).
+    informe `delegation-report/2` (`3162f65`).
   * Coste de una escritura gobernada medido (`docs/design/COSTE.md`): 1875 ms de mediana, por encima
     del umbral de 1 s; según la regla, no se optimiza antes del lanzamiento, el README declara las
     cifras y el diseño para la v0.2 está en su §5.
@@ -516,7 +516,7 @@ una salida. Las reglas pueden quitar la primera y la tercera; la segunda no.
     (en segundo plano mientras se revisa el diff) antes de fusionar. El contrato que se pasa al
     verificador tiene que decir `report_schema: delegation-report/2`.
   * **Se commitea solo si `pytest` sale con 0**, comprobando su código de salida, no el de la orden
-    que le sigue (lección del commit rehecho `429d5ff`).
+    que le sigue (lección del commit rehecho `0fc8cf9`).
   * **El servidor MCP ejecuta el código con el que arrancó:** un cambio en el validador necesita que
     el autor lo reconecte. Los hooks, en cambio, se releen en cada llamada (AGENTS 6.5).
   * `.opencode/` no está gobernado, por decisión del autor (AGENTS §9).

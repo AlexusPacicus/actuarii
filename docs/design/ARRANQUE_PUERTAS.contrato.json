@@ -3,7 +3,7 @@
   "task_id": "a19-a31-a32-arranque-puertas",
   "title": "Gates start from a clean PATH, with -I -S, and the repository root only while importing tools (A19, A31, A32)",
   "branch": "fase2b/arranque-puertas",
-  "base_commit": "629b6e12016518e65c058ead840e291ac765ca3e",
+  "base_commit": "81d64b106cf8b3edd38bb6370d972f12f049e5f3",
   "attribution": null,
   "context": {
     "task": "Close A19, A31 and A32: the gates run outside the sandbox and today load an interpreter, site-packages code and repository-root modules that the agent can write. The design is docs/design/ARRANQUE_PUERTAS.md sections 2, 3, 5 and 7.",

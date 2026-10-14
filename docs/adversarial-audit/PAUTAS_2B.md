@@ -38,7 +38,7 @@ commitea y no cambia durante la auditoría; lo que se aprenda por el camino se a
 | I4 | Un repositorio instalado queda gobernado como este: los mismos hooks, el mismo sandbox estricto y el mismo anuncio verdadero. |
 
 **G1–G13**, solo para lo que entró después del 2026-10-07: el instalador, la denegación sin rastro de
-auditoría (`70304b3`) y las copias del shim (`d2912f4`).
+auditoría (`c6b289b`) y las copias del shim (`3c9faf7`).
 
 **Fuera de alcance:** lo que `AGENTS.md` §9 ya declara, salvo que resulte más amplio de lo que dice; las
 ideas de la v0.2; el coste; Traianus.

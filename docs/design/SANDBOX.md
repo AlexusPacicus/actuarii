@@ -195,7 +195,7 @@ Claude Code 2.1.291, macOS. Cada orden la lanzó Claude desde `Bash`, dentro del
 | S5 aprobación | en modo automático, `touch docs/zz_probe` pidió permiso al autor (lo confirmó y rechazó la segunda vez): la regla `ask` de `Bash` a secas sigue en vigor porque `autoAllowBashIfSandboxed` es `false` | sí |
 | S6 kit | `Write` en `tests/` sin recibo: denegado por la puerta, nombrando su regla. El servidor MCP, fuera del sandbox, sigue emitiendo recibos | sí |
 | S7 suite | 2716 en verde y 1 fallo, el mismo que fuera del sandbox: `test_registration_changes_nothing_else_in_settings` fija las claves de `settings.json` y no conoce `sandbox` | sí (el fallo es del cambio, no del sandbox) |
-| S8 git | rama y commit vacío: funcionan. `git checkout 916ee79 -- tools/boundary_validator/validator.py`: `unable to unlink old … Operation not permitted` | sí, con un hallazgo |
+| S8 git | rama y commit vacío: funcionan. `git checkout 76db044 -- tools/boundary_validator/validator.py`: `unable to unlink old … Operation not permitted` | sí, con un hallazgo |
 | S9 sin sandbox | no se provocó | declarado |
 
 **Hallazgo de S8, no previsto:** el `git checkout <commit> -- <ruta>` que falló **ya había escrito el
@@ -230,7 +230,7 @@ del usuario sigue siendo recomendable, por el fichero local (§5).
 * **Formato del mensaje** (prefijo de una lista cerrada, tipo frente a rutas, plantilla, sin
   atribución): a la v0.2.
 * **S5:** confirmado por el autor: en modo automático también pregunta.
-* **Integridad del commit, hecha (2026-10-07, `e4aa45f` y `ceef6a7`):** `tools/git/commit_integrity.py`,
+* **Integridad del commit, hecha (2026-10-07, `6828cac` y `19b2896`):** `tools/git/commit_integrity.py`,
   lanzado por `tools/git/pre-commit`, que la persona copia a `.git/hooks/pre-commit` y hace ejecutable.
   Rechaza el commit si una ruta gobernada del índice no coincide con el disco (contenido con los filtros
   de git, y modo), y si cualquier ruta del índice se escribe distinto que en el disco: en revisión se vio

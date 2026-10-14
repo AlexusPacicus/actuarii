@@ -3,7 +3,7 @@
   "task_id": "motivo-en-el-acta",
   "title": "Every proposal carries its rationale, and no EXECUTE_SAFE is issued without its record",
   "branch": "v01/motivo",
-  "base_commit": "148961e73f211a4e0a664277b0e1505d63e2ebc4",
+  "base_commit": "eb0d4408ef57677ece5f8f31a0855fdfdd7bebcc",
   "attribution": null,
   "context": {
     "task": "The v0.1 is presented as 'work records for coding agents: every action leaves a record that it happened, and why'. Today the record of a proposal holds its intent class, file, decision and abort flag, but no reason, and an EXECUTE_SAFE is issued even when its record cannot be written. This task adds a required Rationale to the proposal, records it with every decision taken on a valid proposal, and issues no EXECUTE_SAFE without its record.",

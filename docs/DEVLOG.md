@@ -18,28 +18,28 @@ del autor; la CI, en verde.
   `docs/probe-rationale.md`, que no existe. La base real se migró al primer uso y conserva sus 392 filas. El
   esquema de `validate_proposal` que muestra la sesión es una copia vieja, sin `Rationale`; el servidor acepta
   el campo igual.
-* `main` avanzado sin merge hasta `2fd0b9f`, el final de la cadena del motivo y del perímetro.
-* Las decisiones de hoy, anotadas en el PLAN (`d61b2c3`).
-* **A20** (`f06b826`): el `pre-commit` solo se escribe dentro del `.git` propio del destino. Son conflicto, sin
+* `main` avanzado sin merge hasta `8af0e14`, el final de la cadena del motivo y del perímetro.
+* Las decisiones de hoy, anotadas en el PLAN (`7eea77a`).
+* **A20** (`332e847`): el `pre-commit` solo se escribe dentro del `.git` propio del destino. Son conflicto, sin
   escribir nada: un `core.hooksPath` global o que sale del destino, un directorio de hooks del árbol de
   trabajo, un *worktree* enlazado y un `.git` que es un fichero. Verificado: T1–T5 y X1 rojos, T6 y X2 de
   guarda, suite 3177.
-* **A31** (`2f8a898`; contrato `024bd2f` y su ampliación `69f18a7`): la raíz entra en `sys.path` solo para
+* **A31** (`a55b86b`; contrato `ef822eb` y su ampliación `51f7f8b`): la raíz entra en `sys.path` solo para
   `import tools` y sale enseguida. Vale para los nueve scripts: los tres hooks, `commit_integrity.py`, el
   validador, el instalador y los tres de auditoría. En los hooks va dentro del `try` que deniega. Verificado:
   T1–T4, X3 y X4 rojos, T5, X1 y X2 de guarda, suite 3233.
-* **A34** (`6430ca8`; contrato `1f743b3` y `4f8e3d6`):
+* **A34** (`03c7cf7`; contrato `f9daebd` y `f12825a`):
   * el revisor ciego lleva `omitClaudeMd: true`, y los ajustes, `includeGitInstructions: false`;
   * `build --lock` no pone el candado si falta alguno de los dos;
   * la skill separa lo que se cumple de lo que solo se declara.
   * Verificado: T1–T3, T5 y X1 rojos, T4 de guarda, suite 3278.
-* **AGENTS.md v2.2.0** (`8356518`):
+* **AGENTS.md v2.2.0** (`2a25a4c`):
   * 5.1 dice lo que cumple la revisión ciega;
   * 6.2 pierde su [enforced];
   * §9 declara lo que deja acta (A30), el arranque de las puertas (A19, A32), las herramientas de ficheros
     (A33), las credenciales (A35), los canales sin regla (A29), los enlaces (A26), lo que sigue recibiendo el
     revisor (A34), y A21, A23, A24, A25 (en «Forged logs») y A28.
-* **Primer push del autor** (`5d76865`). La CI en Linux, en verde en 1 min 17 s.
+* **Primer push del autor** (`b40adf1`). La CI en Linux, en verde en 1 min 17 s.
 * **Una revisión de otro agente**, que pegó el autor. Lo principal:
   * el acta registra que se pidió escribir, no que se escribió. No hay hook después de la escritura, la base
     es local, git la ignora, `Bash` puede tocar sus ficheros `-wal` y `-shm`, y no se enlaza con ningún
@@ -47,16 +47,16 @@ del autor; la CI, en verde.
   * el coste: el matcher `*` lanza dos procesos de Python en cada llamada a cualquier herramienta, también en
     `Read` y `Grep`; y A30 es un argumento contra el diseño, no un límite más;
   * el hueco de `.claude/memory/` y la fecha mal puesta, comprobados los dos con una sonda y con `git log`.
-* **Fechas corregidas** en esta entrada y en el PLAN (`d6ae943`).
-* **`docs/ESTADO.md`** (`644a901`): un estado corto que `CLAUDE.md` y `opencode.jsonc` cargan en lugar del
+* **Fechas corregidas** en esta entrada y en el PLAN (`87a656a`).
+* **`docs/ESTADO.md`** (`4c9be7a`): un estado corto que `CLAUDE.md` y `opencode.jsonc` cargan en lugar del
   PLAN, que pasa a ser documento de consulta.
-* **El hueco de `.claude/memory/`** (contrato `f1bb253`, implementación `7ede75c`):
+* **El hueco de `.claude/memory/`** (contrato `015d5db`, implementación `92df87a`):
   * cada ruta gobernada tiene su `denyWrite`, sin eximir `.claude/**` ni `.mcp.json`, aquí y en el
     instalador;
   * el test comprueba la regla de AGENTS 7.3 en vez de fijar la exención.
   * Verificado: T1, T2 y X1 rojos, T3 de guarda, suite 3278. Falta la sonda en una sesión con los ajustes
     nuevos.
-* **Segundo push del autor** (`7ede75c`).
+* **Segundo push del autor** (`92df87a`).
 
 **Decidido (autor)**
 * Se quedan A20, A31 y A34. A19, A32, la opción (c) con A33 y A35 pasan a la v0.2, declarados.
@@ -135,8 +135,8 @@ sincera del proyecto y acabó con dos contratos implementados y verificados, enc
   * el proceso se come al producto: ningún cambio de código del kit del 9 al 13, y el README sin empezar;
   * antes de hacer público el repositorio, `docs/PLAN.md` cuenta en la historia la situación personal del
     autor, y A33 y A34 tocan comportamiento de Claude Code que convendría contar antes a Anthropic.
-* **El objetivo de la v0.1, reescrito** en `docs/PLAN.md` (`1222886`): actas de trabajo para agentes de código.
-* **Contrato del motivo** (`docs/design/MOTIVO.contrato.json`, `1222886`) e implementación (`0343a94`, `sonnet`):
+* **El objetivo de la v0.1, reescrito** en `docs/PLAN.md` (`6fccf88`): actas de trabajo para agentes de código.
+* **Contrato del motivo** (`docs/design/MOTIVO.contrato.json`, `6fccf88`) e implementación (`a635ec0`, `sonnet`):
   * `Rationale` obligatorio en la propuesta (de 1 a 1000 caracteres, no solo espacios), guardado en
     `audit_log` con cada decisión, también las denegadas;
   * las bases de auditoría viejas se migran al primer uso, sin perder filas;
@@ -150,8 +150,8 @@ sincera del proyecto y acabó con dos contratos implementados y verificados, enc
 * **Medida de los permisos** en la transcripción de ese implementador: 52 `Bash`, 51 `validate_proposal` y 60
   `Edit` o `Write`; 161 llamadas caían en «preguntar». Con el perímetro nuevo, 70 (10 de ellas `Bash`); con
   `acceptEdits`, 10.
-* **Contrato del perímetro** (`docs/design/PERIMETRO.contrato.json`, `a0d6df9` y `6e4ea39`) e implementación
-  (`ec2dc08`):
+* **Contrato del perímetro** (`docs/design/PERIMETRO.contrato.json`, `12cc5a1` y `2934c1a`) e implementación
+  (`f5517ae`):
   * sin preguntar en los dos entornos: `pytest`, `ls`, `cat`, `head`, `tail`, `wc`, `grep`, `df`, `echo`,
     `sed -n`, `sort`, `uniq`, `diff` y `validate_proposal`;
   * una lista cerrada, con su test; el resto de `Bash` sigue preguntando;
@@ -159,7 +159,7 @@ sincera del proyecto y acabó con dos contratos implementados y verificados, enc
     OpenCode;
   * AGENTS 7.1, reescrito.
   * Verificado por el chat: T1, T2 y T4 rojos, T3 y T5 de guarda, suite 3166.
-* **AGENTS §9** (`bb86a87`): `sort`, `uniq` y `sed -n` escriben o ejecutan con sus opciones (en GNU `sed`, `e`
+* **AGENTS §9** (`f9f951d`): `sort`, `uniq` y `sed -n` escriben o ejecutan con sus opciones (en GNU `sed`, `e`
   ejecuta una orden), sin preguntar; el sandbox las contiene. Lo vio el implementador del perímetro.
 
 **Decidido (autor)**
@@ -191,7 +191,7 @@ sincera del proyecto y acabó con dos contratos implementados y verificados, enc
   implementador lo cambió según D5 y lo dijo. Lección (AGENTS 6.4): buscar también los tests que fijan el
   comportamiento que el contrato quita, no solo los que construyen el formato.
 * **El contrato del perímetro casi se lanza sin decir que el servidor de la sesión no acepta el motivo.** Se
-  añadió D12 (`6e4ea39`). Lección: al encadenar contratos, la sesión sigue con el servidor y los ajustes con que
+  añadió D12 (`2934c1a`). Lección: al encadenar contratos, la sesión sigue con el servidor y los ajustes con que
   arrancó, y el contrato siguiente tiene que decirlo.
 * **El primer mensaje de commit del perímetro pasaba de 100 caracteres;** lo paró `delegation_contract.py`.
 * **El primer recuento de permisos partía los `grep` con `\|` entre comillas.** Se rehízo quitando antes lo
@@ -227,8 +227,8 @@ kit: documentos, contratos, configuración (`CLAUDE.md`, `opencode.jsonc`) y la 
 verde en cada commit. Sin push.
 
 **Hecho**
-* Puesta al día y línea base: `main` en `f9b8990`, 3080 en verde.
-* **Decisión de A19 rehecha** (`d33c63a`, corregida en `629b6e1`; `docs/design/ARRANQUE_PUERTAS.md`):
+* Puesta al día y línea base: `main` en `6715a83`, 3080 en verde.
+* **Decisión de A19 rehecha** (`7b04cee`, corregida en `81d64b1`; `docs/design/ARRANQUE_PUERTAS.md`):
   * `-I` no impide A19: en el `site.py` de 3.11.6, `sitecustomize` se ejecuta también con `-I`. Solo `-S`
     lo evita.
   * Las puertas pasan a arrancar con un lanzador llamado con `/bin/sh` por ruta absoluta, que quita del
@@ -241,27 +241,27 @@ verde en cada commit. Sin push.
 * **A32** (C1): con el `.venv` del repositorio activado, el `python3`, el `sh` y el `git` de las puertas se
   buscan en `.venv/bin`, que `Bash` escribe dentro del sandbox (probado). Ni `-I` ni `-S` sirven.
   Reproducido igual que A31.
-* **A33** (C1, `3db5647`): `Write` escribe `.git/hooks/pre-commit`, `.git/config` y `.vscode/tasks.json` sin
+* **A33** (C1, `d6af9e3`): `Write` escribe `.git/hooks/pre-commit`, `.git/config` y `.vscode/tasks.json` sin
   recibo; el sandbox se los impide a `Bash`. Probado con cargas al hook y sondas que no escriben nada.
-* **A34** (C1, `2b5fb05`, `24c1e19`): la revisión ciega no es ciega por construcción.
+* **A34** (C1, `06e51e6`, `c6b58aa`): la revisión ciega no es ciega por construcción.
   * Las 6 transcripciones del auditor de Traianus contienen `CLAUDE.md`, `AGENTS.md` y el índice de la
     memoria automática, con resultados previos.
   * La documentación de Claude Code confirma qué recibe un subagente: `CLAUDE.md`, la instantánea de git y
     el mensaje de encargo. `omitClaudeMd` e `includeGitInstructions` quitan los dos primeros.
-* **A35** (C2, `653985a`): `Bash` abre `~/.ssh` y `~/.config/gh` dentro del sandbox. Comprobado con
+* **A35** (C2, `60d93b0`): `Bash` abre `~/.ssh` y `~/.config/gh` dentro del sandbox. Comprobado con
   `test -r`, sin leer nada.
-* **Principios de diseño** en `docs/PLAN.md` (`ea17f20`): el agente aislado; toda salida pasa por una regla;
+* **Principios de diseño** en `docs/PLAN.md` (`da0a58a`): el agente aislado; toda salida pasa por una regla;
   lo que corre fuera no se fía de lo que el agente escribe.
 * **Cuatro contratos validados en código, con su paquete de contexto servido; ninguno lanzado:**
-  * A19, A31 y A32 (`5f0df76`);
-  * A20 (`6f103ea`): el `pre-commit` solo dentro del `.git` del destino;
-  * la opción (c) con A33 (`6f103ea`): las herramientas de ficheros con el alcance de `Bash`;
-  * A34 en su parte de la v0.1 (`2b652fd`).
-* **Memoria bajo código** (`e2d4275`): tres recuerdos y su índice en `.claude/memory/`, cada uno con su
+  * A19, A31 y A32 (`e6b9df4`);
+  * A20 (`ad5b3c9`): el `pre-commit` solo dentro del `.git` del destino;
+  * la opción (c) con A33 (`ad5b3c9`): las herramientas de ficheros con el alcance de `Bash`;
+  * A34 en su parte de la v0.1 (`f5ccfa0`).
+* **Memoria bajo código** (`e0299ef`): tres recuerdos y su índice en `.claude/memory/`, cada uno con su
   recibo, cargados por `CLAUDE.md` y `opencode.jsonc`.
 * **Documentación de Claude Code** leída con el navegador integrado: memoria, subagentes, ajustes, referencia
   de ajustes, sandbox y entornos aislados.
-* **Diseño del entorno aislado propio para la v0.2** (`0bfa1d0`, `docs/design/ENTORNO_PROPIO.md`):
+* **Diseño del entorno aislado propio para la v0.2** (`f6bf3d6`, `docs/design/ENTORNO_PROPIO.md`):
   * el agente entero en un entorno;
   * un intermediario MCP fuera que valida y escribe;
   * revisión ciega y delegación en entornos aparte;
@@ -301,18 +301,18 @@ verde en cada commit. Sin push.
     prueba es la 2b; la forma, el monitor de referencia de `ENTORNO_PROPIO.md`.
   * El entorno de internet va separado del de código, con su propia regla de salida, porque pedir una URL ya
     es emitir datos. Triarii, el proyecto de la hackathon de mayo, queda como antecedente: capacidades por
-    efecto físico, punycode y credenciales en un proxy (`758df0b`).
+    efecto físico, punycode y credenciales en un proxy (`b8295a6`).
 
 **Salió mal y se aprendió**
 * **La decisión del 12 ponía `-I` en los hooks**, aunque el DEVLOG del 10 ya decía que `-I` no impide A19.
   Lección: comprobar la semántica de una opción en el código fuente antes de decidir con ella.
-* **El primer diseño ponía la raíz al final de `sys.path` (`d33c63a`).** Al preparar el contrato apareció
+* **El primer diseño ponía la raíz al final de `sys.path` (`7b04cee`).** Al preparar el contrato apareció
   en el `site-packages` de pyenv un paquete `tools` ajeno (`deepcode_hku`) que habría tapado el kit en el
-  validador de esta misma sesión. Se corrigió antes del contrato (`629b6e1`). Lección: mirar el intérprete
+  validador de esta misma sesión. Se corrigió antes del contrato (`81d64b1`). Lección: mirar el intérprete
   real antes de fijar un orden de importación.
 * **El mismo diseño quitaba del `PATH` los directorios temporales.** Eso dejaría fuera los `tmp_path` de
   pytest en Linux. Se declaró en su lugar.
-* **`629b6e1` se commiteó antes de pasar la suite;** se pasó después y salió en verde. Es la regla de siempre
+* **`81d64b1` se commiteó antes de pasar la suite;** se pasó después y salió en verde. Es la regla de siempre
   y se volvió a saltar.
 * **Se propuso `blockReadsOutsideWorkingDirectories` para las credenciales y el autor lo aprobó.** La sección
   enlazada de la documentación decía que, con el sandbox, también quita a `Bash` la lectura de `~/.pyenv`.
@@ -371,29 +371,29 @@ Sesión de tarde: la auditoría 2b reducida. Doce casos nuevos (A19–A30) en `C
 (2026-10-13)». Sin cambios de código; todo en `docs/`.
 
 **Hecho**
-* **Caso (a), A19 (C1), confirmado en vivo** (`f436964`): código en el arranque del intérprete. Con el
+* **Caso (a), A19 (C1), confirmado en vivo** (`bfb329a`): código en el arranque del intérprete. Con el
   `.venv` dentro del repo, un `sitecustomize.py` testigo plantado en su `site-packages` se ejecutó en
   11 procesos (hooks y servidor MCP) fuera del sandbox, en una sesión abierta desde el `.venv` activado
   sobre `noticias-2b`. El validador no puede usar `-S` porque necesita `pydantic`: la carga se ejecuta
   siempre. El montaje que recomienda `INSTALL.md` es el vulnerable.
 * **Casos en el scratchpad**, con `trap`/respaldos, sin tocar nada real:
-  * A20 (c, C1, `a234a5e`): el instalador escribe el `pre-commit` fuera del destino con un
+  * A20 (c, C1, `23341a1`): el instalador escribe el `pre-commit` fuera del destino con un
     `core.hooksPath` global absoluto; rompe I1 y puede bloquear los commits de los demás repos.
-  * A21 (l, C3, `8cc5df4`): A18 reabierto; un `params`/`arguments` no-dict no vacío tumba el servidor MCP.
-  * A22 (k, OK, `8cc5df4`): integridad del commit; media preparación, modo y grafía rechazados.
-  * A23 (i, C2, `8cc5df4`): `Glob` con llaves esquiva el análisis estático del confinamiento de la
+  * A21 (l, C3, `4d5c4d7`): A18 reabierto; un `params`/`arguments` no-dict no vacío tumba el servidor MCP.
+  * A22 (k, OK, `4d5c4d7`): integridad del commit; media preparación, modo y grafía rechazados.
+  * A23 (i, C2, `4d5c4d7`): `Glob` con llaves esquiva el análisis estático del confinamiento de la
     revisión ciega; el hook permitió `{..,x}/**` con `path` dentro del paquete.
-  * A24 (d, C2, `433edc2`): el anuncio afirma «Bash cannot write the governed paths» sin comprobar
+  * A24 (d, C2, `ce8ba37`): el anuncio afirma «Bash cannot write the governed paths» sin comprobar
     `denyWrite`; en Actuarii acierta por el harness, miente para una ruta propia sin su `denyWrite`.
-  * A25 (e, C2, `433edc2`): `.data/` escribible por `Bash`; solo el fichero `.db` está en `denyWrite`.
-  * A26 (g, límite, `433edc2`): una ruta gobernada que es enlace simbólico se gobierna por el destino;
+  * A25 (e, C2, `ce8ba37`): `.data/` escribible por `Bash`; solo el fichero `.db` está en `denyWrite`.
+  * A26 (g, límite, `ce8ba37`): una ruta gobernada que es enlace simbólico se gobierna por el destino;
     no alcanzable por el agente y el `pre-commit` rechaza enlaces en rutas gobernadas.
-  * A27 (h, OK, `16f3791`): el sandbox bloquea crear un enlace duro a un fichero gobernado.
-  * A28 (j, C2, `16f3791`): nada obliga a correr `verify_red_green.py` (6.2 se sobreafirma) y el
+  * A27 (h, OK, `9a831da`): el sandbox bloquea crear un enlace duro a un fichero gobernado.
+  * A28 (j, C2, `9a831da`): nada obliga a correr `verify_red_green.py` (6.2 se sobreafirma) y el
     verificador no compara el diff con `files_may_touch`/`files_must_not_touch`.
-  * A29 (m, límite, `a8ad593`): inventario documental de los canales a la web/host fuera del sandbox
+  * A29 (m, límite, `331f468`): inventario documental de los canales a la web/host fuera del sandbox
     (navegador, Chrome, conectores que envían, artifacts, host, programadores).
-  * A30 (n, límite, `a8ad593`): el desplazamiento del trabajo a rutas no gobernadas, con la evidencia de
+  * A30 (n, límite, `331f468`): el desplazamiento del trabajo a rutas no gobernadas, con la evidencia de
     la prueba en limpio.
 
 **Decidido**
@@ -442,24 +442,24 @@ Sesión de mañana; por la tarde sigue otra. Suite: 3080 en verde, sin cambios d
 prueba en limpio en macOS y quedaron aprobadas las pautas de la 2b reducida.
 
 **Hecho**
-* Entradas del 9 y del 10 de este DEVLOG, reconstruidas de las transcripciones (`7aab204`). Los
+* Entradas del 9 y del 10 de este DEVLOG, reconstruidas de las transcripciones (`8a99dc6`). Los
   hallazgos de la auditoría informal del 10, que solo estaban fuera del repositorio, entran en él. Push;
-  la CI pasa en verde con el commit del kit instalado con su hook (`d2912f4`).
-* Segundo ensayo de la prueba en limpio, sin cifra (`fcd8053`). Empezó como medida y pasó a ensayo
+  la CI pasa en verde con el commit del kit instalado con su hook (`3c9faf7`).
+* Segundo ensayo de la prueba en limpio, sin cifra (`32a4cb0`). Empezó como medida y pasó a ensayo
   cuando el autor pidió ayuda con el argumento del instalador. Primera aplicación del método del hito 1
   por el registro (§4c): se cumple. `INSTALL.md` corregido: el argumento es el repositorio de destino, y
   las rutas de los ejemplos hay que sustituirlas.
-* **Medida en macOS** (`5631c5f`): los dos hitos se cumplen; 612,8 s en total, de los que el agente tarda
+* **Medida en macOS** (`70f7508`): los dos hitos se cumplen; 612,8 s en total, de los que el agente tarda
   35 s; pasa de los 300 s. Sin cronómetro: los tiempos salen del reflog, de las fechas de los ficheros y
   de la transcripción.
-* **Caso real** (`d2155ba`): el agente escribió los 16 tests en `tests/unit/`, fuera de las rutas
+* **Caso real** (`1c20d18`): el agente escribió los 16 tests en `tests/unit/`, fuera de las rutas
   gobernadas, «para no pedir el recibo». El shim denegó un `python3 -c` y el agente siguió sin él. El
   cambio de configuración, que se pidió al agente en vez de hacerlo a mano, pasó por el canal gobernado
   y dejó dos recibos `SPEC`.
-* Pautas de la 2b reducida, aprobadas y commiteadas antes de empezar (`aeafeb5`): G14–G17, las promesas
+* Pautas de la 2b reducida, aprobadas y commiteadas antes de empezar (`5c4b107`): G14–G17, las promesas
   del instalador I1–I4 y 14 casos por riesgo. Entre ellos, la copia redirigida, con el módulo, el texto
   y las tres ejecuciones fijados antes.
-* Instalación en una orden, decidida y apuntada en `docs/PLAN.md` (`acffc36`).
+* Instalación en una orden, decidida y apuntada en `docs/PLAN.md` (`3394a63`).
 
 **Decidido (autor)**
 * La medida del intento 3 vale, con los tiempos del registro en lugar del cronómetro.
@@ -507,7 +507,7 @@ resumen que dejó la sesión fuera del repositorio
 (`~/.claude/plans/haz-una-auditor-a-del-serialized-stream.md`).
 
 **Hecho**
-* Auditoría informal de solo lectura sobre `main` en `e0291db`, pedida por el autor para gastar los
+* Auditoría informal de solo lectura sobre `main` en `1b4c084`, pedida por el autor para gastar los
   créditos de la semana. No es la 2b reducida, que necesita sus pautas commiteadas antes de empezar, y
   ningún punto tiene todavía un caso reproducible. Se interrumpió al ir a comprobar si hay un `.venv`
   dentro del repositorio.
@@ -563,7 +563,7 @@ de la sesión.
 
 **Hecho**
 * Fallo del kit y roce 4 del ensayo, por contrato al implementador (`sonnet`) en la rama
-  `fase2/shim-ficheros` (`d2912f4`):
+  `fase2/shim-ficheros` (`3c9faf7`):
   * Los enlaces del shim se quedan como enlaces en Actuarii, ya commiteados. El instalador escribe en
     el destino un fichero normal con los bytes y el bit de ejecución de aquello a lo que apunta el
     enlace. Rechaza con código 2, sin escribir nada, un enlace que no resuelve a un fichero normal de
@@ -576,17 +576,17 @@ de la sesión.
 * `main` avanzó por fast-forward dentro del sandbox (`git branch -f main <rama>` y `git switch main`),
   sin ninguna orden del autor, porque `main` no se había movido desde la rama. Ramas `fase2/*`
   borradas.
-* `INSTALL.md` (`6908014`): dónde clonar, rutas explícitas, el primer commit del kit instalado en la
+* `INSTALL.md` (`0f3118a`): dónde clonar, rutas explícitas, el primer commit del kit instalado en la
   terminal antes de abrir Claude Code (dentro de la sesión, el shim rechaza `commit_integrity.py`
   hasta que está en `HEAD`), un entorno sin `.venv` y cómo leer `pip check`.
-* Hito 1 de la prueba en limpio reformulado antes de medir (`e0291db`; `PRUEBA_EN_LIMPIO.md` §4c):
+* Hito 1 de la prueba en limpio reformulado antes de medir (`1b4c084`; `PRUEBA_EN_LIMPIO.md` §4c):
   se comprueba por el registro del kit (la transcripción, la tabla `receipts` por hash y el
   `git diff` del destino), no por la conducta del agente. En §5, qué roces del ensayo quedan corregidos
   y dónde.
-* Idea para la v0.2 en `docs/PLAN.md` (`e0291db`): las operaciones sobre rutas gobernadas sin canal
+* Idea para la v0.2 en `docs/PLAN.md` (`1b4c084`): las operaciones sobre rutas gobernadas sin canal
   gobernado.
 * Medida en macOS preparada: copia del ensayo borrada, clon de Actuarii en `~/Documents/actuarii-medida`
-  (`e0291db`) y clon de `noticias` en `~/Documents/noticias-medida` (`v3-exp`, `1676538`). El clon de
+  (`1b4c084`) y clon de `noticias` en `~/Documents/noticias-medida` (`v3-exp`, `1676538`). El clon de
   `noticias` es el paso 1 de la secuencia cronometrada. La medida no siguió: en el destino no hay nada
   instalado ni ninguna sesión de Claude Code. Sin cifra.
 
@@ -609,13 +609,13 @@ de la sesión.
 * La formulación del hito 1 propuesta el 8 («ninguna escritura gobernada sin recibo») no se podía
   comprobar con el rastro: el hook no registra sus decisiones, solo quedan los recibos. Se fijó el
   método concreto antes de medir.
-* El commit `e0291db`, que solo toca documentos, se hizo con `test_ci_workflow.py` en verde (el único
-  test que los lee) y no con la suite entera. La suite había pasado en `6908014`.
+* El commit `1b4c084`, que solo toca documentos, se hizo con `test_ci_workflow.py` en verde (el único
+  test que los lee) y no con la suite entera. La suite había pasado en `0f3118a`.
 * Los tres commits del día no se subieron: `main` quedó 3 por delante de `origin`, y la CI no ha
   ejecutado todavía el test del commit con el hook.
 
 **Siguiente**
-* `git push`, para que la CI compruebe `d2912f4`.
+* `git push`, para que la CI compruebe `3c9faf7`.
 * La medida cronometrada en macOS desde un clon nuevo de `noticias`, siguiendo solo `INSTALL.md`; después,
   la comprobación del hito 1 según §4c.
 * El caso real sin cronómetro (§4b) y la 2b reducida, con sus pautas commiteadas antes.
@@ -629,39 +629,39 @@ Suite: de 2976 a 3063 en verde.
 
 **Hecho**
 * DEVLOG creado, con las entradas del 5 al 7 y la regla de escribirlo al cerrar cada sesión
-  (`d1d67c4`, del 7).
-* Idea para la v0.2 apuntada en `docs/PLAN.md` (`c74dc54`): un núcleo independiente del proveedor,
+  (`33e7001`, del 7).
+* Idea para la v0.2 apuntada en `docs/PLAN.md` (`d433b91`): un núcleo independiente del proveedor,
   para que cualquier entorno de agentes se enganche y las reglas se ejecuten en un paquete. Tres
   piezas: adaptadores finos por entorno sobre una decisión central; el sandbox del sistema por fuera
   del agente entero (`@anthropic-ai/sandbox-runtime` o un contenedor), con la configuración sacada de
   `.actuarii.json`; y un intermediario de escritura por MCP, que escribe las rutas gobernadas tras
   comprobar la propuesta, de modo que la frontera no dependa de los hooks de cada entorno.
 * Fase 2, adelantada desde el 12 de octubre:
-  * Decisiones de la fase y protocolo de la prueba en limpio, commiteados antes de medir (`f65f53a`;
+  * Decisiones de la fase y protocolo de la prueba en limpio, commiteados antes de medir (`35258dd`;
     `docs/design/PRUEBA_EN_LIMPIO.md`).
-  * Instalador, `tools/install.py` (`4d615e2`): copia el kit, fusiona `settings.json` con su
+  * Instalador, `tools/install.py` (`7c52129`): copia el kit, fusiona `settings.json` con su
     `sandbox` y `.mcp.json`, instala el `pre-commit` y añade `.data/` al `.gitignore`. Comprueba
     todo antes de escribir; con un choque no escribe nada; una segunda ejecución no cambia nada.
     Biblioteca estándar, Python 3.9. 57 tests, uno de punta a punta: en un repositorio recién
     instalado, el hook copiado deniega sin recibo y permite con el recibo del validador copiado.
-  * Corrección del hito 1 (`70304b3`): sin base de auditoría, el hook de escritura deniega con su
+  * Corrección del hito 1 (`c6b289b`): sin base de auditoría, el hook de escritura deniega con su
     regla y la llamada a `validate_proposal`, en vez de «unable to open database file». Las
     consultas de `hook_gate` siguen fallando sin base, como fijaban sus tests.
   * `LICENSE` (texto oficial de Apache-2.0, de dos copias locales independientes e idénticas,
-    SHA-256 `cfc7749b…3d30`) y `NOTICE` (`b38dcbd`); `pyproject.toml` de la v0.1.0 (`7e99ee7`).
+    SHA-256 `cfc7749b…3d30`) y `NOTICE` (`7bf6654`); `pyproject.toml` de la v0.1.0 (`16c60d0`).
   * Cada cambio de código, por contrato validado al implementador (`sonnet`), con
     `verify_red_green.py` repetido por el chat principal antes de fusionar: salió 0 las tres veces.
-* Marco del README en `docs/PLAN.md` (`6b6e275`) y casos de partida de la 2b reducida, el instalador
-  y el navegador integrado (`b936cb6`).
+* Marco del README en `docs/PLAN.md` (`7707cc3`) y casos de partida de la 2b reducida, el instalador
+  y el navegador integrado (`5561616`).
 * Repositorio privado en GitHub, `AlexusPacicus/actuarii`, creado por el autor con `gh`.
-* CI en Linux (`e8f0d5d`): acciones fijadas por SHA, Python 3.11, la secuencia de la prueba en limpio
+* CI en Linux (`a9709e5`): acciones fijadas por SHA, Python 3.11, la secuencia de la prueba en limpio
   como paso propio y la suite. Primera ejecución en verde: 3 tests de la secuencia en 2 s y la suite
   en 50 s, 3055 pasan y 14 se saltan (los casos que piden un sistema de ficheros que no distinga
   mayúsculas, por la cuenta de sus condiciones). Resultados en `docs/design/PRUEBA_EN_LIMPIO.md` §5.
-* Enmienda de la prueba en limpio antes de medir (`27b0ef5`): destino un clon de `noticias` en
+* Enmienda de la prueba en limpio antes de medir (`43cd7a8`): destino un clon de `noticias` en
   `v3-exp`, y el agente recibe solo la tarea. Comparación de configuraciones (sin gobierno, gobierno
   por instrucción, Actuarii) apuntada en `docs/design/COSTE.md` §6, sin medir.
-* Guía de instalación, `INSTALL.md` (`f79ac08`).
+* Guía de instalación, `INSTALL.md` (`943358c`).
 * Ensayo de la prueba en limpio en macOS sobre `noticias`, sin cifra: el agente pidió el recibo por
   su cuenta y escribió; salieron siete roces de la guía y del instalador y un fallo del kit (§5).
 
@@ -723,20 +723,20 @@ Escrita al cerrar la sesión. Suite: de 2350 a 2976 en verde.
 
 **Hecho**
 * F3 comprobada en la llamada real: Claude Code convierte el texto JSON en objeto, y el rechazo de un
-  texto que no es JSON sí se aplica (`2268ef5`).
-* F4b, primitivas por `ast` sobre el fichero resultante, decididas en la puerta (`74177b4`), en dos
-  pasos porque el servidor MCP en marcha conservaba la matriz léxica hasta reconectarlo (`28f2c80`,
-  `b6888ca`). Diseño en `docs/design/RECIBO_CONTENIDO.md` §4.1.
+  texto que no es JSON sí se aplica (`af973ab`).
+* F4b, primitivas por `ast` sobre el fichero resultante, decididas en la puerta (`1f4c1fd`), en dos
+  pasos porque el servidor MCP en marcha conservaba la matriz léxica hasta reconectarlo (`e8e48de`,
+  `42a79c6`). Diseño en `docs/design/RECIBO_CONTENIDO.md` §4.1.
 * Sandbox de Claude Code investigado, probado (casos S1–S9) y adoptado como frontera de `Bash`
-  (`750ac0c`). Detalle en `docs/design/SANDBOX.md`.
-* Integridad del commit con un hook `pre-commit` (`15c8ad0`), instalado y probado en este repositorio.
-* `AGENTS.md` v2.1.0, la skill `boundary-validator` y la plantilla `implementer` al día (`f4189ea`,
-  `429d5ff`, `1bdcd90`); `PROCESO.md` con el estado de las correcciones (`6c5ee4b`).
-* F6, los hooks deciden igual con y sin el shim y con el Python 3.9.6 del sistema (`a21fbfc`).
-* A15, la fase roja y la verde de los tests se comprueban en código (`17a05e1`).
-* Coste de una escritura gobernada medido con la regla commiteada antes (`86a4550`, `6c2aa74`) y
-  diseño de optimización para la v0.2 (`bc89176`, `fee798c`). Detalle en `docs/design/COSTE.md`.
-* Traspaso y decisiones de la semana 1 en `docs/PLAN.md` (`7a7e362`, `fee798c`).
+  (`546730b`). Detalle en `docs/design/SANDBOX.md`.
+* Integridad del commit con un hook `pre-commit` (`4ee3691`), instalado y probado en este repositorio.
+* `AGENTS.md` v2.1.0, la skill `boundary-validator` y la plantilla `implementer` al día (`cad6b77`,
+  `0fc8cf9`, `901b90d`); `PROCESO.md` con el estado de las correcciones (`d4fd8d6`).
+* F6, los hooks deciden igual con y sin el shim y con el Python 3.9.6 del sistema (`a391b0e`).
+* A15, la fase roja y la verde de los tests se comprueban en código (`3162f65`).
+* Coste de una escritura gobernada medido con la regla commiteada antes (`c4ae80e`, `48ba34c`) y
+  diseño de optimización para la v0.2 (`7be8667`, `0df813c`). Detalle en `docs/design/COSTE.md`.
+* Traspaso y decisiones de la semana 1 en `docs/PLAN.md` (`1456738`, `0df813c`).
 
 **Decidido (autor)**
 * La lista de primitivas queda cerrada: cada forma nueva sería otro parche. La frontera de lo que se
@@ -752,7 +752,7 @@ Escrita al cerrar la sesión. Suite: de 2350 a 2976 en verde.
   llamada, dio `NameError` y denegó todas las escrituras en `.py` gobernados, también la que lo
   arreglaba. Se devolvió a `HEAD` con permiso del autor. Ahora es AGENTS 6.5.
 * La revisión de la integridad del commit encontró que `TESTS/x.py` pasaba junto a `tests/x.py` en un
-  sistema de ficheros que no distingue mayúsculas; se corrigió antes de fusionar (`ceef6a7`).
+  sistema de ficheros que no distingue mayúsculas; se corrigió antes de fusionar (`19b2896`).
 * Un `git checkout <commit> -- <ruta>` que falla en el sandbox ya ha escrito el índice (S8): de ahí la
   integridad del commit.
 * Errores del chat principal: un `python3 -` suelto en una orden (no ejecutó nada, pero AGENTS 4.2 lo
@@ -767,28 +767,28 @@ Escrita al cerrar la sesión. Suite: de 2350 a 2976 en verde.
 Reconstruida. Suite: de 1768 a 2350 en verde.
 
 **Hecho**
-* Fase 1, pasos 5 y 6: el anuncio al abrir sesión (`453fd01`), la revisión ciega configurable
-  (`1bce3ce`), fuera lo que solo servía a Traianus (`c199173`) y `AGENTS.md` genérico con sus
-  subagentes y skills (`28848f5`). Fase 1 cerrada con 1979 tests (`4c68bdf`).
-* Búsqueda previa: no hay nada igual; se ajusta la presentación, no el kit (`b13f88d`).
-* Auditoría adversarial con pautas aprobadas antes de empezar (`d00af1e`): casos A01–A18 y plan de
-  correcciones F1–F7 (`cac165d`).
-* F1, el cableado del kit gobernado (`afe12bb`); F2, la puerta deniega por defecto (`65f6d30`); F3,
-  entrada estricta del validador (`47f29be`); F4a, el recibo ata el contenido exacto (`d87032d`).
+* Fase 1, pasos 5 y 6: el anuncio al abrir sesión (`387c6b6`), la revisión ciega configurable
+  (`4368b50`), fuera lo que solo servía a Traianus (`887b486`) y `AGENTS.md` genérico con sus
+  subagentes y skills (`a678a95`). Fase 1 cerrada con 1979 tests (`fcd3f78`).
+* Búsqueda previa: no hay nada igual; se ajusta la presentación, no el kit (`a7fe384`).
+* Auditoría adversarial con pautas aprobadas antes de empezar (`8e2d894`): casos A01–A18 y plan de
+  correcciones F1–F7 (`a5bdacb`).
+* F1, el cableado del kit gobernado (`1059787`); F2, la puerta deniega por defecto (`0ef7221`); F3,
+  entrada estricta del validador (`a489919`); F4a, el recibo ata el contenido exacto (`7bb93c1`).
 
 **Decidido (autor)**
 * Calendario de tres semanas hasta el 25 de octubre y criterio de utilidad para retomar Traianus
-  (`7910a63`).
+  (`de8cabf`).
 * La auditoría adversarial se adelanta al empaquetado. F2 deniega por defecto y la matriz léxica se
-  elimina en F4 (`c1669dc`).
+  elimina en F4 (`72ce7da`).
 
 ## 2026-10-05
 
 Reconstruida. Suite: 1497 en verde al cerrar la fase 0, 1768 al final del día.
 
 **Hecho**
-* Extracción del kit desde Traianus con la historia conservada; plan y `CLAUDE.md` (`5497eb4`).
-* Fase 0: la suite pasa sin Traianus instalado (`49a6464`).
-* Fase 1, pasos 1 a 4: los hooks no dependen del directorio actual (`cc81355`), la configuración del
-  proyecto en `.actuarii.json` (`6cf5eb9`), los directorios del shim (`f7f1182`) y el registro de
-  contratos (`7d5498a`) salen de ella.
+* Extracción del kit desde Traianus con la historia conservada; plan y `CLAUDE.md` (`dfa29f6`).
+* Fase 0: la suite pasa sin Traianus instalado (`87e3bc7`).
+* Fase 1, pasos 1 a 4: los hooks no dependen del directorio actual (`060db60`), la configuración del
+  proyecto en `.actuarii.json` (`a5736f4`), los directorios del shim (`aca4ea7`) y el registro de
+  contratos (`b39c5cd`) salen de ella.

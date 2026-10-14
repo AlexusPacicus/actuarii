@@ -3,7 +3,7 @@
   "task_id": "a31-raiz-solo-para-tools",
   "title": "The kit's scripts put the repository root on sys.path only to import tools (A31)",
   "branch": "fase2b/a31-raiz-solo-para-tools",
-  "base_commit": "f06b8267dc3ceb281e1c88620ee4392421362b70",
+  "base_commit": "332e847e089642de20d8897cfc25984d8b316de8",
   "attribution": null,
   "context": {
     "task": "Close A31 in the form that stays in the v0.1: a module at the root of a repository with the kit, named like a standard-library module (a project's own logging.py, inspect.py or dataclasses.py), must not be imported by the kit's scripts. Today it is, because every script puts the root first on sys.path and keeps it there; the gates then fail closed or the validator does not start, although nobody attacks.",
