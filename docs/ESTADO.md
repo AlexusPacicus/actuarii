@@ -93,8 +93,8 @@ Actualizado: 2026-10-14, noche.
   se mira el espacio en disco.
 * **Sin atribución a Claude** en commits ni PR. El correo de los commits es la dirección *noreply* de GitHub.
 * **La historia se reescribió el 2026-10-14:** los hashes de antes ya no existen, y las citas de `docs/` están
-  rehechas. El repositorio de GitHub es el nuevo; el viejo, `actuarii-antiguo`, se borra cuando la CI del
-  nuevo salga en verde.
+  rehechas. El repositorio de GitHub es el nuevo, con la CI en verde; el viejo está borrado (autor,
+  2026-10-14).
 * **Python:** solo scripts commiteados, a través del shim; `pytest` por su propio punto de entrada.
 * **El DEVLOG,** al cerrar cada sesión, con la fecha del reloj y no la de la conversación.
 * **Las ideas que se salen del camino** se apuntan en el PLAN y esperan.
