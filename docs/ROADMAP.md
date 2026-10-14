@@ -100,8 +100,8 @@ pasa si no se cumple.
 **V8. Antes de abrir el repositorio.**
 * Qué:
   * la información personal que fijó el autor, fuera del árbol y de la historia de `main` (D2). Está en
-    `docs/PLAN.md`, `docs/DEVLOG.md` y `docs/adversarial-audit/PAUTAS.md` desde `7910a63`; la lista de términos
-    no se guarda en el repositorio;
+    `docs/PLAN.md`, `docs/DEVLOG.md` y `docs/adversarial-audit/PAUTAS.md` desde `7910a63`, y en
+    `.claude/memory/autor.md`; la lista de términos no se guarda en el repositorio;
   * en `origin`, solo `main`.
 * Comprobación: `git log -p main` no contiene los términos que fije el autor, y `git ls-remote --heads origin`
   lista solo `main`.
@@ -210,7 +210,6 @@ Cada una lleva la recomendación de Claude y, si ya está tomada, la decisión d
   * `.claude/memory/MEMORY.md` todavía dice que la opción (c) la deniega.
   * Claude Code le dice al agente que escriba allí su memoria; lo único que lo impide es una línea de
     `CLAUDE.md`, es decir, una instrucción y no una regla.
-  * **Abierta (autor, 2026-10-14):** hay que pensarla, porque hoy está cogida con pinzas.
   * La documentación de Claude Code (code.claude.com/docs/en/memory, leída el 2026-10-14) da dos ajustes de
     proyecto: `autoMemoryEnabled: false` apaga la memoria automática, y `autoMemoryDirectory` la lleva a otro
     directorio, con una ruta absoluta o que empiece por `~/`.
@@ -218,9 +217,10 @@ Cada una lleva la recomendación de Claude y, si ya está tomada, la decisión d
     transcripciones de subagentes, ninguna recibió la instrucción de la memoria automática, y 6 recibieron el
     índice de `.claude/memory/` a través de `CLAUDE.md`. El revisor ciego no recibe ninguna de las dos
     (`omitClaudeMd`), aunque en Actuarii no se ha ejecutado nunca.
-  * Recomendación de Claude: `autoMemoryEnabled: false` en todo el proyecto, no solo para las revisiones
-    ciegas, que ya están cubiertas. Con ella, una línea de `.claude/memory/MEMORY.md` deja de ser falsa. A
-    cambio, la memoria bajo código se publica el 25.
+  * **Decidido (autor, 2026-10-14):** `autoMemoryEnabled: false` en todo el proyecto, no solo para las
+    revisiones ciegas, que ya están cubiertas. Va en un contrato pequeño, después del instalador, con su test y
+    la corrección de la línea falsa de `.claude/memory/MEMORY.md`. La memoria bajo código se publica el 25, y
+    los recuerdos se escriben sabiéndolo.
 * **D6. El marco del README.**
   * El párrafo de von Neumann del PLAN está escrito en clave de seguridad.
   * **Decidido (autor, 2026-10-14):** el marco explica por qué las reglas viven fuera del modelo, y nombra la
