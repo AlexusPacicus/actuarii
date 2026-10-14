@@ -1,4 +1,4 @@
-# AGENTS.md — Agent constitution (v2.1.0)
+# AGENTS.md — Agent constitution (v2.2.0)
 
 **Scope:** the whole repository.
 **Standard:** RFC 2119 (`MUST` / `MUST NOT`).
@@ -101,6 +101,10 @@ pytest`).
 `.claude/agents/blind-reviewer.md` over a package built by `tools/audit/build_review_package.py`
 from the `review` configuration. **[enforced]** While the review lock is set, the hook
 `tools/hooks/confine_review_reads.py` denies every `Read`, `Grep` and `Glob` outside the package.
+The reviewer starts without the project's `CLAUDE.md` files, a memory of its own or the git
+snapshot: its definition sets `omitClaudeMd: true` and nothing that adds context or tools, the
+settings set `includeGitInstructions` to false, and `build --lock` sets no lock unless both hold.
+**[enforced]** What the harness still gives it is declared in section 9.
 
 5.2 The reviewer changes no file and returns a verdict. The executing agent records it and
 clears the lock (`build_review_package.py unlock`).
@@ -113,7 +117,8 @@ delegates code and tests to the subagent `.claude/agents/implementer.md`.
 6.2 A delegation is a strict JSON `DelegationContract`, and the answer a `DelegationReport`
 (`tools/audit/delegation_contract.py`). Both **MUST** be validated in code before they are used:
 `delegation_contract.py contract` before the launch, and `delegation_contract.py report` and
-`tools/audit/verify_red_green.py` before the report is accepted. **[enforced]** The report names the
+`tools/audit/verify_red_green.py` before the report is accepted. Each check is code and refuses what
+it does not accept; running it is a step of the executing agent (section 9). The report names the
 pytest node ids and the expectation of every test; the verifier runs them, in temporary worktrees,
 at the base commit with the final test files and at the final commit, and then the whole suite at
 the final commit: a red test must not pass at base, a guard must, and everything must pass at the
@@ -195,8 +200,9 @@ The enforcement above does not cover:
   are not checked. It warns the honest agent; the boundary for what runs is the sandbox (7.3).
 * **Forged logs.** The `context_pack` log and the review lock live in `.data/` and are written
   from `Bash`: a line written there forges a context receipt, and removing the lock ends a blind
-  review. The validator's audit database is out of `Bash`'s reach while the sandbox is on. A
-  receipt names neither agent nor session.
+  review. The validator's audit database file is out of `Bash`'s reach while the sandbox is on,
+  but `.data/` and the database's `-wal` and `-shm` files are not. A receipt names neither agent
+  nor session.
 * **Commits around the hook.** `git commit --no-verify` and git's internal commands (`commit-tree`,
   `update-ref`) skip the hook, and `git merge` does not run it; the person approves each of those
   commands. The hook works only where the person installed it (the session announcement says
@@ -219,6 +225,41 @@ The enforcement above does not cover:
   `uniq` with an output file, and `sed -n` with its `w` command and, in GNU `sed`, its `e` command,
   which runs a shell command. With the sandbox on, they reach neither the network nor the governed
   paths.
+* **What leaves a record.** Only what goes through a governed channel leaves a record: a write to a
+  governed path (its receipt and its `Rationale`), a delegation, a served context, a review. What
+  `Bash` writes, and every write to a path outside `governed_paths`, leaves none, and an agent can
+  move its work there. The configuration decides what is governed.
+* **Code the gates load at start-up.** The hooks, the validator and the pre-commit run outside the
+  sandbox, with the `python3` and the `git` of the `PATH` they inherit. A directory inside the
+  repository ahead on that `PATH` (an activated `.venv`), or a `sitecustomize.py` or `.pth` in a
+  `site-packages` the agent can write, runs code outside the sandbox at every call of a gate. Keep
+  the environment outside the repository.
+* **The file tools reach what the sandbox keeps from `Bash`.** `Write` and `Edit` can write
+  `.git/hooks`, `.git/config`, `.vscode`, `.idea` and files outside the repository; only Claude
+  Code's own permission prompt stands before a file that makes the person run something later.
+* **Credentials.** No rule of the kit stops `Bash` or `Read` from reading the person's secrets
+  (`~/.ssh`, `~/.config/gh`, `~/.aws`).
+* **Channels outside every rule.** The integrated browser, the person's Chrome, connectors that send
+  (mail, documents), published pages, tools that act on the host (desktop control, merges and pull
+  requests) and schedulers reach the web or the host outside the sandbox. No rule of the kit decides
+  there: the model does, with the person's approval of each site or action.
+* **Symbolic links.** A governed path that is a symbolic link is governed by its target; the
+  pre-commit refuses a link in a governed path.
+* **What the blind reviewer still receives.** The delegation message, which the executing agent
+  writes and nothing checks; a managed-policy `CLAUDE.md`, which `omitClaudeMd` does not drop; and,
+  under Claude Code before 2.1.271, everything, since those versions ignore `omitClaudeMd` without an
+  error. `build --lock` reads the reviewer's front matter line by line, not as YAML: a quoted value
+  that spans lines can hide a key the harness reads.
+* **Glob patterns with braces.** `confine_review_reads.py` reads a `Glob` pattern as text, and one
+  with braces (`{..,x}/**`) can name files outside the package while the lock is set.
+* **Delegation is a step, not a gate.** Nothing makes the executing agent run
+  `delegation_contract.py` or `verify_red_green.py`, and the verifier does not compare the diff with
+  `files_may_touch`: the executing agent checks the scope.
+* **The validator's server.** `params` or `arguments` that are not an object stop the MCP server;
+  without it there is no receipt, so every governed write is denied.
+* **The announcement and `denyWrite`.** The session announcement says that `Bash` cannot write the
+  governed paths when the sandbox is on, without checking that each governed path has its
+  `denyWrite` entry (7.3).
 * **No session gate.** Without `CLAUDE_ENV_FILE` the shim is not put on the `PATH`; the session
   hook says so on stderr.
 * **The session announcement** informs; it cannot block anything.
