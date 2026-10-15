@@ -12,4 +12,4 @@ Cada recuerdo lleva el formato de la memoria de Claude Code: frontmatter con `na
 
 - [Cómo trabaja el autor](autor.md) — decide él; explicaciones sencillas con una recomendación; lo técnico se prueba ejecutándolo.
 - [Preguntar ante la ambigüedad](preguntar-ante-ambiguedad.md) — una respuesta ambigua no es una decisión del autor.
-- [Pocas peticiones al autor](pocas-peticiones-al-autor.md) — contar los pasos que caen en él y buscar el diseño que los evite.
+- [Pocas peticiones al autor](pocas-peticiones-al-autor.md) — contar los pasos que caen en él y buscar el diseño que los evite; en `Bash`, solo órdenes de la lista, sin variables, `cd` ni bucles.
