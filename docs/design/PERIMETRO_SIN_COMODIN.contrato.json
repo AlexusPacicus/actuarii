@@ -1,0 +1,106 @@
+{
+  "schema_version": "delegation/1",
+  "task_id": "perimetro-sin-comodin",
+  "title": "Claude Code's allow list takes effect: the bare Bash ask rule goes, and the read-only list grows",
+  "branch": "v01/perimetro-sin-comodin",
+  "base_commit": "805884de2bbc5a16406d7594fe278e6e13b3a899",
+  "attribution": null,
+  "context": {
+    "task": "Make the permission perimeter of AGENTS 7.1 work in Claude Code. Its first ask rule, the bare \"Bash\", matches every Bash command, and Claude Code evaluates ask before allow, so every Bash call asks and no allow rule takes effect. This task removes it, lets Claude Code's default permission mode be the catch-all that asks, adds a test that no ask or deny rule covers an allowed command, grows the read-only list, and tells the implementer how to shape a Bash call.",
+    "sources": [
+      {"path": "AGENTS.md", "select": [
+        {"clause": "6.3"}, {"clause": "6.4"}, {"clause": "7.1"}, {"clause": "7.3"}, {"clause": "8.1"}, {"clause": "8.2"},
+        {"lines": "223-227"}]},
+      {"path": ".claude/settings.json", "select": [{"lines": "1-69"}]},
+      {"path": "opencode.jsonc", "select": [{"lines": "20-90"}]},
+      {"path": "tests/security/test_config_perimeter.py", "select": [
+        {"lines": "1-48"}, {"symbol": "_normalize_claude_entry"}, {"symbol": "_claude_matrix"},
+        {"symbol": "test_security_SEC_M_13_bash_default_is_ask"}, {"symbol": "_unlisted_allows"}, {"symbol": "CLOSED_LIST"},
+        {"symbol": "test_security_SEC_M_13_closed_list_names_what_falls_outside"},
+        {"symbol": "test_security_SEC_M_13_claude_allows_the_read_only_commands_and_the_validator"},
+        {"symbol": "test_security_SEC_M_13_opencode_allows_the_read_only_commands_and_the_validator"},
+        {"symbol": "test_security_SEC_M_13_agents_clause_7_1_names_what_the_perimeter_allows"},
+        {"symbol": "test_security_SEC_M_13_perimeter_parity_between_harnesses"}]},
+      {"path": "tests/security/test_opencode_permissions.py", "select": [
+        {"lines": "1-31"}, {"symbol": "test_security_SEC_M_13_broad_catchall_precedes_narrow_rules"},
+        {"symbol": "test_security_SEC_M_13_read_only_allows_follow_the_catchall_and_rm"}]},
+      {"path": "tests/security/test_contract_context_hook.py", "select": [
+        {"symbol": "PERMISSIONS"}, {"symbol": "test_registration_changes_nothing_else_in_settings"}]},
+      {"path": ".claude/agents/implementer.md", "select": [{"lines": "21-51"}]},
+      {"path": "tests/unit/test_delegation_contract.py", "select": [
+        {"lines": "24-30"}, {"symbol": "test_the_agent_definition_names_the_two_commands_and_the_json_contract"}]},
+      {"path": "tests/security/test_rationale.py", "select": [
+        {"symbol": "test_every_skill_and_the_implementer_that_tell_an_agent_how_to_build_a_proposal_name_the_rationale"},
+        {"symbol": "test_the_implementer_says_what_the_rationale_is_for"}]},
+      {"path": "tools/hooks/block_config_changes.py", "select": [{"lines": "1-12"}]}
+    ]
+  },
+  "problem": "Since the perimetro-de-permisos contract (f5517ae, 2026-10-14), .claude/settings.json allows pytest, sixteen read-only Bash patterns and the validator's tool, and keeps the bare \"Bash\" as the first entry of permissions.ask, which the tests normalize as OpenCode's catch-all \"*\": \"ask\". Claude Code does not resolve rules the way OpenCode does. Its permissions documentation (code.claude.com/docs/en/permissions, read on 2026-10-15) says \"Rules are evaluated in order: deny, then ask, then allow\": the first match in that order decides, specificity does not change it, a matching ask rule prompts even when a narrower allow rule matches the same call, and a bare tool name matches every use of the tool. So the bare \"Bash\" in ask prompts for every Bash call: no Bash allow has ever taken effect in Claude Code, and the commands Claude Code runs without a prompt by itself (ls, cat, read-only git) ask too, since an ask rule overrides that. The author saw it on 2026-10-15: every Bash call asks. In OpenCode, where the last matching rule wins, the allows work. Likewise Bash(git branch *) in ask covers every git branch command, listing forms included. The tests pin the configuration, not what Claude Code does with it, so none caught it. Separately, in the main chat's 352 Bash calls of 2026-10-14, 84 would have asked only for a read-only command outside the list (cut, jq, awk, xargs, tr, cmp, date, git merge-base, git branch) and 80 only for the shape of the command (a leading variable assignment, cd, a loop), and the implementer definition says nothing about that shape.",
+  "decisions": [
+    "D1 .claude/settings.json: the bare \"Bash\" leaves permissions.ask, and no entry of ask or deny may be \"Bash\" or \"Bash(*)\". Every other ask entry stays, in its order; deny, defaultMode \"default\", the hooks, includeGitInstructions, enableAllProjectMcpServers, disableAllHooks and the sandbox stay as they are. In the default mode Claude Code still asks for every Bash command that no rule allows, except its built-in read-only commands (the documentation's \"Read-only commands\": ls, cat, echo, pwd, head, tail, grep, find without an action, wc, which, diff, stat, du, cd inside the working directory, read-only git forms); in another mode, the mode decides what no rule names, as it does for Edit and Write.",
+    "D2 The allow list gains, in both harnesses, exactly these patterns: \"cut *\", \"tr *\", \"jq *\", \"cmp *\", \"date\", \"date +*\", \"git merge-base *\", \"git rev-list *\" and \"git for-each-ref *\". date only with no argument or a + format, because with another argument it tries to set the clock. In .claude/settings.json, each as Bash(...): the three git ones right after \"Bash(git ls-files *)\", the other six right after \"Bash(diff *)\" in the order above, so that allow still ends with the read-only list and then the validator's entry. In opencode.jsonc, each \"allow\": the three git ones right after \"git ls-files *\", the other six right after \"diff *\" in the order above, all after \"*\" and \"rm *\". \"git branch *\" stays asked in both: in Claude Code an ask rule wins over a narrower allow, so no listing form of git branch can be allowed while it is there; branches are listed with git for-each-ref.",
+    "D3 In the tests: READ_ONLY_COMMANDS gains \"cut\", \"tr\", \"jq\", \"cmp\" and \"date\", and READ_ONLY_ALLOW gains \"cut *\", \"tr *\", \"jq *\", \"cmp *\", \"date\" and \"date +*\", appended in this order; APPROVED_GIT_ALLOW (test_config_perimeter.py) and APPROVED_ALLOW (test_opencode_permissions.py) gain \"merge-base\", \"rev-list\" and \"for-each-ref\". A new test checks that both harnesses allow \"git merge-base *\", \"git rev-list *\" and \"git for-each-ref *\" (in opencode.jsonc after \"*\" and \"rm *\"). The closed list stays closed: test_security_SEC_M_13_closed_list_names_what_falls_outside gains the cases {\"date *\": allow} and {\"git branch --list *\": allow}, each named as outside it.",
+    "D4 Claude Code's catch-all is its default mode: _claude_matrix() adds \"*\": ask when permissions.defaultMode is \"default\" and no entry normalizes to \"*\", which is what Claude Code does with a Bash command that no rule matches. Parity with the \"*\": \"ask\" of opencode.jsonc then holds as today, and test_security_SEC_M_13_bash_default_is_ask keeps its meaning. A bare \"Bash\" or \"Bash(*)\" still normalizes to \"*\" as today; the test of D5 refuses it in ask or deny, and the closed list refuses it in allow.",
+    "D5 A new test in test_config_perimeter.py: no ask or deny entry of .claude/settings.json covers an allow entry, so that every allow can take effect when Claude Code evaluates deny, then ask, then allow. Coverage is decided on the entries' text, the way Claude Code matches Bash rules: \"Bash\" and \"Bash(*)\" cover every Bash entry; \"Bash(X *)\" covers \"Bash(X)\" and every Bash entry whose pattern starts with \"X \"; \"Bash(X*)\", with no space before the star, covers every Bash entry whose pattern starts with X; an entry with no star covers only the identical entry; a non-Bash entry covers only the identical entry. The failure names each allow and the entry that covers it. A parametrized test pins the coverage function: \"Bash\" covers \"Bash(ls *)\"; \"Bash(*)\" covers \"Bash(git log *)\"; \"Bash(git *)\" covers \"Bash(git log *)\"; \"Bash(git branch *)\" covers \"Bash(git branch --list *)\" and \"Bash(git branch)\"; \"Bash(sed *)\" covers \"Bash(sed -n *)\"; \"Bash(ls*)\" covers \"Bash(lsof *)\"; and it does not cover in these: \"Bash(rm *)\" and \"Bash(git log *)\", \"Bash(python3 -c *)\" and \"Bash(python3 tools/*)\", \"Bash(git branch *)\" and \"Bash(git for-each-ref *)\", \"Bash(cat *)\" and \"Bash(catalog *)\", \"Bash(ls)\" and \"Bash(ls *)\", \"WebFetch\" and \"mcp__boundary-validator__validate_proposal\".",
+    "D6 PERMISSIONS in tests/security/test_contract_context_hook.py pins the new Claude Code perimeter (D1, D2), and the docstring of test_registration_changes_nothing_else_in_settings names this change as the sixth deliberate perimeter change: the bare Bash out of ask and the read-only list grown, the perimetro-sin-comodin contract. This is a change of the specification made by this contract, not a test changed to hide a failure (AGENTS 8.2).",
+    "D7 AGENTS.md 7.1 becomes, word for word, wrapped like the rest of the file and as one paragraph: \"7.1 `.claude/settings.json` (Claude Code) and `opencode.jsonc` (OpenCode) **MUST** stay identical in permission rules: read-only git commands, the scripts under `tools/`, `pytest`, a closed list of read-only commands (`ls`, `cat`, `head`, `tail`, `wc`, `grep`, `df`, `echo`, `sed -n`, `sort`, `uniq`, `diff`, `cut`, `tr`, `jq`, `cmp`, and `date` with no argument or a `+` format) and the validator's own tool, `validate_proposal`, which writes only the audit trail, allowed; `rm`, inline Python, web fetch and web search denied; the `git` and `gh` commands that write asked; every other `Bash` call asked. **[enforced by tests]** Claude Code reads deny, then ask, then allow, and an ask rule wins over a narrower allow: no ask or deny rule of `.claude/settings.json` covers an allowed command, and what asks for every other call is its `default` permission mode, not a bare `Bash` rule, which would ask for every call; OpenCode, where the last matching rule wins, keeps its `\"*\": \"ask\"` first. **[enforced by tests]** In the `default` mode Claude Code also runs its own read-only commands without asking (such as `find` without an action, `stat` or `pwd`); in another mode, the mode decides what no rule names, as it does for `Edit` and `Write`. What an allowed command writes through a redirection is not asked; inside the sandbox it never reaches a governed path (7.3). `Edit` and `Write` ask or not according to the permission mode the person chooses; on a governed path they need their receipt in any mode (2.1). The `Bash` sandbox of 7.3 exists only in Claude Code.\" In that text the OpenCode rule is written `\"*\": \"ask\"`, with plain double quotes inside the backticks. The version line of AGENTS.md does not change.",
+    "D8 The item \"Read-only commands that are not\" of AGENTS.md section 9 (lines 223-227) gains `git diff`, `git log` and `git show` with `--output`, which write a file: its list becomes, word for word, \"`sort -o` and `sort --compress-program`, `uniq` with an output file, `git diff`, `git log` and `git show` with `--output`, and `sed -n` with its `w` command and, in GNU `sed`, its `e` command, which runs a shell command.\" The rest of the item stays.",
+    "D9 .claude/agents/implementer.md gains a bound right after the one that starts \"- **Inside the `Bash` sandbox**\", word for word, wrapped like its neighbours: \"- **One command per `Bash` call,** from the repository root, with literal paths: no leading variable assignment, no `cd`, no loop and no `$(...)`, and every glob quoted, since zsh refuses one that matches nothing. A call outside the allow list of AGENTS 7.1 asks the person, so prefer the commands on it, and read files with Read, which does not ask.\" Its other bounds and every text that test_delegation_contract.py and test_rationale.py look for stay as they are. A new test in test_delegation_contract.py checks that the definition holds this bound and that it names AGENTS 7.1, `cd` and Read.",
+    "D10 Nothing restarts during the task, and the running session keeps today's perimeter: tools/hooks/block_config_changes.py stops a changed settings file from applying to it, so every Bash call of this task still asks the person. Keep them few: read with Read, run the new and changed tests once to see them red, the full suite once before the commit, then the commit. The tests read the files; the executing agent probes the new perimeter in the next session, where it applies (ls, git status and git for-each-ref run without a prompt, git commit asks).",
+    "D11 The session's validator requires a Rationale in every proposal (AGENTS 2.2): include it, even if the schema of validate_proposal shown to you lacks it.",
+    "D12 No new dependency and no file outside files_may_touch: in particular not tools/install.py (the next contract carries this perimeter to the repositories the installer writes into), no hook, no skill.",
+    "D13 Gates: red-first, each red test seen failing for its stated reason before the change that makes it pass; full-suite, `pytest tests/` exits 0 at the commit; verify-red-green, tools/audit/verify_red_green.py exits 0 on the report."
+  ],
+  "behaviours": [
+    {"id": "B1", "statement": "The ask list of .claude/settings.json has no bare \"Bash\" and no \"Bash(*)\"; its other entries, deny, defaultMode \"default\", hooks, includeGitInstructions, enableAllProjectMcpServers, disableAllHooks and sandbox are exactly today's."},
+    {"id": "B2", "statement": "Both harnesses allow \"cut *\", \"tr *\", \"jq *\", \"cmp *\", \"date\", \"date +*\", \"git merge-base *\", \"git rev-list *\" and \"git for-each-ref *\", in the places D2 gives; opencode.jsonc keeps \"*\": \"ask\" first and \"git branch *\" asked in both."},
+    {"id": "B3", "statement": "No ask or deny entry of .claude/settings.json covers an allow entry under the rules of D5; a bare \"Bash\" in ask, or an ask like \"Bash(git *)\" next to an allow \"Bash(git log *)\", fails a test that names both entries."},
+    {"id": "B4", "statement": "The two normalized perimeters are equal, and Claude Code's catch-all asks through defaultMode \"default\"."},
+    {"id": "B5", "statement": "The allow list stays closed: an allow outside it, such as \"date *\" or \"git branch --list *\", fails a test that names it."},
+    {"id": "B6", "statement": "AGENTS.md 7.1 is the text of D7 and names pytest, each read-only command of READ_ONLY_COMMANDS and validate_proposal; section 9 names git's --output as in D8."},
+    {"id": "B7", "statement": ".claude/agents/implementer.md holds the bound of D9, and its other bounds and texts stay."},
+    {"id": "B8", "statement": "What holds today still holds: rm, inline Python, web fetch and web search denied; no git wildcard allow; every git allow read-only; every python3 allow under tools/; OpenCode's matrix broad first."}
+  ],
+  "tests": [
+    {"id": "T1", "must_catch": "an ask or deny entry of .claude/settings.json that covers an allow entry, a bare \"Bash\" or \"Bash(*)\" included", "expectation": "red", "reason": "at base the bare \"Bash\" heads ask and covers every Bash allow"},
+    {"id": "T2", "must_catch": "a coverage function that misreads Claude Code's matching on any case of D5", "expectation": "red", "reason": "at base the coverage function does not exist"},
+    {"id": "T3", "must_catch": "a Claude Code perimeter other than the one of D1 and D2", "expectation": "red", "reason": "at base ask holds the bare \"Bash\" and allow lacks the nine new patterns, and PERMISSIONS pins the new perimeter"},
+    {"id": "T4", "must_catch": "a harness that does not allow one of the nine new patterns, or an opencode.jsonc that allows one before \"*\" and \"rm *\"", "expectation": "red", "reason": "at base neither harness allows any of them"},
+    {"id": "T5", "must_catch": "an AGENTS.md 7.1 that does not name cut, tr, jq, cmp or date", "expectation": "red", "reason": "at base 7.1 names only the twelve read-only commands of the perimetro-de-permisos contract"},
+    {"id": "T6", "must_catch": "an implementer definition without the one-command bound of D9", "expectation": "red", "reason": "at base implementer.md says nothing about the shape of a Bash call"},
+    {"id": "T7", "must_catch": "a Claude Code catch-all that does not ask, drift between the harnesses, an allow outside the closed list (date *, git branch --list *), a required deny gone, a git allow that is not read-only, a python3 allow outside tools/, or OpenCode's order broken", "expectation": "guard", "reason": "these hold at base, the catch-all through the bare \"Bash\", and must keep holding with the catch-all through defaultMode"}
+  ],
+  "files_may_touch": [
+    ".claude/settings.json",
+    "opencode.jsonc",
+    "AGENTS.md",
+    ".claude/agents/implementer.md",
+    "tests/security/test_config_perimeter.py",
+    "tests/security/test_opencode_permissions.py",
+    "tests/security/test_contract_context_hook.py",
+    "tests/unit/test_delegation_contract.py"
+  ],
+  "files_must_not_touch": [
+    "CLAUDE.md",
+    "INSTALL.md",
+    ".actuarii.json",
+    ".mcp.json",
+    "docs/**",
+    "examples/**",
+    "tools/**",
+    ".claude/skills/**",
+    ".claude/memory/**",
+    ".opencode/**",
+    "tests/conftest.py",
+    "tests/security/test_rationale.py",
+    "tests/unit/test_installer.py",
+    ".github/**"
+  ],
+  "gates": [
+    "red-first",
+    "full-suite",
+    "verify-red-green"
+  ],
+  "commit_message": "fix(permisos): sin el comodín Bash en ask, la lista de lectura rige en Claude Code, y crece",
+  "report_schema": "delegation-report/2"
+}
