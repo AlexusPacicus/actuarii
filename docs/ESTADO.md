@@ -5,7 +5,7 @@ del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en 
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
 puerta del 22 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-14, noche.
+Actualizado: 2026-10-15, mediodía.
 
 ## La v0.1
 
@@ -23,7 +23,8 @@ Actualizado: 2026-10-14, noche.
 
 * Hechos y verificados:
   * el motivo (`Rationale`) en cada propuesta;
-  * el perímetro de permisos;
+  * el perímetro de permisos, sin el comodín `Bash` de `ask` y con la lista ampliada (ADR-022). Falta la
+    sonda en una sesión nueva;
   * A20, A31 y A34;
   * AGENTS.md v2.2.0;
   * cada ruta gobernada con su `denyWrite`, sin exenciones, comprobado con una sonda;
@@ -31,28 +32,30 @@ Actualizado: 2026-10-14, noche.
   * la historia reescrita sin la información personal y con el correo *noreply*, en un repositorio nuevo
     de GitHub (V8).
 
-  Suite en verde (3278). El detalle, con sus commits, en el DEVLOG.
+  Suite en verde (3296). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **El instalador en una orden (V2),** en dos contratos. El primero lleva lo que el kit necesita en el
-     destino: el perímetro, `includeGitInstructions`, el `denyWrite` y `pydantic`. El segundo, las preguntas
-     y el acta en git. Reescribe `INSTALL.md`.
-  2. **El acta en git (V3, D1),** en el segundo contrato. Un hook `commit-msg` añade los motivos de los recibos
+  1. **La sonda del perímetro,** al abrir la sesión: `ls`, `git status` y `git for-each-ref refs/heads` sin
+     pedir permiso, y `git commit` preguntando. Si algo no sale así, se mira antes de seguir.
+  2. **El instalador en una orden (V2),** en dos contratos. El primero lleva lo que el kit necesita en el
+     destino: el perímetro de ADR-022, `includeGitInstructions` y `pydantic` (el `denyWrite` ya lo lleva). El
+     segundo, las preguntas y el acta en git. Reescribe `INSTALL.md`.
+  3. **El acta en git (V3, D1),** en el segundo contrato. Un hook `commit-msg` añade los motivos de los recibos
      y dice si el contenido del commit coincide con el que dejaron las escrituras con recibo. El resultado
      esperado lo calcula la puerta, que pasa a escribir en la base y deniega si no puede guardarlo.
-  3. **La memoria automática de Claude Code, apagada (D5):** `autoMemoryEnabled: false`, con su test y la
+  4. **La memoria automática de Claude Code, apagada (D5):** `autoMemoryEnabled: false`, con su test y la
      corrección de la línea de `.claude/memory/MEMORY.md` sobre la opción (c). Va en un contrato pequeño.
-  4. **La medida en macOS (V4),** del autor, como tarde el domingo 18.
-  5. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
+  5. **La medida en macOS (V4),** del autor, como tarde el domingo 18.
+  6. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
      límites del README.
-  6. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6).
-  7. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
+  7. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6).
+  8. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
 
 ## Calendario hasta el 25
 
 | Cuándo | Qué |
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
-| Jueves 15 y viernes 16 | El instalador con el acta en git; el README empieza el viernes |
+| Jueves 15 y viernes 16 | El perímetro sin comodín (hecho el jueves); el instalador con el acta en git; el README empieza el viernes |
 | Sábado 17 y domingo 18 | El contrato de la memoria; la medida en macOS (el autor) |
 | Lunes 19 | La tabla «Resumen» y la sección de límites |
 | Martes 20 a jueves 22 | El README |
@@ -61,7 +64,8 @@ Actualizado: 2026-10-14, noche.
 
 ## Decisiones en vigor
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor todas, de ADR-001 a ADR-021:
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-022, salvo ADR-012, que
+sustituye ADR-022:
 
 | ADR | Decisión |
 |---|---|
@@ -76,7 +80,6 @@ Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor todas, 
 | 009 | La v0.1 son actas de trabajo; la seguridad, en la v0.2 |
 | 010 | La memoria del agente, bajo código; la automática de Claude Code, apagada |
 | 011 | El motivo, obligatorio, y ningún recibo sin acta |
-| 012 | El perímetro de permisos |
 | 013 | Qué correcciones de la auditoría entran en la v0.1 |
 | 014 | Los campos de la propuesta, con nombres llanos en la v0.2 |
 | 015 | Un estado corto al abrir cada sesión, en lugar del PLAN |
@@ -86,6 +89,7 @@ Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor todas, 
 | 019 | A33 y A34 no se cuentan a Anthropic |
 | 020 | La historia, sin lo personal y con el correo *noreply* |
 | 021 | Las decisiones van en este registro, que solo se amplía |
+| 022 | El perímetro de permisos, sin comodín y con la lista ampliada |
 
 ## Cómo se trabaja
 

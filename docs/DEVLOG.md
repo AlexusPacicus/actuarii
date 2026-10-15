@@ -5,6 +5,73 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-15
+
+Primera sesión del jueves. Empezó poniéndose al día y siguió por otro lado: el autor dijo que seguía habiendo
+demasiados permisos manuales, y la causa resultó ser el perímetro del 14, que en Claude Code no aprobaba nada. Se
+arregló por contrato, con dos fallos del contrato corregidos después del resultado. El instalador no empezó.
+Suite: de 3278 a 3296 en verde.
+
+**Hecho**
+* **Al arrancar:** sandbox activo y hook de integridad instalado; `main` igual a `origin/main` (`34f603a`), árbol
+  limpio y suite en verde (3278).
+* **La medida de los permisos,** en las transcripciones desde el 13: 795 llamadas a `Bash`. De las 352 del chat
+  principal del 14, con la lista de AGENTS 7.1 habrían preguntado 231: 67 porque escribían, 80 por la forma de la
+  orden (variables, `cd`, bucles) y 84 por una orden de lectura fuera de la lista (`cut`, `jq`, `awk`, `xargs`…).
+* **La causa,** en la documentación de permisos de Claude Code (code.claude.com/docs/en/permissions, con el
+  navegador integrado):
+  * las reglas se evalúan deny, luego ask, luego allow, y una `ask` gana a una `allow` más estrecha;
+  * `Bash` a secas cubre todas las órdenes.
+
+  El `"Bash"` que encabezaba `ask` hacía preguntar todas las llamadas, también las que Claude Code ejecuta sin
+  preguntar por sí mismo (`ls`, `git status`). La lista del 14 no aprobó nada en Claude Code; en OpenCode, donde
+  gana la última regla, sí funciona.
+* **La memoria** (`805884d`): `pocas-peticiones-al-autor.md` recoge la forma de las órdenes y la causa, y su línea
+  del índice la resume.
+* **Contrato del perímetro** (`docs/design/PERIMETRO_SIN_COMODIN.contrato.json`, `176ece9`, corregido en
+  `cb43f28`) e implementación (`c9248dd` y `bc151d2`, `sonnet`):
+  * sin `"Bash"` en `ask`: lo que pregunta por el resto es el modo `default`;
+  * la lista gana `cut`, `tr`, `jq`, `cmp`, `date` (sin argumento o con formato `+`), `git merge-base`,
+    `git rev-list` y `git for-each-ref`. `git branch` sigue preguntando, y las ramas se listan con
+    `git for-each-ref`;
+  * un test comprueba que ninguna regla `ask` o `deny` tapa una `allow`, comparándolas como lo hace Claude Code;
+  * AGENTS 7.1, reescrito; §9 declara el `--output` de `git diff`, `git log` y `git show`;
+  * `implementer.md`: una orden por llamada, sin variables, `cd`, bucles ni `$(...)`, y los globos entre comillas.
+  * Verificado por el chat con `verify_red_green.py`: T1 y T3–T6 rojos, T2 y T7 de guarda, suite 3296. El
+    alcance, comprobado a mano.
+* `main` avanzado sin merge hasta `bc151d2`.
+
+**Decidido (autor)**
+* **ADR-022:** el perímetro sin comodín y con la lista ampliada, en un contrato pequeño antes del primero del
+  instalador. Sustituye a ADR-012.
+
+**Salió mal y se aprendió**
+* **El perímetro del 14 estuvo un día sin efecto en Claude Code.** Los tests fijaban la configuración y la
+  normalizaban como si Claude Code resolviera las reglas igual que OpenCode, y nadie lo comprobó en una sesión. Es
+  la lección del hueco de `.claude/memory/`: lo que hace un tercero se comprueba con una sonda. Y antes de escribir
+  un test que modela a un tercero, se lee su documentación.
+* **Mi primera cifra, un 66 % de llamadas que preguntaban, daba por buena la lista.** La memoria salió con ella y
+  se corrigió en la misma sesión, después de leer la documentación.
+* **Peticiones de más al autor, mías:** al empezar, órdenes con `cd`, variables y `awk`, y dos
+  `grep --include=*.py` sin comillas que zsh rechazó.
+* **El contrato tenía dos fallos, y se corrigió después del resultado** (D14), una desviación de AGENTS 8.6:
+  * T2 no podía salir rojo: la función y sus casos viven en el fichero de tests que el verificador copia a la
+    base. Lección: un test cuyo código está en el mismo fichero de tests es una guarda;
+  * D9 citaba una cláusula de AGENTS.md en `implementer.md`, que el instalador copia a otros repositorios, y el
+    implementador partió la cadena para pasar `test_kit_independence.py`. Lo paró la revisión del diff. Lección:
+    un texto que el instalador copia no cita cláusulas, y un test no se esquiva troceando una cadena.
+* **El primer implementador tardó 2 h 7 min,** con cada `Bash` pidiendo permiso: el coste de arreglar el perímetro
+  desde una sesión con el perímetro roto.
+
+**Siguiente**
+* **El autor:** el push de `main`.
+* **Una sesión nueva** y, lo primero, la sonda: `ls`, `git status` y `git for-each-ref refs/heads` sin pedir
+  permiso, y `git commit` preguntando. Si algo no sale así, se mira antes de seguir.
+* **El primer contrato del instalador (V2):** el perímetro de ADR-022 en los destinos, `includeGitInstructions` y
+  `pydantic`; el `denyWrite` ya lo lleva. Corte: viernes 16.
+* Después, lo que sigue en `ESTADO.md`.
+* Disco: 14 GiB libres.
+
 ## 2026-10-14 (noche)
 
 Tercera sesión del miércoles. Se cerró la sonda del `denyWrite`; se escribió el ROADMAP, que el autor corrigió

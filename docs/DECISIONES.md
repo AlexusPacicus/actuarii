@@ -262,3 +262,26 @@ personal del autor.
 kit haga cumplir el «solo se añade» queda como idea para la v0.2.
 **Sustituye a:** —
 **Fuente:** esta entrada.
+
+## ADR-022 — El perímetro de permisos, sin comodín y con la lista ampliada (2026-10-15, autor)
+
+**Contexto:** el autor seguía viendo demasiados permisos manuales. Claude Code evalúa deny, luego ask y luego
+allow, y el `"Bash"` a secas que encabezaba `ask` hacía preguntar todas las llamadas a `Bash`: la lista de
+ADR-012 no aprobaba nada en Claude Code.
+**Decisión:**
+* Sin preguntar, en Claude Code y en OpenCode: `pytest`; las órdenes de lectura de ADR-012 más `cut`, `tr`, `jq`,
+  `cmp` y `date` (sin argumento o con formato `+`); las órdenes de git de lectura más `git merge-base`,
+  `git rev-list` y `git for-each-ref`; y `validate_proposal`.
+* En Claude Code, ninguna regla `ask` o `deny` tapa una `allow`, y lo que pregunta por el resto es el modo
+  `default`, no un comodín. OpenCode mantiene su `"*": "ask"` primero.
+* Las órdenes de git y de `gh` que escriben siguen preguntando. `git branch` también, y las ramas se listan con
+  `git for-each-ref`.
+* Lo que algunas órdenes de la lista escriben con sus opciones (`sort`, `uniq`, `sed`, y el `--output` de
+  `git diff`, `git log` y `git show`) se declara en §9.
+* Va en un contrato pequeño, antes del primero del instalador, que lleva este perímetro a los destinos.
+
+**Consecuencias:** AGENTS 7.1 reescrito, con un test de que nada tapa una `allow`. En otro modo de permisos, el
+modo decide lo que ninguna regla nombra. `implementer.md` pide una orden por llamada, sin variables, `cd` ni
+bucles. Rige desde la sesión siguiente a su commit.
+**Sustituye a:** ADR-012.
+**Fuente:** `docs/design/PERIMETRO_SIN_COMODIN.contrato.json`; `docs/DEVLOG.md`, 2026-10-15.
