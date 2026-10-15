@@ -617,7 +617,7 @@ def test_the_agent_definition_bounds_the_shape_of_a_bash_call():
     marker = '- **One command per `Bash` call,**'
     assert marker in text
     bound = text.split(marker, 1)[1].split(LF + '- ', 1)[0]
-    for needle in ('AGEN' + 'TS 7.1', '`cd`', 'Read'):
+    for needle in ('.claude/settings.json', '`cd`', 'Read'):
         assert needle in bound
 
 

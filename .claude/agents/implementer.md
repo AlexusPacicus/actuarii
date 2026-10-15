@@ -47,8 +47,8 @@ Bounds:
   those git commands, stop and report it.
 - **One command per `Bash` call,** from the repository root, with literal paths: no leading variable
   assignment, no `cd`, no loop and no `$(...)`, and every glob quoted, since zsh refuses one that
-  matches nothing. A call outside the allow list of AGENTS 7.1 asks the person, so prefer the
-  commands on it, and read files with Read, which does not ask.
+  matches nothing. A call outside the allow list of `.claude/settings.json` asks the person, so
+  prefer the commands on it, and read files with Read, which does not ask.
 - **Stop at a commit** with the contract's `commit_message`, plus `attribution` as a trailing line
   only when it is not `null`: a `null` attribution means no trailer at all. Commit after the
   contract's `gates` pass. The review of the diff, the records and the merge stay with the
