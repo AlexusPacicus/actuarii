@@ -35,13 +35,12 @@ Actualizado: 2026-10-15, mediodía.
   Suite en verde (3296). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
   1. **La sonda del perímetro,** al abrir la sesión: `ls`, `git status` y `git for-each-ref refs/heads` sin
-     pedir permiso, y `git commit` preguntando. Si algo no sale así, se mira antes de seguir.
+     pedir permiso, y `git commit` preguntando. Si algo no sale así, se mira antes de seguir. Después, **la
+     puerta con los textos largos (ADR-023):** un contrato pequeño para que `ENAMETOOLONG` se lea como «no es
+     una ruta»; los demás errores del sistema siguen denegando.
   2. **El instalador en una orden (V2),** en dos contratos. El primero lleva lo que el kit necesita en el
      destino: el perímetro de ADR-022, `includeGitInstructions` y `pydantic` (el `denyWrite` ya lo lleva). El
      segundo, las preguntas y el acta en git. Reescribe `INSTALL.md`.
-     * **Sin decidir:** la puerta deniega cualquier herramienta con un campo de texto de más de 255 bytes sin
-       barras (`File name too long`), también en los destinos. Propuesta de Claude: un contrato pequeño (DEVLOG,
-       2026-10-15).
   3. **El acta en git (V3, D1),** en el segundo contrato. Un hook `commit-msg` añade los motivos de los recibos
      y dice si el contenido del commit coincide con el que dejaron las escrituras con recibo. El resultado
      esperado lo calcula la puerta, que pasa a escribir en la base y deniega si no puede guardarlo.
@@ -67,7 +66,7 @@ Actualizado: 2026-10-15, mediodía.
 
 ## Decisiones en vigor
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-022, salvo ADR-012, que
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-023, salvo ADR-012, que
 sustituye ADR-022:
 
 | ADR | Decisión |
@@ -93,6 +92,7 @@ sustituye ADR-022:
 | 020 | La historia, sin lo personal y con el correo *noreply* |
 | 021 | Las decisiones van en este registro, que solo se amplía |
 | 022 | El perímetro de permisos, sin comodín y con la lista ampliada |
+| 023 | La puerta no toma por ruta un texto que no puede serlo |
 
 ## Cómo se trabaja
 

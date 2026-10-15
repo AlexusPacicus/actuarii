@@ -285,3 +285,20 @@ modo decide lo que ninguna regla nombra. `implementer.md` pide una orden por lla
 bucles. Rige desde la sesión siguiente a su commit.
 **Sustituye a:** ADR-012.
 **Fuente:** `docs/design/PERIMETRO_SIN_COMODIN.contrato.json`; `docs/DEVLOG.md`, 2026-10-15.
+
+## ADR-023 — La puerta no toma por ruta un texto que no puede serlo (2026-10-15, autor)
+
+**Contexto:** con una herramienta que no conoce, la puerta revisa cada texto que parece una ruta y le pregunta al
+sistema de ficheros adónde apunta. Si un nombre entre barras pasa de 255 bytes, el sistema responde
+`File name too long`, y la puerta deniega por no poder verificar. En un repositorio con el kit, una herramienta
+con un texto largo en una sola línea, que contenga por ejemplo «y/o», queda bloqueada. Pasó al proponer una sesión
+desde el chat.
+**Decisión:**
+* `ENAMETOOLONG` al resolver un candidato se lee como «no es una ruta»: el sistema dice que ningún fichero puede
+  llamarse así, ni uno que exista ni uno por crear. Los demás errores del sistema siguen denegando.
+* Va en un contrato pequeño, en la sesión siguiente, después de la sonda del perímetro y antes del primer contrato
+  del instalador.
+
+**Consecuencias:** el instalador copia a los destinos la puerta ya corregida.
+**Sustituye a:** —
+**Fuente:** `docs/DEVLOG.md`, 2026-10-15.

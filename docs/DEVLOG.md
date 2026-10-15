@@ -44,6 +44,8 @@ Suite: de 3278 a 3296 en verde.
 **Decidido (autor)**
 * **ADR-022:** el perímetro sin comodín y con la lista ampliada, en un contrato pequeño antes del primero del
   instalador. Sustituye a ADR-012.
+* **ADR-023:** la puerta lee `File name too long` como «no es una ruta», en un contrato pequeño en la sesión
+  siguiente, después de la sonda.
 
 **Salió mal y se aprendió**
 * **El perímetro del 14 estuvo un día sin efecto en Claude Code.** Los tests fijaban la configuración y la
@@ -71,8 +73,7 @@ Suite: de 3278 a 3296 en verde.
 
 **Siguiente**
 * **El autor:** el push de `main`.
-* **La puerta y los textos largos:** propuesta de Claude, un contrato pequeño que trate como «no es una ruta» un
-  texto que no puede ser un nombre en disco. Decide el autor si entra antes del 25.
+* **La puerta y los textos largos (ADR-023),** después de la sonda y antes del instalador.
 * **Una sesión nueva** y, lo primero, la sonda: `ls`, `git status` y `git for-each-ref refs/heads` sin pedir
   permiso, y `git commit` preguntando. Si algo no sale así, se mira antes de seguir.
 * **El primer contrato del instalador (V2):** el perímetro de ADR-022 en los destinos, `includeGitInstructions` y
