@@ -45,8 +45,11 @@ denied.
 The target is decided by what the filesystem says it is, not by how it is spelled: `canonical` resolves it
 (symlinks, `..`) and re-spells it with the names its directory entries store, found by identity, before the gate
 looks at it. On a case-insensitive filesystem `TESTS/x.py` is therefore `tests/x.py`. A path inside the
-repository that the filesystem cannot be asked about is denied. A receipt is matched against that stored
-spelling, so validate_proposal must be given it (the denial prints it).
+repository that the filesystem cannot be asked about is denied, with one exception: when resolving a
+candidate fails because a name is too long (ENAMETOOLONG) and the filesystem refuses one of its names looked
+up alone under the repository root, no file can bear that name, so the candidate is not a path. When the
+filesystem admits every name alone, it is the whole path that is too long, and the candidate is denied. A
+receipt is matched against that stored spelling, so validate_proposal must be given it (the denial prints it).
 
 Declared limits: a path hidden inside a longer string (a `file://` URL, a command line with spaces) is not
 recognised as a candidate; the class 2 tools are taken as the tools that write no file; Bash does not pass
@@ -57,6 +60,7 @@ it replaces); a class 3 tool keeps the receipt per file, with any content.
 """
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
@@ -156,6 +160,31 @@ def canonical(
             return real.joinpath(*names[index:])
         real = real / (name if name in found else found[0])
     return real
+
+
+def _refuses_a_name_alone(spelled: Path, root: Path) -> bool:
+    """True when the filesystem, asked about one name of `spelled` resolved, says it is too long.
+
+    Each name is looked up alone under `root`, so the system receives that name and nothing else: a
+    refusal then means no file can bear the name, now or later. The gate counts neither bytes nor
+    characters, since the limit depends on the filesystem. Any other answer, or a failure of the
+    check itself, is False: the caller then denies, as it does for every other error.
+    """
+    try:
+        resolved = spelled.resolve()
+        descriptor = os.open(root, os.O_RDONLY)
+        try:
+            for name in resolved.relative_to(resolved.anchor).parts:
+                try:
+                    os.lstat(name, dir_fd=descriptor)
+                except OSError as exc:
+                    if exc.errno == errno.ENAMETOOLONG:
+                        return True
+            return False
+        finally:
+            os.close(descriptor)
+    except (OSError, RuntimeError, ValueError):
+        return False
 
 
 def _is_candidate(text: str) -> bool:
@@ -333,6 +362,12 @@ def main(
                     spelled = base / spelled
                 target = canonical(spelled, REPO_ROOT, samefile, scandir)
             except (OSError, RuntimeError, ValueError) as exc:
+                if (
+                    isinstance(exc, OSError)
+                    and exc.errno == errno.ENAMETOOLONG
+                    and _refuses_a_name_alone(spelled, REPO_ROOT)
+                ):
+                    continue
                 sys.stderr.write(
                     "[require_boundary_validation] fail-closed: cannot tell whether "
                     f"{raw!r} ({tool}, {location}) is inside the repository ({exc}).\n"

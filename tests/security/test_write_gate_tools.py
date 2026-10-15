@@ -6,8 +6,10 @@ included. Any other tool is denied when a string of its input resolves to a gove
 covers it. The hook runs in process, driven through `main` on a replaced stdin, against a configuration that
 governs `src/**`.
 """
+import errno
 import io
 import json
+import os
 import shlex
 import sys
 
@@ -270,3 +272,96 @@ def test_the_write_hooks_are_launched_for_every_tool():
         ["python3", "$CLAUDE_PROJECT_DIR/tools/hooks/require_boundary_validation.py"],
         ["python3", "$CLAUDE_PROJECT_DIR/tools/hooks/require_contract_context.py"],
     ]
+
+
+# T6: a name the filesystem refuses alone is not a path
+
+REFUSED = "x" * 300
+LEGAL = "€" * 100 + ".md"
+TOOLS = [(UNKNOWN, "path"), *WRITERS]
+
+
+@pytest.fixture
+def injected(monkeypatch, config_file):
+    config_file(CONFIG)
+
+    def run(tool, tool_input, **identity):
+        payload = json.dumps({"tool_name": tool, "tool_input": tool_input})
+        monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
+        return require_boundary_validation.main(**identity)
+
+    return run
+
+
+def name_too_long_at(target):
+    def samefile(first, second):
+        if str(second) == str(target):
+            raise OSError(errno.ENAMETOOLONG, "File name too long")
+        return os.path.samefile(first, second)
+
+    return samefile
+
+
+def refused_alone(name):
+    descriptor = os.open(REPO_ROOT, os.O_RDONLY)
+    try:
+        os.lstat(name, dir_fd=descriptor)
+    except OSError as exc:
+        return exc.errno == errno.ENAMETOOLONG
+    finally:
+        os.close(descriptor)
+    return False
+
+
+@pytest.mark.parametrize("value", [
+    REFUSED + " y/o z",
+    str(REPO_ROOT / "docs" / REFUSED),
+    "docs/" + REFUSED,
+], ids=["prose before a slash", "absolute under docs", "relative under docs"])
+def test_an_unknown_tool_passes_with_a_name_the_filesystem_refuses_alone(gate, value):
+    assert gate(UNKNOWN, {"brief": value, "args": [value]}) == 0
+
+
+@pytest.mark.parametrize("tool, field", WRITERS)
+def test_a_writer_passes_with_a_path_field_naming_a_file_the_filesystem_refuses_alone(gate, tool, field):
+    assert gate(tool, {field: str(REPO_ROOT / "docs" / REFUSED), **CONTENT[tool]}) == 0
+
+
+@pytest.mark.parametrize("tool, field", TOOLS)
+def test_a_path_too_long_as_a_whole_still_denies_naming_the_tool_the_field_and_the_cause(
+        injected, capsys, tool, field):
+    tool_input = {field: GOVERNED, **CONTENT.get(tool, {})}
+    assert injected(tool, tool_input, samefile=name_too_long_at(REPO_ROOT / "src")) == 2
+    err = capsys.readouterr().err
+    assert "fail-closed: cannot tell whether" in err
+    assert tool in err
+    assert f"tool_input.{field}" in err
+    assert "File name too long" in err
+
+
+@pytest.mark.parametrize("tool, field", TOOLS)
+def test_a_legal_name_of_more_than_255_bytes_is_not_taken_for_a_refused_one(injected, capsys, tool, field):
+    if refused_alone(LEGAL):
+        pytest.skip("this filesystem refuses a name of 303 bytes alone: it counts bytes against a limit of 255, "
+                    "as ext4 does")
+    target = REPO_ROOT / "docs" / LEGAL
+    tool_input = {field: str(target), **CONTENT.get(tool, {})}
+    assert injected(tool, tool_input, samefile=name_too_long_at(target)) == 2
+    assert "fail-closed: cannot tell whether" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("tool, field", TOOLS)
+def test_a_root_that_cannot_be_opened_for_the_check_denies_with_the_original_cause(
+        injected, capsys, tool, field):
+    tool_input = {field: str(REPO_ROOT / "docs" / REFUSED), **CONTENT.get(tool, {})}
+
+    def refuse(*_args, **_kwargs):
+        raise PermissionError(errno.EACCES, "denied by the test")
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(os, "open", refuse)
+        status = injected(tool, tool_input)
+    assert status == 2
+    err = capsys.readouterr().err
+    assert "fail-closed: cannot tell whether" in err
+    assert "File name too long" in err
