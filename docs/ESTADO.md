@@ -39,6 +39,9 @@ Actualizado: 2026-10-15, mediodía.
   2. **El instalador en una orden (V2),** en dos contratos. El primero lleva lo que el kit necesita en el
      destino: el perímetro de ADR-022, `includeGitInstructions` y `pydantic` (el `denyWrite` ya lo lleva). El
      segundo, las preguntas y el acta en git. Reescribe `INSTALL.md`.
+     * **Sin decidir:** la puerta deniega cualquier herramienta con un campo de texto de más de 255 bytes sin
+       barras (`File name too long`), también en los destinos. Propuesta de Claude: un contrato pequeño (DEVLOG,
+       2026-10-15).
   3. **El acta en git (V3, D1),** en el segundo contrato. Un hook `commit-msg` añade los motivos de los recibos
      y dice si el contenido del commit coincide con el que dejaron las escrituras con recibo. El resultado
      esperado lo calcula la puerta, que pasa a escribir en la base y deniega si no puede guardarlo.

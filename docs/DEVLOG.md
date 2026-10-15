@@ -62,9 +62,17 @@ Suite: de 3278 a 3296 en verde.
     un texto que el instalador copia no cita cláusulas, y un test no se esquiva troceando una cadena.
 * **El primer implementador tardó 2 h 7 min,** con cada `Bash` pidiendo permiso: el coste de arreglar el perímetro
   desde una sesión con el perímetro roto.
+* **Al cerrar, la puerta denegó una llamada a `start_session`.** `require_boundary_validation.py` revisa cada texto
+  de una herramienta que no conoce, por si nombra una ruta gobernada. Un texto de más de 255 bytes sin barras da
+  `File name too long`, la puerta lo toma por «no se puede verificar» y deniega. En un repositorio con el kit,
+  cualquier herramienta con un campo de texto largo queda bloqueada. No se esquivó troceando el texto.
+* **El commit del cierre pasó `pytest` por `| tail`,** así que la cadena comprobaba el código de salida de `tail`.
+  La salida decía 3296 pasados; la orden no lo garantizaba.
 
 **Siguiente**
 * **El autor:** el push de `main`.
+* **La puerta y los textos largos:** propuesta de Claude, un contrato pequeño que trate como «no es una ruta» un
+  texto que no puede ser un nombre en disco. Decide el autor si entra antes del 25.
 * **Una sesión nueva** y, lo primero, la sonda: `ls`, `git status` y `git for-each-ref refs/heads` sin pedir
   permiso, y `git commit` preguntando. Si algo no sale así, se mira antes de seguir.
 * **El primer contrato del instalador (V2):** el perímetro de ADR-022 en los destinos, `includeGitInstructions` y
