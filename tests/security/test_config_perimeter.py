@@ -28,6 +28,7 @@ DENY = "deny"
 # The ONLY git subcommands that MAY be granted "allow" (read/inspection).
 APPROVED_GIT_ALLOW = {
     "status", "diff", "log", "show", "rev-parse", "grep", "blame", "ls-files",
+    "merge-base", "rev-list", "for-each-ref",
 }
 
 # Primitives that MUST be denied in every matrix.
@@ -35,11 +36,18 @@ REQUIRED_DENY = {"rm *", "python3 -c *", "python3 -m *", "webfetch", "websearch"
 
 # Besides read-only git and the scripts under tools/, the ONLY Bash patterns that MAY be granted "allow":
 # pytest and the closed list of read-only commands (the permission perimeter of the constitution).
-READ_ONLY_COMMANDS = ("ls", "cat", "head", "tail", "wc", "grep", "df", "echo", "sed -n", "sort", "uniq", "diff")
+READ_ONLY_COMMANDS = (
+    "ls", "cat", "head", "tail", "wc", "grep", "df", "echo", "sed -n", "sort", "uniq", "diff", "cut", "tr", "jq",
+    "cmp", "date",
+)
 READ_ONLY_ALLOW = (
     "pytest", "pytest *", "ls", "ls *", "cat *", "head *", "tail *", "wc *", "grep *", "df", "df *",
-    "echo *", "sed -n *", "sort *", "uniq *", "diff *",
+    "echo *", "sed -n *", "sort *", "uniq *", "diff *", "cut *", "tr *", "jq *", "cmp *", "date", "date +*",
 )
+
+# The git inspection patterns that join the allow list after `git ls-files *`: branches are listed with
+# `git for-each-ref`, because `git branch *` stays asked.
+GIT_INSPECTION_ALLOW = ("git merge-base *", "git rev-list *", "git for-each-ref *")
 
 # The only other rule that MAY be granted "allow": validate_proposal of the MCP server boundary-validator, which
 # writes only the audit trail. Claude Code names it mcp__<server>__<tool>; OpenCode joins server and tool with an
@@ -89,6 +97,8 @@ def _claude_matrix() -> dict:
     for decision in (ALLOW, ASK, DENY):
         for entry in permissions.get(decision, []):
             matrix[_normalize_claude_entry(entry)] = decision
+    if permissions.get("defaultMode") == "default":
+        matrix.setdefault("*", ASK)  # a Bash command that no rule names asks: the default mode is the catch-all
     return matrix
 
 
@@ -189,6 +199,8 @@ CLOSED_LIST = {
         pytest.param({"other-server_other-tool": ALLOW}, ["other-server_other-tool"], id="another-mcp-tool"),
         pytest.param({"edit": ALLOW}, ["edit"], id="a-file-tool"),
         pytest.param({"*": ALLOW}, ["*"], id="catch-all"),
+        pytest.param({"date *": ALLOW}, ["date *"], id="date-with-an-argument"),
+        pytest.param({"git branch --list *": ALLOW}, ["git branch --list *"], id="git-branch-listing"),
     ],
 )
 def test_security_SEC_M_13_closed_list_names_what_falls_outside(rules, unlisted):
@@ -211,6 +223,23 @@ def test_security_SEC_M_13_opencode_allows_the_read_only_commands_and_the_valida
     missing = [pattern for pattern in READ_ONLY_ALLOW if permission["bash"].get(pattern) != ALLOW]
     assert missing == [], f"opencode.jsonc: bash patterns not allowed: {missing}"
     assert permission.get(VALIDATOR_RULE) == ALLOW, f"opencode.jsonc: {VALIDATOR_RULE!r} is not allowed"
+
+
+def test_security_SEC_M_13_both_harnesses_allow_the_git_inspection_that_lists_refs_and_history():
+    """.claude/settings.json and opencode.jsonc MUST allow git merge-base, git rev-list and git for-each-ref;
+    opencode.jsonc MUST declare them after the catch-all '*' and 'rm *', or the last matching rule would not be
+    theirs."""
+    allow = json.loads(CLAUDE.read_text(encoding="utf-8"))["permissions"]["allow"]
+    missing = [pattern for pattern in GIT_INSPECTION_ALLOW if f"Bash({pattern})" not in allow]
+    assert missing == [], f".claude/settings.json: git patterns not allowed: {missing}"
+    text = OPENCODE.read_text(encoding="utf-8")
+    floor = max(text.index('"*": "ask"'), text.index('"rm *": "deny"'))
+    misplaced = []
+    for pattern in GIT_INSPECTION_ALLOW:
+        found = re.search(rf'"{re.escape(pattern)}"\s*:\s*"allow"', text)
+        if found is None or found.start() < floor:
+            misplaced.append(pattern)
+    assert misplaced == [], f"opencode.jsonc: allowed after '*' ask and 'rm *' deny: missing or earlier: {misplaced}"
 
 
 AGENTS_MD = ROOT / "AGENTS.md"
@@ -237,6 +266,66 @@ def test_security_SEC_M_13_perimeter_parity_between_harnesses():
         f"perimeter drift -- only in opencode.jsonc: {opencode_only}; "
         f"only in .claude/settings.json: {claude_only}"
     )
+
+
+def _bash_pattern(entry: str):
+    """The pattern of a Claude Code entry for Bash (the bare name matches every command), or None for another tool."""
+    if entry == "Bash":
+        return "*"
+    if entry.startswith("Bash(") and entry.endswith(")"):
+        return entry[len("Bash("):-1]
+    return None
+
+
+def _covers(rule: str, entry: str) -> bool:
+    """Whether `rule` matches every command that `entry` matches, decided on the text of the two entries the way
+    Claude Code matches Bash rules: a trailing ' *' also matches the bare command, a '*' after anything else
+    matches any text, an entry with no star matches only itself, and an entry of another tool covers only itself."""
+    rule_pattern, entry_pattern = _bash_pattern(rule), _bash_pattern(entry)
+    if rule_pattern is None or entry_pattern is None:
+        return rule == entry
+    spaced_tail = rule_pattern.endswith(" *")
+    head = rule_pattern[:-2] if spaced_tail else rule_pattern
+    regex = ".*".join(re.escape(part) for part in head.split("*")) + ("( .*)?" if spaced_tail else "")
+    return re.fullmatch(regex, entry_pattern) is not None
+
+
+@pytest.mark.parametrize(
+    "rule, entry, covers",
+    [
+        pytest.param("Bash", "Bash(ls *)", True, id="bare-bash-covers-every-bash-entry"),
+        pytest.param("Bash(*)", "Bash(git log *)", True, id="star-covers-every-bash-entry"),
+        pytest.param("Bash(git *)", "Bash(git log *)", True, id="a-prefix-covers-its-subcommands"),
+        pytest.param("Bash(git branch *)", "Bash(git branch --list *)", True, id="a-prefix-covers-a-listing-form"),
+        pytest.param("Bash(git branch *)", "Bash(git branch)", True, id="a-spaced-star-covers-the-bare-command"),
+        pytest.param("Bash(sed *)", "Bash(sed -n *)", True, id="sed-covers-sed-n"),
+        pytest.param("Bash(ls*)", "Bash(lsof *)", True, id="a-star-without-space-covers-a-longer-word"),
+        pytest.param("Bash(rm *)", "Bash(git log *)", False, id="another-command-is-not-covered"),
+        pytest.param("Bash(python3 -c *)", "Bash(python3 tools/*)", False, id="another-argument-is-not-covered"),
+        pytest.param("Bash(git branch *)", "Bash(git for-each-ref *)", False, id="another-subcommand-is-not-covered"),
+        pytest.param("Bash(cat *)", "Bash(catalog *)", False, id="a-spaced-star-stops-at-the-word"),
+        pytest.param("Bash(ls)", "Bash(ls *)", False, id="an-entry-with-no-star-covers-only-itself"),
+        pytest.param(
+            "WebFetch", "mcp__boundary-validator__validate_proposal", False, id="a-non-bash-entry-covers-only-itself"
+        ),
+    ],
+)
+def test_security_SEC_M_13_coverage_follows_how_claude_code_matches_bash_rules(rule, entry, covers):
+    assert _covers(rule, entry) is covers
+
+
+def test_security_SEC_M_13_no_ask_or_deny_rule_covers_an_allow_in_claude_code():
+    """Claude Code evaluates deny, then ask, then allow, and the first match decides: an ask or deny entry that
+    covers an allow entry (a bare 'Bash' covers them all) keeps that allow from ever taking effect."""
+    permissions = json.loads(CLAUDE.read_text(encoding="utf-8"))["permissions"]
+    shadowed = [
+        f"{allow!r} is covered by the {decision} entry {rule!r}"
+        for allow in permissions[ALLOW]
+        for decision in (DENY, ASK)
+        for rule in permissions.get(decision, [])
+        if _covers(rule, allow)
+    ]
+    assert shadowed == [], f".claude/settings.json: allow entries that never take effect: {shadowed}"
 
 
 def test_every_python_allow_names_a_path_that_exists(matrix):

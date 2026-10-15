@@ -48,6 +48,12 @@
       "sort *": "allow",
       "uniq *": "allow",
       "diff *": "allow",
+      "cut *": "allow",
+      "tr *": "allow",
+      "jq *": "allow",
+      "cmp *": "allow",
+      "date": "allow",
+      "date +*": "allow",
       // Safe read-only Git inspection
       "git status": "allow",
       "git status *": "allow",
@@ -59,6 +65,9 @@
       "git grep *": "allow",
       "git blame *": "allow",
       "git ls-files *": "allow",
+      "git merge-base *": "allow",
+      "git rev-list *": "allow",
+      "git for-each-ref *": "allow",
       "git add *": "ask",
       // Branch management and GitHub CLI interaction
       "git checkout -b *": "ask",

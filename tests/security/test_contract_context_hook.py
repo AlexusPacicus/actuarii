@@ -650,14 +650,16 @@ PERMISSIONS = {
         "Bash(python3 tools/hooks/*)", "Bash(python3 tools/boundary_validator/validator.py)",
         "Bash(git status)", "Bash(git status *)", "Bash(git diff)", "Bash(git diff *)",
         "Bash(git log *)", "Bash(git show *)", "Bash(git rev-parse *)", "Bash(git grep *)",
-        "Bash(git blame *)", "Bash(git ls-files *)",
+        "Bash(git blame *)", "Bash(git ls-files *)", "Bash(git merge-base *)", "Bash(git rev-list *)",
+        "Bash(git for-each-ref *)",
         "Bash(pytest)", "Bash(pytest *)", "Bash(ls)", "Bash(ls *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)",
         "Bash(wc *)", "Bash(grep *)", "Bash(df)", "Bash(df *)", "Bash(echo *)", "Bash(sed -n *)", "Bash(sort *)",
-        "Bash(uniq *)", "Bash(diff *)", "mcp__boundary-validator__validate_proposal",
+        "Bash(uniq *)", "Bash(diff *)", "Bash(cut *)", "Bash(tr *)", "Bash(jq *)", "Bash(cmp *)", "Bash(date)",
+        "Bash(date +*)", "mcp__boundary-validator__validate_proposal",
     ],
     "deny": ["WebFetch", "WebSearch", "Bash(rm *)", "Bash(python3 -c *)", "Bash(python3 -m *)"],
     "ask": [
-        "Bash", "Bash(git add *)", "Bash(git checkout -b *)", "Bash(git commit *)",
+        "Bash(git add *)", "Bash(git checkout -b *)", "Bash(git commit *)",
         "Bash(git checkout *)", "Bash(git branch *)", "Bash(git stash *)", "Bash(git tag *)",
         "Bash(git remote *)", "Bash(git fetch *)", "Bash(git pull *)", "Bash(git push *)",
         "Bash(git config *)", "Bash(git merge *)", "Bash(git rebase *)", "Bash(git reset *)",
@@ -681,7 +683,8 @@ def test_registration_changes_nothing_else_in_settings():
     (the python gate wiring, 54c7f8c, is the second such change; the sandbox key, docs/design/SANDBOX.md
     section 6, is the third; pytest, the read-only commands and the validator's tool allowed without asking, the
     perimetro-de-permisos contract, is the fourth; includeGitInstructions false, the blind-review isolation
-    contract (A34), is the fifth)."""
+    contract (A34), is the fifth; the bare Bash out of ask and the read-only list grown, the
+    perimetro-sin-comodin contract, is the sixth)."""
     current = settings()
     assert current["permissions"] == PERMISSIONS
     parsed = [

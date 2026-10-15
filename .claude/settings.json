@@ -17,6 +17,9 @@
       "Bash(git grep *)",
       "Bash(git blame *)",
       "Bash(git ls-files *)",
+      "Bash(git merge-base *)",
+      "Bash(git rev-list *)",
+      "Bash(git for-each-ref *)",
       "Bash(pytest)",
       "Bash(pytest *)",
       "Bash(ls)",
@@ -33,6 +36,12 @@
       "Bash(sort *)",
       "Bash(uniq *)",
       "Bash(diff *)",
+      "Bash(cut *)",
+      "Bash(tr *)",
+      "Bash(jq *)",
+      "Bash(cmp *)",
+      "Bash(date)",
+      "Bash(date +*)",
       "mcp__boundary-validator__validate_proposal"
     ],
     "deny": [
@@ -43,7 +52,6 @@
       "Bash(python3 -m *)"
     ],
     "ask": [
-      "Bash",
       "Bash(git add *)",
       "Bash(git checkout -b *)",
       "Bash(git commit *)",

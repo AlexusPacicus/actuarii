@@ -140,12 +140,20 @@ module and its import come before the code that uses them.
 7.1 `.claude/settings.json` (Claude Code) and `opencode.jsonc` (OpenCode) **MUST** stay identical
 in permission rules: read-only git commands, the scripts under `tools/`, `pytest`, a closed list of
 read-only commands (`ls`, `cat`, `head`, `tail`, `wc`, `grep`, `df`, `echo`, `sed -n`, `sort`,
-`uniq`, `diff`) and the validator's own tool, `validate_proposal`, which writes only the audit
-trail, allowed; `rm`, inline Python, web fetch and web search denied; every other `Bash` call
-asked. **[enforced by tests]** What an allowed command writes through a redirection is not asked;
-inside the sandbox it never reaches a governed path (7.3). `Edit` and `Write` ask or not according
-to the permission mode the person chooses; on a governed path they need their receipt in any mode
-(2.1). The `Bash` sandbox of 7.3 exists only in Claude Code.
+`uniq`, `diff`, `cut`, `tr`, `jq`, `cmp`, and `date` with no argument or a `+` format) and the
+validator's own tool, `validate_proposal`, which writes only the audit trail, allowed; `rm`, inline
+Python, web fetch and web search denied; the `git` and `gh` commands that write asked; every other
+`Bash` call asked. **[enforced by tests]** Claude Code reads deny, then ask, then allow, and an ask
+rule wins over a narrower allow: no ask or deny rule of `.claude/settings.json` covers an allowed
+command, and what asks for every other call is its `default` permission mode, not a bare `Bash`
+rule, which would ask for every call; OpenCode, where the last matching rule wins, keeps its
+`"*": "ask"` first. **[enforced by tests]** In the `default` mode Claude Code also runs its own
+read-only commands without asking (such as `find` without an action, `stat` or `pwd`); in another
+mode, the mode decides what no rule names, as it does for `Edit` and `Write`. What an allowed
+command writes through a redirection is not asked; inside the sandbox it never reaches a governed
+path (7.3). `Edit` and `Write` ask or not according to the permission mode the person chooses; on a
+governed path they need their receipt in any mode (2.1). The `Bash` sandbox of 7.3 exists only in
+Claude Code.
 
 7.2 Both harnesses load the same instructions: `CLAUDE.md` imports and the OpenCode
 `instructions` list name the same files. **[enforced by tests]**
@@ -222,9 +230,9 @@ The enforcement above does not cover:
   way around it reaches neither the network nor the governed paths.
 * **Read-only commands that are not.** Some commands of the allow list of 7.1 write or start a
   program through their own options, without a prompt: `sort -o` and `sort --compress-program`,
-  `uniq` with an output file, and `sed -n` with its `w` command and, in GNU `sed`, its `e` command,
-  which runs a shell command. With the sandbox on, they reach neither the network nor the governed
-  paths.
+  `uniq` with an output file, `git diff`, `git log` and `git show` with `--output`, and `sed -n`
+  with its `w` command and, in GNU `sed`, its `e` command, which runs a shell command. With the
+  sandbox on, they reach neither the network nor the governed paths.
 * **What leaves a record.** Only what goes through a governed channel leaves a record: a write to a
   governed path (its receipt and its `Rationale`), a delegation, a served context, a review. What
   `Bash` writes, and every write to a path outside `governed_paths`, leaves none, and an agent can

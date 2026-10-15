@@ -2,8 +2,9 @@
 This file verifies MUST/MUST NOT requirements from the SPEC (RFC 2119).
 Config perimeter (SEC-M-13): the opencode.jsonc bash permission matrix must
 not grant a 'git *' wildcard allow; only the explicit read/inspection git
-subcommands (status, diff, log, show, rev-parse, grep, blame, ls-files, add)
-may be allowed, and the deny primitives (webfetch, websearch, rm *) persist.
+subcommands (status, diff, log, show, rev-parse, grep, blame, ls-files,
+merge-base, rev-list, for-each-ref, add) may be allowed, and the deny
+primitives (webfetch, websearch, rm *) persist.
 Normative: opencode.jsonc permission matrix
 Coverage: SEC-M-13"""
 import re
@@ -24,6 +25,9 @@ APPROVED_ALLOW = {
     "grep",
     "blame",
     "ls-files",
+    "merge-base",
+    "rev-list",
+    "for-each-ref",
     "add",
 }
 

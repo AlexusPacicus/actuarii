@@ -612,6 +612,15 @@ def test_the_agent_definition_names_the_two_commands_and_the_json_contract(cli):
         assert cli(DOCS.get(argv[0], ''), *argv)[0] == 0, command
 
 
+def test_the_agent_definition_bounds_the_shape_of_a_bash_call():
+    text = AGENT.read_text(encoding='utf-8')
+    marker = '- **One command per `Bash` call,**'
+    assert marker in text
+    bound = text.split(marker, 1)[1].split(LF + '- ', 1)[0]
+    for needle in ('AGEN' + 'TS 7.1', '`cd`', 'Read'):
+        assert needle in bound
+
+
 # T14 no scope, and a gate is a free name: the contract declares what each one means
 
 SECOND = {**TEST, 'id': 'T2'}
