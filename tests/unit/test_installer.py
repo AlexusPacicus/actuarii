@@ -8,15 +8,18 @@ writes nothing.
 import copy
 import json
 import os
+import shlex
 import shutil
 import stat
 import sys
 from pathlib import Path
 
+import pydantic
 import pytest
 
 from tests.security.test_sandbox_settings import STRICT, expected_deny_write, sandbox_problems
 from tools.audit.run_process import run
+from tools.install import pydantic_pin
 
 CLONE = Path(__file__).resolve().parents[2]
 INSTALLER = CLONE / "tools" / "install.py"
@@ -28,6 +31,9 @@ KIT_TREES = ("tools", ".claude/agents", ".claude/skills")
 SERVER = "boundary-validator"
 CLONE_SETTINGS = json.loads((CLONE / ".claude" / "settings.json").read_text(encoding="utf-8"))
 CLONE_SERVER = json.loads((CLONE / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"][SERVER]
+CLONE_PERMISSIONS = CLONE_SETTINGS["permissions"]
+CHECK = CLONE / "tools" / "check_pydantic.py"
+PIN = pydantic_pin()
 PRE_COMMIT_SOURCE = CLONE / "tools" / "git" / "pre-commit"
 EXAMPLE_CONFIG = {
     "schema": "actuarii-config/1",
@@ -191,8 +197,10 @@ def test_a_fresh_install_writes_the_example_configuration_that_the_copied_projec
 def test_a_fresh_install_takes_the_hooks_from_the_clone_and_writes_a_strict_sandbox(target, home):
     assert install(target, home).returncode == 0
     settings = read_json(target / ".claude" / "settings.json")
-    assert set(settings) == {"hooks", "sandbox"}
+    assert list(settings) == ["permissions", "hooks", "includeGitInstructions", "sandbox"]
+    assert settings["permissions"] == CLONE_PERMISSIONS
     assert settings["hooks"] == CLONE_SETTINGS["hooks"]
+    assert settings["includeGitInstructions"] is False
     assert sandbox_problems(settings, EXAMPLE_CONFIG) == []
     assert (target / ".claude" / "settings.json").read_text(encoding="utf-8") == json.dumps(settings, indent=2) + "\n"
 
@@ -545,6 +553,13 @@ CONFLICTS = [
     ("a-loosened-sandbox-value", settings_with({"sandbox": {"allowUnsandboxedCommands": True}}), ".claude/settings.json"),
     ("a-disabled-sandbox", settings_with({"sandbox": {"enabled": False}}), ".claude/settings.json"),
     ("a-sandbox-that-is-not-an-object", settings_with({"sandbox": True}), ".claude/settings.json"),
+    ("permissions-that-are-not-an-object", settings_with({"permissions": ["Bash(ls)"]}), "permissions is not an object"),
+    ("an-allow-that-is-not-a-list", settings_with({"permissions": {"allow": "Bash(ls)"}}), "permissions.allow is not a list"),
+    ("a-deny-that-is-not-a-list", settings_with({"permissions": {"deny": {"WebFetch": True}}}), "permissions.deny is not a list"),
+    ("an-ask-that-is-not-a-list", settings_with({"permissions": {"ask": None}}), "permissions.ask is not a list"),
+    ("git-instructions-on", settings_with({"includeGitInstructions": True}), "includeGitInstructions is true"),
+    ("git-instructions-as-text", settings_with({"includeGitInstructions": "false"}), "includeGitInstructions is \"false\""),
+    ("git-instructions-as-zero", settings_with({"includeGitInstructions": 0}), "includeGitInstructions is 0"),
     ("a-different-validator-entry", different_server, ".mcp.json"),
     ("an-mcp-file-that-is-not-an-object", mcp_that_is_not_an_object, ".mcp.json"),
     ("a-different-configuration", different_configuration, ".actuarii.json"),
@@ -587,12 +602,27 @@ def test_every_conflict_is_listed_at_once(target, home):
     assert snapshot(target) == before
 
 
+def test_every_problem_of_the_settings_is_listed_at_once(target, home):
+    write_json(target / ".claude" / "settings.json",
+               {"permissions": {"allow": 1, "ask": 2}, "includeGitInstructions": True, "disableAllHooks": True})
+    before = snapshot(target)
+    done = install(target, home)
+    assert done.returncode == 1, done.stderr
+    for needle in ("permissions.allow is not a list", "permissions.ask is not a list", "includeGitInstructions is true", "disableAllHooks"):
+        assert needle in done.stderr, needle
+    assert snapshot(target) == before
+
+
 # T4 ---------------------------------------------------------------------------------------------------------------
 
 
 EXISTING_SETTINGS = {
     "model": "some-model",
-    "permissions": {"allow": ["Bash(ls)"], "deny": ["WebFetch"]},
+    "permissions": {
+        "allow": ["Bash(my-tool)", "Bash(ls)"],
+        "deny": ["WebFetch"],
+        "additionalDirectories": ["../shared"],
+    },
     "hooks": {
         "PreToolUse": [{"matcher": "Edit", "hooks": [{"type": "command", "command": "echo mine"}]}],
         "Stop": [{"hooks": [{"type": "command", "command": "echo stopped"}]}],
@@ -614,9 +644,17 @@ def test_existing_settings_are_merged_and_not_replaced(target, home):
     done = install(target, home)
     assert done.returncode == 0, done.stderr
     merged = read_json(path)
-    assert list(merged) == ["model", "permissions", "hooks", "sandbox"]
+    assert list(merged) == ["model", "permissions", "hooks", "sandbox", "includeGitInstructions"]
     assert merged["model"] == "some-model"
-    assert merged["permissions"] == EXISTING_SETTINGS["permissions"]
+    assert merged["includeGitInstructions"] is False
+    permissions = merged["permissions"]
+    assert list(permissions) == ["allow", "deny", "additionalDirectories", "defaultMode", "ask"]
+    assert permissions["additionalDirectories"] == ["../shared"]
+    assert permissions["defaultMode"] == CLONE_PERMISSIONS["defaultMode"]
+    assert permissions["allow"][:2] == ["Bash(my-tool)", "Bash(ls)"]
+    assert permissions["allow"][2:] == [entry for entry in CLONE_PERMISSIONS["allow"] if entry != "Bash(ls)"]
+    assert permissions["deny"] == ["WebFetch"] + [entry for entry in CLONE_PERMISSIONS["deny"] if entry != "WebFetch"]
+    assert permissions["ask"] == CLONE_PERMISSIONS["ask"]
     assert merged["hooks"]["Stop"] == EXISTING_SETTINGS["hooks"]["Stop"]
     assert merged["hooks"]["PreToolUse"] == EXISTING_SETTINGS["hooks"]["PreToolUse"] + [kit_hooks["PreToolUse"][0]] + kit_hooks["PreToolUse"][1:]
     for event, groups in kit_hooks.items():
@@ -631,6 +669,39 @@ def test_existing_settings_are_merged_and_not_replaced(target, home):
     kit_entries = [entry for entry in expected_deny_write(EXAMPLE_CONFIG) if entry not in ("./secret", "./tools")]
     assert sandbox["filesystem"]["denyWrite"] == ["./secret", "./tools"] + kit_entries
     assert path.read_text(encoding="utf-8") == json.dumps(merged, indent=2) + "\n"
+
+
+def test_settings_without_permissions_gain_the_kits_after_their_own_keys_in_the_kits_order(target, home):
+    path = target / ".claude" / "settings.json"
+    write_json(path, {"model": "some-model", "sandbox": {"enabled": True}})
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    merged = read_json(path)
+    assert list(merged) == ["model", "sandbox", "permissions", "hooks", "includeGitInstructions"]
+    assert merged["permissions"] == CLONE_PERMISSIONS
+    assert merged["includeGitInstructions"] is False
+
+
+@pytest.mark.parametrize("mode", ["plan", "bypassPermissions", "not-a-mode", 7])
+def test_a_default_mode_the_target_chose_is_kept_whatever_it_is(target, home, mode):
+    path = target / ".claude" / "settings.json"
+    write_json(path, {"permissions": {"defaultMode": mode}})
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    permissions = read_json(path)["permissions"]
+    assert list(permissions) == ["defaultMode", "allow", "deny", "ask"]
+    assert permissions["defaultMode"] == mode
+    assert permissions["allow"] == CLONE_PERMISSIONS["allow"]
+
+
+def test_include_git_instructions_false_stays_where_it_is(target, home):
+    path = target / ".claude" / "settings.json"
+    write_json(path, {"includeGitInstructions": False, "model": "some-model"})
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    merged = read_json(path)
+    assert list(merged) == ["includeGitInstructions", "model", "permissions", "hooks", "sandbox"]
+    assert merged["includeGitInstructions"] is False
 
 
 def test_settings_that_already_hold_the_kit_are_left_as_they_are_even_if_formatted_otherwise(target, home):
@@ -900,3 +971,418 @@ def test_the_installer_runs_under_the_system_python_with_the_same_result(tmp_pat
     done = install(system, home, python=SYSTEM_PYTHON, path=SYSTEM_PATH)
     assert done.returncode == 0, done.stderr
     assert snapshot(system) == snapshot(reference)
+
+
+# T10 ---------------------------------------------------------------------------------------------------------------
+
+
+def with_validator_command(clone, command):
+    path = clone / ".mcp.json"
+    mcp = read_json(path)
+    mcp["mcpServers"][SERVER]["command"] = command
+    write_json(path, mcp)
+
+
+CLONE_FAULTS = [
+    ("permissions-missing", ".claude/settings.json", lambda value: value.pop("permissions"), "permissions"),
+    ("permissions-not-an-object", ".claude/settings.json", lambda value: value.update(permissions=["allow"]),
+     "permissions is not an object"),
+    ("allow-not-a-list", ".claude/settings.json", lambda value: value["permissions"].update(allow="Bash(ls)"),
+     "permissions.allow is not a list of strings"),
+    ("deny-with-a-number", ".claude/settings.json", lambda value: value["permissions"].update(deny=["WebFetch", 3]),
+     "permissions.deny is not a list of strings"),
+    ("ask-missing", ".claude/settings.json", lambda value: value["permissions"].pop("ask"),
+     "permissions.ask is not a list of strings"),
+    ("default-mode-not-a-string", ".claude/settings.json", lambda value: value["permissions"].update(defaultMode=None),
+     "permissions.defaultMode is not a string"),
+    ("command-not-a-string", ".mcp.json", lambda value: value["mcpServers"][SERVER].update(command=3),
+     "command is not a non-empty string"),
+    ("command-empty", ".mcp.json", lambda value: value["mcpServers"][SERVER].update(command=""),
+     "command is not a non-empty string"),
+]
+
+
+@pytest.mark.parametrize("name, change, needle", [case[1:] for case in CLONE_FAULTS], ids=[case[0] for case in CLONE_FAULTS])
+def test_a_clone_whose_settings_or_server_cannot_be_merged_exits_two_names_it_and_writes_nothing(
+        tmp_path, target, home, name, change, needle):
+    clone = make_clone(tmp_path)
+    path = clone / name
+    value = read_json(path)
+    change(value)
+    write_json(path, value)
+    before = snapshot(target)
+    done = install_from(clone, target, home)
+    assert done.returncode == 2, done.stderr
+    assert done.stderr.startswith(PREFIX)
+    assert needle in done.stderr
+    assert len(done.stderr.splitlines()) == 1
+    assert snapshot(target) == before
+
+
+# T11 ---------------------------------------------------------------------------------------------------------------
+
+
+def warning_lines(done):
+    return [line for line in done.stderr.splitlines() if line.startswith(PREFIX + "warning: ")]
+
+
+@pytest.mark.parametrize("name, entry", [("ask", "Bash"), ("ask", "Bash(*)"), ("deny", "Bash"), ("deny", "Bash(*)")],
+                         ids=["ask-bash", "ask-bash-star", "deny-bash", "deny-bash-star"])
+def test_a_bare_bash_rule_in_ask_or_deny_is_a_warning_the_dry_run_and_the_real_run_print_alike(target, home, name, entry):
+    path = target / ".claude" / "settings.json"
+    write_json(path, {"permissions": {name: [entry]}})
+    dry = install(target, home, "--dry-run")
+    real = install(target, home)
+    assert dry.returncode == real.returncode == 0, dry.stderr + real.stderr
+    assert dry.stderr == real.stderr
+    (line,) = warning_lines(real)
+    assert f"permissions.{name}" in line
+    assert json.dumps(entry) in line
+    assert "deny, then ask, then allow" in line
+    assert read_json(path)["permissions"][name][0] == entry
+
+
+def test_each_bare_bash_rule_gets_a_warning_line_of_its_own(target, home):
+    write_json(target / ".claude" / "settings.json", {"permissions": {"ask": ["Bash", "Bash(*)"], "deny": ["Bash(*)"]}})
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    lines = warning_lines(done)
+    assert len(lines) == 3
+    assert sum("permissions.ask" in line for line in lines) == 2
+    assert sum("permissions.deny" in line for line in lines) == 1
+
+
+def test_other_rules_and_a_bare_bash_in_allow_are_not_warned(target, home):
+    rules = {"allow": ["Bash", "Bash(*)"], "ask": ["Bash(git push *)"], "deny": ["Bash(rm *)"]}
+    write_json(target / ".claude" / "settings.json", {"permissions": rules})
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    assert warning_lines(done) == []
+
+
+# T12 ---------------------------------------------------------------------------------------------------------------
+
+
+FAKE_PYTHON = """#!/bin/sh
+printf '%s\\n' "$@" > '{arguments}'
+pwd -P > '{cwd}'
+cat '{answer}'
+exit {status}
+"""
+OUTSIDE = "/opt/fake-python"
+FAKE_EXECUTABLE = f"{OUTSIDE}/bin/python3"
+
+
+class Fake:
+    """An interpreter that is a shell script: it records its arguments and its working directory, prints the answer it
+    was given and exits with the status it was given. Only the script lies in `directory`; what it records lies under `root`."""
+
+    def __init__(self, root, stdout, status=0, directory=None):
+        root.mkdir(parents=True)
+        self.directory = root / "bin" if directory is None else directory
+        self.directory.mkdir(parents=True, exist_ok=True)
+        self.arguments, self.cwd = root / "arguments", root / "cwd"
+        (root / "answer").write_text(stdout, encoding="utf-8")
+        self.path = self.directory / "python3"
+        script = FAKE_PYTHON.format(arguments=self.arguments, cwd=self.cwd, answer=root / "answer", status=status)
+        self.path.write_text(script, encoding="utf-8")
+        self.path.chmod(0o755)
+
+    @property
+    def ran(self):
+        return self.arguments.exists()
+
+
+def path_with(*directories):
+    return os.pathsep.join([*(str(directory) for directory in directories), os.environ["PATH"]])
+
+
+def check_output(executable, prefix, version):
+    return json.dumps({"executable": str(executable), "prefix": str(prefix), "pydantic": version}) + "\n"
+
+
+def python_lines(done):
+    return [line for line in done.stdout.splitlines() if line.startswith("python: ")]
+
+
+ANSWER = check_output(FAKE_EXECUTABLE, OUTSIDE, PIN)
+
+
+def test_the_report_names_the_interpreter_the_check_printed_and_says_it_has_the_pinned_pydantic(tmp_path, target, home):
+    fake = Fake(tmp_path / "fake", ANSWER)
+    done = install(target, home, path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    (line,) = python_lines(done)
+    assert FAKE_EXECUTABLE in line
+    assert f"has pydantic=={PIN}" in line
+    assert "pip" not in line
+    assert str(fake.path) not in line
+
+
+@pytest.mark.parametrize("version, needles", [("1.10.0", ("has pydantic==1.10.0", f"tested with {PIN}")), (None, ("lacks pydantic",))],
+                         ids=["another-version", "none"])
+def test_the_report_gives_the_pip_command_for_another_version_and_for_no_pydantic(tmp_path, target, home, version, needles):
+    fake = Fake(tmp_path / "fake", check_output(FAKE_EXECUTABLE, OUTSIDE, version))
+    done = install(target, home, path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    (line,) = python_lines(done)
+    for needle in needles:
+        assert needle in line, needle
+    assert f"{FAKE_EXECUTABLE} -m pip install pydantic=={PIN}" in line
+
+
+def test_the_pip_command_quotes_an_executable_that_needs_it(tmp_path, target, home):
+    executable = f"{OUTSIDE}/with space/bin/python3"
+    fake = Fake(tmp_path / "fake", check_output(executable, OUTSIDE, None))
+    done = install(target, home, path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    (line,) = python_lines(done)
+    assert f"{shlex.quote(executable)} -m pip install pydantic=={PIN}" in line
+
+
+def test_only_the_last_line_of_the_output_counts(tmp_path, target, home):
+    fake = Fake(tmp_path / "fake", "environment ready\n" + ANSWER)
+    done = install(target, home, path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    (line,) = python_lines(done)
+    assert f"has pydantic=={PIN}" in line
+
+
+@pytest.mark.parametrize("options", [(), ("--dry-run",)], ids=["real-run", "dry-run"])
+def test_the_interpreter_runs_the_clones_check_with_no_option_from_the_target(tmp_path, target, home, options):
+    fake = Fake(tmp_path / "fake", ANSWER)
+    done = install(target, home, *options, path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    assert fake.arguments.read_text(encoding="utf-8").splitlines() == [str(CHECK)]
+    assert fake.cwd.read_text(encoding="utf-8").strip() == str(target)
+
+
+def test_the_python_lines_come_after_the_plan_and_before_the_next_steps_and_both_runs_print_the_same(tmp_path, target, home):
+    fake = Fake(tmp_path / "fake", ANSWER)
+    path = path_with(fake.directory)
+    dry = install(target, home, "--dry-run", path=path)
+    real = install(target, home, path=path)
+    assert dry.returncode == real.returncode == 0, dry.stderr + real.stderr
+    assert python_lines(dry) == python_lines(real)
+    dry_lines, real_lines = dry.stdout.splitlines(), real.stdout.splitlines()
+    assert dry_lines[-2].startswith("python: ")
+    assert dry_lines[-1] == DRY_RUN_CLOSING
+    steps = real_lines.index("next steps:")
+    assert real_lines[steps - 1].startswith("python: ")
+    assert real_lines[steps:] == [
+        "next steps:",
+        "  1. commit the installed files; the Python shim only runs scripts committed in HEAD",
+        "  2. start Claude Code with this same PATH, so that the validator runs with the python3 named above",
+        f"  3. open Claude Code in {target}; accept the folder trust and the {SERVER} server",
+    ]
+
+
+def test_a_command_found_on_no_path_entry_is_reported_and_is_not_a_conflict(tmp_path, target, home):
+    clone = make_clone(tmp_path)
+    with_validator_command(clone, "no-such-python-3")
+    done = install_from(clone, target, home)
+    assert done.returncode == 0, done.stderr
+    assert python_lines(done) == ["python: no no-such-python-3 was found on the PATH"]
+    second = "  2. start Claude Code with this same PATH, so that the validator runs with the no-such-python-3 named above"
+    assert second in done.stdout.splitlines()
+    assert read_json(target / ".mcp.json")["mcpServers"][SERVER]["command"] == "no-such-python-3"
+
+
+def test_a_command_that_is_a_path_is_not_looked_up_on_the_path(tmp_path, target, home):
+    fake = Fake(tmp_path / "fake", ANSWER)
+    clone = make_clone(tmp_path)
+    with_validator_command(clone, str(fake.path))
+    done = install_from(clone, target, home)
+    assert done.returncode == 0, done.stderr
+    assert fake.ran
+    (line,) = python_lines(done)
+    assert f"has pydantic=={PIN}" in line
+
+
+def inside_by_an_absolute_entry(tmp_path, target):
+    fake = Fake(tmp_path / "fake", ANSWER, directory=target / "venv" / "bin")
+    return fake, path_with(fake.directory)
+
+
+def inside_by_a_relative_entry(tmp_path, target):
+    fake = Fake(tmp_path / "fake", ANSWER, directory=target / "venv" / "bin")
+    return fake, path_with("venv/bin")
+
+
+def inside_by_an_empty_entry(tmp_path, target):
+    fake = Fake(tmp_path / "fake", ANSWER, directory=target)
+    return fake, path_with("")
+
+
+def inside_by_a_linked_directory(tmp_path, target):
+    fake = Fake(tmp_path / "fake", ANSWER, directory=target / "venv" / "bin")
+    (tmp_path / "alias").symlink_to(fake.directory)
+    return fake, path_with(tmp_path / "alias")
+
+
+def inside_by_a_linked_file(tmp_path, target):
+    fake = Fake(tmp_path / "fake", ANSWER, directory=target / "venv" / "bin")
+    (tmp_path / "links").mkdir()
+    (tmp_path / "links" / "python3").symlink_to(fake.path)
+    return fake, path_with(tmp_path / "links")
+
+
+INSIDE = [
+    ("an-absolute-entry", inside_by_an_absolute_entry),
+    ("a-relative-entry", inside_by_a_relative_entry),
+    ("an-empty-entry", inside_by_an_empty_entry),
+    ("a-linked-directory", inside_by_a_linked_directory),
+    ("a-linked-file", inside_by_a_linked_file),
+]
+
+
+@pytest.mark.parametrize("build", [case[1] for case in INSIDE], ids=[case[0] for case in INSIDE])
+def test_an_interpreter_inside_the_target_is_never_run_and_the_report_says_the_environment_belongs_outside(
+        tmp_path, target, home, build):
+    fake, path = build(tmp_path, target)
+    done = install(target, home, path=path)
+    assert done.returncode == 0, done.stderr
+    assert not fake.ran
+    (line,) = python_lines(done)
+    assert f"lies inside {target}" in line
+    assert "was not run" in line
+    assert "outside the repository" in line
+
+
+def test_a_relative_command_is_joined_to_the_target_and_an_interpreter_there_is_never_run(tmp_path, target, home):
+    fake = Fake(tmp_path / "fake", ANSWER, directory=target / "venv" / "bin")
+    clone = make_clone(tmp_path)
+    with_validator_command(clone, "venv/bin/python3")
+    done = install_from(clone, target, home)
+    assert done.returncode == 0, done.stderr
+    assert not fake.ran
+    (line,) = python_lines(done)
+    assert f"lies inside {target}" in line
+
+
+@pytest.mark.parametrize("how", ["directly", "through-a-link"])
+def test_an_environment_inside_the_target_gets_a_second_line_even_when_the_interpreter_is_outside(tmp_path, target, home, how):
+    prefix = target / ".venv"
+    prefix.mkdir()
+    shown = prefix
+    if how == "through-a-link":
+        shown = tmp_path / "alias"
+        shown.symlink_to(prefix)
+    fake = Fake(tmp_path / "fake", check_output(FAKE_EXECUTABLE, shown, PIN))
+    done = install(target, home, path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    assert fake.ran
+    first, second = python_lines(done)
+    assert f"has pydantic=={PIN}" in first
+    assert str(shown) in second
+    assert "outside the repository" in second
+
+
+FAILURES = [
+    ("a-non-zero-exit", ANSWER, 3),
+    ("no-output", "", 0),
+    ("not-json", "not json\n", 0),
+    ("not-an-object", "[1, 2]\n", 0),
+    ("a-missing-key", json.dumps({"executable": FAKE_EXECUTABLE, "prefix": OUTSIDE}) + "\n", 0),
+    ("an-extra-key", json.dumps({"executable": FAKE_EXECUTABLE, "prefix": OUTSIDE, "pydantic": PIN, "more": 1}) + "\n", 0),
+    ("a-number-for-the-version", json.dumps({"executable": FAKE_EXECUTABLE, "prefix": OUTSIDE, "pydantic": 2}) + "\n", 0),
+    ("a-number-for-the-executable", json.dumps({"executable": 3, "prefix": OUTSIDE, "pydantic": PIN}) + "\n", 0),
+]
+
+
+@pytest.mark.parametrize("stdout, status", [case[1:] for case in FAILURES], ids=[case[0] for case in FAILURES])
+def test_a_check_that_fails_or_prints_something_else_is_reported_as_unknown_and_is_not_a_conflict(
+        tmp_path, target, home, stdout, status):
+    fake = Fake(tmp_path / "fake", stdout, status)
+    done = install(target, home, path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    assert fake.ran
+    (line,) = python_lines(done)
+    assert str(fake.path) in line
+    assert "cannot tell" in line
+    assert "pip install" not in line
+    assert "lacks pydantic" not in line
+
+
+def test_an_interpreter_that_cannot_be_started_is_reported_as_unknown(tmp_path, target, home):
+    directory = tmp_path / "broken"
+    directory.mkdir()
+    broken = directory / "python3"
+    broken.write_text("#!/no/such/interpreter\n", encoding="utf-8")
+    broken.chmod(0o755)
+    done = install(target, home, path=path_with(directory))
+    assert done.returncode == 0, done.stderr
+    (line,) = python_lines(done)
+    assert str(broken) in line
+    assert "cannot tell" in line
+
+
+@pytest.mark.parametrize("before", ["nothing", "the-clones-kit-bin", "an-installed-kit-bin"])
+def test_the_lookup_skips_the_python_shim_and_the_report_is_the_one_of_the_interpreter_of_the_test_run(
+        tmp_path, target, home, before):
+    directory = Path(sys.executable).parent
+    python = directory / "python3"
+    if not python.is_file():
+        pytest.skip(f"{directory} holds no python3")
+    entries = [directory]
+    if before == "the-clones-kit-bin":
+        entries.insert(0, CLONE / "tools" / "bin")
+    if before == "an-installed-kit-bin":
+        assert install(target, home).returncode == 0
+        entries.insert(0, target / "tools" / "bin")
+    done = install(target, home, path=path_with(*entries))
+    assert done.returncode == 0, done.stderr
+    (line,) = python_lines(done)
+    own = run([str(python), str(CHECK)], cwd=target, env=environment(home), timeout=60.0)
+    assert own.returncode == 0, own.stderr
+    answer = json.loads(own.stdout)
+    assert answer["executable"] in line
+    if answer["pydantic"] == PIN:
+        assert f"has pydantic=={PIN}" in line
+        assert "pip install" not in line
+    else:
+        assert f"{shlex.quote(answer['executable'])} -m pip install pydantic=={PIN}" in line
+
+
+# T13 ---------------------------------------------------------------------------------------------------------------
+
+
+def test_the_check_prints_one_json_line_for_the_interpreter_that_runs_it():
+    done = run([sys.executable, str(CHECK)], timeout=60.0)
+    assert done.returncode == 0, done.stderr
+    assert done.stderr == ""
+    assert done.stdout.count("\n") == 1 and done.stdout.endswith("\n")
+    assert json.loads(done.stdout) == {"executable": sys.executable, "prefix": sys.prefix, "pydantic": pydantic.VERSION}
+
+
+def test_the_check_runs_under_the_system_python_where_pydantic_is_missing(home):
+    if not SYSTEM_PYTHON.exists():
+        pytest.skip(f"{SYSTEM_PYTHON} does not exist")
+    done = run([str(SYSTEM_PYTHON), str(CHECK)], env=environment(home, SYSTEM_PATH), timeout=60.0)
+    assert done.returncode == 0, done.stderr
+    answer = json.loads(done.stdout)
+    if answer["pydantic"] is not None:
+        pytest.skip(f"{SYSTEM_PYTHON} has pydantic {answer['pydantic']}")
+    assert done.stdout.count("\n") == 1
+    assert set(answer) == {"executable", "prefix", "pydantic"}
+    assert answer["executable"] and answer["prefix"]
+
+
+def run_check_with_planted_pydantic(tmp_path, home, source):
+    planted = tmp_path / "planted"
+    planted.mkdir()
+    (planted / "pydantic.py").write_text(source, encoding="utf-8")
+    return run([sys.executable, str(CHECK)], env={**environment(home), "PYTHONPATH": str(planted)}, timeout=60.0)
+
+
+def test_an_import_error_means_pydantic_is_not_installed(tmp_path, home):
+    done = run_check_with_planted_pydantic(tmp_path, home, "raise ImportError('planted')\n")
+    assert done.returncode == 0, done.stderr
+    assert json.loads(done.stdout)["pydantic"] is None
+
+
+def test_any_other_exception_of_the_import_propagates(tmp_path, home):
+    done = run_check_with_planted_pydantic(tmp_path, home, "raise RuntimeError('planted')\n")
+    assert done.returncode != 0
+    assert done.stdout == ""
+    assert "RuntimeError: planted" in done.stderr

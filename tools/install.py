@@ -13,7 +13,9 @@ and nothing is written. It receives, from the clone's working tree:
   it resolves to a regular file inside those trees; any other link (dangling, in a loop, to a directory or to
   something outside them) is a problem of the clone: exit status 2, the path on stderr, nothing written;
 * .actuarii.json, when absent, with an example configuration;
-* .claude/settings.json, with the clone's own `hooks` and a strict `sandbox`, merged into what is there;
+* .claude/settings.json, with the clone's own `permissions` and `hooks`, `includeGitInstructions` false and a strict
+  `sandbox`, merged into what is there: the clone's permission entries go after the target's own, once each, and a
+  `defaultMode` already there stays; a bare `Bash` rule in the merged `ask` or `deny` is a warning, not a conflict;
 * .mcp.json, with the clone's boundary-validator server, merged into what is there;
 * the pre-commit hook, where `git rev-parse --git-path hooks/pre-commit` says it goes, provided that is inside the
   target's own `.git` directory: a hooks path anywhere else (a global or escaping core.hooksPath, a hooks directory of
@@ -27,8 +29,13 @@ without writing. A write that fails midway exits 1 and names what was already wr
 
 The user's own settings are only read, to warn when they do not forbid unsandboxed commands; they are never written.
 
-Standard library only, plus tools.audit.run_process for the one process it starts (git). It imports and runs under a
-Python 3.9 system interpreter.
+The report also says which interpreter the validator will start with (the `command` of the clone's server, looked up on
+the installer's PATH from the target, never the Python shim) and whether it has the pydantic the kit is tested with. It
+runs tools/check_pydantic.py with that interpreter, from the target and with no option, unless the interpreter lies
+inside the target; it prints the pip command that would install the pin and never runs it.
+
+Standard library only, plus tools.audit.run_process for the processes it starts (git and that interpreter). It imports
+and runs under a Python 3.9 system interpreter.
 """
 from __future__ import annotations
 
@@ -37,6 +44,7 @@ import copy
 import json
 import os
 import re
+import shlex
 import stat
 import sys
 from dataclasses import dataclass
@@ -64,6 +72,16 @@ SETTINGS_NAME = ".claude/settings.json"
 MCP_NAME = ".mcp.json"
 PRE_COMMIT_SOURCE = "tools/git/pre-commit"
 HOOK_GIT_PATH = "hooks/pre-commit"
+SHIM_SOURCE = "tools/bin/python3"
+CHECK_SOURCE = "tools/check_pydantic.py"
+CHECK_KEYS = {"executable", "prefix", "pydantic"}
+CHECK_TIMEOUT = 60.0
+TIMED_OUT = run_process.subprocess.TimeoutExpired
+PYTHON_PREFIX = "python: "
+PERMISSION_LISTS = ("allow", "deny", "ask")
+PERMISSION_KEYS = ("defaultMode", *PERMISSION_LISTS)
+BARE_BASH = ("Bash", "Bash(*)")
+BARE_BASH_EFFECT = {"ask": "ask", "deny": "be denied"}
 DATA_LINES = (b".data/", b"/.data/")
 EXAMPLE_CONFIG = {
     "schema": "actuarii-config/1",
@@ -96,10 +114,12 @@ class Write:
 
 
 class Plan:
-    def __init__(self) -> None:
+    def __init__(self, command: str) -> None:
+        self.command = command
         self.writes: list[Write] = []
         self.skips: list[str] = []
         self.conflicts: list[tuple[str, str]] = []
+        self.warnings: list[str] = []
 
     def conflict(self, label: str, why: str) -> None:
         if (label, why) not in self.conflicts:
@@ -192,11 +212,31 @@ def clone_json(name: str) -> object:
         raise Problem(f"the clone's {name} {exc}") from exc
 
 
-def clone_hooks_and_server() -> tuple[dict, dict]:
+def clone_permissions(permissions: object) -> dict:
+    where = f"the clone's {SETTINGS_NAME} permissions"
+    if not isinstance(permissions, dict):
+        raise Problem(f"{where} is not an object")
+    for key in PERMISSION_LISTS:
+        entries = permissions.get(key)
+        if not isinstance(entries, list) or not all(isinstance(entry, str) for entry in entries):
+            raise Problem(f"{where}.{key} is not a list of strings")
+    if not isinstance(permissions.get("defaultMode"), str):
+        raise Problem(f"{where}.defaultMode is not a string")
+    return permissions
+
+
+def clone_kit_settings() -> tuple[dict, dict, dict]:
+    """The permissions and hooks of the clone's settings and its validator server, in the shape the merge needs."""
     try:
-        return clone_json(SETTINGS_NAME)["hooks"], clone_json(MCP_NAME)["mcpServers"][SERVER]
+        settings = clone_json(SETTINGS_NAME)
+        permissions, hooks = settings["permissions"], settings["hooks"]
+        server = clone_json(MCP_NAME)["mcpServers"][SERVER]
+        command = server["command"]
     except (KeyError, TypeError) as exc:
         raise Problem(f"the clone's {SETTINGS_NAME} or {MCP_NAME} lacks what the kit installs ({exc!r})") from exc
+    if not isinstance(command, str) or not command:
+        raise Problem(f"the clone's {MCP_NAME} {SERVER} command is not a non-empty string")
+    return clone_permissions(permissions), hooks, server
 
 
 def deny_write_entries() -> list[str]:
@@ -259,11 +299,30 @@ def plan_config(plan: Plan, target: Path) -> None:
         plan.conflict(CONFIG_NAME, "exists and differs from the example configuration; the installer does not adopt another")
 
 
-def merge_settings(existing: object, hooks: dict) -> tuple[object, list[str]]:
+def merge_permissions(merged: dict, permissions: dict, problems: list[str]) -> None:
+    """The clone's permissions into merged: its entries after the target's own, once each; a defaultMode already there stays."""
+    if "permissions" not in merged:
+        merged["permissions"] = copy.deepcopy(permissions)
+        return
+    current = merged["permissions"]
+    if not isinstance(current, dict):
+        problems.append("permissions is not an object")
+        return
+    for key in PERMISSION_KEYS:
+        if key not in current:
+            current[key] = copy.deepcopy(permissions[key])
+        elif key in PERMISSION_LISTS and not isinstance(current[key], list):
+            problems.append(f"permissions.{key} is not a list")
+        elif key in PERMISSION_LISTS:
+            current[key] += [entry for entry in dict.fromkeys(permissions[key]) if entry not in current[key]]
+
+
+def merge_settings(existing: object, permissions: dict, hooks: dict) -> tuple[object, list[str]]:
     if not isinstance(existing, dict):
         return existing, ["is not a JSON object"]
     problems = []
     merged = copy.deepcopy(existing)
+    merge_permissions(merged, permissions, problems)
     if merged.get("disableAllHooks") is True:
         problems.append("disableAllHooks is true, so the kit's hooks would not run")
     current_hooks = merged.setdefault("hooks", {})
@@ -276,6 +335,13 @@ def merge_settings(existing: object, hooks: dict) -> tuple[object, list[str]]:
                 problems.append(f"hooks.{event} is not a list")
                 continue
             current.extend([group for group in groups if group not in current])
+    if "includeGitInstructions" not in merged:
+        merged["includeGitInstructions"] = False
+    elif merged["includeGitInstructions"] is not False:
+        problems.append(
+            f"includeGitInstructions is {json.dumps(merged['includeGitInstructions'])} and the kit needs false, "
+            "since otherwise tools/audit/build_review_package.py --lock sets no review lock"
+        )
     sandbox = merged.setdefault("sandbox", {})
     if not isinstance(sandbox, dict):
         problems.append("sandbox is not an object")
@@ -295,6 +361,17 @@ def merge_settings(existing: object, hooks: dict) -> tuple[object, list[str]]:
         return merged, problems
     deny_write.extend([entry for entry in deny_write_entries() if entry not in deny_write])
     return merged, problems
+
+
+def bare_bash_warnings(merged: dict) -> list[str]:
+    """One warning per bare Bash rule in the deny and ask lists of settings that merged without a problem."""
+    return [
+        f"{SETTINGS_NAME} permissions.{name} holds {json.dumps(entry)}: Claude Code evaluates deny, then ask, then allow, "
+        f"so this entry makes every Bash command {BARE_BASH_EFFECT[name]} and no allow rule takes effect"
+        for name in ("deny", "ask")
+        for entry in merged["permissions"][name]
+        if entry in BARE_BASH
+    ]
 
 
 def merge_mcp(existing: object, server: dict) -> tuple[object, list[str]]:
@@ -383,11 +460,18 @@ def plan_gitignore(plan: Plan, target: Path) -> None:
 
 
 def build_plan(target: Path) -> Plan:
-    hooks, server = clone_hooks_and_server()
-    plan = Plan()
+    permissions, hooks, server = clone_kit_settings()
+    plan = Plan(server["command"])
+
+    def merge_kit_settings(existing: object) -> tuple[object, list[str]]:
+        merged, problems = merge_settings(existing, permissions, hooks)
+        if not problems:
+            plan.warnings.extend(bare_bash_warnings(merged))
+        return merged, problems
+
     plan_kit(plan, target)
     plan_config(plan, target)
-    plan_json(plan, target, SETTINGS_NAME, lambda existing: merge_settings(existing, hooks))
+    plan_json(plan, target, SETTINGS_NAME, merge_kit_settings)
     plan_json(plan, target, MCP_NAME, lambda existing: merge_mcp(existing, server))
     plan_pre_commit(plan, target)
     plan_gitignore(plan, target)
@@ -417,6 +501,81 @@ def unsandboxed_commands_gap() -> str:
     return f"{path} does not set sandbox.allowUnsandboxedCommands to false"
 
 
+class CannotTell(Exception):
+    """The installer could not learn which pydantic an interpreter has; the message says why."""
+
+
+def lies_inside(path: Path, target: Path) -> bool:
+    resolved = Path(os.path.realpath(path))
+    return resolved == target or target in resolved.parents
+
+
+def find_interpreter(command: str, target: Path) -> Optional[Path]:
+    """What the system would start for command from the target: a path as it is, a bare name by the PATH, never the shim."""
+    if "/" in command:
+        return target / command
+    shim = (REPO_ROOT / SHIM_SOURCE).read_bytes()
+    for entry in os.environ.get("PATH", os.defpath).split(os.pathsep):
+        candidate = target / entry / command
+        if not (os.path.isfile(candidate) and os.access(candidate, os.X_OK)):
+            continue
+        if candidate.stat().st_size != len(shim) or candidate.read_bytes() != shim:
+            return candidate
+    return None
+
+
+def run_check(interpreter: Path, target: Path) -> dict:
+    """What tools/check_pydantic.py prints under interpreter, run from the target with no option."""
+    try:
+        done = run_process.run([str(interpreter), str(REPO_ROOT / CHECK_SOURCE)], cwd=target, timeout=CHECK_TIMEOUT)
+    except (OSError, ValueError) as exc:
+        raise CannotTell(f"it cannot be run: {exc}") from exc
+    except TIMED_OUT as exc:
+        raise CannotTell(f"it did not answer within {CHECK_TIMEOUT:.0f} seconds") from exc
+    if done.returncode != 0:
+        detail = " ".join(done.stderr.split())
+        raise CannotTell(f"it exited {done.returncode}" + (f": {detail}" if detail else ""))
+    lines = done.stdout.strip().splitlines()
+    try:
+        answer = json.loads(lines[-1]) if lines else None
+    except ValueError:
+        answer = None
+    if not (isinstance(answer, dict) and set(answer) == CHECK_KEYS and isinstance(answer["executable"], str)
+            and isinstance(answer["prefix"], str) and (answer["pydantic"] is None or isinstance(answer["pydantic"], str))):
+        raise CannotTell("the last line of its output is not the JSON object that tools/check_pydantic.py prints")
+    return answer
+
+
+def python_lines(command: str, target: Path) -> list[str]:
+    """The `python:` lines of the report: the interpreter the validator will start with and the pydantic it has."""
+    pin = pydantic_pin()
+    named = command
+    try:
+        interpreter = find_interpreter(command, target)
+        if interpreter is None:
+            return [f"{PYTHON_PREFIX}no {command} was found on the PATH"]
+        named = str(interpreter)
+        if lies_inside(interpreter.parent, target) or lies_inside(interpreter, target):
+            return [f"{PYTHON_PREFIX}{named} lies inside {target}, so it was not run; "
+                    "the environment belongs outside the repository"]
+        answer = run_check(interpreter, target)
+    except (CannotTell, OSError) as exc:
+        return [f"{PYTHON_PREFIX}{named}: cannot tell whether it has pydantic=={pin} ({exc})"]
+    executable, version = answer["executable"], answer["pydantic"]
+    pip_command = f"{shlex.quote(executable)} -m pip install pydantic=={pin}"
+    if version == pin:
+        says = f"has pydantic=={pin}"
+    elif version is None:
+        says = f"lacks pydantic; to install the pinned version: {pip_command}"
+    else:
+        says = f"has pydantic=={version} and the validator is tested with {pin}; to install the pinned version: {pip_command}"
+    lines = [f"{PYTHON_PREFIX}{executable} {says}"]
+    if lies_inside(Path(answer["prefix"]), target):
+        lines.append(f"{PYTHON_PREFIX}its environment, {answer['prefix']}, lies inside {target}, where the agent writes; "
+                     "the environment belongs outside the repository")
+    return lines
+
+
 def report(plan: Plan, target: Path, dry_run: bool) -> str:
     lines = [f"{PREFIX}{'dry run on' if dry_run else 'installing into'} {target}"]
     if plan.writes:
@@ -425,10 +584,11 @@ def report(plan: Plan, target: Path, dry_run: bool) -> str:
         lines += ["skip (already as the kit needs it):"] + [f"  {label}" for label in plan.skips]
     if not plan.writes:
         lines.append("nothing to do: the kit is already installed")
+    lines += python_lines(plan.command, target)
     next_steps = [
         "next steps:",
         "  1. commit the installed files; the Python shim only runs scripts committed in HEAD",
-        f"  2. start Claude Code from an environment whose python3 has pydantic=={pydantic_pin()}",
+        f"  2. start Claude Code with this same PATH, so that the validator runs with the {plan.command} named above",
         f"  3. open Claude Code in {target}; accept the folder trust and the {SERVER} server",
     ]
     lines += [DRY_RUN_CLOSING] if dry_run else next_steps
@@ -455,6 +615,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         sys.stderr.write(f"{PREFIX}{len(plan.conflicts)} conflict(s); nothing was written\n")
         sys.stderr.writelines(f"  {label}: {why}\n" for label, why in plan.conflicts)
         return 1
+    sys.stderr.writelines(f"{PREFIX}warning: {warning}\n" for warning in plan.warnings)
     if not arguments.dry_run:
         written = []
         for write in plan.writes:
