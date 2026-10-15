@@ -5,6 +5,71 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-15 (tarde)
+
+Segunda sesión del jueves. La sonda del perímetro salió bien, la puerta dejó de bloquear los textos largos
+(ADR-024, que sustituye a ADR-023) y el primer contrato del instalador entró en `main`. Suite: de 3296 a 3382 en
+verde.
+
+**Hecho**
+* **Al arrancar:** sandbox activo y hook de integridad instalado; `main` igual a `origin/main` (`71b58b5`), con
+  el push del cierre anterior hecho; árbol limpio y suite en verde (3296).
+* **La sonda del perímetro (ADR-022):** `ls`, `git status` y `git for-each-ref refs/heads` pasaron sin pedir
+  permiso, y `git commit --dry-run` preguntó (autor, en la segunda pasada, una orden por llamada). La sesión
+  corría en modo auto; según el autor, la configuración hace que no cambie el resultado.
+* **La medida del límite de un nombre, en el macOS del autor:** un nombre ASCII de 260 bytes da
+  `File name too long`; uno de 86 «€» (258 bytes) se admite. APFS cuenta caracteres; ext4, bytes.
+* **La puerta con los textos largos** (ADR-024; contrato `docs/design/PUERTA_NOMBRES_LARGOS.contrato.json`,
+  `a0eb3cb`; implementación `cfa6ebf`, `sonnet`):
+  * `ENAMETOOLONG` es «no es una ruta» solo si el sistema rechaza uno de los nombres de la ruta resuelta buscado
+    solo bajo la raíz (`os.lstat` con `dir_fd`); con todos los nombres admitidos, la puerta sigue denegando;
+  * `canonical` y `_same` no cambian, y el cambio vale igual para las herramientas que escriben y para las que la
+    puerta no conoce;
+  * verificado por el chat con `verify_red_green.py`: T1 y T2 rojos, T3–T6 de guarda. T4, el nombre de «€»,
+    corre en macOS y se salta donde el sistema lo rechaza (ext4). El alcance, comprobado a mano.
+* **El primer contrato del instalador (V2)** (`docs/design/INSTALADOR_ENTORNO.contrato.json`, `888d62d`;
+  implementación `8902b4e`, `sonnet`):
+  * el perímetro del clon llega al destino detrás de sus propias entradas, una vez cada una; un `defaultMode` que
+    ya esté se respeta;
+  * `includeGitInstructions: false`, y cualquier otro valor es un choque;
+  * un `"Bash"` o un `"Bash(*)"` en `ask` o `deny` del destino da un aviso;
+  * `tools/check_pydantic.py`: el instalador busca el intérprete del servidor como lo hará Claude Code (el
+    `command` de `.mcp.json` en el `PATH`, desde el destino y saltándose el shim), lo ejecuta sin opciones y dice
+    si tiene el `pydantic` fijado, con la orden de `pip` cuando no; nunca ejecuta un intérprete de dentro del
+    destino;
+  * verificado por el chat: T1–T7 y X1 rojos, T8 y X2 de guarda, suite 3382. El alcance, comprobado a mano. Un
+    `--dry-run` real sobre un repositorio vacío nombró `~/.pyenv/versions/3.11.6/bin/python3` con
+    `pydantic==2.13.3`.
+* `main` avanzado sin merge hasta `8902b4e`.
+
+**Decidido (autor)**
+* **ADR-024**, que sustituye a ADR-023: solo un nombre que el sistema rechaza por sí solo deja de ser una ruta.
+* El segundo contrato del instalador va en una sesión nueva.
+
+**Salió mal y se aprendió**
+* **ADR-023, tal como estaba, fallaba en abierto:** el sistema da el mismo `ENAMETOOLONG` para un nombre
+  demasiado largo y para una ruta entera demasiado larga con los nombres cortos, y en el segundo caso el fichero
+  puede existir.
+* **Mi primera redacción de ADR-024, «más de 255 bytes», era falsa en macOS.** El autor la aceptó, la medida la
+  desmintió y se corrigió antes del commit. La lección del 14 otra vez: un límite del sistema se mide antes de
+  escribirlo en una decisión.
+* **`deny_python_escapes.py` denegó un `grep`** cuyo patrón contenía la ruta del Python del sistema. Lee el
+  texto, no la orden; está declarado en §9 («Clever shell»).
+* **El tiempo de espera de 60 s de la comprobación de `pydantic` no tiene test:** el test tendría que esperar
+  60 s.
+* **Límite que queda de ADR-024:** la puerta pregunta al sistema de ficheros de la raíz. Un sistema montado
+  dentro del repositorio que admita nombres más largos, junto con una ruta entera demasiado larga, la engañaría.
+* **El `--dry-run` real avisó** de que el `~/.claude/settings.json` del autor no fija
+  `sandbox.allowUnsandboxedCommands: false`. Lo decide el autor.
+
+**Siguiente**
+* **El autor:** el push de `main`.
+* **Una sesión nueva, con el segundo contrato del instalador:** las preguntas (qué rutas gobernar, el commit y el
+  permiso para `pip install`), el modo sin preguntas, el acta en git (V3: el `commit-msg` y la puerta que escribe
+  en la base) e `INSTALL.md` reescrito con el entorno fuera del repositorio. Corte: viernes 16.
+* Después, lo que sigue en `ESTADO.md`.
+* Disco: 14 GiB libres.
+
 ## 2026-10-15
 
 Primera sesión del jueves. Empezó poniéndose al día y siguió por otro lado: el autor dijo que seguía habiendo

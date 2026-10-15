@@ -5,7 +5,7 @@ del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en 
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
 puerta del 22 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-15, mediodía.
+Actualizado: 2026-10-15, tarde.
 
 ## La v0.1
 
@@ -25,6 +25,9 @@ Actualizado: 2026-10-15, mediodía.
   * el motivo (`Rationale`) en cada propuesta;
   * el perímetro de permisos, sin el comodín `Bash` de `ask` y con la lista ampliada (ADR-022), comprobado con
     la sonda;
+  * la puerta con los textos largos (ADR-024);
+  * el primer contrato del instalador (V2): el perímetro, `includeGitInstructions` y la comprobación de
+    `pydantic` en el destino;
   * A20, A31 y A34;
   * AGENTS.md v2.2.0;
   * cada ruta gobernada con su `denyWrite`, sin exenciones, comprobado con una sonda;
@@ -32,31 +35,30 @@ Actualizado: 2026-10-15, mediodía.
   * la historia reescrita sin la información personal y con el correo *noreply*, en un repositorio nuevo
     de GitHub (V8).
 
-  Suite en verde (3296). El detalle, con sus commits, en el DEVLOG.
+  Suite en verde (3382). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **La puerta con los textos largos (ADR-024):** un contrato pequeño para que `ENAMETOOLONG` se lea como «no
-     es una ruta» solo si el sistema rechaza también uno de sus nombres por sí solo; los demás casos siguen
-     denegando.
-  2. **El instalador en una orden (V2),** en dos contratos. El primero lleva lo que el kit necesita en el
-     destino: el perímetro de ADR-022, `includeGitInstructions` y `pydantic` (el `denyWrite` ya lo lleva). El
-     segundo, las preguntas y el acta en git. Reescribe `INSTALL.md`.
-  3. **El acta en git (V3, D1),** en el segundo contrato. Un hook `commit-msg` añade los motivos de los recibos
-     y dice si el contenido del commit coincide con el que dejaron las escrituras con recibo. El resultado
-     esperado lo calcula la puerta, que pasa a escribir en la base y deniega si no puede guardarlo.
-  4. **La memoria automática de Claude Code, apagada (D5):** `autoMemoryEnabled: false`, con su test y la
+  1. **El segundo contrato del instalador (V2 y V3),** en una sesión nueva. Corte: viernes 16.
+     * Las preguntas: qué rutas gobernar, además de las mínimas, con sus `denyWrite`; si hace el commit; y el
+       permiso para ejecutar la orden de `pip` que hoy solo imprime.
+     * El modo sin preguntas.
+     * **El acta en git (D1):** un hook `commit-msg` añade los motivos de los recibos y dice si el contenido del
+       commit coincide con el que dejaron las escrituras con recibo. El resultado esperado lo calcula la puerta,
+       que pasa a escribir en la base y deniega si no puede guardarlo.
+     * `INSTALL.md`, reescrito, con el entorno fuera del repositorio.
+  2. **La memoria automática de Claude Code, apagada (D5):** `autoMemoryEnabled: false`, con su test y la
      corrección de la línea de `.claude/memory/MEMORY.md` sobre la opción (c). Va en un contrato pequeño.
-  5. **La medida en macOS (V4),** del autor, como tarde el domingo 18.
-  6. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
+  3. **La medida en macOS (V4),** del autor, como tarde el domingo 18.
+  4. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
      límites del README.
-  7. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6).
-  8. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
+  5. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6).
+  6. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
 
 ## Calendario hasta el 25
 
 | Cuándo | Qué |
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
-| Jueves 15 y viernes 16 | El perímetro sin comodín (hecho el jueves); el instalador con el acta en git; el README empieza el viernes |
+| Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos y el primer contrato del instalador (hecho el jueves); el segundo, con el acta en git, el viernes; el README empieza el viernes |
 | Sábado 17 y domingo 18 | El contrato de la memoria; la medida en macOS (el autor) |
 | Lunes 19 | La tabla «Resumen» y la sección de límites |
 | Martes 20 a jueves 22 | El README |
