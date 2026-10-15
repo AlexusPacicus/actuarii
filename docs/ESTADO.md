@@ -23,8 +23,8 @@ Actualizado: 2026-10-15, mediodía.
 
 * Hechos y verificados:
   * el motivo (`Rationale`) en cada propuesta;
-  * el perímetro de permisos, sin el comodín `Bash` de `ask` y con la lista ampliada (ADR-022). Falta la
-    sonda en una sesión nueva;
+  * el perímetro de permisos, sin el comodín `Bash` de `ask` y con la lista ampliada (ADR-022), comprobado con
+    la sonda;
   * A20, A31 y A34;
   * AGENTS.md v2.2.0;
   * cada ruta gobernada con su `denyWrite`, sin exenciones, comprobado con una sonda;
@@ -34,10 +34,9 @@ Actualizado: 2026-10-15, mediodía.
 
   Suite en verde (3296). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **La sonda del perímetro,** al abrir la sesión: `ls`, `git status` y `git for-each-ref refs/heads` sin
-     pedir permiso, y `git commit` preguntando. Si algo no sale así, se mira antes de seguir. Después, **la
-     puerta con los textos largos (ADR-023):** un contrato pequeño para que `ENAMETOOLONG` se lea como «no es
-     una ruta»; los demás errores del sistema siguen denegando.
+  1. **La puerta con los textos largos (ADR-024):** un contrato pequeño para que `ENAMETOOLONG` se lea como «no
+     es una ruta» solo si el sistema rechaza también uno de sus nombres por sí solo; los demás casos siguen
+     denegando.
   2. **El instalador en una orden (V2),** en dos contratos. El primero lleva lo que el kit necesita en el
      destino: el perímetro de ADR-022, `includeGitInstructions` y `pydantic` (el `denyWrite` ya lo lleva). El
      segundo, las preguntas y el acta en git. Reescribe `INSTALL.md`.
@@ -66,8 +65,8 @@ Actualizado: 2026-10-15, mediodía.
 
 ## Decisiones en vigor
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-023, salvo ADR-012, que
-sustituye ADR-022:
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-024, salvo ADR-012 y
+ADR-023, que sustituyen ADR-022 y ADR-024:
 
 | ADR | Decisión |
 |---|---|
@@ -92,7 +91,7 @@ sustituye ADR-022:
 | 020 | La historia, sin lo personal y con el correo *noreply* |
 | 021 | Las decisiones van en este registro, que solo se amplía |
 | 022 | El perímetro de permisos, sin comodín y con la lista ampliada |
-| 023 | La puerta no toma por ruta un texto que no puede serlo |
+| 024 | Solo un nombre demasiado largo deja de ser una ruta |
 
 ## Cómo se trabaja
 

@@ -302,3 +302,27 @@ desde el chat.
 **Consecuencias:** el instalador copia a los destinos la puerta ya corregida.
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-15.
+
+## ADR-024 — Solo un nombre demasiado largo deja de ser una ruta (2026-10-15, autor)
+
+**Contexto:** ADR-023 lee todo `ENAMETOOLONG` como «no es una ruta», pero el sistema da ese error en dos casos:
+* un nombre entre barras más largo de lo que admite el sistema de ficheros: ningún fichero puede llamarse así;
+* una ruta entera de más de 1024 bytes en macOS (4096 en Linux) con cada nombre admisible: el fichero sí puede
+  existir, y una herramienta lo alcanza por una ruta relativa.
+
+En el segundo caso, dejar pasar el texto sería fallar en abierto (AGENTS 8.4). La prosa no llega a él: la puerta se
+para en el primer nombre que no existe, y ese error solo sale con un árbol real de directorios muy profundo.
+
+El límite de un nombre no es una cifra fija. En el macOS del autor, un nombre ASCII de 260 bytes da
+`File name too long` y uno de 86 «€», con 258 bytes, se admite: cuenta caracteres. En Linux, con ext4, cuenta
+bytes. Contar 255 bytes tomaría por demasiado largo un nombre legal en macOS.
+**Decisión:**
+* `ENAMETOOLONG` al resolver un candidato se lee como «no es una ruta» solo si el sistema rechaza también uno de
+  los nombres de la ruta resuelta por sí solo, buscado relativo a la raíz del repositorio, para que la ruta que
+  recibe sea corta. La puerta no cuenta bytes ni caracteres: le pregunta al sistema. Si el sistema admite cada
+  nombre solo, la puerta sigue denegando, como con los demás errores del sistema.
+* Va en el contrato pequeño que preveía ADR-023, antes del primer contrato del instalador.
+
+**Consecuencias:** el instalador copia a los destinos la puerta ya corregida.
+**Sustituye a:** ADR-023.
+**Fuente:** `docs/DEVLOG.md`, 2026-10-15 (tarde).
