@@ -1,0 +1,110 @@
+{
+  "schema_version": "delegation/1",
+  "task_id": "instalador-entorno",
+  "title": "The installer gives the target the kit's permission perimeter and includeGitInstructions, and checks pydantic",
+  "branch": "v01/instalador-entorno",
+  "base_commit": "cfa6ebfb57874d4bc9d3ec57babdd6d0eccb96f7",
+  "attribution": null,
+  "context": {
+    "task": "First of the two contracts of the one-command installer. tools/install.py already copies the kit, merges the hooks, a strict sandbox and a denyWrite per governed path of the example configuration. It gains what the kit needs to work in the target: the permission perimeter of the clone's .claude/settings.json, includeGitInstructions false, and a check that the interpreter the validator will start with has the pinned pydantic, reported with the exact command that would install it. The questions, the no-questions mode, running pip, the commit-msg hook and the rewrite of INSTALL.md are the next contract's.",
+    "sources": [
+      {"path": "AGENTS.md", "select": [
+        {"clause": "2.4"}, {"clause": "6.3"}, {"clause": "6.4"}, {"clause": "7.1"}, {"clause": "8.1"}, {"clause": "8.2"},
+        {"clause": "8.4"}, {"clause": "8.5"}]},
+      {"path": "docs/ROADMAP.md", "select": [{"lines": "33-47"}]},
+      {"path": "docs/design/ARRANQUE_PUERTAS.md", "select": [
+        {"heading": "5.4 El entorno de Actuarii, fuera del repositorio (decidido)"}]},
+      {"path": "tools/install.py", "select": [
+        {"lines": "1-84"}, {"symbol": "git"}, {"symbol": "pydantic_pin"}, {"symbol": "clone_json"},
+        {"symbol": "clone_hooks_and_server"}, {"symbol": "merge_settings"}, {"symbol": "plan_json"},
+        {"symbol": "build_plan"}, {"symbol": "report"}, {"symbol": "main"}]},
+      {"path": ".claude/settings.json", "select": [{"lines": "1-78"}, {"lines": "118-118"}]},
+      {"path": ".mcp.json", "select": [{"lines": "1-9"}]},
+      {"path": "tools/bin/python3", "select": [{"lines": "1-27"}]},
+      {"path": "tests/unit/test_installer.py", "select": [
+        {"lines": "1-155"}, {"symbol": "test_a_fresh_install_takes_the_hooks_from_the_clone_and_writes_a_strict_sandbox"},
+        {"symbol": "CONFLICTS"}, {"symbol": "test_a_conflict_exits_one_names_it_and_leaves_the_target_untouched"},
+        {"symbol": "EXISTING_SETTINGS"}, {"symbol": "test_existing_settings_are_merged_and_not_replaced"},
+        {"symbol": "test_a_second_run_over_merged_settings_writes_nothing"},
+        {"symbol": "test_a_dry_run_writes_nothing_and_reports_the_plan_the_real_run_then_carries_out"},
+        {"symbol": "test_a_dry_run_prints_no_next_steps_and_a_real_run_still_prints_them"},
+        {"symbol": "test_the_installer_does_not_warn_when_the_user_settings_forbid_unsandboxed_commands"},
+        {"symbol": "test_the_installer_runs_under_the_system_python_with_the_same_result"}]},
+      {"path": "tests/unit/test_packaging.py", "select": [{"lines": "52-55"}]},
+      {"path": "tests/unit/test_kit_independence.py", "select": [{"lines": "27-48"}]}
+    ]
+  },
+  "problem": "ROADMAP V2 asks that tools/install.py leave the target like this repository. Today it writes the hooks, a strict sandbox and the denyWrite entries, but not three things the kit needs there. (1) The permission perimeter: since the perimetro-sin-comodin contract, this repository's .claude/settings.json allows the read-only commands, pytest, the kit's scripts and the validator's tool, denies rm, inline Python, web fetch and web search, asks for the git and gh commands that write, and leaves the rest to the default mode; a target gets none of it, so every Bash call asks there and nothing denies inline Python at the permission level. (2) includeGitInstructions false, without which tools/audit/build_review_package.py --lock sets no review lock in the target. (3) pydantic: the validator that issues receipts imports it, and Claude Code starts it with the command of .mcp.json (python3 tools/boundary_validator/validator.py), looked up on the PATH Claude Code starts with. The installer only says, in its next steps, to start Claude Code from an environment that has pydantic==2.13.3; it never checks, and the person finds out when every governed write is denied. INSTALL.md still offers an environment inside the project, which the author ruled out on 2026-10-13: an environment inside the repository puts code the agent writes in the path of the gates.",
+  "decisions": [
+    "D1 The perimeter comes from the clone, like the hooks: the `permissions` object of the clone's .claude/settings.json, read where clone_hooks_and_server() reads the hooks. It must be an object whose allow, deny and ask are lists of strings and whose defaultMode is a string; otherwise the installer raises Problem (exit 2) naming what is wrong, as it does for the hooks.",
+    "D2 Merging it into the target's .claude/settings.json. No `permissions`: the clone's object, as it is. A `permissions` that is not an object: a conflict, \"permissions is not an object\". For each of allow, deny and ask: absent, the clone's list; not a list, a conflict \"permissions.<key> is not a list\"; otherwise the clone's entries the list does not hold are appended after the existing ones, which keep their order, in the clone's order and once. defaultMode: absent, the clone's value; present, kept as it is, whatever it is, since the mode is the person's choice. Every other key of permissions stays as it is. Keys added to permissions follow the existing ones, in the clone's order (defaultMode, allow, deny, ask).",
+    "D3 A warning, not a conflict: when, after the merge, permissions.ask or permissions.deny holds \"Bash\" or \"Bash(*)\", the installer writes on stderr one line per such entry, starting with the installer's prefix and \"warning: \", that names the entry and its list and says that Claude Code evaluates deny, then ask, then allow, so that entry makes every Bash command ask (in ask) or be denied (in deny) and no allow rule takes effect. The merge goes on and the exit status is unchanged. A dry run writes the same warnings, so its stderr stays equal to the real run's.",
+    "D4 includeGitInstructions: absent, false; false, nothing to do; any other value, a conflict that names the value and says the kit needs false, since with it tools/audit/build_review_package.py --lock sets no review lock.",
+    "D5 Order of the keys of a written .claude/settings.json: the keys already there keep their order; the keys the kit adds follow, in the clone's order: permissions, hooks, includeGitInstructions, sandbox. A fresh install writes exactly those four, in that order. A settings file that already holds what the kit needs is skipped, as today.",
+    "D6 The interpreter the validator will start with. Its name is the `command` of the clone's boundary-validator server in .mcp.json (today \"python3\"). A command with a slash is a path, joined to the target when relative. A bare name is looked up in the installer's own PATH the way the system would from the target: an empty entry is the target, a relative entry is joined to the target, and the first entry holding a regular executable file of that name wins, skipping every entry where that file has the bytes of the clone's tools/bin/python3: the Python shim, which a session puts first on the PATH of Bash, not on the PATH with which Claude Code starts the server.",
+    "D7 The installer never runs an interpreter that lies inside the target: when the directory holding it or the file itself, each resolved physically, lies inside the target, the check does not run, and the report says so (D9). Running it would load, outside the sandbox, the site-packages of an environment the agent can write.",
+    "D8 The check. A new script, tools/check_pydantic.py, standard library only and importing under Python 3.9, that tries `import pydantic` (ImportError means it is not installed; any other exception propagates) and prints one line of JSON: {\"executable\": sys.executable, \"prefix\": sys.prefix, \"pydantic\": pydantic.VERSION, or null when it is not installed}, then exits 0. No primitive of tools/boundary_validator/primitives.py (in particular no importlib). The installer runs [interpreter, <clone>/tools/check_pydantic.py] through tools.audit.run_process, with the target as working directory (so a version manager that reads the project's files picks what it will pick for the server), the installer's own environment, no option (the server starts with none), and a timeout of 60 s. No -c, no -m. A non-zero exit, a timeout, an OSError, or an output whose last line is not that JSON object means the installer cannot tell.",
+    "D9 The report. After the write, skip and nothing-to-do lines, and before \"next steps:\" in a real run or the dry-run closing line in a dry run, one or two lines starting with \"python: \". The first names the interpreter, by the executable the check printed or, when the check did not run or failed, by the path found, and says one of: it has pydantic==<pin>; it has pydantic==<other version>, the validator is tested with <pin>, and the command `<executable> -m pip install pydantic==<pin>`; it lacks pydantic, and the same command; no <command> was found on the PATH; it lies inside the target, so it was not run and the environment belongs outside the repository; or the installer cannot tell, and why. A second line appears only when the check ran and the prefix it printed, resolved physically, lies inside the target: the environment is inside the repository, where the agent writes, and belongs outside it. The pin is pydantic_pin(). The command is printed, never run. The check runs in dry runs too, so both print the same lines; it changes no exit status: a missing pydantic is not a conflict.",
+    "D10 The second of the next steps becomes \"  2. start Claude Code with this same PATH, so that the validator runs with the python3 named above\", with the command's name in place of python3. The first and the third stay word for word, and the third stays last.",
+    "D11 Not in this contract: the questions (which paths to govern, whether to commit, permission to run pip install), the no-questions mode, running pip, the commit-msg hook, the rewrite of INSTALL.md (all for the next contract) and opencode.jsonc, which the installer has never written to a target.",
+    "D12 Tests whose expectation this contract changes, a change of the specification and not a test changed to hide a failure: test_a_fresh_install_takes_the_hooks_from_the_clone_and_writes_a_strict_sandbox (the four keys of D5, permissions equal to the clone's, includeGitInstructions false) and test_existing_settings_are_merged_and_not_replaced (the permissions of EXISTING_SETTINGS merged as in D2, includeGitInstructions after sandbox). New conflict cases join CONFLICTS. A test that puts a fake interpreter on the PATH puts its directory before the inherited PATH, so that git stays reachable; a fake interpreter is a shell script under tmp_path, outside the target.",
+    "D13 tools/install.py and tools/check_pydantic.py import and run under a Python 3.9 system interpreter: test_the_installer_runs_under_the_system_python_with_the_same_result keeps passing, and its comparison covers the files written, not the report. No text in tools/ or tests/ cites a clause of AGENTS.md (tests/unit/test_kit_independence.py).",
+    "D14 The validator requires a Rationale in every proposal: include it, even if the schema of validate_proposal shown to you lacks it.",
+    "D15 No new dependency and no file outside files_may_touch.",
+    "D16 Gates: red-first, each red test seen failing for its stated reason before the change that makes it pass; full-suite, `pytest tests/` exits 0 at the commit; verify-red-green, tools/audit/verify_red_green.py exits 0 on the report."
+  ],
+  "behaviours": [
+    {"id": "B1", "statement": "A fresh install writes .claude/settings.json with exactly permissions (equal to the clone's), hooks, includeGitInstructions (false) and sandbox, in that order."},
+    {"id": "B2", "statement": "Existing settings gain the clone's allow, deny and ask entries they lack, after their own and once; defaultMode is added when absent and kept when present; every other key stays; includeGitInstructions false is added after the existing keys; a second run writes nothing."},
+    {"id": "B3", "statement": "permissions that is not an object, one of allow, deny or ask that is not a list, or includeGitInstructions other than false is a conflict: exit 1, the conflict named, nothing written."},
+    {"id": "B4", "statement": "A bare \"Bash\" or \"Bash(*)\" in the target's ask or deny gives a warning on stderr naming the entry and its list, in the dry run and in the real run alike; the install goes on and exits 0."},
+    {"id": "B5", "statement": "The report names the interpreter the validator will start with and says whether it has the pinned pydantic, another version or none, with the exact pip command when it is not the pin, or why it cannot tell; the interpreter runs the clone's tools/check_pydantic.py with no option, from the target."},
+    {"id": "B6", "statement": "An interpreter inside the target is never run, and the report says the environment belongs outside the repository; an environment whose prefix is inside the target gets the same advice; the Python shim is skipped when the interpreter is looked up."},
+    {"id": "B7", "statement": "What holds today still holds: dry and real runs print the same plan and stderr, a conflict writes nothing, the system Python writes the same files, the next steps end with the third, the pin is pyproject's."}
+  ],
+  "tests": [
+    {"id": "T1", "must_catch": "a fresh install whose settings lack the clone's permissions or includeGitInstructions false, or hold other keys or another order", "expectation": "red", "reason": "at base a fresh install writes only hooks and sandbox"},
+    {"id": "T2", "must_catch": "a merge that replaces, reorders or duplicates the target's permission entries, overrides its defaultMode, drops another key of permissions, or leaves out includeGitInstructions", "expectation": "red", "reason": "at base the target's permissions are left exactly as they were and includeGitInstructions is never added"},
+    {"id": "T3", "must_catch": "a permissions that is not an object, a non-list allow, deny or ask, or an includeGitInstructions other than false that is not reported as a conflict, or a conflict that writes anything", "expectation": "red", "reason": "at base the installer does not look at permissions or includeGitInstructions, so these install with exit 0"},
+    {"id": "T4", "must_catch": "a bare Bash or Bash(*) in ask or deny that goes unreported, or a warning that stops the install or differs between the dry run and the real run", "expectation": "red", "reason": "at base the installer writes no such warning"},
+    {"id": "T5", "must_catch": "a report that does not name the interpreter or misreports the pin, another version, no pydantic, no interpreter, an interpreter or prefix inside the target, or a failed check; a missing pip command; an interpreter run with an option, with another script or from another directory; an interpreter inside the target that is run", "expectation": "red", "reason": "at base the installer runs no interpreter and prints no python: line; the test drives fake interpreters, shell scripts that record their arguments and working directory and print a chosen answer"},
+    {"id": "T6", "must_catch": "a lookup that stops at the Python shim, or a check that misreports the real interpreter of the test run", "expectation": "red", "reason": "at base there is no lookup and no python: line; the test puts the directory of sys.executable on the PATH, with and without an installed kit's tools/bin before it, skipping with a reason where that directory holds no python3"},
+    {"id": "T7", "must_catch": "a tools/check_pydantic.py that prints anything but the JSON line of D8, or fails under the system Python 3.9 without pydantic", "expectation": "red", "reason": "at base the script does not exist; the test runs it with sys.executable, and with /usr/bin/python3 where it exists and lacks pydantic, skipping otherwise"},
+    {"id": "T8", "must_catch": "a change to what holds today: the second runs, the dry runs, the conflicts that write nothing, the system Python, the next steps, the pydantic pin, the warning about the user's settings", "expectation": "guard", "reason": "these hold at base and must keep holding: test_a_second_run_writes_nothing_and_says_there_was_nothing_to_do, test_a_second_run_over_merged_settings_writes_nothing, test_a_dry_run_writes_nothing_and_reports_the_plan_the_real_run_then_carries_out, test_a_dry_run_prints_no_next_steps_and_a_real_run_still_prints_them, test_a_dry_run_reports_the_conflicts_and_the_exit_status_of_the_real_run, test_a_conflict_exits_one_names_it_and_leaves_the_target_untouched for the cases of today, test_the_installer_runs_under_the_system_python_with_the_same_result, test_the_installer_does_not_warn_when_the_user_settings_forbid_unsandboxed_commands and tests/unit/test_packaging.py::test_installer_pin_is_the_pydantic_dependency_of_pyproject"}
+  ],
+  "files_may_touch": [
+    "tools/install.py",
+    "tools/check_pydantic.py",
+    "tests/unit/test_installer.py"
+  ],
+  "files_must_not_touch": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "INSTALL.md",
+    ".actuarii.json",
+    ".mcp.json",
+    "opencode.jsonc",
+    "pyproject.toml",
+    ".claude/**",
+    ".opencode/**",
+    "docs/**",
+    "examples/**",
+    "tools/hooks/**",
+    "tools/boundary_validator/**",
+    "tools/audit/**",
+    "tools/bin/**",
+    "tools/git/**",
+    "tests/conftest.py",
+    "tests/security/**",
+    "tests/unit/test_packaging.py",
+    "tests/unit/test_kit_independence.py",
+    ".github/**"
+  ],
+  "gates": [
+    "red-first",
+    "full-suite",
+    "verify-red-green"
+  ],
+  "commit_message": "feat(instalador): el perímetro, includeGitInstructions y la comprobación de pydantic en el destino",
+  "report_schema": "delegation-report/2"
+}
