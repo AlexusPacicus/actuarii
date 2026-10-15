@@ -1,4 +1,4 @@
-# AGENTS.md — Agent constitution (v2.2.0)
+# AGENTS.md — Agent constitution (v2.3.0)
 
 **Scope:** the whole repository.
 **Standard:** RFC 2119 (`MUST` / `MUST NOT`).
@@ -70,6 +70,17 @@ sees that the change crosses a boundary it should not cross. **[enforced]**
 `.git/hooks/pre-commit`, refuses a commit in which a staged governed path differs from the disk
 (content or mode), or in which any staged path is spelled otherwise than the disk spells it. A
 governed file is committed whole.
+
+2.7 A commit carries the record of its governed paths. **[enforced]** Before it allows an `Edit`,
+`MultiEdit` or `Write` on a governed path, the write gate records in the audit trail the content the
+file has and the content the write leaves, computed from the tool's input, with the receipts that
+cover it, and denies the write when it cannot record them. The git hook `tools/git/commit-msg`,
+which the person installs as `.git/hooks/commit-msg`, appends to the message of every commit, for
+each governed path whose content the commit changes, an `Actuarii-Record` trailer: `matches` when
+recorded writes lead from the content at `HEAD` to the committed content, followed by one
+`Actuarii-Rationale` trailer per distinct `Rationale` of their receipts, and
+`changed outside the channel` otherwise. It only records: it never refuses a commit, and when it
+cannot make the record it says so (`not made`).
 
 ## 3. Contract context
 
@@ -211,10 +222,11 @@ The enforcement above does not cover:
   review. The validator's audit database file is out of `Bash`'s reach while the sandbox is on,
   but `.data/` and the database's `-wal` and `-shm` files are not. A receipt names neither agent
   nor session.
-* **Commits around the hook.** `git commit --no-verify` and git's internal commands (`commit-tree`,
-  `update-ref`) skip the hook, and `git merge` does not run it; the person approves each of those
-  commands. The hook works only where the person installed it (the session announcement says
-  whether it is), and with `core.fileMode` off its mode check can refuse a valid commit.
+* **Commits around the hooks.** `git commit --no-verify` and git's internal commands (`commit-tree`,
+  `update-ref`) skip both hooks, and `git merge` does not run the pre-commit; the person approves
+  each of those commands. The hooks work only where the person installed them (the session
+  announcement says whether the pre-commit is), and with `core.fileMode` off the pre-commit's mode
+  check can refuse a valid commit.
 * **Test runners.** `pytest` runs the test files it collects, committed or not, with its own
   interpreter, outside the shim; so do `uv run` and `pipx run`. With the sandbox on they reach
   neither the network nor the governed paths.
@@ -237,6 +249,22 @@ The enforcement above does not cover:
   governed path (its receipt and its `Rationale`), a delegation, a served context, a review. What
   `Bash` writes, and every write to a path outside `governed_paths`, leaves none, and an agent can
   move its work there. The configuration decides what is governed.
+* **What the commit record compares.** The gate computes what `Edit`, `MultiEdit` and `Write` leave
+  from their input, as UTF-8 text; it records nothing for `NotebookEdit`, for a tool it does not
+  know, or for an `Edit` it cannot apply to the file as it reads it (a file that is not UTF-8, an
+  `old_string` it does not find). Where Claude Code writes something other than its input says
+  (other line endings, other quotes, another encoding), or git stores something other than the file
+  (a clean filter), the record says `changed outside the channel` for a file that went through the
+  gate: it says `matches` only when recorded writes reach the committed content. A committed file
+  that is not UTF-8 text always reads as changed outside the channel. A write the gate allowed and
+  that never happened counts when the same content reaches the commit another way. Modes are not
+  compared, and a submodule gets no record.
+* **Where the commit record is made.** Only where git runs `commit-msg`: `git commit` and
+  `git merge`, without `--no-verify`, in a repository where the hook is installed. A rebase or a
+  cherry-pick copies the trailers of a commit without checking them again, and an amended commit is
+  compared with the commit it replaces. Writes recorded in another clone are not in this audit
+  trail, so what they left reads as changed outside the channel. The trailers are text in a message:
+  anyone can write them, and nothing signs them.
 * **Code the gates load at start-up.** The hooks, the validator and the pre-commit run outside the
   sandbox, with the `python3` and the `git` of the `PATH` they inherit. A directory inside the
   repository ahead on that `PATH` (an activated `.venv`), or a `sitecustomize.py` or `.pth` in a

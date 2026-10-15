@@ -31,10 +31,12 @@ HOOK = ROOT / "tools" / "hooks" / "require_boundary_validation.py"
 PROJECT_CONFIG = ROOT / "tools" / "project_config.py"
 PRIMITIVES = ROOT / "tools" / "boundary_validator" / "primitives.py"
 COMMIT_INTEGRITY = ROOT / "tools" / "git" / "commit_integrity.py"
+COMMIT_RECORD = ROOT / "tools" / "git" / "commit_record.py"
 
 GATE_MODULE = "tools.boundary_validator.hook_gate"
 PRIMITIVES_MODULE = "tools.boundary_validator.primitives"
 GATE_DEPENDENCY = "tools.project_config"
+COMMIT_RECORD_KIT_IMPORTS = {"tools", "tools.project_config", "tools.audit.run_process", GATE_MODULE}
 
 
 def _import_time_statements(body):
@@ -126,11 +128,28 @@ def test_security_project_configuration_imports_only_the_standard_library():
 
 @pytest.mark.parametrize(
     "path",
-    [GATE, PROJECT_CONFIG, PRIMITIVES, HOOK, COMMIT_INTEGRITY],
-    ids=["gate", "project_config", "primitives", "hook", "commit_integrity"],
+    [GATE, PROJECT_CONFIG, PRIMITIVES, HOOK, COMMIT_INTEGRITY, COMMIT_RECORD],
+    ids=["gate", "project_config", "primitives", "hook", "commit_integrity", "commit_record"],
 )
 def test_security_gate_modules_postpone_annotations_for_a_system_python_3_9(path):
     assert _postpones_annotations(path)
+
+
+def test_security_commit_record_imports_only_the_standard_library_and_three_kit_modules():
+    """git runs the record under whatever python3 the person has, so it MUST import nothing the kit does not carry."""
+    tree = ast.parse(COMMIT_RECORD.read_text(encoding="utf-8"), feature_version=(3, 9))
+    names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            assert node.level == 0, "commit_record.py must not import a relative module"
+            if node.module.split(".")[0] == "tools":
+                names.update(f"{node.module}.{alias.name}" for alias in node.names)
+            else:
+                names.add(node.module)
+    foreign = {name for name in names if name.split(".")[0] not in sys.stdlib_module_names}
+    assert foreign == COMMIT_RECORD_KIT_IMPORTS, sorted(foreign)
 
 
 def test_security_hook_script_imports_only_stdlib_and_the_gate():

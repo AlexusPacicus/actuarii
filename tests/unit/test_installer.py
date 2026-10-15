@@ -35,6 +35,7 @@ CLONE_PERMISSIONS = CLONE_SETTINGS["permissions"]
 CHECK = CLONE / "tools" / "check_pydantic.py"
 PIN = pydantic_pin()
 PRE_COMMIT_SOURCE = CLONE / "tools" / "git" / "pre-commit"
+COMMIT_MSG_SOURCE = CLONE / "tools" / "git" / "commit-msg"
 EXAMPLE_CONFIG = {
     "schema": "actuarii-config/1",
     "governed_paths": ["AGENTS.md", "CLAUDE.md", ".claude/**", ".mcp.json", "tools/**"],
@@ -72,10 +73,14 @@ def install(target, home, *options, python=sys.executable, path=None):
     return run([str(python), str(INSTALLER), *options, str(target)], env=environment(home, path), timeout=120.0)
 
 
-def precommit_path(target, home):
-    done = run(["git", "rev-parse", "--git-path", "hooks/pre-commit"], cwd=target, env=environment(home), timeout=60.0)
+def hook_path(target, home, name):
+    done = run(["git", "rev-parse", "--git-path", f"hooks/{name}"], cwd=target, env=environment(home), timeout=60.0)
     assert done.returncode == 0, done.stderr
     return target / done.stdout.strip()
+
+
+def precommit_path(target, home):
+    return hook_path(target, home, "pre-commit")
 
 
 def run_git(home, cwd, *arguments):
@@ -218,6 +223,49 @@ def test_a_fresh_install_puts_the_pre_commit_hook_where_git_reports_it(target, h
     assert stat.S_IMODE(os.lstat(hook).st_mode) == 0o755
 
 
+def test_a_fresh_install_puts_the_commit_msg_hook_where_git_reports_it(target, home):
+    assert install(target, home).returncode == 0
+    hook = hook_path(target, home, "commit-msg")
+    assert hook.read_bytes() == COMMIT_MSG_SOURCE.read_bytes()
+    assert os.access(hook, os.X_OK)
+    assert stat.S_IMODE(os.lstat(hook).st_mode) == 0o755
+
+
+@pytest.mark.parametrize("options", [(), ("--dry-run",)], ids=["real-run", "dry-run"])
+def test_the_plan_and_the_report_list_the_pre_commit_hook_before_the_commit_msg_hook(target, home, options):
+    done = install(target, home, *options)
+    assert done.returncode == 0, done.stderr
+    first, second = (str(hook_path(target, home, name).relative_to(target)) for name in ("pre-commit", "commit-msg"))
+    assert done.stdout.index(f"  {first}\n") < done.stdout.index(f"  {second}\n")
+    assert (hook_path(target, home, "commit-msg").exists()) is (not options)
+
+
+def test_a_second_run_writes_neither_hook(target, home):
+    assert install(target, home).returncode == 0
+    hooks = [hook_path(target, home, name) for name in ("pre-commit", "commit-msg")]
+    modified = [os.lstat(hook).st_mtime_ns for hook in hooks]
+    second = install(target, home)
+    assert second.returncode == 0, second.stderr
+    assert "nothing to do" in second.stdout
+    for hook in hooks:
+        assert f"  {hook.relative_to(target)}\n" in second.stdout.split("skip (already as the kit needs it):")[1]
+    assert [os.lstat(hook).st_mtime_ns for hook in hooks] == modified
+
+
+def test_a_commit_msg_hook_that_is_already_the_kits_is_skipped_and_the_pre_commit_is_still_written(target, home):
+    hook = hook_path(target, home, "commit-msg")
+    hook.write_bytes(COMMIT_MSG_SOURCE.read_bytes())
+    hook.chmod(0o755)
+    modified = os.lstat(hook).st_mtime_ns
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    written, skipped = done.stdout.split("skip (already as the kit needs it):")
+    assert ".git/hooks/pre-commit" in written and ".git/hooks/commit-msg" not in written
+    assert ".git/hooks/commit-msg" in skipped
+    assert precommit_path(target, home).read_bytes() == PRE_COMMIT_SOURCE.read_bytes()
+    assert os.lstat(hook).st_mtime_ns == modified
+
+
 def assert_hook_conflict(done, *needles):
     assert done.returncode == 1, done.stdout + done.stderr
     assert done.stderr.startswith(PREFIX)
@@ -233,6 +281,17 @@ def test_an_absolute_global_hooks_path_outside_the_target_is_a_conflict_and_noth
     before = snapshot(target)
     done = install(target, home, *options)
     assert_hook_conflict(done, "core.hooksPath", str(shared.resolve() / "pre-commit"))
+    assert snapshot(target) == before
+    assert not any(shared.iterdir())
+
+
+def test_a_hooks_path_outside_the_target_is_a_conflict_for_the_commit_msg_hook_too(tmp_path, target, home):
+    shared = tmp_path / "shared-hooks"
+    shared.mkdir()
+    run_git(home, target, "config", "core.hooksPath", str(shared))
+    before = snapshot(target)
+    done = install(target, home)
+    assert_hook_conflict(done, "core.hooksPath", str(shared.resolve() / "commit-msg"))
     assert snapshot(target) == before
     assert not any(shared.iterdir())
 
@@ -304,6 +363,17 @@ def test_the_pre_commit_hook_goes_to_a_hooks_path_inside_the_git_directory_and_a
     assert os.lstat(hook).st_mtime_ns == modified
 
 
+def test_the_commit_msg_hook_goes_with_the_pre_commit_to_a_hooks_path_inside_the_git_directory(target, home):
+    run_git(home, target, "config", "core.hooksPath", ".git/custom-hooks")
+    assert install(target, home).returncode == 0
+    hooks = target / ".git" / "custom-hooks"
+    for name, source in (("pre-commit", PRE_COMMIT_SOURCE), ("commit-msg", COMMIT_MSG_SOURCE)):
+        assert (hooks / name).read_bytes() == source.read_bytes(), name
+        assert stat.S_IMODE(os.lstat(hooks / name).st_mode) == 0o755, name
+    assert hook_path(target, home, "commit-msg") == hooks / "commit-msg"
+    assert not (target / ".git" / "hooks" / "commit-msg").exists()
+
+
 def test_a_hooks_path_that_reaches_the_git_directory_through_a_link_is_accepted(tmp_path, target, home):
     alias = tmp_path / "alias"
     alias.symlink_to(target)
@@ -324,6 +394,17 @@ def test_a_git_hooks_directory_that_is_a_link_is_still_a_conflict_and_nothing_is
     assert_hook_conflict(done, ".git/hooks")
     assert snapshot(target) == before
     assert not (real / "pre-commit").exists()
+
+
+@pytest.mark.parametrize("where", ["inside", "outside"])
+def test_a_git_hooks_directory_that_is_a_link_gets_no_commit_msg_hook_through_it(tmp_path, target, home, where):
+    hooks = target / ".git" / "hooks"
+    real = target / ".git" / "real-hooks" if where == "inside" else tmp_path / "elsewhere"
+    hooks.rename(real)
+    hooks.symlink_to(real)
+    done = install(target, home)
+    assert_hook_conflict(done, ".git/hooks")
+    assert not (real / "commit-msg").exists()
 
 
 def test_a_fresh_install_ignores_the_data_directory(target, home):
@@ -354,6 +435,20 @@ def test_the_installed_kit_is_committed_with_its_own_hook_and_head_holds_the_shi
     assert sorted(entries) == sorted(SHIM_NAMES)
     assert {tuple(entry[:2]) for entry in entries.values()} == {("100755", "blob")}
     assert len({entry[2] for entry in entries.values()}) == 1
+
+
+def test_the_installed_kit_is_committed_with_the_record_of_its_governed_paths_in_the_message(installed, home):
+    person = environment(home, f"{Path(sys.executable).parent}:{SYSTEM_PATH}")
+    added = run(["git", "add", "-A"], cwd=installed, env=person, timeout=60.0)
+    assert added.returncode == 0, added.stderr
+    committed = run(["git", *GIT_IDENTITY, "commit", "-q", "-m", "install the kit"], cwd=installed, env=person, timeout=120.0)
+    assert committed.returncode == 0, committed.stdout + committed.stderr
+    assert "[commit_record]" not in committed.stderr
+    shown = run(["git", "cat-file", "commit", "HEAD"], cwd=installed, env=person, timeout=60.0)
+    assert shown.returncode == 0, shown.stderr
+    for path in (".actuarii.json", ".mcp.json", ".claude/settings.json", "tools/git/commit_record.py"):
+        assert f"\nActuarii-Record: changed outside the channel: {path}\n" in shown.stdout, path
+    assert "\nActuarii-Record: changed outside the channel: .gitignore\n" not in shown.stdout
 
 
 def make_clone(tmp_path):
@@ -541,6 +636,18 @@ def non_executable_pre_commit(target, home=None):
     hook.chmod(0o644)
 
 
+def different_commit_msg(target, home=None):
+    hook = target / ".git" / "hooks" / "commit-msg"
+    hook.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    hook.chmod(0o755)
+
+
+def non_executable_commit_msg(target, home=None):
+    hook = target / ".git" / "hooks" / "commit-msg"
+    hook.write_bytes(COMMIT_MSG_SOURCE.read_bytes())
+    hook.chmod(0o644)
+
+
 CONFLICTS = [
     ("a-different-kit-file", different_kit_file, "tools/project_config.py"),
     ("a-directory-where-a-kit-file-goes", kit_file_that_is_a_directory, "tools/project_config.py"),
@@ -587,6 +694,19 @@ def test_a_conflicting_pre_commit_exits_one_and_leaves_the_git_hooks_as_they_wer
     assert done.stderr.startswith(PREFIX)
     assert "pre-commit" in done.stderr
     assert snapshot(target) == before
+
+
+@pytest.mark.parametrize("setup", [different_commit_msg, non_executable_commit_msg],
+                         ids=["a-different-commit-msg", "a-commit-msg-that-is-not-executable"])
+def test_a_conflicting_commit_msg_exits_one_and_leaves_the_git_hooks_as_they_were(target, home, setup):
+    setup(target)
+    before = snapshot(target)
+    done = install(target, home)
+    assert done.returncode == 1, done.stderr
+    assert done.stderr.startswith(PREFIX)
+    assert "commit-msg" in done.stderr
+    assert snapshot(target) == before
+    assert not precommit_path(target, home).exists()
 
 
 def test_every_conflict_is_listed_at_once(target, home):

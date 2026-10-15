@@ -105,6 +105,7 @@ SCRIPTS = [
     Script("contract", "tools/hooks/require_contract_context.py", 0, "", stdin=edit_input),
     Script("announce", "tools/hooks/announce_governance.py", 0, "actuarii: the governance rules come from"),
     Script("commit-integrity", "tools/git/commit_integrity.py", 0, ""),
+    Script("commit-record", "tools/git/commit_record.py", 0, "", arguments=("{target}/COMMIT_EDITMSG",)),
     VALIDATOR,
     Script("install", "tools/install.py", 0, "dry run: nothing was written", arguments=("--dry-run", "{target}")),
     Script("review-package", "tools/audit/build_review_package.py", 0, "usage:", arguments=("--help",)),
@@ -116,6 +117,7 @@ HANDLERS = {
     "contract": (2, "[require_contract_context] fail-closed: the project configuration could not be imported"),
     "announce": (0, "actuarii: the project configuration could not be imported"),
     "commit-integrity": (1, "[commit_integrity] cannot start"),
+    "commit-record": (1, "[commit_record] cannot start"),
 }
 SCRIPT = pytest.mark.parametrize("script", SCRIPTS, ids=lambda script: script.id)
 GUARDED = pytest.mark.parametrize(

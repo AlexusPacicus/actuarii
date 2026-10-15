@@ -17,9 +17,11 @@ and nothing is written. It receives, from the clone's working tree:
   `sandbox`, merged into what is there: the clone's permission entries go after the target's own, once each, and a
   `defaultMode` already there stays; a bare `Bash` rule in the merged `ask` or `deny` is a warning, not a conflict;
 * .mcp.json, with the clone's boundary-validator server, merged into what is there;
-* the pre-commit hook, where `git rev-parse --git-path hooks/pre-commit` says it goes, provided that is inside the
-  target's own `.git` directory: a hooks path anywhere else (a global or escaping core.hooksPath, a hooks directory of
-  the working tree, the git directory of a linked worktree or of a submodule) is a conflict;
+* the pre-commit hook and then the commit-msg hook, each where `git rev-parse --git-path hooks/<name>` says it goes,
+  provided that is inside the target's own `.git` directory: a hooks path anywhere else (a global or escaping
+  core.hooksPath, a hooks directory of the working tree, the git directory of a linked worktree or of a submodule) is a
+  conflict. The two hooks follow the same rules: the kit's file with its bytes and mode 0755, skipped when the
+  destination already holds exactly that, a conflict otherwise;
 * a `.data/` line in .gitignore.
 
 Everything is checked before the first write. A destination that already holds exactly what the kit needs is
@@ -70,8 +72,8 @@ SERVER = "boundary-validator"
 CONFIG_NAME = ".actuarii.json"
 SETTINGS_NAME = ".claude/settings.json"
 MCP_NAME = ".mcp.json"
-PRE_COMMIT_SOURCE = "tools/git/pre-commit"
-HOOK_GIT_PATH = "hooks/pre-commit"
+GIT_HOOKS = ("pre-commit", "commit-msg")
+GIT_HOOKS_SOURCE = "tools/git"
 SHIM_SOURCE = "tools/bin/python3"
 CHECK_SOURCE = "tools/check_pydantic.py"
 CHECK_KEYS = {"executable", "prefix", "pydantic"}
@@ -420,7 +422,7 @@ def hook_problem(target: Path, destination: Path) -> str:
     hooks_path = git(["config", "--default", "", "--get", "core.hooksPath"], target)
     if hooks_path:
         cause = (f"core.hooksPath ({hooks_path}) puts the hooks there; unset it, "
-                 "or wire the kit's pre-commit into those hooks by hand")
+                 "or wire the kit's git hooks into those hooks by hand")
     else:
         cause = (f"the git directory of the target is not {own} (a linked worktree, or a git directory elsewhere, "
                  "as in a submodule or --separate-git-dir), so its hooks belong to another repository; "
@@ -428,10 +430,10 @@ def hook_problem(target: Path, destination: Path) -> str:
     return f"the hook would go to {resolved}, outside {own}: {cause}"
 
 
-def plan_pre_commit(plan: Plan, target: Path) -> None:
-    shown = git(["rev-parse", "--git-path", HOOK_GIT_PATH], target)
+def plan_git_hook(plan: Plan, target: Path, name: str) -> None:
+    shown = git(["rev-parse", "--git-path", f"hooks/{name}"], target)
     if not shown:
-        raise Problem("git did not say where the pre-commit hook goes")
+        raise Problem(f"git did not say where the {name} hook goes")
     destination = target / shown
     if blocked(plan, target, destination):
         return
@@ -439,7 +441,7 @@ def plan_pre_commit(plan: Plan, target: Path) -> None:
     if problem:
         plan.conflict(shown, problem)
     else:
-        plan_file(plan, shown, destination, (REPO_ROOT / PRE_COMMIT_SOURCE).read_bytes(), 0o755)
+        plan_file(plan, shown, destination, (REPO_ROOT / GIT_HOOKS_SOURCE / name).read_bytes(), 0o755)
 
 
 def plan_gitignore(plan: Plan, target: Path) -> None:
@@ -473,7 +475,8 @@ def build_plan(target: Path) -> Plan:
     plan_config(plan, target)
     plan_json(plan, target, SETTINGS_NAME, merge_kit_settings)
     plan_json(plan, target, MCP_NAME, lambda existing: merge_mcp(existing, server))
-    plan_pre_commit(plan, target)
+    for name in GIT_HOOKS:
+        plan_git_hook(plan, target, name)
     plan_gitignore(plan, target)
     return plan
 

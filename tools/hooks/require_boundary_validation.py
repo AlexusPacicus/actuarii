@@ -36,6 +36,18 @@ parses it with `ast` under its own Python and denies it when it does not parse o
 file does not already have (tools/boundary_validator/primitives.py). An Edit that cannot apply, because its
 `old_string` is not in the file, writes nothing and gets no primitive check.
 
+The one thing the gate writes is the record of what an allowed write leaves. Once the receipts and the primitive
+check pass, and before it allows an Edit, MultiEdit or Write, it adds a row to the audit trail
+(tools/boundary_validator/hook_gate.py: record_write) with the path relative to the repository, the tool, the
+SHA-256 of the bytes the file has now (NULL when it does not exist), the SHA-256 of the exact result and the
+case_ids of the receipts that cover the write: for each receipt the tool needs, in that order, the most recent one
+that matches. The file is read once, for the primitive check and for the record; an OSError other than its absence
+denies the write. The result is the content of a Write; for an Edit or a MultiEdit it is computed from the file
+read as strict UTF-8, and nothing is recorded (the write is allowed, as it was) when the file is not UTF-8 or the
+change cannot apply. When the row cannot be written the write is denied: a gate that cannot record what it allows
+does not allow it. NotebookEdit, the tools of class 3 and a denied write record nothing. The receipt queries stay
+read-only.
+
 The governed paths and the receipt window come from the project configuration (.actuarii.json,
 tools/project_config.py), and every denial names the rule behind it. While that configuration is invalid every
 path inside the repository that a writer or a class 3 tool names is denied, with the error in the message,
@@ -64,6 +76,7 @@ import errno
 import hashlib
 import json
 import os
+import sqlite3
 import sys
 from collections.abc import Callable, Iterator
 from pathlib import Path
@@ -85,8 +98,9 @@ try:
         audit_trail_exists,
         governing_rule,
         has_any_receipt,
-        has_receipt,
         has_recent_execute_safe,
+        receipt_case,
+        record_write,
     )
     from tools.boundary_validator.primitives import NotPython, introduced
     from tools.project_config import CONFIG_NAME, ConfigError
@@ -278,8 +292,66 @@ def written_result(tool: str, tool_input: dict[str, Any], current: str | None) -
     return result
 
 
-def primitive_denial(target: Path, tool: str, tool_input: dict[str, Any]) -> str | None:
-    """Why the result of `tool` on the Python file `target` is denied, or None when it is not.
+def read_current(target: Path) -> bytes | None:
+    """The bytes of `target`, or None when the file does not exist; any other OSError propagates."""
+    try:
+        return target.read_bytes()
+    except FileNotFoundError:
+        return None
+
+
+def record(target: Path, tool: str, tool_input: dict[str, Any], data: bytes | None, cases: list[str]) -> None:
+    """Records in the audit trail what `tool` leaves in `target`, which holds `data` (None: no file).
+
+    Only Edit, MultiEdit and Write. The result is the content of a Write; for an Edit or a MultiEdit it is
+    written_result over `data` as strict UTF-8, and nothing is recorded when `data` is not UTF-8 or the tool cannot
+    apply. Call it only once required_receipts has read the tool input; `cases` are the case_ids of the receipts,
+    in the order required_receipts gives them. An error of record_write propagates.
+    """
+    if tool not in ("Edit", "MultiEdit", "Write"):
+        return
+    if tool == "Write":
+        result = tool_input["content"]
+    else:
+        try:
+            current = None if data is None else data.decode("utf-8")
+        except UnicodeDecodeError:
+            return
+        result = written_result(tool, tool_input, current)
+        if result is None:
+            return
+    record_write(
+        target.relative_to(REPO_ROOT).as_posix(),
+        tool,
+        None if data is None else hashlib.sha256(data).hexdigest(),
+        _sha256(result),
+        cases,
+    )
+
+
+def _one_line(exc: Exception) -> str:
+    return f"{type(exc).__name__}: {' '.join(str(exc).split())}"
+
+
+def write_denial(target: Path, tool: str, tool_input: dict[str, Any], cases: list[str]) -> str | None:
+    """Why the gate denies a write whose receipts all exist, or None when it records the write and allows it."""
+    try:
+        data = read_current(target)
+    except OSError as exc:
+        return f"the gate cannot read it ({_one_line(exc)}), so it cannot tell what {tool} would leave and denies it."
+    denial = primitive_denial(target, tool, tool_input, data)
+    if denial is not None:
+        return denial
+    try:
+        record(target, tool, tool_input, data, cases)
+    except (sqlite3.Error, OSError) as exc:
+        return (f"the gate could not record in the audit trail what {tool} leaves ({_one_line(exc)}), "
+                "so it denies the write.")
+    return None
+
+
+def primitive_denial(target: Path, tool: str, tool_input: dict[str, Any], data: bytes | None) -> str | None:
+    """Why the result of `tool` on the Python file `target`, which holds `data` (None: no file), is denied, or None.
 
     Only Edit, MultiEdit and Write on a `.py` path. The result is parsed with this hook's Python; it is denied when
     it does not parse or introduces a primitive the file as it is now does not have. A file that is not valid
@@ -288,9 +360,7 @@ def primitive_denial(target: Path, tool: str, tool_input: dict[str, Any]) -> str
     if tool not in ("Edit", "MultiEdit", "Write") or not target.name.lower().endswith(".py"):
         return None
     try:
-        current = target.read_bytes().decode("utf-8")
-    except FileNotFoundError:
-        current = None
+        current = None if data is None else data.decode("utf-8")
     except UnicodeDecodeError:
         return f"its current content is not valid UTF-8, so the gate cannot compute what {tool} would leave."
     result = written_result(tool, tool_input, current)
@@ -408,11 +478,12 @@ def main(
                 )
                 return 2
             if writer:
-                if all(
-                    has_receipt(str(target), block, grounding, verdict.window_seconds)
+                cases = [
+                    receipt_case(str(target), block, grounding, verdict.window_seconds)
                     for grounding, block in needed
-                ):
-                    denial = primitive_denial(target, tool, tool_input)
+                ]
+                if None not in cases:
+                    denial = write_denial(target, tool, tool_input, cases)
                     if denial is None:
                         continue
                     sys.stderr.write(
