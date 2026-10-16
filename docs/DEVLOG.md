@@ -5,6 +5,27 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-16 (mediodía, cierre de la sesión del 15)
+
+La sesión del jueves 15 por la tarde siguió abierta para seguir las dos que el autor arrancó desde su tarjeta: la
+del segundo contrato del instalador y, desde ella, la de D5. Su trabajo está en las dos entradas de abajo; esta solo
+cierra.
+
+**Hecho**
+* **Comprobado en el repositorio,** no solo en los informes de esas sesiones: `main` en `3d59864`, 13 commits por
+  delante de `origin/main`, árbol limpio, y `"autoMemoryEnabled": false` en `.claude/settings.json`. Sus
+  verificadores no se repitieron aquí; la suite, sí, antes de este commit (3681 en verde).
+
+**Salió mal y se aprendió**
+* **Esta sesión no vale como la comprobación de D5:** arrancó el 15, antes de `0116031`, y su contexto sigue
+  trayendo la instrucción de la memoria automática. No escribió nada allí. La comprobación es de la próxima sesión
+  nueva.
+
+**Siguiente**
+* **El autor:** el push de `main`.
+* **La medida en macOS (V4)** y lo que sigue en `ESTADO.md`.
+* Disco: 11 GiB libres.
+
 ## 2026-10-16 (mediodía)
 
 Segunda sesión del viernes, abierta desde la primera. El contrato pequeño de D5 entró en `main`: la memoria
