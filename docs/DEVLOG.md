@@ -5,6 +5,77 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-16
+
+Sesión empezada el jueves 15 a las 16:50, cortada por el límite de uso y seguida el viernes 16 por la mañana. El
+segundo contrato del instalador salió en dos, el acta en git y las preguntas, y los dos entraron en `main`. El acta
+registró su primer commit real. Suite: de 3382 a 3676 en verde.
+
+**Hecho**
+* **Al arrancar:** sandbox activo y hook de integridad instalado; `main` en `1f7e49d`, 5 commits por delante de
+  `origin/main`; árbol limpio.
+* **Las elecciones del autor** antes de los contratos (ADR-025): dos contratos, el acta primero; sin acta cuando la
+  puerta no puede calcular lo que deja una escritura; solo una ruta o una carpeta seguida de `/**` como ruta
+  gobernada extra; `INSTALL.md`, del chat.
+* **El acta en git (V3, ADR-016)** (contrato `docs/design/ACTA_EN_GIT.contrato.json`, `31a3567`; implementación
+  `d5aa611`, `sonnet`, 1 h 12 min):
+  * antes de dejar pasar un `Edit`, `MultiEdit` o `Write` gobernado, la puerta guarda en la tabla `writes` de la base
+    de auditoría el hash del fichero antes, el del resultado y los recibos que lo cubren; si no puede guardarlo,
+    deniega;
+  * `tools/git/commit-msg` y `tools/git/commit_record.py`: cada commit lleva, por cada fichero gobernado que cambia,
+    `Actuarii-Record: matches: <ruta>` con los motivos de las escrituras que llevan de `HEAD` al commit, o
+    `changed outside the channel`. Nunca impide un commit: si falla, lo dice (`not made`);
+  * el instalador pone el `commit-msg` junto al `pre-commit`;
+  * AGENTS.md v2.3.0: la cláusula 2.7 y dos límites nuevos en §9;
+  * verificado por el chat con `verify_red_green.py`: T1–T3 y T5–T9 rojos, T4 y T10 de guarda, suite 3526. El
+    alcance, comprobado a mano: los 11 ficheros del contrato.
+* **El hook `commit-msg`, instalado en este repositorio** (autor).
+* **Las preguntas del instalador (V2)** (contrato `docs/design/INSTALADOR_PREGUNTAS.contrato.json`, `2a445f1`;
+  implementación `ba6a120`, `sonnet`):
+  * qué más gobernar, por pregunta o con `--govern`, con su entrada de `denyWrite`; una configuración con rutas extra
+    se adopta en la vuelta siguiente;
+  * `pip install` solo con un sí o `--install-pydantic`, nunca para un entorno dentro del destino;
+  * el commit de la instalación solo con un sí o `--commit`, con los ficheros que escribió y nada más;
+  * `--no-input`, para la CI y los tests;
+  * verificado por el chat: T1–T6 rojos, T7, X1 y X2 de guarda, suite 3676. El alcance: los 2 ficheros del contrato.
+* **La primera acta real:** el commit `ba6a120` lleva `Actuarii-Record: matches:` en sus dos ficheros, con los
+  motivos de sus 13 y 19 escrituras.
+* **`INSTALL.md`, reescrito:** el entorno fuera del repositorio, la orden única con sus preguntas, el modo sin
+  preguntas y el acta.
+* `main` avanzado sin merge hasta `ba6a120`.
+
+**Decidido (autor)**
+* **ADR-025:** el acta en git y las preguntas del instalador, en dos contratos, con las elecciones de arriba.
+
+**Salió mal y se aprendió**
+* **El contexto del contrato A pesaba 68 KB,** por encima del tope de 40 KB de `context_pack`. Se recortó a 38 KB con
+  símbolos y rangos cortos. Lección: un contrato que toca muchos ficheros sirve símbolos, no ficheros enteros.
+* **`run_process` devuelve texto UTF-8 estricto,** y el contrato A pedía el hash de los bytes de un blob. Se vio
+  repasando el contrato antes de lanzarlo: un blob que no es UTF-8 queda como `changed outside the channel`, y está
+  declarado en §9.
+* **El implementador de B se cortó por el límite de uso** con los tests escritos. Se retomó por la mañana con su
+  contexto y terminó en 23 min.
+* **Una desviación de A, aceptada:** la puerta lee el fichero también en un `NotebookEdit`, y deniega si el sistema
+  no la deja leerlo; el contrato decía que esas decisiones no cambiaban. Es el lado seguro, y solo afecta a escrituras
+  que fallarían igual.
+* **Las actas son largas:** un fichero con 19 escrituras lleva 19 líneas de motivo. Es lo decidido (los motivos
+  distintos, en orden).
+* **Encontrado por el implementador de A, fuera de su alcance:** `project_config.path_matches` traduce `**` sin
+  `re.DOTALL`, así que un fichero cuyo nombre tiene un salto de línea, bajo `src/**`, no queda gobernado.
+* **Menores de B:** un `git add` o un `git commit` del instalador que pase de 300 s acaba con una traza de Python; y si
+  el ejecutable que nombra la comprobación está dentro del destino con el intérprete fuera, no se pregunta por `pip` y
+  ninguna línea dice por qué.
+* El implementador de A dejó copias de trabajo en `/tmp/claude-501/acta-work` y `/tmp/claude-501/scratch`, fuera del
+  repositorio; `rm` le está denegado.
+
+**Siguiente**
+* **El autor:** el push de `main`.
+* **El contrato pequeño de D5:** `autoMemoryEnabled: false`, con su test y la línea de `.claude/memory/MEMORY.md`.
+* **La medida en macOS (V4),** con el instalador nuevo y la enmienda de `docs/design/PRUEBA_EN_LIMPIO.md`
+  commiteada antes; la hace el autor, como tarde el domingo 18.
+* Después, lo que sigue en `ESTADO.md`.
+* Disco: 12 GiB libres.
+
 ## 2026-10-15 (tarde)
 
 Segunda sesión del jueves. La sonda del perímetro salió bien, la puerta dejó de bloquear los textos largos

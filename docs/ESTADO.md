@@ -5,7 +5,7 @@ del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en 
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
 puerta del 22 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-15, tarde.
+Actualizado: 2026-10-16, mañana.
 
 ## La v0.1
 
@@ -26,39 +26,37 @@ Actualizado: 2026-10-15, tarde.
   * el perímetro de permisos, sin el comodín `Bash` de `ask` y con la lista ampliada (ADR-022), comprobado con
     la sonda;
   * la puerta con los textos largos (ADR-024);
-  * el primer contrato del instalador (V2): el perímetro, `includeGitInstructions` y la comprobación de
-    `pydantic` en el destino;
+  * el instalador en una orden (V2): el perímetro, `includeGitInstructions`, la comprobación de `pydantic`, las
+    preguntas (qué más gobernar, `pip` con permiso y el commit), `--no-input` e `INSTALL.md` reescrito;
+  * el acta en git (V3, ADR-016): la puerta guarda lo que deja cada escritura y el `commit-msg` lo compara con el
+    commit; instalado en este repositorio, con su primera acta real en `ba6a120`;
   * A20, A31 y A34;
-  * AGENTS.md v2.2.0;
+  * AGENTS.md v2.3.0;
   * cada ruta gobernada con su `denyWrite`, sin exenciones, comprobado con una sonda;
   * el ROADMAP, con D1–D7 decididas;
   * la historia reescrita sin la información personal y con el correo *noreply*, en un repositorio nuevo
     de GitHub (V8).
 
-  Suite en verde (3382). El detalle, con sus commits, en el DEVLOG.
+  Suite en verde (3676). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **El segundo contrato del instalador (V2 y V3),** en una sesión nueva. Corte: viernes 16.
-     * Las preguntas: qué rutas gobernar, además de las mínimas, con sus `denyWrite`; si hace el commit; y el
-       permiso para ejecutar la orden de `pip` que hoy solo imprime.
-     * El modo sin preguntas.
-     * **El acta en git (D1):** un hook `commit-msg` añade los motivos de los recibos y dice si el contenido del
-       commit coincide con el que dejaron las escrituras con recibo. El resultado esperado lo calcula la puerta,
-       que pasa a escribir en la base y deniega si no puede guardarlo.
-     * `INSTALL.md`, reescrito, con el entorno fuera del repositorio.
-  2. **La memoria automática de Claude Code, apagada (D5):** `autoMemoryEnabled: false`, con su test y la
+  1. **La memoria automática de Claude Code, apagada (D5):** `autoMemoryEnabled: false`, con su test y la
      corrección de la línea de `.claude/memory/MEMORY.md` sobre la opción (c). Va en un contrato pequeño.
-  3. **La medida en macOS (V4),** del autor, como tarde el domingo 18.
-  4. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
+  2. **La medida en macOS (V4),** del autor, como tarde el domingo 18, con el instalador nuevo. Antes, la enmienda
+     de `docs/design/PRUEBA_EN_LIMPIO.md` para la orden única, commiteada.
+  3. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
      límites del README.
-  5. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6).
-  6. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
+  4. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6). Conserva «that it happened»: el
+     acta en git llegó a tiempo (V3).
+  5. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
+* Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
+  de un `git` del instalador que pasa de 300 s.
 
 ## Calendario hasta el 25
 
 | Cuándo | Qué |
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
-| Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos y el primer contrato del instalador (hecho el jueves); el segundo, con el acta en git, el viernes; el README empieza el viernes |
+| Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos y los dos contratos del instalador, con el acta en git (hecho); el README empieza el viernes |
 | Sábado 17 y domingo 18 | El contrato de la memoria; la medida en macOS (el autor) |
 | Lunes 19 | La tabla «Resumen» y la sección de límites |
 | Martes 20 a jueves 22 | El README |
@@ -67,7 +65,7 @@ Actualizado: 2026-10-15, tarde.
 
 ## Decisiones en vigor
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-024, salvo ADR-012 y
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-025, salvo ADR-012 y
 ADR-023, que sustituyen ADR-022 y ADR-024:
 
 | ADR | Decisión |
@@ -94,6 +92,7 @@ ADR-023, que sustituyen ADR-022 y ADR-024:
 | 021 | Las decisiones van en este registro, que solo se amplía |
 | 022 | El perímetro de permisos, sin comodín y con la lista ampliada |
 | 024 | Solo un nombre demasiado largo deja de ser una ruta |
+| 025 | El acta en git y las preguntas del instalador, en dos contratos |
 
 ## Cómo se trabaja
 
@@ -112,6 +111,8 @@ ADR-023, que sustituyen ADR-022 y ADR-024:
 * **El servidor MCP del validador ejecuta el código con el que arrancó la sesión.** Un cambio en el
   validador rige en la sesión siguiente. El esquema de la herramienta que muestra una sesión retomada puede
   ser una copia vieja: el motivo se envía igual.
+* **El hook `commit-msg` está instalado en este repositorio:** cada commit que cambia un fichero gobernado lleva su
+  acta (`Actuarii-Record`, `Actuarii-Rationale`). Un `changed outside the channel` inesperado se mira antes de seguir.
 * **Se commitea solo si `pytest` sale con 0,** comprobando su código de salida. Antes de una suite completa,
   se mira el espacio en disco.
 * **Sin atribución a Claude** en commits ni PR. El correo de los commits es la dirección *noreply* de GitHub.

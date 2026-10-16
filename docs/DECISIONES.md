@@ -326,3 +326,24 @@ bytes. Contar 255 bytes tomaría por demasiado largo un nombre legal en macOS.
 **Consecuencias:** el instalador copia a los destinos la puerta ya corregida.
 **Sustituye a:** ADR-023.
 **Fuente:** `docs/DEVLOG.md`, 2026-10-15 (tarde).
+
+## ADR-025 — El acta en git y las preguntas del instalador, en dos contratos (2026-10-15, autor)
+
+**Contexto:** el segundo contrato del instalador llevaba las preguntas, el modo sin preguntas, `pip`, el commit, el
+acta en git (ADR-016) e `INSTALL.md`. Era grande, cambiaba la puerta y dejaba abiertas varias elecciones de
+política.
+**Decisión:**
+* Dos contratos: primero el acta en git (`docs/design/ACTA_EN_GIT.contrato.json`), que es lo más arriesgado y cuyo
+  corte quita «that it happened» del README; después las preguntas (`docs/design/INSTALADOR_PREGUNTAS.contrato.json`).
+* Cuando la puerta no puede calcular lo que deja una escritura (`NotebookEdit`, una herramienta que no conoce, un
+  `Edit` sobre un fichero que no es UTF-8 o que no puede aplicar), la deja pasar sin acta, como antes, y el commit
+  dice de ese fichero `changed outside the channel`. El acta se equivoca hacia el lado seguro: solo dice `matches`
+  cuando las escrituras registradas llevan al contenido del commit.
+* La pregunta de qué más gobernar, y `--govern`, solo admiten una ruta o una carpeta seguida de `/**`, porque cada
+  una se traduce exacta a su entrada de `denyWrite`.
+* `INSTALL.md` lo reescribe el chat cuando los dos contratos están en `main`.
+
+**Consecuencias:** AGENTS.md v2.3.0: la cláusula 2.7 y dos límites nuevos en §9. La puerta escribe en la base de
+auditoría. El hook `commit-msg` se instala a mano en este repositorio y con el instalador en los destinos.
+**Sustituye a:** —
+**Fuente:** `docs/DEVLOG.md`, 2026-10-16.
