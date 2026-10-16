@@ -5,7 +5,7 @@ del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en 
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
 puerta del 22 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-16, mañana.
+Actualizado: 2026-10-16, mediodía.
 
 ## La v0.1
 
@@ -30,6 +30,8 @@ Actualizado: 2026-10-16, mañana.
     preguntas (qué más gobernar, `pip` con permiso y el commit), `--no-input` e `INSTALL.md` reescrito;
   * el acta en git (V3, ADR-016): la puerta guarda lo que deja cada escritura y el `commit-msg` lo compara con el
     commit; instalado en este repositorio, con su primera acta real en `ba6a120`;
+  * la memoria automática de Claude Code, apagada en este repositorio (D5, ADR-010), con su test; el instalador no
+    la toca en los destinos;
   * A20, A31 y A34;
   * AGENTS.md v2.3.0;
   * cada ruta gobernada con su `denyWrite`, sin exenciones, comprobado con una sonda;
@@ -37,17 +39,15 @@ Actualizado: 2026-10-16, mañana.
   * la historia reescrita sin la información personal y con el correo *noreply*, en un repositorio nuevo
     de GitHub (V8).
 
-  Suite en verde (3676). El detalle, con sus commits, en el DEVLOG.
+  Suite en verde (3681). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **La memoria automática de Claude Code, apagada (D5):** `autoMemoryEnabled: false`, con su test y la
-     corrección de la línea de `.claude/memory/MEMORY.md` sobre la opción (c). Va en un contrato pequeño.
-  2. **La medida en macOS (V4),** del autor, como tarde el domingo 18, con el instalador nuevo. Antes, la enmienda
+  1. **La medida en macOS (V4),** del autor, como tarde el domingo 18, con el instalador nuevo. Antes, la enmienda
      de `docs/design/PRUEBA_EN_LIMPIO.md` para la orden única, commiteada.
-  3. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
+  2. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
      límites del README.
-  4. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6). Conserva «that it happened»: el
+  3. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6). Conserva «that it happened»: el
      acta en git llegó a tiempo (V3).
-  5. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
+  4. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
 * Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
   de un `git` del instalador que pasa de 300 s.
 
@@ -56,8 +56,8 @@ Actualizado: 2026-10-16, mañana.
 | Cuándo | Qué |
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
-| Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos y los dos contratos del instalador, con el acta en git (hecho); el README empieza el viernes |
-| Sábado 17 y domingo 18 | El contrato de la memoria; la medida en macOS (el autor) |
+| Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, y el contrato de la memoria (hecho); el README empieza el viernes |
+| Sábado 17 y domingo 18 | La medida en macOS (el autor) |
 | Lunes 19 | La tabla «Resumen» y la sección de límites |
 | Martes 20 a jueves 22 | El README |
 | Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
@@ -128,8 +128,9 @@ ADR-023, que sustituyen ADR-022 y ADR-024:
   PLAN y espera. El único documento nuevo antes del lanzamiento es el README.
 * **Las ideas que se salen del camino** se apuntan en el PLAN y esperan.
 * **La memoria del agente** es la de `.claude/memory/`, bajo código, con un recibo por escritura. Se publica
-  el 25: los recuerdos se escriben sabiéndolo. La memoria automática de Claude Code no se usa, y el contrato
-  de D5 la apaga.
+  el 25: los recuerdos se escriben sabiéndolo. La memoria automática de Claude Code está apagada
+  (`autoMemoryEnabled: false` en `.claude/settings.json`, ADR-010); si el contexto de una sesión trae su
+  instrucción, no se sigue y se mira por qué.
 
 ## Cómo empezar una sesión
 

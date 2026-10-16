@@ -5,6 +5,50 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-16 (mediodía)
+
+Segunda sesión del viernes, abierta desde la primera. El contrato pequeño de D5 entró en `main`: la memoria
+automática de Claude Code, apagada en este repositorio. Suite: de 3676 a 3681 en verde.
+
+**Hecho**
+* **Al arrancar:** sandbox activo y hook de integridad instalado; `main` en `daf478a`, 10 commits por delante de
+  `origin/main`; árbol limpio.
+* **El ajuste, comprobado en la documentación** (code.claude.com/docs/en/memory y /settings-reference, leídas el
+  16): `autoMemoryEnabled`, booleano, vale en cualquier fichero de ajustes; con `false`, Claude Code ni lee ni
+  escribe la memoria automática. Un `.claude/settings.local.json` lo supera, y `CLAUDE_CODE_DISABLE_AUTO_MEMORY`
+  manda sobre él en los dos sentidos.
+* **La memoria automática, apagada (D5, ADR-010)** (contrato `docs/design/MEMORIA_AUTOMATICA.contrato.json`,
+  `57e7a5c`; implementación `0116031`, `sonnet`, 23 min):
+  * `.claude/settings.json` lleva `"autoMemoryEnabled": false`, y un test nuevo lo fija
+    (`tests/security/test_auto_memory_setting.py`);
+  * la fijación de las claves de `settings.json` (`test_registration_changes_nothing_else_in_settings`) la cuenta
+    como el séptimo cambio deliberado;
+  * el instalador no cambia: del clon solo copia `permissions` y `hooks`. Dos tests de guarda lo fijan: una
+    instalación nueva no añade la clave, y un `true` del destino se conserva;
+  * `.claude/memory/MEMORY.md` ya no dice que la opción (c) deniega esa memoria: dice que la apaga un ajuste, que no
+    es una denegación, y qué puede volver a encenderla (texto elegido por el autor);
+  * verificado por el chat con `verify_red_green.py`: T1 y T2 rojos, T3 de guarda, suite 3681. El alcance,
+    comprobado a mano: los 5 ficheros del contrato. Las cinco actas del commit dicen `matches`.
+* `main` avanzado sin merge hasta `0116031`.
+
+**Decidido (autor)**
+* La línea de `MEMORY.md`, con el límite: un `.claude/settings.local.json` o la variable pueden volver a encender la
+  memoria automática.
+
+**Salió mal y se aprendió**
+* **El efecto no se puede ver en esta sesión:** el hook de `ConfigChange` no aplica a la sesión en curso un cambio
+  de los ajustes del proyecto, y esta sesión arrancó con la memoria automática encendida (su contexto trae la
+  instrucción de escribirla). No se escribió nada allí; el directorio sigue vacío desde el 5 de octubre.
+* El primer `commit_message` del contrato pasaba de 100 caracteres y el validador lo rechazó; se acortó.
+
+**Siguiente**
+* **La sesión siguiente comprueba** que su contexto ya no trae la sección de la memoria automática.
+* **El autor:** el push de `main`.
+* **La medida en macOS (V4),** con la enmienda de `docs/design/PRUEBA_EN_LIMPIO.md` commiteada antes; la hace el
+  autor, como tarde el domingo 18.
+* Después, lo que sigue en `ESTADO.md`.
+* Disco: 12 GiB libres.
+
 ## 2026-10-16
 
 Sesión empezada el jueves 15 a las 16:50, cortada por el límite de uso y seguida el viernes 16 por la mañana. El
