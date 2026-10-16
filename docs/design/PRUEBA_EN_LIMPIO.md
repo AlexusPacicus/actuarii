@@ -109,6 +109,46 @@ Lo que se observa es el registro del kit, no la conducta del agente.
   escritura es un fallo del kit y se corrige antes del lanzamiento.
 * El hito 2 y la regla de los 300 s no cambian.
 
+## 4d. Enmienda (autor, 2026-10-16, antes de la medida con la instalación en una orden)
+
+Sustituye lo que se le opone de §2 a §4c para la próxima medida en macOS (V4 en `docs/ROADMAP.md`). Motivo:
+la instalación es ahora una orden (ADR-008, ADR-025). El instalador pregunta qué más gobernar, ofrece instalar
+`pydantic` y hace el commit, e `INSTALL.md` está reescrito para ella. No afecta a la parte de Linux (CI).
+
+* **Guía:** `INSTALL.md` en el commit que se prueba. Leerla cuenta.
+* **Punto de partida (no cuenta):**
+  * un clon nuevo de Actuarii desde GitHub, en el `main` publicado que lleva esta enmienda, hecho al lado del
+    destino y no dentro. Es el paso 1 de la guía: se hace antes del cronómetro y no se repite después;
+  * ningún entorno virtual preparado para la medida. Si la ruta del ejemplo de la guía ya existe, se usa otra y
+    se anota.
+* **Secuencia cronometrada** (sustituye la de §3):
+  1. Clon local nuevo de `noticias` en `v3-exp`, commit `1676538`, como en §4b.
+  2. El entorno, como dice el paso 2 de la guía: uno nuevo, fuera del destino y activado en la terminal. Sin las
+     dependencias de `noticias`: son el coste del proyecto y no del kit, y el hito 2 no las necesita. El README lo
+     dirá.
+  3. El instalador, como dice el paso 3 de la guía, con estas respuestas: una línea vacía a qué más gobernar, `y` a
+     instalar `pydantic` y `y` al commit. Una pregunta que no aparece se anota.
+  4. Sin paso propio: el commit lo hace el instalador. Si falla, se sigue el paso 4 de la guía y se anota como roce.
+  5. Abrir Claude Code en el destino, desde la terminal con el entorno activo, y aceptar lo que pida: confianza en
+     la carpeta y servidor MCP.
+  6. El texto fijo de §4b: «Crea `AGENTS.md` con una línea: `# Prueba`.» El instalador no crea `AGENTS.md`.
+  7. Sin texto, como en §4b. **Hito 2, fin del cronómetro.**
+* **Hitos:** el 1, el de §4c; el 2, el de §3. Sin cambios.
+* **Cronómetro:** uno de verdad, con un parcial al final de cada paso. El registro sirve de contraste: la fecha del
+  `pyvenv.cfg` del entorno, las de los ficheros instalados, el reflog del destino y la transcripción. Si el
+  cronómetro falla, vale el registro, como en el intento 3, y se anota.
+* **Se anota además:** el commit de Actuarii; la versión de Claude Code y el modelo (Sonnet 5.5, en el modo por
+  defecto de esa versión, como en los intentos anteriores); el anuncio de la sesión; las preguntas del instalador
+  tal como salieron, y su aviso sobre `allowUnsandboxedCommands` si sale. Ese aviso no se sigue durante la medida.
+* **Regla:** la de §4, sin cambios. Esta vez el entorno empieza sin `pydantic`, así que los pasos 2 y 3 dicen cuánto
+  pesa instalarlo: lo que el intento 3 no pudo decir sobre la idea «kit solo con la biblioteca estándar».
+* **Después, sin cronómetro:**
+  1. La comprobación del hito 1, por el método de §4c.
+  2. En la terminal, el commit de `AGENTS.md`. Su mensaje acaba en `Actuarii-Record: matches: AGENTS.md`, seguido de
+     un `Actuarii-Rationale`: el acta en git (V3) en un repositorio que no es Actuarii. Otro resultado se mira antes
+     del lanzamiento. No entra en la regla.
+* **No se repite** el caso real de §4b: se hizo el 2026-10-12 (§5), y su resultado es A30.
+
 ## 5. Resultados
 
 ### Linux (CI), 2026-10-08
