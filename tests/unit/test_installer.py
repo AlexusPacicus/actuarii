@@ -69,8 +69,8 @@ def make_repository(path, home):
     return path.resolve()
 
 
-def install(target, home, *options, python=sys.executable, path=None):
-    return run([str(python), str(INSTALLER), *options, str(target)], env=environment(home, path), timeout=120.0)
+def install(target, home, *options, python=sys.executable, path=None, stdin=""):
+    return run([str(python), str(INSTALLER), *options, str(target)], env=environment(home, path), stdin=stdin, timeout=120.0)
 
 
 def hook_path(target, home, name):
@@ -463,8 +463,9 @@ def make_clone(tmp_path):
     return clone
 
 
-def install_from(clone, target, home):
-    return run([sys.executable, str(clone / "tools" / "install.py"), str(target)], env=environment(home), timeout=120.0)
+def install_from(clone, target, home, *options, path=None, stdin=""):
+    return run([sys.executable, str(clone / "tools" / "install.py"), *options, str(target)], env=environment(home, path), stdin=stdin,
+               timeout=120.0)
 
 
 BAD_LINKS = [
@@ -1506,3 +1507,821 @@ def test_any_other_exception_of_the_import_propagates(tmp_path, home):
     assert done.returncode != 0
     assert done.stdout == ""
     assert "RuntimeError: planted" in done.stderr
+
+
+# Questions, flags and the mode without questions ------------------------------------------------------------------
+
+
+MINIMUM = EXAMPLE_CONFIG["governed_paths"]
+PERSON_PATH = f"{Path(sys.executable).parent}:{SYSTEM_PATH}"
+SKIPPED = "skip (already as the kit needs it):"
+NO_COMMIT_STEP = "  1. commit the installed files; the Python shim only runs scripts committed in HEAD"
+CHECK_CALL = str(CHECK)
+PIP_CALL = f"-m pip install pydantic=={PIN}"
+PIP_PYTHON = """#!/bin/sh
+printf '%s|%s|%s\\n' "$(pwd -P)" "$HOME" "$*" >> '{calls}'
+if [ "$1" = "-m" ]; then
+    touch '{ran}'
+    cat '{stderr}' >&2
+    exit {status}
+fi
+if [ -e '{ran}' ]; then
+    cat '{after}'
+else
+    cat '{before}'
+fi
+"""
+
+
+class Pip:
+    """An interpreter that is a shell script and records every call (its directory, its HOME and its arguments). A call whose first
+    argument is -m is pip: it writes `stderr` and exits with `status`. Any other call is the check: it prints the answer for the
+    version `before` until pip was called and for the version `after` from then on."""
+
+    def __init__(self, root, before, after=PIN, status=0, stderr="", executable=None, prefix=OUTSIDE):
+        root.mkdir(parents=True)
+        self.directory = root / "bin"
+        self.directory.mkdir()
+        self.path = self.directory / "python3"
+        self.record = root / "calls"
+        shown = self.path if executable is None else executable
+        (root / "before").write_text(check_output(shown, prefix, before), encoding="utf-8")
+        (root / "after").write_text(check_output(shown, prefix, after), encoding="utf-8")
+        (root / "stderr").write_text(stderr, encoding="utf-8")
+        script = PIP_PYTHON.format(calls=self.record, ran=root / "ran", stderr=root / "stderr", after=root / "after",
+                                   before=root / "before", status=status)
+        self.path.write_text(script, encoding="utf-8")
+        self.path.chmod(0o755)
+
+    @property
+    def calls(self):
+        if not self.record.exists():
+            return []
+        return [tuple(line.split("|")) for line in self.record.read_text(encoding="utf-8").splitlines()]
+
+    @property
+    def arguments(self):
+        return [call[2] for call in self.calls]
+
+    @property
+    def command(self):
+        return f"{shlex.quote(str(self.path))} {PIP_CALL}"
+
+
+def config_with_extras(*extras):
+    return {**EXAMPLE_CONFIG, "governed_paths": [*MINIMUM, *extras]}
+
+
+def configured_extras(target):
+    return read_json(target / ".actuarii.json")["governed_paths"][len(MINIMUM):]
+
+
+def deny_write(target):
+    return read_json(target / ".claude" / "settings.json")["sandbox"]["filesystem"]["denyWrite"]
+
+
+def listed(done, heading):
+    """The labels the report lists under a heading such as `write:`."""
+    lines = done.stdout.splitlines()
+    if heading not in lines:
+        return []
+    found = []
+    for line in lines[lines.index(heading) + 1:]:
+        if not line.startswith("  "):
+            break
+        found.append(line.strip())
+    return found
+
+
+def answers(*lines):
+    """What a person types for the questions in turn: an empty line to the paths question, then one line for each of the others."""
+    return "\n" + "".join(f"{line}\n" for line in lines)
+
+
+def pip_lines(done):
+    return [line for line in done.stdout.splitlines() if line.startswith("pip: ")]
+
+
+def commit_lines(done):
+    return [line for line in done.stdout.splitlines() if line.startswith("commit: ")]
+
+
+def steps_after_a_commit(target, command="python3"):
+    return [
+        "next steps:",
+        f"  1. start Claude Code with this same PATH, so that the validator runs with the {command} named above",
+        f"  2. open Claude Code in {target}; accept the folder trust and the {SERVER} server",
+    ]
+
+
+def git_output(home, cwd, *arguments):
+    done = run(["git", *arguments], cwd=cwd, env=environment(home), timeout=60.0)
+    assert done.returncode == 0, done.stderr
+    return done.stdout.strip()
+
+
+def head(target, home):
+    done = run(["git", "rev-parse", "--verify", "-q", "HEAD"], cwd=target, env=environment(home), timeout=60.0)
+    return done.stdout.strip() if done.returncode == 0 else None
+
+
+def with_git_identity(home):
+    config = "[user]\n\tname = Tester\n\temail = tester@example.org\n[commit]\n\tgpgsign = false\n"
+    (home / ".gitconfig").write_text(config, encoding="utf-8")
+
+
+def install_with_check_of(tmp_path, target, home, fake, *options, stdin=""):
+    """The installer run from a copy of the clone whose validator command is the fake, so that the check and pip are the fake's while
+    git and the hooks use the interpreter of the test run."""
+    clone = make_clone(tmp_path)
+    with_validator_command(clone, str(fake.path))
+    return install_from(clone, target, home, *options, path=PERSON_PATH, stdin=stdin)
+
+
+# --govern -------------------------------------------------------------------------------------------------------------
+
+
+EMPTY = "the path is empty"
+ROOTED = "must not start with / or ~"
+PARENT = "must not hold '..'"
+BACKSLASH = "must not hold a backslash"
+CONTROL = "must not hold a control character"
+WILDCARD = "must not hold any of * ? [ ] { }"
+TRAILING = "must not end with /"
+SEGMENT = "must not have an empty or '.' segment"
+RESERVED = "must not start with .git or .data"
+DIRECTORY = "names a directory of the target"
+REFUSED = [
+    ("empty", "", EMPTY),
+    ("only-the-suffix", "/**", EMPTY),
+    ("absolute", "/etc/hosts", ROOTED),
+    ("absolute-directory", "/etc/**", ROOTED),
+    ("home", "~/notes", ROOTED),
+    ("tilde-name", "~notes", ROOTED),
+    ("parent", "../outside", PARENT),
+    ("parent-inside", "docs/../x", PARENT),
+    ("parent-alone", "..", PARENT),
+    ("dots-in-a-name", "a..b", PARENT),
+    ("backslash", "docs\\x", BACKSLASH),
+    ("control-character", "docs\x01x", CONTROL),
+    ("tab", "docs\tx", CONTROL),
+    ("newline", "docs\nx", CONTROL),
+    ("delete", "docs\x7fx", CONTROL),
+    ("star", "docs/*.md", WILDCARD),
+    ("double-star-alone", "**", WILDCARD),
+    ("double-star-inside", "docs/**/x", WILDCARD),
+    ("double-star-twice", "docs/**/**", WILDCARD),
+    ("question-mark", "a?b", WILDCARD),
+    ("open-bracket", "a[b", WILDCARD),
+    ("close-bracket", "a]b", WILDCARD),
+    ("open-brace", "a{b", WILDCARD),
+    ("close-brace", "a}b", WILDCARD),
+    ("trailing-slash", "docs/", TRAILING),
+    ("trailing-slash-before-the-suffix", "docs//**", TRAILING),
+    ("empty-segment", "docs//x", SEGMENT),
+    ("dot-first", "./docs", SEGMENT),
+    ("dot-inside", "docs/./x", SEGMENT),
+    ("dot-last", "docs/.", SEGMENT),
+    ("dot-alone", ".", SEGMENT),
+    ("git-directory", ".git", RESERVED),
+    ("inside-the-git-directory", ".git/hooks/**", RESERVED),
+    ("data-directory", ".data", RESERVED),
+    ("inside-the-data-directory", ".data/boundary_validator_audit.db", RESERVED),
+    ("a-directory-without-the-suffix", "existing", DIRECTORY),
+]
+ACCEPTED = [
+    "README.md", "docs/**", "src/app.py", ".gitignore", ".github/workflows/**", ".dataset", "docs/my notes.md", "résumé.md",
+    "a-b/c_d.e", "existing/**",
+]
+
+
+def test_govern_puts_the_paths_after_the_minimum_in_the_order_given_once_each_with_a_deny_write_entry_for_each(target, home):
+    done = install(target, home, "--govern", "docs/**", "--govern", "notes.md", "--govern", "docs/**", "--govern", "AGENTS.md",
+                   "--govern", "tools/**")
+    assert done.returncode == 0, done.stderr
+    config = config_with_extras("docs/**", "notes.md")
+    assert read_json(target / ".actuarii.json") == config
+    assert sandbox_problems(read_json(target / ".claude" / "settings.json"), config) == []
+    assert deny_write(target) == expected_deny_write(config)
+    assert "./docs" in deny_write(target) and "./notes.md" in deny_write(target)
+
+
+@pytest.mark.parametrize("entry", ACCEPTED)
+def test_an_entry_the_rules_accept_is_governed_with_its_deny_write_entry(target, home, entry):
+    (target / "existing").mkdir()
+    (target / "README.md").write_text("readme\n", encoding="utf-8")
+    done = install(target, home, "--govern", entry)
+    assert done.returncode == 0, done.stderr
+    config = config_with_extras(entry)
+    assert read_json(target / ".actuarii.json") == config
+    assert sandbox_problems(read_json(target / ".claude" / "settings.json"), config) == []
+
+
+@pytest.mark.parametrize("entry, needle", [case[1:] for case in REFUSED], ids=[case[0] for case in REFUSED])
+def test_a_refused_govern_exits_two_naming_the_argument_and_the_reason_and_writes_nothing(target, home, entry, needle):
+    (target / "existing").mkdir()
+    before = snapshot(target)
+    done = install(target, home, "--govern", "docs/**", "--govern", entry, stdin=answers("y", "y"))
+    assert done.returncode == 2, done.stderr
+    assert done.stderr.startswith(PREFIX)
+    assert len(done.stderr.splitlines()) == 1
+    assert repr(entry) in done.stderr
+    assert needle in done.stderr
+    assert snapshot(target) == before
+
+
+def test_a_refused_govern_exits_two_in_a_dry_run_too(target, home):
+    before = snapshot(target)
+    done = install(target, home, "--dry-run", "--govern", "../outside")
+    assert done.returncode == 2, done.stderr
+    assert done.stderr.startswith(PREFIX)
+    assert PARENT in done.stderr
+    assert snapshot(target) == before
+
+
+def test_a_dry_run_with_govern_writes_nothing_and_reports_what_the_real_run_writes(target, home):
+    before = snapshot(target)
+    dry = install(target, home, "--dry-run", "--govern", "docs/**")
+    assert dry.returncode == 0, dry.stderr
+    assert snapshot(target) == before
+    real = install(target, home, "--govern", "docs/**")
+    assert real.returncode == 0, real.stderr
+    dry_lines, real_lines = dry.stdout.splitlines(), real.stdout.splitlines()
+    assert dry_lines[1:-1] == real_lines[1:real_lines.index("next steps:")]
+    assert read_json(target / ".actuarii.json") == config_with_extras("docs/**")
+
+
+def test_the_installed_gate_enforces_the_extra_paths_and_only_them(target, home):
+    done = install(target, home, "--govern", "docs/**", "--govern", "notes.md")
+    assert done.returncode == 0, done.stderr
+    for name in ("docs/guide.md", "notes.md"):
+        denied = hook_run(target, home, write_payload(target, name, "text\n"))
+        assert denied.returncode == 2, denied.stderr
+        assert name in denied.stderr
+    allowed = hook_run(target, home, write_payload(target, "src/app.py", "text\n"))
+    assert allowed.returncode == 0, allowed.stderr
+
+
+def test_the_help_describes_every_flag_and_the_questions(target, home):
+    done = install(target, home, "--help")
+    assert done.returncode == 0, done.stderr
+    for flag in ("--dry-run", "--govern", "--install-pydantic", "--commit", "--no-input"):
+        assert flag in done.stdout, flag
+    assert "question" in done.stdout
+
+
+# The paths question ---------------------------------------------------------------------------------------------------
+
+
+PATH_ANSWERS = [
+    ("empty-input", "", []),
+    ("only-an-empty-line", "\n", []),
+    ("no-final-newline", "docs/**", ["docs/**"]),
+    ("one-answer", "docs/**\n", ["docs/**"]),
+    ("three-answers", "docs/**\nnotes.md\nREADME.md\n\n", ["docs/**", "notes.md", "README.md"]),
+    ("windows-line-ends", "docs/**\r\nnotes.md\r\n\r\n", ["docs/**", "notes.md"]),
+    ("surrounding-whitespace", "  docs/**  \n\tnotes.md\t\n\n", ["docs/**", "notes.md"]),
+    ("an-empty-line-ends", "docs/**\n\nnotes.md\n", ["docs/**"]),
+    ("a-blank-line-ends", "docs/**\n   \nnotes.md\n", ["docs/**"]),
+    ("governed-and-repeated-count-once", "AGENTS.md\ndocs/**\ndocs/**\ntools/**\n\n", ["docs/**"]),
+]
+
+
+@pytest.mark.parametrize("stdin, extras", [case[1:] for case in PATH_ANSWERS], ids=[case[0] for case in PATH_ANSWERS])
+def test_the_answers_to_the_paths_question_are_the_extra_paths_and_the_question_is_not_written_to_a_pipe(target, home, stdin, extras):
+    done = install(target, home, stdin=stdin)
+    assert done.returncode == 0, done.stderr
+    assert done.stderr == ""
+    assert configured_extras(target) == extras
+    assert deny_write(target) == expected_deny_write(config_with_extras(*extras))
+
+
+def test_a_refused_answer_is_explained_on_stderr_and_reading_goes_on(target, home):
+    (target / "existing").mkdir()
+    done = install(target, home, stdin="../outside\ndocs/*\nexisting\ndocs/**\n\n")
+    assert done.returncode == 0, done.stderr
+    explained = done.stderr.splitlines()
+    assert len(explained) == 3
+    for line, answer, needle in zip(explained, ("../outside", "docs/*", "existing"), (PARENT, WILDCARD, DIRECTORY)):
+        assert line.startswith(PREFIX), line
+        assert repr(answer) in line, line
+        assert needle in line, line
+    assert configured_extras(target) == ["docs/**"]
+
+
+def test_the_paths_question_comes_before_the_conflicts_are_looked_for(target, home):
+    different_kit_file(target)
+    before = snapshot(target)
+    done = install(target, home, stdin="../outside\n\n")
+    assert done.returncode == 1, done.stderr
+    assert PARENT in done.stderr
+    assert "tools/project_config.py" in done.stderr
+    assert snapshot(target) == before
+
+
+def test_with_govern_the_paths_question_is_not_asked(target, home):
+    done = install(target, home, "--govern", "notes.md", stdin="docs/**\n../outside\n\n")
+    assert done.returncode == 0, done.stderr
+    assert done.stderr == ""
+    assert configured_extras(target) == ["notes.md"]
+
+
+# A configuration with extra paths ------------------------------------------------------------------------------------
+
+
+def hand_written(target, *extras):
+    write_json(target / ".actuarii.json", config_with_extras(*extras), indent=4)
+
+
+NOT_ADOPTED = [
+    ("another-receipt-window", {**config_with_extras("docs/**"), "receipt_window_seconds": 60}),
+    ("other-script-dirs", {**config_with_extras("docs/**"), "python_script_dirs": []}),
+    ("a-registry", {**config_with_extras("docs/**"), "contract_registry": "docs/registry.json"}),
+    ("a-review", {**config_with_extras("docs/**"), "review": {}}),
+    ("another-schema", {**config_with_extras("docs/**"), "schema": "actuarii-config/2"}),
+    ("an-extra-key", {**config_with_extras("docs/**"), "more": 1}),
+    ("a-missing-key", {key: value for key, value in config_with_extras("docs/**").items() if key != "review"}),
+    ("no-governed-paths", {key: value for key, value in EXAMPLE_CONFIG.items() if key != "governed_paths"}),
+    ("paths-that-are-not-a-list", {**EXAMPLE_CONFIG, "governed_paths": "AGENTS.md"}),
+    ("the-minimum-reordered", {**EXAMPLE_CONFIG, "governed_paths": [*reversed(MINIMUM), "docs/**"]}),
+    ("the-minimum-incomplete", {**EXAMPLE_CONFIG, "governed_paths": [*MINIMUM[1:], "docs/**"]}),
+    ("only-extras", {**EXAMPLE_CONFIG, "governed_paths": ["docs/**"]}),
+    ("a-minimum-entry-replaced", {**EXAMPLE_CONFIG, "governed_paths": [*MINIMUM[:-1], "tools", "docs/**"]}),
+    ("an-extra-that-is-not-a-string", config_with_extras("docs/**", 3)),
+    ("a-repeated-extra", config_with_extras("docs/**", "docs/**")),
+    ("an-extra-that-repeats-the-minimum", config_with_extras("docs/**", "tools/**")),
+    ("an-empty-extra", config_with_extras("")),
+    ("an-absolute-extra", config_with_extras("/etc/hosts")),
+    ("a-parent-extra", config_with_extras("../outside")),
+    ("a-wildcard-extra", config_with_extras("docs/*")),
+    ("a-git-extra", config_with_extras(".git/hooks")),
+    ("a-trailing-slash-extra", config_with_extras("docs/")),
+    ("not-an-object", ["AGENTS.md"]),
+]
+
+
+def test_a_second_run_over_a_configuration_with_extra_paths_adopts_it_and_writes_nothing(target, home):
+    hand_written(target, "docs/**", "notes.md")
+    first = install(target, home)
+    assert first.returncode == 0, first.stderr
+    assert deny_write(target) == expected_deny_write(config_with_extras("docs/**", "notes.md"))
+    after_first = snapshot(target)
+    for options in ((), ("--govern", "docs/**", "--govern", "notes.md"), ("--govern", "notes.md")):
+        again = install(target, home, *options)
+        assert again.returncode == 0, again.stderr
+        assert "nothing to do" in again.stdout
+        assert ".actuarii.json" in listed(again, SKIPPED)
+        assert snapshot(target) == after_first
+
+
+def test_a_configuration_written_by_hand_with_the_minimum_and_extra_paths_is_adopted_as_it_is(target, home):
+    hand_written(target, "docs/**", "notes.md")
+    before = (target / ".actuarii.json").read_bytes()
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    assert (target / ".actuarii.json").read_bytes() == before
+    assert ".actuarii.json" in listed(done, SKIPPED)
+    assert ".actuarii.json" not in listed(done, "write:")
+
+
+def test_an_extra_path_that_names_a_directory_is_adopted_all_the_same(target, home):
+    (target / "docs").mkdir()
+    hand_written(target, "docs")
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    assert ".actuarii.json" in listed(done, SKIPPED)
+    assert "./docs" in deny_write(target)
+
+
+def test_a_new_entry_is_appended_to_the_adopted_configuration_and_its_deny_write_entry_to_the_settings(target, home):
+    hand_written(target, "docs/**")
+    assert install(target, home).returncode == 0
+    before = deny_write(target)
+    second = install(target, home, "--govern", "docs/**", "--govern", "notes.md", "--govern", "AGENTS.md")
+    assert second.returncode == 0, second.stderr
+    assert listed(second, "write:") == [".actuarii.json", ".claude/settings.json"]
+    config = config_with_extras("docs/**", "notes.md")
+    assert read_json(target / ".actuarii.json") == config
+    assert deny_write(target) == before + ["./notes.md"]
+    assert sandbox_problems(read_json(target / ".claude" / "settings.json"), config) == []
+    third = install(target, home, "--govern", "notes.md")
+    assert third.returncode == 0, third.stderr
+    assert "nothing to do" in third.stdout
+
+
+def test_an_answer_is_appended_to_the_adopted_configuration_like_a_govern_entry(target, home):
+    hand_written(target, "docs/**")
+    assert install(target, home).returncode == 0
+    second = install(target, home, stdin="notes.md\n\n")
+    assert second.returncode == 0, second.stderr
+    assert listed(second, "write:") == [".actuarii.json", ".claude/settings.json"]
+    assert configured_extras(target) == ["docs/**", "notes.md"]
+
+
+def test_a_dry_run_over_an_adopted_configuration_reports_the_append_and_writes_nothing(target, home):
+    hand_written(target, "docs/**")
+    assert install(target, home).returncode == 0
+    before = snapshot(target)
+    dry = install(target, home, "--dry-run", "--govern", "notes.md")
+    assert dry.returncode == 0, dry.stderr
+    assert listed(dry, "write:") == [".actuarii.json", ".claude/settings.json"]
+    assert snapshot(target) == before
+
+
+@pytest.mark.parametrize("config", [case[1] for case in NOT_ADOPTED], ids=[case[0] for case in NOT_ADOPTED])
+def test_a_configuration_that_is_not_the_example_with_acceptable_extra_paths_is_still_a_conflict(target, home, config):
+    write_json(target / ".actuarii.json", config, indent=4)
+    before = snapshot(target)
+    done = install(target, home)
+    assert done.returncode == 1, done.stderr
+    assert done.stderr.startswith(PREFIX)
+    assert ".actuarii.json: exists and differs from the example configuration" in done.stderr
+    assert snapshot(target) == before
+
+
+# pip ------------------------------------------------------------------------------------------------------------------
+
+
+def inside_by_the_executable(tmp_path, target):
+    return Pip(tmp_path / "fake", None, executable=target / "venv" / "bin" / "python3")
+
+
+def inside_by_the_prefix(tmp_path, target):
+    return Pip(tmp_path / "fake", None, prefix=target / ".venv")
+
+
+def inside_by_a_linked_prefix(tmp_path, target):
+    (target / ".venv").mkdir()
+    (tmp_path / "alias").symlink_to(target / ".venv")
+    return Pip(tmp_path / "fake", None, prefix=tmp_path / "alias")
+
+
+def inside_by_a_linked_executable(tmp_path, target):
+    (tmp_path / "links").mkdir()
+    (tmp_path / "links" / "python3").symlink_to(target / "venv" / "bin" / "python3")
+    return Pip(tmp_path / "fake", None, executable=tmp_path / "links" / "python3")
+
+
+PIP_INSIDE = [
+    ("the-executable", inside_by_the_executable),
+    ("the-prefix", inside_by_the_prefix),
+    ("a-linked-prefix", inside_by_a_linked_prefix),
+    ("a-linked-executable", inside_by_a_linked_executable),
+]
+
+
+@pytest.mark.parametrize("before", ["1.10.0", None], ids=["another-version", "none"])
+def test_install_pydantic_runs_the_printed_command_from_the_target_and_reports_it_with_a_new_check(tmp_path, target, home, before):
+    fake = Pip(tmp_path / "fake", before)
+    done = install(target, home, "--install-pydantic", path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    assert done.stderr == ""
+    assert fake.calls == [(str(target), str(home), call) for call in (CHECK_CALL, PIP_CALL, CHECK_CALL)]
+    lines = done.stdout.splitlines()
+    steps = lines.index("next steps:")
+    assert lines[steps - 3].startswith("python: ") and fake.command in lines[steps - 3]
+    assert lines[steps - 2] == f"pip: {fake.command} exited 0"
+    assert lines[steps - 1] == f"python: {fake.path} has pydantic=={PIN}"
+    assert lines[steps + 1] == NO_COMMIT_STEP
+
+
+@pytest.mark.parametrize("answer", ["y", "Y", "yes", "Yes", "YES"])
+def test_a_yes_to_the_pip_question_runs_pip(tmp_path, target, home, answer):
+    fake = Pip(tmp_path / "fake", None)
+    done = install(target, home, stdin=answers(answer), path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    assert done.stderr == ""
+    assert fake.arguments == [CHECK_CALL, PIP_CALL, CHECK_CALL]
+    assert pip_lines(done) == [f"pip: {fake.command} exited 0"]
+
+
+NOT_A_YES = [
+    ("n", answers("n")),
+    ("capital-n", answers("N")),
+    ("no", answers("no")),
+    ("an-empty-line", answers("")),
+    ("yes-please", answers("yes please")),
+    ("yy", answers("yy")),
+    ("sure", answers("sure")),
+    ("one", answers("1")),
+    ("end-of-input", ""),
+    ("the-paths-then-the-end-of-input", "\n"),
+]
+
+
+@pytest.mark.parametrize("stdin", [case[1] for case in NOT_A_YES], ids=[case[0] for case in NOT_A_YES])
+def test_anything_but_a_yes_to_the_pip_question_does_not_run_it(tmp_path, target, home, stdin):
+    fake = Pip(tmp_path / "fake", None)
+    done = install(target, home, stdin=stdin, path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    assert fake.arguments == [CHECK_CALL]
+    assert pip_lines(done) == []
+
+
+def test_a_dry_run_never_runs_pip_and_with_the_flag_says_a_real_run_would(tmp_path, target, home):
+    fake = Pip(tmp_path / "fake", "1.10.0")
+    path = path_with(fake.directory)
+    before = snapshot(target)
+    plain = install(target, home, "--dry-run", stdin=answers("y"), path=path)
+    assert plain.returncode == 0, plain.stderr
+    assert pip_lines(plain) == []
+    flagged = install(target, home, "--dry-run", "--install-pydantic", stdin=answers("y"), path=path)
+    assert flagged.returncode == 0, flagged.stderr
+    assert fake.arguments == [CHECK_CALL, CHECK_CALL]
+    lines = flagged.stdout.splitlines()
+    assert lines[-2:] == [f"pip: a real run would run {fake.command}", DRY_RUN_CLOSING]
+    assert lines[-3].startswith("python: ")
+    assert snapshot(target) == before
+
+
+@pytest.mark.parametrize("options", [(), ("--dry-run",)], ids=["real-run", "dry-run"])
+def test_when_the_check_says_it_has_the_pin_pip_is_neither_asked_nor_run_even_with_the_flag(tmp_path, target, home, options):
+    fake = Pip(tmp_path / "fake", PIN)
+    done = install(target, home, *options, "--install-pydantic", path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    assert fake.arguments == [CHECK_CALL]
+    assert pip_lines(done) == []
+
+
+@pytest.mark.parametrize("options", [(), ("--dry-run",)], ids=["real-run", "dry-run"])
+@pytest.mark.parametrize("build", [case[1] for case in PIP_INSIDE], ids=[case[0] for case in PIP_INSIDE])
+def test_an_executable_or_a_prefix_inside_the_target_is_neither_asked_about_nor_run(tmp_path, target, home, build, options):
+    assert install(target, home).returncode == 0
+    fake = build(tmp_path, target)
+    path = path_with(fake.directory)
+    flagged = install(target, home, *options, "--install-pydantic", stdin=answers("y"), path=path)
+    asked = install(target, home, *options, stdin=answers("y"), path=path)
+    for done in (flagged, asked):
+        assert done.returncode == 0, done.stderr
+        assert pip_lines(done) == []
+        assert commit_lines(done) == []
+    assert fake.arguments == [CHECK_CALL, CHECK_CALL]
+
+
+def test_a_pip_that_exits_non_zero_is_reported_with_the_last_line_of_its_stderr_and_the_installer_exits_one(tmp_path, target, home):
+    fake = Pip(tmp_path / "fake", None, status=3, stderr="ERROR: first\nERROR: No matching distribution found for pydantic\n\n")
+    done = install(target, home, "--install-pydantic", path=path_with(fake.directory))
+    assert done.returncode == 1, done.stderr
+    assert pip_lines(done) == [f"pip: {fake.command} exited 3: ERROR: No matching distribution found for pydantic"]
+    assert fake.arguments == [CHECK_CALL, PIP_CALL]
+    assert len(python_lines(done)) == 1
+    assert "next steps:" in done.stdout
+    assert read_json(target / ".actuarii.json") == EXAMPLE_CONFIG
+
+
+def test_a_pip_that_exits_non_zero_without_a_word_on_stderr_is_reported_by_its_status_alone(tmp_path, target, home):
+    fake = Pip(tmp_path / "fake", None, status=3)
+    done = install(target, home, "--install-pydantic", path=path_with(fake.directory))
+    assert done.returncode == 1, done.stderr
+    assert pip_lines(done) == [f"pip: {fake.command} exited 3"]
+
+
+def test_a_pip_that_cannot_be_started_is_reported_and_the_installer_exits_one(tmp_path, target, home):
+    fake = Fake(tmp_path / "fake", check_output(FAKE_EXECUTABLE, OUTSIDE, None))
+    assert not Path(FAKE_EXECUTABLE).exists()
+    done = install(target, home, "--install-pydantic", path=path_with(fake.directory))
+    assert done.returncode == 1, done.stderr
+    (line,) = pip_lines(done)
+    assert line.startswith(f"pip: {shlex.quote(FAKE_EXECUTABLE)} -m pip install pydantic=={PIN} could not be run: ")
+    assert len(python_lines(done)) == 1
+    assert "next steps:" in done.stdout
+
+
+def test_a_conflict_runs_pip_for_nobody_and_commits_nothing(tmp_path, target, home):
+    fake = Pip(tmp_path / "fake", None)
+    different_kit_file(target)
+    done = install(target, home, "--install-pydantic", "--commit", stdin=answers("y", "y"), path=path_with(fake.directory))
+    assert done.returncode == 1, done.stderr
+    assert PIP_CALL not in fake.arguments
+    assert done.stdout == ""
+    assert head(target, home) is None
+
+
+# The commit -----------------------------------------------------------------------------------------------------------
+
+
+COMMIT_ANSWERS = [
+    ("y", answers("y"), True),
+    ("capital-y", answers("Y"), True),
+    ("yes", answers("yes"), True),
+    ("capital-yes", answers("YES"), True),
+    ("n", answers("n"), False),
+    ("no", answers("no"), False),
+    ("an-empty-line", answers(""), False),
+    ("yes-please", answers("yes please"), False),
+    ("one", answers("1"), False),
+    ("end-of-input", "", False),
+]
+
+
+def test_commit_commits_what_the_run_wrote_with_the_message_and_the_installed_hooks_and_says_so(target, home):
+    with_git_identity(home)
+    done = install(target, home, "--no-input", "--commit", path=PERSON_PATH)
+    assert done.returncode == 0, done.stderr
+    assert head(target, home) is not None
+    assert git_output(home, target, "log", "-1", "--format=%s") == "Install Actuarii"
+    short = git_output(home, target, "rev-parse", "--short", "HEAD")
+    lines = done.stdout.splitlines()
+    steps = lines.index("next steps:")
+    assert commit_lines(done) == [f"commit: {short} Install Actuarii"]
+    assert lines[steps - 1] == f"commit: {short} Install Actuarii"
+    assert lines[steps:] == steps_after_a_commit(target)
+    assert "commit the installed files" not in done.stdout
+    recorded = git_output(home, target, "cat-file", "commit", "HEAD")
+    assert "\nActuarii-Record: changed outside the channel: .actuarii.json\n" in recorded
+
+
+def test_the_commit_holds_exactly_the_working_tree_files_the_run_wrote_and_leaves_the_rest_alone(target, home):
+    with_git_identity(home)
+    (target / "README.md").write_text("readme\n", encoding="utf-8")
+    (target / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    run_git(home, target, "add", "README.md", ".gitignore")
+    run_git(home, target, "commit", "-q", "-m", "base")
+    (target / "staged.txt").write_text("staged\n", encoding="utf-8")
+    run_git(home, target, "add", "staged.txt")
+    (target / "untracked.txt").write_text("untracked\n", encoding="utf-8")
+    done = install(target, home, "--no-input", "--commit", path=PERSON_PATH)
+    assert done.returncode == 0, done.stderr
+    written = [path.as_posix() for path in kit_paths()] + [".actuarii.json", ".claude/settings.json", ".mcp.json", ".gitignore"]
+    assert sorted(git_output(home, target, "show", "--name-only", "--format=", "HEAD").splitlines()) == sorted(written)
+    assert git_output(home, target, "rev-list", "--count", "HEAD") == "2"
+    assert git_output(home, target, "diff", "--cached", "--name-only") == "staged.txt"
+    assert "?? untracked.txt" in git_output(home, target, "status", "--porcelain").splitlines()
+
+
+def test_a_run_that_writes_nothing_of_the_working_tree_commits_nothing_even_with_the_flag(target, home):
+    with_git_identity(home)
+    assert install(target, home, "--no-input", "--commit", path=PERSON_PATH).returncode == 0
+    first = head(target, home)
+    again = install(target, home, "--no-input", "--commit", path=PERSON_PATH)
+    assert again.returncode == 0, again.stderr
+    assert "nothing to do" in again.stdout
+    assert commit_lines(again) == []
+    for name in ("pre-commit", "commit-msg"):
+        hook_path(target, home, name).unlink()
+    hooks = install(target, home, "--no-input", "--commit", path=PERSON_PATH)
+    assert hooks.returncode == 0, hooks.stderr
+    assert listed(hooks, "write:") == [".git/hooks/pre-commit", ".git/hooks/commit-msg"]
+    assert commit_lines(hooks) == []
+    assert NO_COMMIT_STEP in hooks.stdout.splitlines()
+    assert head(target, home) == first
+
+
+@pytest.mark.parametrize("stdin, committed", [case[1:] for case in COMMIT_ANSWERS], ids=[case[0] for case in COMMIT_ANSWERS])
+def test_only_a_yes_to_the_commit_question_commits(tmp_path, target, home, stdin, committed):
+    with_git_identity(home)
+    fake = Pip(tmp_path / "fake", PIN)
+    done = install_with_check_of(tmp_path, target, home, fake, stdin=stdin)
+    assert done.returncode == 0, done.stderr
+    assert done.stderr == ""
+    assert PIP_CALL not in fake.arguments
+    assert (head(target, home) is not None) is committed
+    assert bool(commit_lines(done)) is committed
+    assert (NO_COMMIT_STEP in done.stdout.splitlines()) is not committed
+
+
+def test_the_pip_and_the_commit_questions_read_the_next_lines_in_turn(tmp_path, target, home):
+    with_git_identity(home)
+    fake = Pip(tmp_path / "fake", "1.10.0")
+    done = install_with_check_of(tmp_path, target, home, fake, stdin=answers("y", "y"))
+    assert done.returncode == 0, done.stderr
+    assert done.stderr == ""
+    assert fake.arguments.count(PIP_CALL) == 1
+    short = git_output(home, target, "rev-parse", "--short", "HEAD")
+    lines = done.stdout.splitlines()
+    steps = lines.index("next steps:")
+    assert lines[steps - 4].startswith("python: ") and lines[steps - 2].startswith("python: ")
+    assert lines[steps - 3] == f"pip: {fake.command} exited 0"
+    assert lines[steps - 1] == f"commit: {short} Install Actuarii"
+    assert lines[steps:] == steps_after_a_commit(target, fake.path)
+
+
+def test_a_no_to_pip_and_a_yes_to_the_commit(tmp_path, target, home):
+    with_git_identity(home)
+    fake = Pip(tmp_path / "fake", "1.10.0")
+    done = install_with_check_of(tmp_path, target, home, fake, stdin=answers("n", "y"))
+    assert done.returncode == 0, done.stderr
+    assert PIP_CALL not in fake.arguments
+    assert pip_lines(done) == []
+    assert len(commit_lines(done)) == 1
+    assert head(target, home) is not None
+
+
+def test_a_dry_run_with_commit_commits_nothing_and_writes_nothing(target, home):
+    with_git_identity(home)
+    before = snapshot(target)
+    done = install(target, home, "--dry-run", "--commit", path=PERSON_PATH)
+    assert done.returncode == 0, done.stderr
+    assert snapshot(target) == before
+    assert commit_lines(done) == []
+    assert head(target, home) is None
+
+
+def test_a_git_add_that_fails_is_reported_and_the_installer_exits_one(target, home):
+    with_git_identity(home)
+    (target / ".gitignore").write_text(".mcp.json\n", encoding="utf-8")
+    done = install(target, home, "--no-input", "--commit", path=PERSON_PATH)
+    assert done.returncode == 1, done.stderr
+    (line,) = commit_lines(done)
+    assert line.startswith("commit: failed: git add -- ")
+    assert " exited 1: " in line and "ignored" in line
+    assert head(target, home) is None
+    lines = done.stdout.splitlines()
+    assert lines[lines.index("next steps:") + 1] == NO_COMMIT_STEP
+
+
+def test_a_commit_refused_by_a_hook_is_reported_with_the_stderr_of_git_and_the_installer_exits_one(tmp_path, target, home):
+    with_git_identity(home)
+    refuser = tmp_path / "refuser"
+    refuser.mkdir()
+    (refuser / "python3").write_text("#!/bin/sh\necho 'refused by the fake interpreter' >&2\nexit 1\n", encoding="utf-8")
+    (refuser / "python3").chmod(0o755)
+    done = install(target, home, "--no-input", "--commit", path=f"{refuser}:{PERSON_PATH}")
+    assert done.returncode == 1, done.stderr
+    (line,) = commit_lines(done)
+    assert line.startswith("commit: failed: git commit -q -m Install Actuarii -- ")
+    assert " exited 1: " in line and "refused by the fake interpreter" in line
+    assert head(target, home) is None
+    lines = done.stdout.splitlines()
+    assert lines[lines.index("next steps:") + 1] == NO_COMMIT_STEP
+
+
+def test_a_failed_pip_does_not_stop_the_commit_and_the_report_gives_pip_before_the_commit(tmp_path, target, home):
+    with_git_identity(home)
+    fake = Pip(tmp_path / "fake", None, status=2, stderr="ERROR: no\n")
+    done = install(target, home, "--install-pydantic", "--commit", path=path_with(fake.directory))
+    assert done.returncode == 1, done.stderr
+    short = git_output(home, target, "rev-parse", "--short", "HEAD")
+    lines = done.stdout.splitlines()
+    steps = lines.index("next steps:")
+    assert lines[steps - 2] == f"pip: {fake.command} exited 2: ERROR: no"
+    assert lines[steps - 1] == f"commit: {short} Install Actuarii"
+    assert lines[steps:] == steps_after_a_commit(target)
+
+
+# --no-input, the dry run and the flags --------------------------------------------------------------------------------
+
+
+def shown(done, target):
+    return done.stdout.replace(str(target), "TARGET")
+
+
+def test_no_input_asks_nothing_whatever_stdin_holds_and_prints_what_a_run_with_empty_stdin_prints(tmp_path, target, home):
+    other = make_repository(tmp_path / "other", home)
+    fake = Pip(tmp_path / "fake", "1.10.0")
+    path = path_with(fake.directory)
+    quiet = install(target, home, "--no-input", stdin="docs/**\n\ny\ny\n", path=path)
+    plain = install(other, home, path=path)
+    assert quiet.returncode == plain.returncode == 0, quiet.stderr + plain.stderr
+    assert fake.arguments == [CHECK_CALL, CHECK_CALL]
+    assert configured_extras(target) == []
+    assert pip_lines(quiet) == [] and commit_lines(quiet) == []
+    assert head(target, home) is None
+    assert shown(quiet, target) == shown(plain, other)
+    assert quiet.stderr == plain.stderr
+
+
+def test_a_dry_run_asks_nothing_whatever_stdin_holds(tmp_path, target, home):
+    fake = Pip(tmp_path / "fake", "1.10.0")
+    path = path_with(fake.directory)
+    before = snapshot(target)
+    asked = install(target, home, "--dry-run", stdin="docs/**\n\ny\ny\n", path=path)
+    quiet = install(target, home, "--dry-run", "--no-input", path=path)
+    assert asked.returncode == quiet.returncode == 0, asked.stderr + quiet.stderr
+    assert fake.arguments == [CHECK_CALL, CHECK_CALL]
+    assert asked.stdout == quiet.stdout and asked.stderr == quiet.stderr
+    assert pip_lines(asked) == [] and commit_lines(asked) == []
+    assert snapshot(target) == before
+
+
+@pytest.mark.parametrize("options", [("--no-input",), ("--dry-run",)], ids=["no-input", "dry-run"])
+def test_neither_no_input_nor_a_dry_run_asks_the_paths_question(target, home, options):
+    hand_written(target, "docs/**")
+    assert install(target, home).returncode == 0
+    before = snapshot(target)
+    done = install(target, home, *options, stdin="notes.md\n\n")
+    assert done.returncode == 0, done.stderr
+    assert "nothing to do" in done.stdout
+    assert snapshot(target) == before
+
+
+def test_the_flags_answer_their_questions_in_advance_without_reading_stdin(tmp_path, target, home):
+    with_git_identity(home)
+    fake = Pip(tmp_path / "fake", "1.10.0")
+    done = install(target, home, "--no-input", "--govern", "notes.md", "--install-pydantic", "--commit", path=path_with(fake.directory))
+    assert done.returncode == 0, done.stderr
+    assert configured_extras(target) == ["notes.md"]
+    assert fake.arguments.count(PIP_CALL) == 1
+    assert head(target, home) is not None
+    assert len(pip_lines(done)) == 1 and len(commit_lines(done)) == 1
+
+
+def test_commit_alone_answers_the_commit_question_and_the_other_questions_take_their_defaults(target, home):
+    with_git_identity(home)
+    done = install(target, home, "--commit", path=PERSON_PATH)
+    assert done.returncode == 0, done.stderr
+    assert done.stderr == ""
+    assert configured_extras(target) == []
+    assert pip_lines(done) == []
+    assert len(commit_lines(done)) == 1
+    assert head(target, home) is not None

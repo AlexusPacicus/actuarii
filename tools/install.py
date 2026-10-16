@@ -2,7 +2,7 @@
 
 Run by the person, outside any session, from a clone of Actuarii:
 
-    python3 tools/install.py [--dry-run] <target>
+    python3 tools/install.py [--dry-run] [--no-input] [--govern PATH]... [--install-pydantic] [--commit] <target>
 
 The target must be the top level of a git working tree and not the clone itself; otherwise the exit status is 2
 and nothing is written. It receives, from the clone's working tree:
@@ -12,7 +12,10 @@ and nothing is written. It receives, from the clone's working tree:
   of the clone is installed as the regular file it resolves to, with that file's bytes and executable bit, provided
   it resolves to a regular file inside those trees; any other link (dangling, in a loop, to a directory or to
   something outside them) is a problem of the clone: exit status 2, the path on stderr, nothing written;
-* .actuarii.json, when absent, with an example configuration;
+* .actuarii.json, when absent, with an example configuration: the minimum governed paths (AGENTS.md, CLAUDE.md, .claude/**,
+  .mcp.json and tools/**) followed by the extra paths of this run. One that exists is adopted when it equals the example in every
+  key but governed_paths and its governed_paths are the minimum in its order followed by acceptable extra paths, without
+  duplicates; it is merged, with the new extra paths appended, when this run adds some, and any other is a conflict;
 * .claude/settings.json, with the clone's own `permissions` and `hooks`, `includeGitInstructions` false and a strict
   `sandbox`, merged into what is there: the clone's permission entries go after the target's own, once each, and a
   `defaultMode` already there stays; a bare `Bash` rule in the merged `ask` or `deny` is a warning, not a conflict;
@@ -34,7 +37,31 @@ The user's own settings are only read, to warn when they do not forbid unsandbox
 The report also says which interpreter the validator will start with (the `command` of the clone's server, looked up on
 the installer's PATH from the target, never the Python shim) and whether it has the pydantic the kit is tested with. It
 runs tools/check_pydantic.py with that interpreter, from the target and with no option, unless the interpreter lies
-inside the target; it prints the pip command that would install the pin and never runs it.
+inside the target; it prints the pip command that would install the pin and runs it only on a yes or with --install-pydantic.
+
+Three questions are asked in a real run and only there, each answered by one line of the standard input (the end of input
+answers the default). A question is written on stderr only when the standard input is a terminal; the answers are read the
+same way from a pipe, so that a script or a test can supply them:
+
+* which paths to govern besides the minimum, before the plan is built and so before any write and before conflicts are looked
+  for, unless --govern is given. It names what is already governed and takes one path per line, each a file path or a
+  directory followed by /**; an empty line or the end of input ends it. An answer the entry rules below refuse is explained on
+  stderr, not taken, and reading goes on. Default: no other path;
+* after the writes, whether to run `<executable> -m pip install pydantic==<pin>` for the interpreter the check named, when it
+  has another pydantic or none and neither its executable nor its prefix lies inside the target; the report gives the result,
+  and a new check when pip succeeded. Default: no;
+* last, whether to commit what this run wrote in the working tree (not the git hooks) as "Install Actuarii": git add and git
+  commit are limited to those paths, so that other staged or untracked files stay out, and the installed hooks run. Default: no.
+
+--govern PATH (repeatable), --install-pydantic and --commit answer their question in advance. --no-input and --dry-run ask
+nothing, and what no flag says is no; a dry run with --install-pydantic says what a real run would run. An entry, for --govern
+and for an answer, is a plain path or a plain path followed by /**: not empty, relative (no leading / or ~), with no '..',
+backslash, control character, * ? [ ] { }, trailing / or empty or '.' segment, and not starting with the segment .git or
+.data; a plain path that names an existing directory of the target is refused (write it followed by /**). A refused --govern
+exits 2 and nothing is written.
+
+Exit status: 0 when all went well; 1 for a conflict, a write that fails, a pip that fails or a commit that fails (after the
+report, except for a conflict or a write); 2 for a problem with the target or the clone and for a refused --govern.
 
 Standard library only, plus tools.audit.run_process for the processes it starts (git and that interpreter). It imports
 and runs under a Python 3.9 system interpreter.
@@ -78,8 +105,18 @@ SHIM_SOURCE = "tools/bin/python3"
 CHECK_SOURCE = "tools/check_pydantic.py"
 CHECK_KEYS = {"executable", "prefix", "pydantic"}
 CHECK_TIMEOUT = 60.0
+PIP_TIMEOUT = 600.0
+GIT_WRITE_TIMEOUT = 300.0
 TIMED_OUT = run_process.subprocess.TimeoutExpired
 PYTHON_PREFIX = "python: "
+PIP_PREFIX = "pip: "
+COMMIT_PREFIX = "commit: "
+COMMIT_MESSAGE = "Install Actuarii"
+COMMIT_QUESTION = f'commit the installed files now, as "{COMMIT_MESSAGE}"? [y/N] '
+DIRECTORY_SUFFIX = "/**"
+RESERVED_ROOTS = (".git", ".data")
+WILDCARDS = "*?[]{}"
+CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 PERMISSION_LISTS = ("allow", "deny", "ask")
 PERMISSION_KEYS = ("defaultMode", *PERMISSION_LISTS)
 BARE_BASH = ("Bash", "Bash(*)")
@@ -113,6 +150,7 @@ class Write:
     path: Path
     content: Optional[bytes] = None
     mode: Optional[int] = None
+    hook: bool = False
 
 
 class Plan:
@@ -128,9 +166,9 @@ class Plan:
             self.conflicts.append((label, why))
 
 
-def git(arguments: list[str], cwd: Path) -> str:
+def git(arguments: list[str], cwd: Path, timeout: float = 30.0) -> str:
     try:
-        done = run_process.run(["git", *arguments], cwd=cwd, timeout=30.0)
+        done = run_process.run(["git", *arguments], cwd=cwd, timeout=timeout)
     except OSError as exc:
         raise Problem(f"cannot run git: {exc}") from exc
     if done.returncode != 0:
@@ -241,9 +279,122 @@ def clone_kit_settings() -> tuple[dict, dict, dict]:
     return clone_permissions(permissions), hooks, server
 
 
-def deny_write_entries() -> list[str]:
-    entries = {"./" + path.removesuffix("/**") for path in EXAMPLE_CONFIG["governed_paths"]}
+def deny_write_entries(extras: list[str]) -> list[str]:
+    entries = {"./" + path.removesuffix(DIRECTORY_SUFFIX) for path in [*EXAMPLE_CONFIG["governed_paths"], *extras]}
     return sorted(entries | {CONFIG_ENTRY, AUDIT_DB_ENTRY})
+
+
+def plain_path(entry: str) -> str:
+    """The path of an entry, a plain path or a plain path followed by /**; raises Problem with the reason when it is refused."""
+    plain = entry.removesuffix(DIRECTORY_SUFFIX)
+    if not plain:
+        raise Problem("the path is empty")
+    if plain.startswith(("/", "~")):
+        raise Problem("the path must not start with / or ~; give it relative to the repository")
+    if ".." in plain:
+        raise Problem("the path must not hold '..'")
+    if "\\" in plain:
+        raise Problem("the path must not hold a backslash")
+    if CONTROL_CHARACTER.search(plain):
+        raise Problem("the path must not hold a control character")
+    if any(char in WILDCARDS for char in plain):
+        raise Problem(f"the path must not hold any of * ? [ ] {{ }}; a directory is written followed by {DIRECTORY_SUFFIX}")
+    if plain.endswith("/"):
+        raise Problem(f"the path must not end with /; a directory is written followed by {DIRECTORY_SUFFIX}")
+    segments = plain.split("/")
+    if any(segment in ("", ".") for segment in segments):
+        raise Problem("the path must not have an empty or '.' segment")
+    if segments[0] in RESERVED_ROOTS:
+        raise Problem("the path must not start with .git or .data: the git directory and the audit trail are not governed paths")
+    return plain
+
+
+def check_entry(entry: str, target: Path) -> None:
+    """Raises Problem with the reason when the entry cannot be governed in the target."""
+    if plain_path(entry) == entry and os.path.isdir(target / entry):
+        raise Problem(f"{entry} names a directory of the target; write it as {entry}{DIRECTORY_SUFFIX} to govern what is under it")
+
+
+def check_govern(entries: list[str], target: Path) -> list[str]:
+    for entry in entries:
+        try:
+            check_entry(entry, target)
+        except Problem as exc:
+            raise Problem(f"--govern {entry!r}: {exc}") from exc
+    return entries
+
+
+def adopted_extras(existing: object) -> Optional[list[str]]:
+    """The extra paths of an existing configuration the installer adopts, or None for any other. It is adopted when it equals the
+    example in every key but governed_paths, whose value is the minimum in its order followed by entries the rules accept (the
+    directory check aside), none twice."""
+    if not isinstance(existing, dict) or set(existing) != set(EXAMPLE_CONFIG):
+        return None
+    if any(existing[key] != value for key, value in EXAMPLE_CONFIG.items() if key != "governed_paths"):
+        return None
+    minimum, paths = EXAMPLE_CONFIG["governed_paths"], existing["governed_paths"]
+    if not isinstance(paths, list) or paths[:len(minimum)] != minimum:
+        return None
+    extras = paths[len(minimum):]
+    if not all(isinstance(extra, str) for extra in extras) or len(set(paths)) != len(paths):
+        return None
+    try:
+        for extra in extras:
+            plain_path(extra)
+    except Problem:
+        return None
+    return extras
+
+
+def existing_extras(target: Path) -> list[str]:
+    """The extra paths of the configuration the target holds when the installer adopts it; none otherwise (plan_config reports a conflict)."""
+    destination = target / CONFIG_NAME
+    try:
+        extras = adopted_extras(load_json(destination)) if os.path.lexists(destination) else None
+    except Problem:
+        extras = None
+    return extras or []
+
+
+def extra_paths(held: list[str], given: list[str]) -> list[str]:
+    """The extra paths already held, then the entries of this run that are not governed yet, each once, in order."""
+    known = [*EXAMPLE_CONFIG["governed_paths"], *held]
+    return [*held, *(entry for entry in dict.fromkeys(given) if entry not in known)]
+
+
+def read_line(question: str) -> Optional[str]:
+    """The next line of the standard input without its line end, or None at its end; a terminal also gets the question on stderr."""
+    if question and sys.stdin.isatty():
+        sys.stderr.write(question)
+        sys.stderr.flush()
+    line = sys.stdin.readline()
+    return line.rstrip("\r\n") if line else None
+
+
+def confirmed(question: str) -> bool:
+    answer = read_line(question)
+    return answer is not None and answer.strip().lower() in ("y", "yes")
+
+
+def ask_paths(target: Path, held: list[str]) -> list[str]:
+    """The paths the person gives, one per line, until an empty line or the end of input; a refused one is explained and not taken."""
+    governed = ", ".join([*EXAMPLE_CONFIG["governed_paths"], *held])
+    question = (f"{PREFIX}already governed: {governed}\n"
+                f"{PREFIX}other paths to govern, one per line, each a file or a directory followed by {DIRECTORY_SUFFIX}; "
+                "an empty line ends\n")
+    answers: list[str] = []
+    while True:
+        line = read_line(question)
+        question = ""
+        answer = "" if line is None else line.strip()
+        if not answer:
+            return answers
+        try:
+            check_entry(answer, target)
+        except Problem as exc:
+            sys.stderr.write(f"{PREFIX}{answer!r} was not taken: {exc}\n")
+        else:
+            answers.append(answer)
 
 
 def blocked(plan: Plan, target: Path, destination: Path) -> bool:
@@ -255,9 +406,9 @@ def blocked(plan: Plan, target: Path, destination: Path) -> bool:
     return False
 
 
-def plan_file(plan: Plan, label: str, destination: Path, content: bytes, mode: int) -> None:
+def plan_file(plan: Plan, label: str, destination: Path, content: bytes, mode: int, hook: bool = False) -> None:
     if not os.path.lexists(destination):
-        plan.writes.append(Write(label, destination, content=content, mode=mode))
+        plan.writes.append(Write(label, destination, content=content, mode=mode, hook=hook))
     elif destination.is_symlink() or not destination.is_file():
         plan.conflict(label, "exists and is not a regular file")
     else:
@@ -285,20 +436,24 @@ def plan_kit(plan: Plan, target: Path) -> None:
         plan_file(plan, label, destination, source.read_bytes(), 0o755 if executable else 0o644)
 
 
-def plan_config(plan: Plan, target: Path) -> None:
+def plan_config(plan: Plan, target: Path, extras: list[str]) -> None:
     destination = target / CONFIG_NAME
+    governed = [*EXAMPLE_CONFIG["governed_paths"], *extras]
     if not os.path.lexists(destination):
-        plan.writes.append(Write(CONFIG_NAME, destination, content=dumps(EXAMPLE_CONFIG)))
+        plan.writes.append(Write(CONFIG_NAME, destination, content=dumps({**EXAMPLE_CONFIG, "governed_paths": governed})))
         return
     try:
         existing = load_json(destination)
     except Problem as exc:
         plan.conflict(CONFIG_NAME, str(exc))
         return
-    if existing == EXAMPLE_CONFIG:
+    held = adopted_extras(existing)
+    if held is None:
+        plan.conflict(CONFIG_NAME, "exists and differs from the example configuration; the installer does not adopt another")
+    elif held == extras:
         plan.skips.append(CONFIG_NAME)
     else:
-        plan.conflict(CONFIG_NAME, "exists and differs from the example configuration; the installer does not adopt another")
+        plan.writes.append(Write(CONFIG_NAME, destination, content=dumps({**existing, "governed_paths": governed})))
 
 
 def merge_permissions(merged: dict, permissions: dict, problems: list[str]) -> None:
@@ -319,7 +474,7 @@ def merge_permissions(merged: dict, permissions: dict, problems: list[str]) -> N
             current[key] += [entry for entry in dict.fromkeys(permissions[key]) if entry not in current[key]]
 
 
-def merge_settings(existing: object, permissions: dict, hooks: dict) -> tuple[object, list[str]]:
+def merge_settings(existing: object, permissions: dict, hooks: dict, deny_entries: list[str]) -> tuple[object, list[str]]:
     if not isinstance(existing, dict):
         return existing, ["is not a JSON object"]
     problems = []
@@ -361,7 +516,7 @@ def merge_settings(existing: object, permissions: dict, hooks: dict) -> tuple[ob
     if not isinstance(deny_write, list):
         problems.append("sandbox.filesystem.denyWrite is not a list")
         return merged, problems
-    deny_write.extend([entry for entry in deny_write_entries() if entry not in deny_write])
+    deny_write.extend([entry for entry in deny_entries if entry not in deny_write])
     return merged, problems
 
 
@@ -441,7 +596,7 @@ def plan_git_hook(plan: Plan, target: Path, name: str) -> None:
     if problem:
         plan.conflict(shown, problem)
     else:
-        plan_file(plan, shown, destination, (REPO_ROOT / GIT_HOOKS_SOURCE / name).read_bytes(), 0o755)
+        plan_file(plan, shown, destination, (REPO_ROOT / GIT_HOOKS_SOURCE / name).read_bytes(), 0o755, hook=True)
 
 
 def plan_gitignore(plan: Plan, target: Path) -> None:
@@ -461,18 +616,18 @@ def plan_gitignore(plan: Plan, target: Path) -> None:
     plan.writes.append(Write(".gitignore", destination, content=existing + separator + DATA_LINES[0] + b"\n"))
 
 
-def build_plan(target: Path) -> Plan:
+def build_plan(target: Path, extras: list[str]) -> Plan:
     permissions, hooks, server = clone_kit_settings()
     plan = Plan(server["command"])
 
     def merge_kit_settings(existing: object) -> tuple[object, list[str]]:
-        merged, problems = merge_settings(existing, permissions, hooks)
+        merged, problems = merge_settings(existing, permissions, hooks, deny_write_entries(extras))
         if not problems:
             plan.warnings.extend(bare_bash_warnings(merged))
         return merged, problems
 
     plan_kit(plan, target)
-    plan_config(plan, target)
+    plan_config(plan, target, extras)
     plan_json(plan, target, SETTINGS_NAME, merge_kit_settings)
     plan_json(plan, target, MCP_NAME, lambda existing: merge_mcp(existing, server))
     for name in GIT_HOOKS:
@@ -549,37 +704,77 @@ def run_check(interpreter: Path, target: Path) -> dict:
     return answer
 
 
-def python_lines(command: str, target: Path) -> list[str]:
-    """The `python:` lines of the report: the interpreter the validator will start with and the pydantic it has."""
+def pip_command(executable: str) -> str:
+    return f"{shlex.quote(executable)} -m pip install pydantic=={pydantic_pin()}"
+
+
+def python_check(command: str, target: Path) -> tuple[list[str], Optional[dict]]:
+    """The `python:` lines of the report, the interpreter the validator will start with and the pydantic it has, and what the
+    check printed when it ran."""
     pin = pydantic_pin()
     named = command
     try:
         interpreter = find_interpreter(command, target)
         if interpreter is None:
-            return [f"{PYTHON_PREFIX}no {command} was found on the PATH"]
+            return [f"{PYTHON_PREFIX}no {command} was found on the PATH"], None
         named = str(interpreter)
         if lies_inside(interpreter.parent, target) or lies_inside(interpreter, target):
             return [f"{PYTHON_PREFIX}{named} lies inside {target}, so it was not run; "
-                    "the environment belongs outside the repository"]
+                    "the environment belongs outside the repository"], None
         answer = run_check(interpreter, target)
     except (CannotTell, OSError) as exc:
-        return [f"{PYTHON_PREFIX}{named}: cannot tell whether it has pydantic=={pin} ({exc})"]
+        return [f"{PYTHON_PREFIX}{named}: cannot tell whether it has pydantic=={pin} ({exc})"], None
     executable, version = answer["executable"], answer["pydantic"]
-    pip_command = f"{shlex.quote(executable)} -m pip install pydantic=={pin}"
+    command_to_install = pip_command(executable)
     if version == pin:
         says = f"has pydantic=={pin}"
     elif version is None:
-        says = f"lacks pydantic; to install the pinned version: {pip_command}"
+        says = f"lacks pydantic; to install the pinned version: {command_to_install}"
     else:
-        says = f"has pydantic=={version} and the validator is tested with {pin}; to install the pinned version: {pip_command}"
+        says = f"has pydantic=={version} and the validator is tested with {pin}; to install the pinned version: {command_to_install}"
     lines = [f"{PYTHON_PREFIX}{executable} {says}"]
     if lies_inside(Path(answer["prefix"]), target):
         lines.append(f"{PYTHON_PREFIX}its environment, {answer['prefix']}, lies inside {target}, where the agent writes; "
                      "the environment belongs outside the repository")
-    return lines
+    return lines, answer
 
 
-def report(plan: Plan, target: Path, dry_run: bool) -> str:
+def can_install_pydantic(answer: Optional[dict], target: Path) -> bool:
+    """True when the check ran and printed another pydantic than the pin, or none, from an executable and a prefix outside the target."""
+    return (answer is not None and answer["pydantic"] != pydantic_pin()
+            and not lies_inside(Path(answer["executable"]), target) and not lies_inside(Path(answer["prefix"]), target))
+
+
+def install_pydantic(answer: dict, command: str, target: Path) -> tuple[list[str], bool]:
+    """Runs pip for the interpreter the check named, from the target and with the installer's environment; the lines of the report
+    (with a new check when pip exited 0) and whether it did."""
+    shown = pip_command(answer["executable"])
+    try:
+        done = run_process.run([answer["executable"], "-m", "pip", "install", f"pydantic=={pydantic_pin()}"],
+                               cwd=target, timeout=PIP_TIMEOUT)
+    except TIMED_OUT:
+        return [f"{PIP_PREFIX}{shown} did not finish within {PIP_TIMEOUT:.0f} seconds"], False
+    except (OSError, ValueError) as exc:
+        return [f"{PIP_PREFIX}{shown} could not be run: {exc}"], False
+    if done.returncode != 0:
+        last = next((line.strip() for line in reversed(done.stderr.splitlines()) if line.strip()), "")
+        return [f"{PIP_PREFIX}{shown} exited {done.returncode}" + (f": {last}" if last else "")], False
+    lines, _ = python_check(command, target)
+    return [f"{PIP_PREFIX}{shown} exited 0", *lines], True
+
+
+def commit(target: Path, labels: list[str]) -> tuple[str, bool]:
+    """Commits the files of the working tree this run wrote, and only them; the line of the report and whether it succeeded."""
+    try:
+        git(["add", "--", *labels], target, GIT_WRITE_TIMEOUT)
+        git(["commit", "-q", "-m", COMMIT_MESSAGE, "--", *labels], target, GIT_WRITE_TIMEOUT)
+        short = git(["rev-parse", "--short", "HEAD"], target)
+    except Problem as exc:
+        return f"{COMMIT_PREFIX}failed: {exc}", False
+    return f"{COMMIT_PREFIX}{short} {COMMIT_MESSAGE}", True
+
+
+def report_head(plan: Plan, target: Path, dry_run: bool, python: list[str]) -> list[str]:
     lines = [f"{PREFIX}{'dry run on' if dry_run else 'installing into'} {target}"]
     if plan.writes:
         lines += ["write:"] + [f"  {write.label}" for write in plan.writes]
@@ -587,15 +782,20 @@ def report(plan: Plan, target: Path, dry_run: bool) -> str:
         lines += ["skip (already as the kit needs it):"] + [f"  {label}" for label in plan.skips]
     if not plan.writes:
         lines.append("nothing to do: the kit is already installed")
-    lines += python_lines(plan.command, target)
-    next_steps = [
-        "next steps:",
-        "  1. commit the installed files; the Python shim only runs scripts committed in HEAD",
-        f"  2. start Claude Code with this same PATH, so that the validator runs with the {plan.command} named above",
-        f"  3. open Claude Code in {target}; accept the folder trust and the {SERVER} server",
+    return lines + python
+
+
+def next_steps(plan: Plan, target: Path, committed: bool) -> list[str]:
+    steps = [] if committed else ["commit the installed files; the Python shim only runs scripts committed in HEAD"]
+    steps += [
+        f"start Claude Code with this same PATH, so that the validator runs with the {plan.command} named above",
+        f"open Claude Code in {target}; accept the folder trust and the {SERVER} server",
     ]
-    lines += [DRY_RUN_CLOSING] if dry_run else next_steps
-    return "\n".join(lines) + "\n"
+    return ["next steps:"] + [f"  {number}. {step}" for number, step in enumerate(steps, 1)]
+
+
+def emit(lines: list[str]) -> None:
+    sys.stdout.write("".join(f"{line}\n" for line in lines))
 
 
 def fail(status: int, message: str) -> int:
@@ -603,15 +803,57 @@ def fail(status: int, message: str) -> int:
     return status
 
 
+def finish(arguments: argparse.Namespace, plan: Plan, target: Path, answer: Optional[dict], head: list[str]) -> int:
+    """The rest of a run after the writes: the report, then the pip and commit steps, each by its flag or its answer; the exit status."""
+    asking = not arguments.no_input
+    emit(head)
+    status = 0
+    if can_install_pydantic(answer, target):
+        question = f"install pydantic=={pydantic_pin()} into {answer['executable']} with {pip_command(answer['executable'])}? [y/N] "
+        if arguments.install_pydantic or (asking and confirmed(question)):
+            lines, installed = install_pydantic(answer, plan.command, target)
+            emit(lines)
+            status = 0 if installed else 1
+    labels = [write.label for write in plan.writes if not write.hook]
+    committed = False
+    if labels and (arguments.commit or (asking and confirmed(COMMIT_QUESTION))):
+        line, committed = commit(target, labels)
+        emit([line])
+        if not committed:
+            status = 1
+    emit(next_steps(plan, target, committed))
+    return status
+
+
 def main(argv: Optional[list[str]] = None) -> int:
-    parser = argparse.ArgumentParser(prog="install.py", description="Installs the kit into an existing git repository.")
+    parser = argparse.ArgumentParser(
+        prog="install.py",
+        description="Installs the kit into an existing git repository. In a real run it asks three questions, one line of the "
+                    "standard input each: which paths to govern besides the minimum, whether to run pip for the pinned pydantic "
+                    "and whether to commit what it installed. A flag answers its question in advance; --no-input and --dry-run "
+                    "ask no question, and what no flag says is no.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="run every check and print the plan, writing nothing")
+    parser.add_argument("--no-input", action="store_true", help="ask no question: what no flag says is no")
+    parser.add_argument("--govern", action="append", default=[], metavar="PATH",
+                        help="govern PATH besides the minimum, a file path or a directory followed by /** (repeatable; "
+                             "answers the paths question)")
+    parser.add_argument("--install-pydantic", action="store_true",
+                        help="run the pip command the report prints when the validator's interpreter has another pydantic or "
+                             "none (answers the pip question yes)")
+    parser.add_argument("--commit", action="store_true",
+                        help=f'commit the files this run wrote, as "{COMMIT_MESSAGE}" (answers the commit question yes)')
     parser.add_argument("target", help="the top level of the git working tree to install into")
     arguments = parser.parse_args(argv)
+    asking = not (arguments.dry_run or arguments.no_input)
     try:
         target = check_target(arguments.target)
-        plan = build_plan(target)
-        text = report(plan, target, arguments.dry_run)
+        given = check_govern(arguments.govern, target)
+        held = existing_extras(target)
+        if asking and not given:
+            given = ask_paths(target, held)
+        plan = build_plan(target, extra_paths(held, given))
+        python, answer = python_check(plan.command, target)
     except Problem as exc:
         return fail(2, str(exc))
     if plan.conflicts:
@@ -634,7 +876,12 @@ def main(argv: Optional[list[str]] = None) -> int:
             "sandbox.allowUnsandboxedCommands false in your own settings holds against it. "
             "The installer does not write your settings.\n"
         )
-    sys.stdout.write(text)
+    head = report_head(plan, target, arguments.dry_run, python)
+    if not arguments.dry_run:
+        return finish(arguments, plan, target, answer, head)
+    if arguments.install_pydantic and can_install_pydantic(answer, target):
+        head.append(f"{PIP_PREFIX}a real run would run {pip_command(answer['executable'])}")
+    emit([*head, DRY_RUN_CLOSING])
     return 0
 
 
