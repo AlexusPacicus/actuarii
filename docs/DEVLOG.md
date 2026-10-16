@@ -5,6 +5,58 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-16 (tarde)
+
+Sesión nueva del viernes 16, de las 13:00 a las 17:45. La enmienda de la prueba en limpio para V4 entró en `main`, y
+el README tiene su primer borrador, en su rama hasta después de la medida. Suite: 3681 en verde, sin cambios de
+código.
+
+**Hecho**
+* **Al arrancar:** sandbox activo y hook de integridad instalado; `main` en `f4d1d9d`, igual que `origin/main` (el
+  push del 15, hecho); árbol limpio.
+* **D5, comprobado:** es la primera sesión nueva después de `0116031`, y su contexto ya no trae la sección de la
+  memoria automática. El directorio de esa memoria sigue vacío desde el 5 de octubre.
+* **La enmienda §4d de `docs/design/PRUEBA_EN_LIMPIO.md`** (`abb0d83`), para medir V4 con la instalación en una
+  orden:
+  * un entorno nuevo, fuera del destino y sin las dependencias de `noticias`;
+  * respuestas fijas al instalador: ninguna ruta extra, sí a `pydantic` y sí al commit;
+  * un cronómetro con un parcial por paso, y el registro como contraste;
+  * después, sin cronómetro, el commit de `AGENTS.md`, que tiene que llevar `Actuarii-Record: matches`.
+* **El borrador del README (V6),** en la rama `v01/readme`, sin push:
+  * en el orden de V6: la frase con su primer límite, el marco, la tabla de canales, 12 garantías, el coste, lo que
+    cae en la persona, la v0.2 y la licencia;
+  * cada garantía nombra su test. Los 20 tests citados se ejecutaron: 89 casos, todos en verde;
+  * tres huecos marcados «Draft»: los límites (V5), la cifra de la instalación (V4) y el caso de Traianus.
+* **Fuera de `main` hasta después de la medida (Claude):** §1 de la prueba en limpio toma como guía la del commit
+  que se prueba. Si el README llegara al clon antes de medir, la medida leería otra guía. En su rama, el push de
+  `main` del autor no lo lleva.
+
+**Decidido (autor)**
+* La enmienda §4d, tal cual.
+* La frase del README es la de ADR-009. Ya lleva «trazabilidad», que sustituyó a «seguimiento o transparencia» en la
+  sesión del 14.
+* El caso de Traianus va en el README. El autor dirá cuál es y si sus commits son públicos.
+* El borrador del README se commitea en local, sin push.
+
+**Salió mal y se aprendió**
+* **El autor no reconoció la frase del README.** Los registros y la transcripción de la sesión del 14 mostraron que
+  era la decidida. Lección: un texto decidido se presenta con su ADR, para que se reconozca.
+* **La cifra del coste es del 7 de octubre.** Desde entonces, `validate_proposal` está en `permissions.allow`
+  (ADR-022) y la puerta guarda lo que deja cada escritura (ADR-016). No se ha vuelto a medir; el README lo dice.
+* **V7, encontrado:** la descripción de `pyproject.toml` («Governance kit for coding agents: rules enforced in
+  code…») no coincide con la frase. Además, «5 Radicals» o «Blind by construction» siguen en
+  `RECIBO_CONTENIDO.md`, `ENTORNO_PROPIO.md`, `PRIOR_ART.md`, `PROCESO.md` y el `SKILL.md` de `examples/traianus`,
+  y la exención de `.claude/**`, en `SANDBOX.md`.
+
+**Siguiente**
+* **El autor:** el push de `main`, que lleva `abb0d83` y no el README.
+* **La medida en macOS (V4),** del autor, el sábado o el domingo, con un clon nuevo de `main` desde GitHub.
+* **La tabla «Resumen» (V5),** de A13 a A35, como tarde el lunes 19.
+* **El caso de Traianus:** el autor dice cuál, si sus commits son públicos y si se puede leer su repositorio. Las
+  ramas locales `feat/p1-engine-gate` y `feat/p1-qwen3-provider` parecen las de los dos casos del PLAN.
+* **V7,** con lo encontrado arriba.
+* Disco: 9 GiB libres.
+
 ## 2026-10-16 (mediodía, cierre de la sesión del 15)
 
 La sesión del jueves 15 por la tarde siguió abierta para seguir las dos que el autor arrancó desde su tarjeta: la

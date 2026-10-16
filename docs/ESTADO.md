@@ -5,7 +5,7 @@ del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en 
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
 puerta del 22 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-16, mediodía.
+Actualizado: 2026-10-16, tarde.
 
 ## La v0.1
 
@@ -37,17 +37,21 @@ Actualizado: 2026-10-16, mediodía.
   * cada ruta gobernada con su `denyWrite`, sin exenciones, comprobado con una sonda;
   * el ROADMAP, con D1–D7 decididas;
   * la historia reescrita sin la información personal y con el correo *noreply*, en un repositorio nuevo
-    de GitHub (V8).
+    de GitHub (V8);
+  * la enmienda §4d de `docs/design/PRUEBA_EN_LIMPIO.md`, para medir con la instalación en una orden (`abb0d83`);
+  * el primer borrador del README (V6), en la rama `v01/readme`, sin push.
 
   Suite en verde (3681). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **La medida en macOS (V4),** del autor, como tarde el domingo 18, con el instalador nuevo. Antes, la enmienda
-     de `docs/design/PRUEBA_EN_LIMPIO.md` para la orden única, commiteada.
-  2. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** hasta A35. Pasa a ser la sección de
+  1. **La medida en macOS (V4),** del autor, como tarde el domingo 18, con un clon nuevo de `main` desde GitHub y
+     el método de §4d. Antes, el push de `main`.
+  2. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** de A13 a A35. Pasa a ser la sección de
      límites del README.
-  3. **El README en inglés (V6),** con su primer límite (A30, D3) y su marco (D6). Conserva «that it happened»: el
-     acta en git llegó a tiempo (V3).
-  4. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9).
+  3. **El README (V6),** en `v01/readme` hasta después de la medida: si llegara antes al clon, la medida leería otra
+     guía (§1 de la prueba). Le faltan los límites (V5), la cifra de la instalación (V4) y el caso de Traianus: el
+     autor dice cuál es y si sus commits son públicos.
+  4. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
+     DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`.
 * Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
   de un `git` del instalador que pasa de 300 s.
 
@@ -56,7 +60,7 @@ Actualizado: 2026-10-16, mediodía.
 | Cuándo | Qué |
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
-| Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, y el contrato de la memoria (hecho); el README empieza el viernes |
+| Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, el contrato de la memoria, la enmienda de la prueba en limpio y el borrador del README (hecho) |
 | Sábado 17 y domingo 18 | La medida en macOS (el autor) |
 | Lunes 19 | La tabla «Resumen» y la sección de límites |
 | Martes 20 a jueves 22 | El README |
