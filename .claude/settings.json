@@ -116,6 +116,7 @@
   },
   "enableAllProjectMcpServers": true,
   "includeGitInstructions": false,
+  "autoMemoryEnabled": false,
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": true,

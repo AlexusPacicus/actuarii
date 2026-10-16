@@ -4,7 +4,9 @@ Memoria bajo código (decisión del autor, 2026-10-13):
 * un fichero por recuerdo en `.claude/memory/`, con este índice, que `CLAUDE.md` carga al abrir cada sesión;
 * cada escritura pide recibo (`.claude/**` está gobernado), `Bash` no la toca (el sandbox protege `.claude/`) y git
   guarda cada versión;
-* la memoria de Claude Code en `~/.claude/projects/…/memory/` no se usa en este proyecto: la opción (c) la deniega;
+* la memoria automática de Claude Code (`~/.claude/projects/…/memory/`) está apagada en este proyecto:
+  `autoMemoryEnabled: false` en `.claude/settings.json` (ADR-010). Es un ajuste, no una denegación: un
+  `.claude/settings.local.json` o la variable `CLAUDE_CODE_DISABLE_AUTO_MEMORY` pueden volver a encenderla;
 * será el corpus del primer piloto de la memoria de agentes de la fase 4 (`docs/PLAN.md`).
 
 Cada recuerdo lleva el formato de la memoria de Claude Code: frontmatter con `name`, `description` y `metadata.type`

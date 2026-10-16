@@ -210,6 +210,19 @@ def test_a_fresh_install_takes_the_hooks_from_the_clone_and_writes_a_strict_sand
     assert (target / ".claude" / "settings.json").read_text(encoding="utf-8") == json.dumps(settings, indent=2) + "\n"
 
 
+def test_a_fresh_install_leaves_the_auto_memory_of_the_target_alone(target, home):
+    assert install(target, home).returncode == 0
+    assert "autoMemoryEnabled" not in read_json(target / ".claude" / "settings.json")
+
+
+def test_an_install_keeps_the_auto_memory_value_the_target_already_has(target, home):
+    path = target / ".claude" / "settings.json"
+    write_json(path, {"autoMemoryEnabled": True})
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    assert read_json(path)["autoMemoryEnabled"] is True
+
+
 def test_a_fresh_install_adds_the_validator_server_to_mcp_json(target, home):
     assert install(target, home).returncode == 0
     assert read_json(target / ".mcp.json") == {"mcpServers": {SERVER: CLONE_SERVER}}

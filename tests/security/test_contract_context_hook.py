@@ -684,7 +684,8 @@ def test_registration_changes_nothing_else_in_settings():
     section 6, is the third; pytest, the read-only commands and the validator's tool allowed without asking, the
     perimetro-de-permisos contract, is the fourth; includeGitInstructions false, the blind-review isolation
     contract (A34), is the fifth; the bare Bash out of ask and the read-only list grown, the
-    perimetro-sin-comodin contract, is the sixth)."""
+    perimetro-sin-comodin contract, is the sixth;
+    Claude Code's auto memory off, the memoria-automatica-apagada contract (ADR-010), is the seventh)."""
     current = settings()
     assert current["permissions"] == PERMISSIONS
     parsed = [
@@ -700,8 +701,10 @@ def test_registration_changes_nothing_else_in_settings():
     assert current["enableAllProjectMcpServers"] is True
     assert current["disableAllHooks"] is False
     assert current["includeGitInstructions"] is False
+    assert current["autoMemoryEnabled"] is False
     assert set(current) == {
-        "permissions", "hooks", "enableAllProjectMcpServers", "disableAllHooks", "includeGitInstructions", "sandbox"}
+        "permissions", "hooks", "enableAllProjectMcpServers", "disableAllHooks", "includeGitInstructions",
+        "autoMemoryEnabled", "sandbox"}
     assert set(current["hooks"]) == {"PreToolUse", "SessionStart", "ConfigChange"}
 
 
