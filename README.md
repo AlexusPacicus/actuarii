@@ -1,0 +1,194 @@
+# Actuarii
+
+**Work records for coding agents. Every action leaves a record that it happened, and why. Built for settings
+where traceability comes first.**
+
+**The first limit.** Only what goes through the governed channel leaves a record, and that channel is, above
+all, the writes to the paths you chose to govern. What the agent does through `Bash`, and what it writes to
+paths you did not govern, leaves none. An agent can move its work there, and we have seen one do it
+([below](#limits)).
+
+Actuarii v0.1 is not a security boundary against an adversarial agent. That is what v0.2 is for.
+
+It works with [Claude Code](https://claude.com/claude-code) on macOS and Linux. The design records and the
+development log are in Spanish; this README, the installation guide and the agent rules are in English.
+
+## Why the rules live outside the model
+
+A coding agent reads instructions and data through the same channel, its context, and it cannot reliably tell
+them apart. A file it opens, a test output or a web page can change what it does next. A record that the agent
+keeps, or a rule that the agent is asked to follow, is only as good as the agent's reading of its context at
+that moment.
+
+Actuarii does not try to keep the agent from being convinced. It takes the decision away from it. The agent
+proposes a change and gives its reason; code outside the model checks the proposal and records the decision;
+the write goes through only if a receipt for that exact change exists. Whatever convinced the agent, the record
+says what was written and why the agent said it was writing it. The reason is recorded, not verified: nothing
+checks that it is true.
+
+### What a record looks like
+
+Every commit that changes a governed file carries its record at the end of the message:
+
+```
+Actuarii-Record: matches: src/app.py
+Actuarii-Rationale: Why the change was made, as the agent gave it in its proposal.
+Actuarii-Record: changed outside the channel: AGENTS.md
+```
+
+`matches` means that the writes the gate allowed lead from the file at `HEAD` to what the commit holds, and the
+`Actuarii-Rationale` lines are the reasons the agent gave for them. `changed outside the channel` means that
+something else changed the file: you, an editor, a tool the gate does not see. The full trail (every proposal,
+decision, refusal and reason) stays in a local database under `.data/`, which git ignores; the trailers are what
+travels with the repository. This repository is developed under its own rules: since `ba6a120`, every commit
+that changes a governed file carries its record.
+
+### Which channel decides who
+
+| What the agent does | Who decides | Record |
+|---|---|---|
+| `Edit`, `Write`, `MultiEdit`, `NotebookEdit` on a governed path | Code: the write gate, with a receipt for that exact change | The proposal, its reason and, except for `NotebookEdit`, what the write left |
+| A change to the rules (`.actuarii.json`) | Code: the same gate; the file is always governed | The same |
+| `Edit` or `Write` on any other path of the repository | You, through Claude Code's permission mode | None |
+| `Bash` | The operating system's sandbox: no write to a governed path, no network. Outside a closed list of read-only commands, your permission mode decides each command | None |
+| Running Python | Code: a shim that runs only scripts committed in `HEAD` | None |
+| `git commit` | Code: the `pre-commit` hook refuses a governed path that differs from the disk; the `commit-msg` hook writes the record | Trailers in the message |
+| `git merge`, `switch`, `restore`, `push`; deleting or renaming a governed file | You: the sandbox keeps them from the agent | None |
+| File tools outside the repository (`.git/hooks`, your home directory) | You, through Claude Code's permission prompt | None |
+| The integrated browser, your Chrome, connectors, tools that act on the host | The model, with your approval of each site or action | None |
+| Reading your credentials (`~/.ssh`, `~/.aws`) | No one | None |
+
+The rows where the model or no one decides are declared limits, not oversights.
+
+### What the kit enforces, and the test that checks it
+
+1. A write to a governed path without a receipt is denied, and the denial names the rule, the file it comes
+   from and the call that resolves it.
+   [`test_hook_gate.py`](tests/security/test_hook_gate.py):
+   `test_a_path_the_configuration_governs_is_denied_without_a_receipt`,
+   `test_a_denial_names_the_path_the_rule_the_source_the_window_and_the_call`.
+2. A receipt covers one exact change: one byte of difference is another change.
+   [`test_content_receipt.py`](tests/security/test_content_receipt.py):
+   `test_an_edit_with_other_content_than_the_receipt_is_denied_down_to_one_byte`.
+3. Every proposal carries its reason, which is recorded with the decision, also when the proposal is refused.
+   No receipt is issued without its record.
+   [`test_rationale.py`](tests/security/test_rationale.py):
+   `test_a_proposal_without_a_rationale_is_a_schema_violation_and_leaves_no_receipt`,
+   `test_a_refusal_after_the_schema_records_the_rationale`,
+   `test_an_execute_safe_is_not_issued_when_the_audit_database_cannot_be_written`.
+4. The gate records what each write leaves before it allows it, and denies the write when it cannot.
+   [`test_gate_record.py`](tests/security/test_gate_record.py):
+   `test_a_write_is_denied_when_the_audit_database_can_be_read_but_not_written`.
+5. Each commit says, for each governed file, whether the recorded writes lead to what it holds.
+   [`test_commit_record.py`](tests/security/test_commit_record.py):
+   `test_a_governed_file_written_through_the_gate_is_committed_with_its_record_and_its_rationale`,
+   `test_a_governed_file_changed_without_the_gate_is_committed_as_changed_outside_the_channel`.
+6. A commit cannot store in a governed path anything other than the file on disk.
+   [`test_commit_integrity.py`](tests/security/test_commit_integrity.py):
+   `test_a_forged_blob_written_with_hash_object_and_staged_with_update_index_is_refused`,
+   `test_a_real_commit_with_an_older_blob_staged_is_refused_and_accepted_once_the_index_matches_the_disk`.
+7. The rules are governed too: `.actuarii.json` always needs a receipt, and an invalid one denies every write
+   inside the repository, its own fix included until it has a receipt.
+   [`test_project_config.py`](tests/security/test_project_config.py):
+   `test_the_configuration_itself_is_always_governed`;
+   [`test_hook_gate.py`](tests/security/test_hook_gate.py):
+   `test_an_invalid_configuration_denies_everything_inside_the_root_with_the_error`,
+   `test_the_configuration_file_stays_subject_to_a_receipt_when_it_is_invalid`.
+8. A governed Python write cannot introduce a process, network or code-loading primitive the file did not
+   have. [`test_gate_primitives.py`](tests/security/test_gate_primitives.py):
+   `test_an_edit_with_a_receipt_whose_result_introduces_a_primitive_is_denied`.
+9. Python runs only scripts committed in `HEAD`, from the directories the configuration allows.
+   [`test_python_gate.py`](tests/security/test_python_gate.py):
+   `test_denies_argv_that_is_not_a_committed_script`,
+   `test_an_uncommitted_script_in_a_permitted_directory_is_still_denied`.
+10. `Bash` runs in the operating system's sandbox, which keeps it from the governed paths and the network. The
+    operating system enforces it; the tests pin the settings, here and in what the installer writes, and the
+    behaviour was probed by hand ([`SANDBOX.md`](docs/design/SANDBOX.md) §8).
+    [`test_sandbox_settings.py`](tests/security/test_sandbox_settings.py):
+    `test_the_committed_sandbox_values_are_strict`,
+    `test_every_governed_path_of_the_committed_configuration_has_its_deny_write_entry`;
+    [`test_installer.py`](tests/unit/test_installer.py):
+    `test_the_sandbox_values_of_the_installer_are_the_ones_the_settings_test_pins`.
+11. The kit's permission rules allow no `Bash` command outside a closed list of read-only commands, the kit's
+    own scripts and `pytest`, and they deny `rm`, inline Python and the network tools.
+    [`test_config_perimeter.py`](tests/security/test_config_perimeter.py):
+    `test_security_SEC_M_13_allow_list_is_closed`,
+    `test_security_SEC_M_13_required_denies_persist`.
+12. The installer never overwrites: with any conflict it lists them all and writes nothing.
+    [`test_installer.py`](tests/unit/test_installer.py):
+    `test_a_conflict_exits_one_names_it_and_leaves_the_target_untouched`,
+    `test_every_conflict_is_listed_at_once`.
+
+## Limits
+
+> **Draft.** This section becomes the summary table of
+> [`CASES.md`](docs/adversarial-audit/CASES.md), A01 to A35, on Monday 19 (V5). Until then, the full list is
+> [`AGENTS.md` §9](AGENTS.md#9-declared-limits).
+
+* **The kit governs paths, not tasks.** In a test on a real repository, asked to write tests for a module whose
+  directory was governed, the agent wrote them in `tests/unit/`, which was not, and said it did so to avoid
+  asking for a receipt ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §5, in Spanish). It broke no
+  rule. What you do not govern leaves no record.
+* **The boundary is borrowed from Claude Code.** The sandbox, the hooks and the permission prompts are Claude
+  Code's. Where they do not reach, the kit does not either: the file tools can write `.git/hooks` and files
+  outside the repository with only Claude Code's own permission prompt in the way, and the gates themselves run
+  outside the sandbox with the `python3` on your `PATH`. These are limits of the kit, not faults of Claude Code.
+* **The agent issues its own receipts.** A receipt proves that a well-formed proposal for that exact change was
+  recorded before the write, not that a person approved it.
+* **The commit trailers are text.** Anyone can write them, and nothing signs them.
+
+## Install
+
+You need `git`, Claude Code, a `python3` (3.9 or later) for the installer, and a Python environment outside
+your repository for the session. From the top of a clone of Actuarii, next to your repository and never inside
+it:
+
+```bash
+python3 tools/install.py ~/src/your-repo
+```
+
+It asks which other paths to govern, whether to install the kit's one dependency (`pydantic`) when your
+environment lacks it, and whether to commit what it installed. [`INSTALL.md`](INSTALL.md) has every step, the
+mode without questions and what each file does.
+
+> **Draft.** The time from an empty clone to the first governed write, measured on macOS with the one-command
+> installer, goes here after Sunday 18 (V4). The last measure, with the earlier procedure of several steps, was
+> 612.8 s, of which the agent took 35 s.
+
+## What it costs
+
+Each governed write adds a median of **1875 ms**: the round trip to the validator (1378 ms) and two hooks of
+about 250 ms each, which are almost all Python start-up. The validator itself answers in 4 ms; most of the
+round trip is the harness. A proposal is about 1.06 times the size of the edit it covers. Measured on 7 October
+2026 over 15 writes ([`COSTE.md`](docs/design/COSTE.md), in Spanish); the kit has changed since and has not been
+measured again. v0.1 is not optimised; the design for v0.2 is in `COSTE.md` §5.
+
+## What falls to you
+
+The only governed channel is writing content through the file tools. Everything else on a governed path
+falls to you, because the sandbox blocks it and no receipt can allow it:
+
+* `git merge`, `switch`, `restore` and a `checkout` of a path, when they rewrite governed files;
+* deleting, renaming or changing the mode of a governed file;
+* `git push`;
+* the permission prompts of Claude Code, as your permission mode decides: for `Bash` commands outside the
+  read-only list, and for the file tools outside the repository.
+
+When `main` has not moved since a branch left it, the agent can fast-forward `main` to the branch without
+rewriting the tree.
+
+## What comes next
+
+If v0.1 shows a signal, set in advance in [`ROADMAP.md`](docs/ROADMAP.md) (in Spanish), v0.2 runs the whole
+agent inside an isolated environment of its own, with the gates and a write broker outside it, so that the
+boundary no longer depends on one vendor's hooks and is designed to hold against an adversarial agent
+([`ENTORNO_PROPIO.md`](docs/design/ENTORNO_PROPIO.md)).
+
+## A real case: Traianus
+
+> **Draft.** Actuarii was born governing Traianus. This section follows one piece of work there, from the frozen
+> protocol to the result, with its commits. Pending: which case, and whether its commits are public.
+
+## License
+
+Apache-2.0. See [`LICENSE`](LICENSE).
