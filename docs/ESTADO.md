@@ -3,9 +3,9 @@
 Lo que una sesión nueva necesita saber, y nada más. Se actualiza al cerrar cada sesión, junto con la entrada
 del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en `docs/PLAN.md`, que se lee
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
-puerta del 22 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
+puerta del 24 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-16, tarde.
+Actualizado: 2026-10-17, tarde.
 
 ## La v0.1
 
@@ -14,10 +14,11 @@ Actualizado: 2026-10-16, tarde.
   first.»
 * **Qué no es:** una frontera de seguridad frente a un agente adversario. Eso es la v0.2, con su entorno
   propio (`docs/design/ENTORNO_PROPIO.md`). AGENTS.md §9 declara lo que la v0.1 no cubre.
-* **Publicación:** el 25 de octubre, esté como esté. El repositorio es privado hasta entonces.
-* **Señal de éxito, comprometida:** en las cuatro semanas siguientes, 5 personas ajenas que lo instalan o
-  abren una issue, o una conversación de trabajo. Si no llega, se revisa con datos, sin reencuadrar. Cómo se
-  cuenta, en el ROADMAP §3.
+* **Publicación:** el repositorio se abre el 25 de octubre, esté como esté, y es privado hasta entonces. El texto
+  para HN y Reddit sale el martes 27 hacia las 14:00 de Madrid (ADR-027).
+* **Señal de éxito, comprometida:** en las cuatro semanas desde el texto, hasta el martes 24 de noviembre, 5
+  personas ajenas que lo instalan o abren una issue, o una conversación de trabajo. Si no llega, se revisa con
+  datos, sin reencuadrar. Cómo se cuenta, en el ROADMAP §3.
 
 ## Dónde estamos
 
@@ -39,38 +40,43 @@ Actualizado: 2026-10-16, tarde.
   * la historia reescrita sin la información personal y con el correo *noreply*, en un repositorio nuevo
     de GitHub (V8);
   * la enmienda §4d de `docs/design/PRUEBA_EN_LIMPIO.md`, para medir con la instalación en una orden (`abb0d83`);
-  * el primer borrador del README (V6), en la rama `v01/readme`, sin push.
+  * el primer borrador del README (V6), en la rama `v01/readme`, sin push;
+  * el push de `main` del 16: `origin/main` en `2efa73a`;
+  * los límites, por problemas (ADR-026), y el texto para HN y Reddit, el martes 27, con la puerta el 24 de
+    noviembre (ADR-027).
 
   Suite en verde (3681). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
   1. **La medida en macOS (V4),** del autor, como tarde el domingo 18, con un clon nuevo de `main` desde GitHub y
-     el método de §4d. Antes, el push de `main`.
-  2. **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5),** de A13 a A35. Pasa a ser la sección de
-     límites del README.
+     el método de §4d. Hasta entonces no se tocan `INSTALL.md`, `tools/install.py` ni `AGENTS.md`, que la medida
+     lee o instala.
+  2. **Los límites, por problemas (V5, ADR-026):** la tabla «Resumen» de `docs/adversarial-audit/CASES.md`, de
+     problema a casos, y la sección de límites del README, con los ocho problemas y su motivo.
   3. **El README (V6),** en `v01/readme` hasta después de la medida: si llegara antes al clon, la medida leería otra
      guía (§1 de la prueba). Le faltan los límites (V5), la cifra de la instalación (V4) y el caso de Traianus: el
      autor dice cuál es y si sus commits son públicos.
   4. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
-     DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`.
+     DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; lo de `INSTALL.md`, después de la medida.
 * Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
   de un `git` del instalador que pasa de 300 s.
 
-## Calendario hasta el 25
+## Calendario hasta el 27
 
 | Cuándo | Qué |
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
 | Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, el contrato de la memoria, la enmienda de la prueba en limpio y el borrador del README (hecho) |
-| Sábado 17 y domingo 18 | La medida en macOS (el autor) |
-| Lunes 19 | La tabla «Resumen» y la sección de límites |
+| Sábado 17 y domingo 18 | La medida en macOS (el autor); ADR-026 y ADR-027 (hecho) |
+| Lunes 19 | Los límites, por problemas |
 | Martes 20 a jueves 22 | El README |
 | Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
-| Domingo 25 | Publicar |
+| Domingo 25 | Se abre el repositorio |
+| Martes 27 | El texto en HN y Reddit, hacia las 14:00 de Madrid |
 
 ## Decisiones en vigor
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-025, salvo ADR-012 y
-ADR-023, que sustituyen ADR-022 y ADR-024:
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-027, salvo ADR-012 y
+ADR-023, sustituidas por ADR-022 y ADR-024:
 
 | ADR | Decisión |
 |---|---|
@@ -97,6 +103,8 @@ ADR-023, que sustituyen ADR-022 y ADR-024:
 | 022 | El perímetro de permisos, sin comodín y con la lista ampliada |
 | 024 | Solo un nombre demasiado largo deja de ser una ruta |
 | 025 | El acta en git y las preguntas del instalador, en dos contratos |
+| 026 | Los límites, por problemas: gobernanza en la v0.1 y seguridad en la v0.2 |
+| 027 | El texto para HN y Reddit, el martes 27; la puerta, el martes 24 de noviembre |
 
 ## Cómo se trabaja
 

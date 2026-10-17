@@ -5,6 +5,32 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-17 (tarde)
+
+Sesión del sábado 17, desde las 16:15. Dos decisiones del autor sobre cómo se cuentan los límites y cuándo sale el
+texto. Sin cambios de código.
+
+**Hecho**
+* **Al arrancar:** sandbox activo y los dos hooks instalados; `main` igual que `origin/main` en `2efa73a` (el push
+  del 16, hecho); en `origin`, solo `main`; árbol limpio en `v01/readme`. D5 se mantiene: el contexto de esta
+  sesión no trae la memoria automática.
+* **ADR-026 y ADR-027,** con el ROADMAP (§1, V5, V9, §3, §4 y §5) y el ESTADO al día.
+
+**Decidido (autor)**
+* **ADR-026:** los límites, por problemas y no por casos: cuatro de gobernanza (v0.1) y cuatro de seguridad
+  (v0.2), siguiendo el perfil A y B de la auditoría. El autor añadió que el problema 2 se nombre por lo que le falta:
+  ninguna persona aprueba los recibos ni sus motivos (*human in the loop*).
+* **ADR-027:** el repositorio se abre el 25, el texto sale el martes 27 y la puerta pasa al martes 24 de noviembre.
+
+**Salió mal y se aprendió**
+* El ESTADO decía que ADR-012 y ADR-023 «sustituyen» a ADR-022 y ADR-024; es al revés. Corregido.
+
+**Siguiente**
+* **La medida en macOS (V4),** del autor, como tarde el domingo 18. Hasta entonces no se tocan `INSTALL.md`,
+  `tools/install.py` ni `AGENTS.md`.
+* **Los límites, por problemas (V5),** el lunes 19.
+* Disco: 9 GiB libres.
+
 ## 2026-10-16 (tarde)
 
 Sesión nueva del viernes 16, de las 13:00 a las 17:45. La enmienda de la prueba en limpio para V4 entró en `main`, y

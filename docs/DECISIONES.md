@@ -347,3 +347,58 @@ política.
 auditoría. El hook `commit-msg` se instala a mano en este repositorio y con el instalador en los destinos.
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-16.
+
+## ADR-026 — Los límites, por problemas: gobernanza en la v0.1 y seguridad en la v0.2 (2026-10-17, autor)
+
+**Contexto:** V5 pedía una fila por caso de `docs/adversarial-audit/CASES.md`, de A01 a A35. Una lista de casos dice
+lo que se probó, no por qué falla el kit. La auditoría ya separaba dos perfiles: el A, el agente honesto que se
+equivoca, y el B, el que busca la salida. Es la línea de ADR-009 entre la v0.1 y la v0.2.
+**Decisión:**
+* Los límites se cuentan por problemas, cada uno con su motivo. Son ocho.
+* Gobernanza: el acta queda incompleta sin que nadie lo busque (v0.1).
+  1. El acta solo cubre su canal: se hace en la llamada a la herramienta, no en el disco. A01, A08, A29 y A30.
+  2. Ninguna persona aprueba los recibos ni sus motivos: no hay *human in the loop*. El agente se emite su recibo
+     y escribe su motivo, y el validador comprueba la forma y la cita, no que el motivo sea verdad. Con la fase
+     roja y la delegación pasa lo mismo: el agente que ejecuta se comprueba a sí mismo. A02, A03, A04, A12, A15,
+     A16 y A28.
+  3. El kit confía en cómo lo instala la persona: enlaces simbólicos, `core.fileMode` o el `PATH` de la sesión; el
+     anuncio informa y no comprueba. A11, A14, A24 y A26.
+  4. Cuando el validador cae, el trabajo se para: sin servidor no hay recibos, y cada escritura gobernada se
+     deniega. A18 y A21.
+* Seguridad: un agente que busca la salida la encuentra (v0.2).
+  5. Las puertas arrancan en un entorno que el agente alcanza: corren fuera del sandbox, con el Python, el `PATH` y
+     los ajustes del repositorio. A09, A10, A19, A31, A32 y A33.
+  6. Las comprobaciones son texto, no una frontera: listas de prohibidos y heurísticas de shell; la frontera es el
+     sandbox. A05, A06, A07 y A23.
+  7. Fuera de la base de auditoría, los registros se pueden escribir: `.data/`, el candado de la revisión ciega y
+     los *trailers*. A13, A25 y A34.
+  8. La sesión tiene lo que tiene la persona: el kit corre con sus permisos. A35.
+* A17, A20, A22 y A27 no son límites: van al pie de la tabla, con su commit.
+* La tabla «Resumen» de `CASES.md` pasa a ir de problema a casos, con lo corregido y su commit. La sección de
+  límites del README da los ocho problemas, cada uno con su motivo, un ejemplo y lo que cambia en la v0.2, sin los
+  ids de los casos.
+* V5 se comprueba así: cada caso de `CASES.md` y cada límite de AGENTS §9 están en un problema.
+* Poner a una persona en el bucle de los recibos es una función nueva: no entra antes del 25 (ADR-004).
+
+**Consecuencias:** cambia V5 del ROADMAP (ADR-017). AGENTS §9 no se reordena antes de la medida en macOS (V4),
+porque el instalador lo copia.
+**Sustituye a:** —
+**Fuente:** `docs/DEVLOG.md`, 2026-10-17.
+
+## ADR-027 — El texto para HN y Reddit, el martes 27; la puerta, el martes 24 de noviembre (2026-10-17, autor)
+
+**Contexto:** el 25 de octubre es domingo. El fin de semana, HN y Reddit tienen menos tráfico, y el público del kit
+lee de lunes a viernes; no se ha medido, porque las sesiones no buscan en la web. ADR-003 fija el 25 para publicar
+y ADR-005 cuenta cuatro semanas desde la publicación.
+**Decisión:**
+* El repositorio se abre el domingo 25, como dice ADR-003.
+* El texto para HN y Reddit (V9) sale el martes 27 hacia las 14:00 de Madrid, las 9:00 de Nueva York: esa semana
+  Europa ya ha cambiado de hora y Estados Unidos no.
+* Las cuatro semanas de la señal (ADR-005) se cuentan desde el texto: cuenta lo que llegue hasta el martes 24 de
+  noviembre a las 23:59, hora de Madrid, y la puerta pasa a ese día.
+* Los dos días no son margen de trabajo: ADR-004 sigue en vigor.
+
+**Consecuencias:** cambian §1, §3, §4, §5 y V9 del ROADMAP (ADR-017). Se decide antes de tener datos de la
+ventana, así que no es un reencuadre.
+**Sustituye a:** —
+**Fuente:** `docs/DEVLOG.md`, 2026-10-17.

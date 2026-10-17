@@ -1,21 +1,22 @@
 # Actuarii — hoja de ruta
 
 Borrador de Claude del 2026-10-14, para que lo corrija el autor antes de commitearlo (decisión del autor,
-2026-10-14). Sirve para dos cosas: cortar el alcance antes del 25 de octubre y que la revisión del 22 de
+2026-10-14). Sirve para dos cosas: cortar el alcance antes del 25 de octubre y que la revisión del 24 de
 noviembre se haga contra algo escrito antes. Las propuestas de Claude en V2–V9 y en §3–§5 las aceptó el autor el
 2026-10-14 (D7); lo que sigue abierto está en §6.
 
 El porqué de cada decisión está en `docs/PLAN.md`; el trabajo de cada día, en `docs/ESTADO.md`. Después del
-commit, un cambio de criterio lo decide el autor y se añade a `docs/DECISIONES.md` con su motivo. El 22 de noviembre este
+commit, un cambio de criterio lo decide el autor y se añade a `docs/DECISIONES.md` con su motivo. El 24 de noviembre este
 documento solo se toca para anotar el resultado.
 
 ## 1. Tres fechas
 
 | Cuándo | Qué |
 |---|---|
-| Domingo 25 de octubre | Se publica la v0.1, esté como esté (autor, 2026-10-06) |
-| Del 26 de octubre al 22 de noviembre | La ventana de señal (§3) |
-| Domingo 22 de noviembre | La puerta: se mira la señal y se decide si empieza la v0.2 (§4) |
+| Domingo 25 de octubre | Se publica la v0.1, esté como esté (autor, 2026-10-06): se abre el repositorio |
+| Martes 27 de octubre | El texto para HN y Reddit, hacia las 14:00 de Madrid (ADR-027) |
+| Del 27 de octubre al 24 de noviembre | La ventana de señal (§3) |
+| Martes 24 de noviembre | La puerta: se mira la señal y se decide si empieza la v0.2 (§4) |
 
 ## 2. La v0.1
 
@@ -64,10 +65,12 @@ pasa si no se cumple.
 * Si no se cumple: el README da la cifra, y el autor decide con los tiempos por paso (regla de su §4).
 
 **V5. Los límites, completos.**
-* Qué: la tabla «Resumen» de `docs/adversarial-audit/CASES.md` cubre de A01 a A35 (hoy llega a A12), con lo
-  corregido y su commit, lo declarado en AGENTS §9 y lo que pasa a la v0.2. Es la sección de límites del
-  README.
-* Comprobación: cada caso de `CASES.md` tiene su fila, y cada fila «declarado», su línea en §9.
+* Qué: los límites, por problemas y cada uno con su motivo (ADR-026): cuatro de gobernanza, de la v0.1, y cuatro
+  de seguridad, que pasan a la v0.2.
+  * La tabla «Resumen» de `docs/adversarial-audit/CASES.md` va de problema a casos, con lo corregido y su commit.
+  * La sección de límites del README da los ocho problemas, cada uno con su motivo, un ejemplo y lo que cambia en
+    la v0.2, sin los ids de los casos.
+* Comprobación: cada caso de `CASES.md`, de A01 a A35, y cada límite de AGENTS §9 están en un problema.
 * Corte: lunes 19.
 * Si no se cumple: el README enlaza `CASES.md` y §9 tal como estén.
 
@@ -110,7 +113,8 @@ pasa si no se cumple.
   recoge. Decide el autor.
 
 **V9. El texto para HN y Reddit.**
-* Qué: un texto técnico corto en inglés, con las reglas de autopromoción de cada sitio revisadas antes.
+* Qué: un texto técnico corto en inglés, con las reglas de autopromoción de cada sitio revisadas antes. Sale el
+  martes 27 hacia las 14:00 de Madrid, las 9:00 de Nueva York (ADR-027).
 * Corte: sábado 24.
 * Si no se cumple: el repositorio se abre el 25 y el texto sale en la primera semana de la ventana.
 
@@ -125,7 +129,8 @@ pasa si no se cumple.
 
 **El compromiso (autor, 2026-10-07):** en las cuatro semanas siguientes a la publicación, éxito si al menos 5
 personas ajenas lo instalan o abren una issue, o si nace una conversación de trabajo. Si no llega, se revisa con
-datos, sin reencuadrar.
+datos, sin reencuadrar. Las cuatro semanas se cuentan desde el texto para HN y Reddit, el martes 27 de octubre
+(ADR-027).
 
 **Cómo se cuenta:**
 * Se cuentan personas, no acciones: quien lo instala y además abre una issue cuenta una vez.
@@ -136,12 +141,12 @@ datos, sin reencuadrar.
 * **Abre una issue:** una issue o un pull request de una cuenta que no es del autor y que no es spam.
 * **Conversación de trabajo:** un intercambio sobre trabajo pagado o sobre una colaboración que nombra Actuarii,
   con respuesta de las dos partes. Basta una.
-* **Dónde se anota:** GitHub solo guarda 14 días de tráfico. Cada domingo (1, 8, 15 y 22 de noviembre) va una
-  línea en el DEVLOG con lo que cuenta, enlazado cuando es público, y el tráfico como contexto. De una
+* **Dónde se anota:** GitHub solo guarda 14 días de tráfico. Cada domingo (1, 8, 15 y 22 de noviembre), y el
+  martes 24 al cerrar, va una línea en el DEVLOG con lo que cuenta, enlazado cuando es público, y el tráfico como contexto. De una
   conversación privada se anota que existe, sin nombres: el DEVLOG es público.
-* **Hasta cuándo:** cuenta lo que llega hasta el domingo 22 de noviembre a las 23:59, hora de Madrid.
+* **Hasta cuándo:** cuenta lo que llega hasta el martes 24 de noviembre a las 23:59, hora de Madrid (ADR-027).
 
-## 4. La puerta del 22 de noviembre
+## 4. La puerta del 24 de noviembre
 
 Se mira la cuenta del §3, con sus pruebas, y nada más.
 
@@ -172,7 +177,7 @@ middleware para usar agentes de forma segura (autor, 2026-10-13). Empieza solo s
 **Orden:** las fases v0.2-a a v0.2-e de `ENTORNO_PROPIO.md` §9, con las decisiones de su §10 tomadas antes del
 prototipo.
 
-**Fecha y alcance:** la fecha se fija el 22 de noviembre, con la regla de la v0.1: no se mueve, se
+**Fecha y alcance:** la fecha se fija el 24 de noviembre, con la regla de la v0.1: no se mueve, se
 recorta alcance. De «Ideas para la v0.2» del PLAN entra solo lo que haga falta para un criterio de aquí.
 
 ## 6. Decisiones pendientes
