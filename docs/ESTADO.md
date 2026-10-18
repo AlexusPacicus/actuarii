@@ -5,7 +5,7 @@ del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en 
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
 puerta del 24 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-18, mediodía.
+Actualizado: 2026-10-18, tarde.
 
 ## La v0.1
 
@@ -40,7 +40,8 @@ Actualizado: 2026-10-18, mediodía.
   * la historia reescrita sin la información personal y con el correo *noreply*, en un repositorio nuevo
     de GitHub (V8);
   * la enmienda §4d de `docs/design/PRUEBA_EN_LIMPIO.md`, para medir con la instalación en una orden (`abb0d83`);
-  * el primer borrador del README (V6), en la rama `v01/readme`, sin push;
+  * **el README (V6), en `main`,** con los límites en ocho problemas (la otra mitad de V5, `2092f2f`) y la
+    instalación con el bloque y los 223 s. Le falta el caso de Traianus;
   * los límites, por problemas (ADR-026), y el texto para HN y Reddit, el martes 27, con la puerta el 24 de
     noviembre (ADR-027);
   * la tabla «Resumen» de `docs/adversarial-audit/CASES.md`, de problema a casos y límites de §9 (V5, `da3ccd0`):
@@ -55,14 +56,13 @@ Actualizado: 2026-10-18, mediodía.
 
   Suite en verde (3683). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **La sección de límites del README,** la otra mitad de V5 (ADR-026): los ocho problemas, cada uno con su
-     motivo, un ejemplo y lo que cambia en la v0.2, sin los ids de los casos.
-  2. **El README (V6),** en `v01/readme`. Le faltan los límites (V5) y el caso de Traianus: el autor dice cuál es y
-     si sus commits son públicos. La cifra de la instalación ya está: 223 s, unos 4 minutos (V4). Su instalación
-     usa el bloque de `INSTALL.md` (ADR-028). La rama va por detrás de `main`: antes de seguir, se le trae `main`.
-  3. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
+  1. **El caso de Traianus en el README (V6):** el autor dice cuál es, si sus commits son públicos y si se puede leer
+     su repositorio. Si no llega, es lo primero que se recorta: queda un enlace al DEVLOG.
+  2. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
      DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; `INSTALL.md` ya no trae la exención de
      `.claude/**`.
+  3. **La comprobación de V8:** `git log -p main` sin los términos personales que fije el autor, cuya lista no se
+     guarda en el repositorio. Claude propone adelantarla, porque es el único criterio que retrasa la apertura.
 * Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
   de un `git` del instalador que pasa de 300 s.
 
@@ -72,9 +72,8 @@ Actualizado: 2026-10-18, mediodía.
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
 | Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, el contrato de la memoria, la enmienda de la prueba en limpio y el borrador del README (hecho) |
-| Sábado 17 y domingo 18 | La medida en macOS, 223 s (el autor); ADR-026, ADR-027, la tabla de límites y la guía en un bloque (hecho) |
-| Lunes 19 | La sección de límites del README |
-| Martes 20 a jueves 22 | El README |
+| Sábado 17 y domingo 18 | La medida en macOS, 223 s (el autor); ADR-026 a ADR-029, los límites, la guía en un bloque y el README en `main`, con los límites y la instalación (hecho) |
+| Lunes 19 a jueves 22 | El README: el caso de Traianus y una lectura entera |
 | Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
 | Domingo 25 | Se abre el repositorio |
 | Martes 27 | El texto en HN y Reddit, hacia las 14:00 de Madrid |

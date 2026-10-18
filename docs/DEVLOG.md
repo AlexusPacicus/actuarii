@@ -5,6 +5,30 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-18 (tarde)
+
+El README está en `main`, con los límites en ocho problemas y la instalación medida. Le falta el caso de Traianus.
+
+**Hecho**
+* **`v01/readme` encima de `main`,** sin merge ni reescribir el árbol: la rama se movió a `main` y el borrador se
+  volvió a aplicar con `cherry-pick` (`867a6a9` sustituye a `59487c1`, que nada citaba).
+* **La sección de límites del README** (`2092f2f`), la otra mitad de V5 (ADR-026):
+  * cuatro problemas de gobernanza y cuatro de seguridad, cada uno con su motivo, un ejemplo y lo que cambia en la
+    v0.2, sin los ids de los casos;
+  * lo de la v0.2, tomado de `ENTORNO_PROPIO.md` (§3, §4.3, §5 y §6), sin prometer más: una persona que apruebe
+    cada recibo no está prevista, y la inyección de prompt no se resuelve;
+  * el ejemplo del problema 2 sale de la medida: Claude Code pidió aprobar la escritura y mostró su contenido, pero
+    el motivo solo llegó al validador.
+* **`main` avanzado** hasta `2092f2f`.
+* **La instalación del README:** el bloque de `INSTALL.md` (ADR-028), la primera pregunta con el destino
+  (ADR-029) y la cifra de V4. Son 223 s, medidos una vez por el autor, que conoce el kit, frente a los 612,8 s del
+  procedimiento anterior.
+
+**Siguiente**
+* **El autor:** el caso de Traianus (cuál, si sus commits son públicos y si se puede leer su repositorio).
+* **V7 y V9.** La comprobación de V8, adelantada si el autor da su lista de términos.
+* Ramas que ya están en `main` y se pueden borrar: `v01/readme`, `v01/limites` y `v01/destino-nombrado`.
+
 ## 2026-10-18 (mediodía)
 
 El instalador nombra el destino en su primera pregunta, antes de escribir (ADR-029), por contrato al implementador.

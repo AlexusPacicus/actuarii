@@ -221,21 +221,40 @@ it can no longer act outside its environment ([`ENTORNO_PROPIO.md`](docs/design/
 
 ## Install
 
-You need `git`, Claude Code, a `python3` (3.9 or later) for the installer, and a Python environment outside
-your repository for the session. From the top of a clone of Actuarii, next to your repository and never inside
-it:
+You need `git`, Claude Code and Python 3.11, as `python3.11`. Open a terminal at the top level of your repository
+and paste this block as it is. Nothing in it needs editing:
 
 ```bash
-python3 tools/install.py ~/src/your-repo
+REPO=$(git rev-parse --show-toplevel) &&
+ACTUARII=$(dirname "$REPO")/actuarii &&
+git clone https://github.com/AlexusPacicus/actuarii.git "$ACTUARII" &&
+python3.11 -m venv ~/.venvs/actuarii &&
+source ~/.venvs/actuarii/bin/activate &&
+python3 "$ACTUARII/tools/install.py" "$REPO" &&
+cd "$REPO"
 ```
 
-It asks which other paths to govern, whether to install the kit's one dependency (`pydantic`) when your
-environment lacks it, and whether to commit what it installed. [`INSTALL.md`](INSTALL.md) has every step, the
-mode without questions and what each file does.
+The block does three things and stops at the first that fails:
 
-> **Draft.** The time from an empty clone to the first governed write, measured on macOS with the one-command
-> installer, goes here after Sunday 18 (V4). The last measure, with the earlier procedure of several steps, was
-> 612.8 s, of which the agent took 35 s.
+1. it clones Actuarii next to your repository, never inside it;
+2. it creates the session's Python environment outside the repository, in `~/.venvs/actuarii`, and activates
+   it;
+3. it runs the installer.
+
+The installer asks at most three questions:
+
+* which other paths to govern. This question starts by naming the repository the kit goes into. If that is not
+  the one you meant, stop with Ctrl-C: nothing has been written yet;
+* whether to install the kit's one dependency, `pydantic`, when the environment lacks it;
+* whether to commit what it installed.
+
+Then start Claude Code in the same terminal, with `claude`. [`INSTALL.md`](INSTALL.md) has the details, the mode
+without questions and what each file does.
+
+**How long it takes.** Measured once on macOS, by the author, who knows the kit: **223 s**, about four minutes,
+from a fresh clone of a real repository to the first governed write. That includes reading the guide and
+installing `pydantic` from scratch. The agent's part, from the prompt to the write, took 19 s. The earlier
+procedure, in several steps, took 612.8 s ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §5).
 
 ## What it costs
 
