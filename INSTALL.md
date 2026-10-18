@@ -32,7 +32,8 @@ It runs in order and stops at the first step that fails:
    folder already exists, the clone fails and the block stops.
 3. The Python environment for the session is created outside your repository, in `~/.venvs/actuarii`,
    and activated in this terminal.
-4. The installer runs and asks at most three questions (below).
+4. The installer runs and asks at most three questions (below). The first one names the repository it installs into,
+   before anything is written.
 
 Then start Claude Code in this same terminal, where the environment is active:
 
@@ -61,10 +62,11 @@ project's dependencies into `~/.venvs/actuarii` as your project says.
 
 ## What the installer asks
 
-1. **Which other paths to govern.** The kit always governs `AGENTS.md`, `CLAUDE.md`, `.claude/**`,
-   `.mcp.json` and `tools/**`. Give one path per line, a file (`src/app.py`) or a directory followed by
-   `/**` (`src/**`), and an empty line to finish. Each path goes into `governed_paths` and gets its
-   `denyWrite` entry, so that Bash cannot write it either.
+1. **Which other paths to govern.** The question first names the repository the kit goes into. If it is not
+   the one you meant, stop with Ctrl-C: nothing has been written yet. The kit always governs `AGENTS.md`,
+   `CLAUDE.md`, `.claude/**`, `.mcp.json` and `tools/**`. Give one path per line, a file (`src/app.py`) or a
+   directory followed by `/**` (`src/**`), and an empty line to finish. Each path goes into `governed_paths`
+   and gets its `denyWrite` entry, so that Bash cannot write it either.
 2. **Whether to install `pydantic==2.13.3`,** only when the interpreter the validator will start with
    lacks it. The question names the interpreter and the exact `pip` command. It is never asked for an
    interpreter or an environment inside your repository.

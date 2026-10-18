@@ -48,20 +48,19 @@ Actualizado: 2026-10-18, mediodía.
   * `INSTALL.md` en un solo bloque que se pega desde la raíz del repositorio, sin nada que editar (ADR-028), y la
     enmienda §4e;
   * **la medida en macOS (V4), superada con 223 s:** el intento 5 de `docs/design/PRUEBA_EN_LIMPIO.md` §5, con sus
-    desviaciones anotadas y el hito 1 comprobado por §4c. El bloque funcionó a la primera.
+    desviaciones anotadas y el hito 1 comprobado por §4c. El bloque funcionó a la primera;
+  * **el destino, nombrado antes de escribir (ADR-029, `119d569`):** la primera pregunta del instalador empieza con
+    el repositorio en que instala y dice que Ctrl-C para ahí, solo en un terminal. Por contrato al implementador,
+    comprobado con `verify_red_green.py`; `INSTALL.md` lo dice.
 
-  Suite en verde (3681). El detalle, con sus commits, en el DEVLOG.
+  Suite en verde (3683). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **El destino, nombrado antes de escribir:** lo decide el autor. El bloque instala en el repositorio donde está
-     la terminal, y el instalador dice dónde solo después de escribir; en el intento 5 fue el repositorio de trabajo
-     del autor. La corrección propuesta es nombrar el destino en la primera pregunta, sin añadir preguntas. Sería un
-     contrato al implementador sobre `tools/install.py`, y ADR-004 lo admite porque responde a un fallo real.
-  2. **La sección de límites del README,** la otra mitad de V5 (ADR-026): los ocho problemas, cada uno con su
+  1. **La sección de límites del README,** la otra mitad de V5 (ADR-026): los ocho problemas, cada uno con su
      motivo, un ejemplo y lo que cambia en la v0.2, sin los ids de los casos.
-  3. **El README (V6),** en `v01/readme`. Le faltan los límites (V5) y el caso de Traianus: el autor dice cuál es y
+  2. **El README (V6),** en `v01/readme`. Le faltan los límites (V5) y el caso de Traianus: el autor dice cuál es y
      si sus commits son públicos. La cifra de la instalación ya está: 223 s, unos 4 minutos (V4). Su instalación
      usa el bloque de `INSTALL.md` (ADR-028). La rama va por detrás de `main`: antes de seguir, se le trae `main`.
-  4. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
+  3. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
      DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; `INSTALL.md` ya no trae la exención de
      `.claude/**`.
 * Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
@@ -82,7 +81,7 @@ Actualizado: 2026-10-18, mediodía.
 
 ## Decisiones en vigor
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-028, salvo ADR-012 y
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-029, salvo ADR-012 y
 ADR-023, sustituidas por ADR-022 y ADR-024:
 
 | ADR | Decisión |
@@ -113,6 +112,7 @@ ADR-023, sustituidas por ADR-022 y ADR-024:
 | 026 | Los límites, por problemas: gobernanza en la v0.1 y seguridad en la v0.2 |
 | 027 | El texto para HN y Reddit, el martes 27; la puerta, el martes 24 de noviembre |
 | 028 | La instalación, en un solo bloque que se pega; la orden con pantalla, en la v0.2 |
+| 029 | El instalador nombra el destino en la primera pregunta, antes de escribir |
 
 ## Cómo se trabaja
 

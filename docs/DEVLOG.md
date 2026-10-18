@@ -5,6 +5,32 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-18 (mediodía)
+
+El instalador nombra el destino en su primera pregunta, antes de escribir (ADR-029), por contrato al implementador.
+
+**Hecho**
+* **ADR-029 y su contrato** (`docs/design/DESTINO_NOMBRADO.contrato.json`, validado), en `15fe01a`. Antes de
+  delegar, se sirvió el contexto con `context_pack.py` para comprobar que encuentra cada sección.
+* **El implementador** (Sonnet, unos 49 min) hizo su commit en `v01/destino-nombrado` (`119d569`). La pregunta de
+  qué más gobernar empieza con `installing into <destino>; nothing is written until you answer, and Ctrl-C stops
+  here`, y como el resto de la pregunta solo sale en un terminal. Dos tests nuevos, en proceso, con una entrada que
+  se hace pasar por terminal; seis tests de guarda sin cambios.
+* **Comprobado por el chat:**
+  * el informe es válido;
+  * `verify_red_green.py` sale con 0: T1 y T2 fallan en la base y pasan al final, T3 pasa en los dos y la suite
+    completa pasa al final;
+  * el diff solo toca `tools/install.py` y `tests/unit/test_installer.py`;
+  * el acta del commit dice `matches` en los dos, con sus motivos.
+* **`main` avanzado** hasta `119d569` sin reescribir el árbol. **`INSTALL.md`,** al día: la primera pregunta nombra
+  el repositorio, y Ctrl-C para antes de escribir nada.
+
+**Decidido (autor)**
+* **ADR-029.**
+
+**Siguiente**
+* **La sección de límites del README** y, después, el README.
+
 ## 2026-10-18 (antes del mediodía)
 
 La medida en macOS (V4) está superada: 223 s desde el clon de `noticias` hasta el hito 2 (intento 5). El kit acabó
