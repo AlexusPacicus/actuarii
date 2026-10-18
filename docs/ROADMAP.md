@@ -83,12 +83,12 @@ pasa si no se cumple.
   * el coste por escritura gobernada, con su cifra (1875 ms de mediana, `docs/design/COSTE.md`);
   * lo que cae en la persona (`merge`, `switch`, borrar);
   * la v0.2 en una frase;
-  * el caso de Traianus, con sus commits.
+  * un caso real: los dos defectos del clasificador de `noticias` v3, con sus commits (ADR-030).
 * Comprobación: cada cosa que el README dice que el kit hace cumplir nombra el test que lo
   comprueba; si no lo tiene, se quita.
 * Corte: jueves 22.
-* Si no se cumple: se recorta en este orden: primero el caso de Traianus (queda un enlace al
-  DEVLOG), después la tabla de canales. La frase, los límites y la instalación no se recortan.
+* Si no se cumple: se recorta en este orden: primero el caso real (queda un enlace al DEVLOG),
+  después la tabla de canales. La frase, los límites y la instalación no se recortan.
 
 **V7. Nada de lo publicado contradice el kit.**
 * Qué: fuera de los registros (DEVLOG, PLAN y contratos), ningún documento describe lo que ya no es así:

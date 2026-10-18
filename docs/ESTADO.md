@@ -41,7 +41,7 @@ Actualizado: 2026-10-18, tarde.
     de GitHub (V8);
   * la enmienda §4d de `docs/design/PRUEBA_EN_LIMPIO.md`, para medir con la instalación en una orden (`abb0d83`);
   * **el README (V6), en `main`,** con los límites en ocho problemas (la otra mitad de V5, `2092f2f`) y la
-    instalación con el bloque y los 223 s. Le falta el caso de Traianus;
+    instalación con el bloque y los 223 s. Le falta el caso real (ADR-030);
   * los límites, por problemas (ADR-026), y el texto para HN y Reddit, el martes 27, con la puerta el 24 de
     noviembre (ADR-027);
   * la tabla «Resumen» de `docs/adversarial-audit/CASES.md`, de problema a casos y límites de §9 (V5, `da3ccd0`):
@@ -56,8 +56,10 @@ Actualizado: 2026-10-18, tarde.
 
   Suite en verde (3683). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **El caso de Traianus en el README (V6):** el autor dice cuál es, si sus commits son públicos y si se puede leer
-     su repositorio. Si no llega, es lo primero que se recorta: queda un enlace al DEVLOG.
+  1. **El caso real del README (V6, ADR-030):** el autor arregla los dos defectos del clasificador de `noticias` v3,
+     con el plan de `docs/design/PRUEBA_EN_LIMPIO.md` §4f, como tarde el miércoles 21. Después, el chat comprueba el
+     registro (§4c), lo anota en §5 y escribe la sección del README con sus commits. Si no llega, es lo primero que
+     se recorta: queda un enlace al DEVLOG.
   2. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
      DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; `INSTALL.md` ya no trae la exención de
      `.claude/**`.
@@ -73,14 +75,15 @@ Actualizado: 2026-10-18, tarde.
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
 | Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, el contrato de la memoria, la enmienda de la prueba en limpio y el borrador del README (hecho) |
 | Sábado 17 y domingo 18 | La medida en macOS, 223 s (el autor); ADR-026 a ADR-029, los límites, la guía en un bloque y el README en `main`, con los límites y la instalación (hecho) |
-| Lunes 19 a jueves 22 | El README: el caso de Traianus y una lectura entera |
+| Lunes 19 a miércoles 21 | El caso real en `noticias` v3 (el autor, con el plan de §4f) |
+| Jueves 22 | El README: el caso real y una lectura entera |
 | Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
 | Domingo 25 | Se abre el repositorio |
 | Martes 27 | El texto en HN y Reddit, hacia las 14:00 de Madrid |
 
 ## Decisiones en vigor
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-029, salvo ADR-012 y
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-030, salvo ADR-012 y
 ADR-023, sustituidas por ADR-022 y ADR-024:
 
 | ADR | Decisión |
@@ -112,6 +115,7 @@ ADR-023, sustituidas por ADR-022 y ADR-024:
 | 027 | El texto para HN y Reddit, el martes 27; la puerta, el martes 24 de noviembre |
 | 028 | La instalación, en un solo bloque que se pega; la orden con pantalla, en la v0.2 |
 | 029 | El instalador nombra el destino en la primera pregunta, antes de escribir |
+| 030 | El caso real del README, en `noticias` v3: los dos defectos del clasificador |
 
 ## Cómo se trabaja
 

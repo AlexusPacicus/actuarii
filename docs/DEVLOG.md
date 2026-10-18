@@ -5,6 +5,33 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-18 (tarde, el caso real)
+
+El caso real del README será en `noticias` v3, no en Traianus (ADR-030), con su plan escrito antes de hacerlo.
+
+**Hecho**
+* **El repaso de `noticias` v3 con el autor:**
+  * commiteados, una hipótesis (H1), un protocolo congelado con criterios de éxito y de fracaso, y un experimento 0
+    de 9 papers;
+
+  `origin` es `github.com/AlexusPacicus/AI-Papers-Engine`, público según el autor.
+* **Los dos defectos del clasificador, confirmados al leer `origin/v3-exp`:** la búsqueda por subcadena (`gan`
+  dentro de `organization`) y el empate de `diffusion transformer` con `diffusion`, que da `other`.
+* **ADR-030 y el plan del caso** (`docs/design/PRUEBA_EN_LIMPIO.md` §4f). El plan fija:
+  * la preparación, con los restos de la medida borrados antes, porque `~/Documents/actuarii` haría parar el
+    bloque;
+  * el texto único de la tarea, que dice dónde van los tests para que queden dentro de lo gobernado;
+  * lo que se comprueba después y lo que se cuenta, salga como salga.
+* **Al día:** V6 del ROADMAP, la sección del caso en el README, y el ESTADO con el calendario hasta el 22.
+
+**Decidido (autor)**
+* **ADR-030.**
+
+**Siguiente**
+* **El autor:** el caso, con el plan de §4f, como tarde el miércoles 21.
+* **Para decidir:** el instalador copia el kit (Apache-2.0) sin el texto de la licencia. Quien lo instale en un
+  repositorio público lo redistribuye sin esa copia, que la licencia pide.
+
 ## 2026-10-18 (tarde)
 
 El README está en `main`, con los límites en ocho problemas y la instalación medida. Le falta el caso de Traianus.

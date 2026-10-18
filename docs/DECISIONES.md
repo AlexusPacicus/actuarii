@@ -443,3 +443,25 @@ solo escribe ficheros nuevos y solo commitea los suyos.
 lectura, no un paso.
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-18.
+
+## ADR-030 — El caso real del README, en noticias v3: los dos defectos del clasificador (2026-10-18, autor)
+
+**Contexto:** V6 pedía el caso de Traianus, con sus commits. Un caso nuevo en Traianus choca con ADR-004, y el del 5
+de octubre es de antes de la v0.1: no tiene motivos ni acta en git. `noticias` (AI-Papers-Engine) es público, con
+AGPL-3.0, y su rama `v3-exp` tiene trabajo real ajeno al kit. El caso real de la prueba en limpio (2026-10-12)
+encontró dos defectos del clasificador léxico, `explorations/v3/scripts/classify_method_family.py`, y siguen ahí:
+* la familia `gan` se cuenta dentro de palabras como `organization`, porque las claves se buscan como subcadenas;
+* un texto con `diffusion transformer` empata siempre entre `diffusion` y `diffusion_transformer_or_hybrid`, y sale
+  `other`.
+
+**Decisión:**
+* El caso real del README es arreglar esos dos defectos, con los tests primero, con la v0.1 tal como se publica.
+* Se hace en un clon limpio de `origin/v3-exp`, con `explorations/v3/**` gobernado.
+* El plan se escribe antes de hacerlo (`docs/design/PRUEBA_EN_LIMPIO.md` §4f), y el README cuenta lo que pase, salga
+  como salga.
+* El caso de Traianus queda para cuando se abra su repositorio.
+
+**Consecuencias:** cambia V6 del ROADMAP (ADR-017): el caso es este, y sigue siendo lo primero que se recorta. La
+copia de trabajo del autor no se usa: tiene el `.env` y notas privadas sin commitear.
+**Sustituye a:** —
+**Fuente:** `docs/DEVLOG.md`, 2026-10-18.

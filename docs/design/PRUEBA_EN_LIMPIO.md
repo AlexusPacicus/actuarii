@@ -173,6 +173,50 @@ editar, y ese bloque clona Actuarii al lado del destino (ADR-028). No afecta a l
   un repositorio privado; queda dentro del primer parcial del paso 2, que se anota aparte.
 * **Hitos, cronómetro, lo que se anota, regla y lo de después:** los de §4d, sin cambios.
 
+## 4f. Caso real para el README (autor, 2026-10-18, antes de hacerlo)
+
+No es una medida: no hay cronómetro ni regla de tiempo. Es el caso real que cuenta el README (ADR-030). Se escribe
+antes, para que lo que se cuente no se elija después.
+
+* **Proyecto:** `noticias`, AI-Papers-Engine (`github.com/AlexusPacicus/AI-Papers-Engine`, AGPL-3.0), rama `v3-exp`.
+* **Los dos defectos,** confirmados al leer `explorations/v3/scripts/classify_method_family.py` en `origin/v3-exp`:
+  1. `count_keyword_hits` busca cada clave como subcadena (`keyword in lowered`): la clave `gan` se cuenta dentro de
+     `organization`, `began` o `slogan`.
+  2. Un texto con `diffusion transformer` contiene también `diffusion`, así que suma una coincidencia a cada
+     familia. Empatan, y `classify_text` devuelve `other`. Para que gane `diffusion_transformer_or_hybrid` hacen
+     falta dos de sus claves.
+* **Preparación, que no forma parte del caso:**
+  1. Borrar los restos de la medida que chocarían con el bloque: `~/Documents/actuarii`, donde el bloque clona, y
+     `~/.venvs/actuarii`.
+  2. Un clon nuevo de `origin/v3-exp` desde GitHub, al lado de los demás (por ejemplo, `~/Documents/noticias-caso`),
+     y una rama de trabajo (por ejemplo, `v3-exp-clasificador`). La copia de trabajo del autor no se toca.
+  3. En su raíz, el bloque del README, tal cual. Respuestas: `explorations/v3/**` y una línea vacía a qué más
+     gobernar, `y` a `pydantic` y `y` al commit.
+  4. En el entorno activo, lo que el clasificador y sus tests necesitan:
+     `python3 -m pip install pandas matplotlib pytest`.
+* **La sesión:** Claude Code, abierto con `claude` desde esa terminal, con el modelo y el modo de permisos que el
+  autor usa normalmente; se anotan los dos. Un solo texto:
+
+  > Arregla dos defectos de `explorations/v3/scripts/classify_method_family.py`. Uno: la familia `gan` se cuenta
+  > dentro de palabras como `organization`, porque las claves se buscan como subcadenas. Dos: un texto con
+  > `diffusion transformer` empata entre `diffusion` y `diffusion_transformer_or_hybrid` y sale `other`. Escribe
+  > primero, en `explorations/v3/tests/test_classify_method_family.py`, un test que falle por cada defecto, y
+  > después el cambio mínimo.
+
+  El texto es la tarea y nada más: no habla de recibos ni de gobernanza (§4b). Nombra dónde van los tests para que
+  queden dentro de lo gobernado. La persona solo aprueba lo que Claude Code le pregunte y, si el agente se para,
+  responde «continúa». Cada intervención se anota. Límite: 30 minutos.
+* **Después:**
+  1. Si el agente no ha commiteado, el autor commitea en la terminal. Cada fichero gobernado del commit debería
+     llevar `Actuarii-Record: matches`, con sus motivos.
+  2. La comprobación del registro por el método de §4c: cada escritura gobernada con su recibo, y ningún cambio
+     gobernado sin una escritura que lo explique.
+  3. Los tests nuevos, ejecutados: fallan en el commit de la instalación y pasan en el del arreglo.
+  4. El autor sube la rama a GitHub, y el README enlaza sus commits.
+* **Qué se cuenta:** lo que pase, también lo que salga mal: una escritura fuera de las rutas gobernadas, un `changed
+  outside the channel` o una intervención. Si el caso no está hecho el miércoles 21, el README lo recorta (V6).
+* **Evidencia:** el rastro, la transcripción y los commits, guardados como los del intento 5.
+
 ## 5. Resultados
 
 ### Linux (CI), 2026-10-08

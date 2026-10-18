@@ -285,10 +285,12 @@ agent inside an isolated environment of its own, with the gates and a write brok
 boundary no longer depends on one vendor's hooks and is designed to hold against an adversarial agent
 ([`ENTORNO_PROPIO.md`](docs/design/ENTORNO_PROPIO.md)).
 
-## A real case: Traianus
+## A real case
 
-> **Draft.** Actuarii was born governing Traianus. This section follows one piece of work there, from the frozen
-> protocol to the result, with its commits. Pending: which case, and whether its commits are public.
+> **Draft.** One piece of real work in another project, done with v0.1 as published: fixing two defects of the
+> paper classifier of [AI Papers Engine](https://github.com/AlexusPacicus/AI-Papers-Engine), tests first, with its
+> commits. The case was planned before it was done
+> ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §4f).
 
 ## License
 
