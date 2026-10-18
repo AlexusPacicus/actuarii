@@ -36,6 +36,8 @@ are translated.
 
 **Next**
 * **The author:** review the translated `ROADMAP.md` as the sample of tone and edits, and the three decisions above.
+  On closing, the author said that "we will be able to shorten"; what and how is to be agreed before translating
+  more, and is not recorded as a decision.
 * **Translation, priority 1:** `CASES.md`, `PRUEBA_EN_LIMPIO.md`, `COSTE.md`, `ENTORNO_PROPIO.md`, `SANDBOX.md`.
   Then `DECISIONES.md`, then the rest. When it is done, the README's line about Spanish says that the history keeps
   the original commit messages.

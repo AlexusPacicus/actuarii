@@ -61,8 +61,10 @@ Updated: 2026-10-18, evening.
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
   1. **The translation (ADR-032),** in its order: what the README links (`CASES.md`, `PRUEBA_EN_LIMPIO.md`,
-     `COSTE.md`, `ENTORNO_PROPIO.md`, `SANDBOX.md`, `ROADMAP.md`); then `DECISIONES.md`; then the other records.
-     What is not translated by 25 October leaves the tree.
+     `COSTE.md`, `ENTORNO_PROPIO.md`, `SANDBOX.md`; `ROADMAP.md` is done); then `DECISIONES.md`; then the other
+     records. What is not translated by 25 October leaves the tree. Before going on: the author reviews the
+     translated `ROADMAP.md` as the sample, and said on closing on 2026-10-18 that "we will be able to shorten".
+     What is shortened, and how, is not decided yet: agree on it first.
   2. **Three decisions of the author, before their documents are translated:**
      * `examples/traianus/`: Claude recommends removing it from the tree. Nothing uses it, it describes a private
        project from inside and it still says "Blind by construction";
