@@ -123,7 +123,8 @@ pasa si no se cumple.
   declarados sin corregir (autor, 2026-10-14).
 * Nada de Traianus, ninguna mejora de gobernanza que no responda a un fallo real y ninguna función nueva salvo
   el acta en git (autor, 2026-10-06 y 2026-10-14).
-* Los nombres llanos de los campos, el plugin y la optimización del coste van a la v0.2.
+* Los nombres llanos de los campos, el plugin, la orden única con pantalla propia (ADR-028) y la optimización del
+  coste van a la v0.2.
 
 ## 3. La ventana de señal
 

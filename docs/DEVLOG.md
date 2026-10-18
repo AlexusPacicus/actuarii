@@ -5,6 +5,65 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-18 (mañana)
+
+La medida en macOS se paró en el paso 3 y quedó en ensayo (intento 4). La guía pasa a ser un solo bloque que se pega.
+
+**Hecho**
+* **El intento 4,** en `docs/design/PRUEBA_EN_LIMPIO.md` §5: ensayo, sin cifra. Se copiaron tal cual las rutas del
+  ejemplo del paso 3 de la guía (`~/src/actuarii`, `~/src/your-repo`). Es el roce del intento 2, que se había
+  corregido con un aviso en prosa. Además, `~/src` no existe en esta máquina.
+* **`INSTALL.md` en un solo bloque (ADR-028)** que se pega desde la raíz del repositorio. Saca la ruta de
+  `git rev-parse`, clona Actuarii al lado, crea y activa el entorno fuera y ejecuta el instalador; cada paso, unido
+  con `&&`. El instalador encuentra su clon por su propia ruta (`Path(__file__)`), así que no hace falta `cd`. Sin
+  ejecutar el bloque de punta a punta: el sandbox no deja clonar desde la red ni crear el entorno en `~/.venvs`, y el
+  shim deniega `python3.11 -m venv`. Lo prueba la medida.
+* **La enmienda §4e:** el bloque pegado tal cual, con el clon de Actuarii dentro del tiempo, anotado en su propio
+  parcial.
+
+**Decidido (autor)**
+* **ADR-028:** la instalación, en un bloque que se pega; la orden única con pantalla propia, en la v0.2.
+
+**Salió mal y se aprendió**
+* **El chat dio, antes de medir, las órdenes de los clones con rutas que no eran las de la guía,** y el `cd` del
+  paso 3 ya no podía funcionar. Lección: en una medida, el chat da el método, nunca órdenes.
+* **Un aviso en prosa no corrige un roce de copiar y pegar:** el del intento 2 volvió. Lo que lo corrige es que la
+  orden copiada sea la correcta.
+
+**Siguiente**
+* **El autor:** el push de `main`, borrar `~/.venvs/actuarii` y repetir la medida con §4e. El destino,
+  `~/Documents/noticias-medida-4`: el bloque clonará Actuarii en `~/Documents/actuarii`, que no existe.
+
+## 2026-10-18 (mañana, cierre del 17)
+
+La sesión del 17 sigue abierta. La entrada de abajo se escribió a media tarde, antes de la tabla de V5; esta cierra
+el resto del día.
+
+**Hecho**
+* **La tabla «Resumen» de `docs/adversarial-audit/CASES.md` (V5, ADR-026),** en `da3ccd0`, en la rama
+  `v01/limites`:
+  * ocho problemas, cada uno con su motivo, sus casos con su estado y sus límites de AGENTS §9; al pie, A17, A20,
+    A22, A27 y los controles del primer día;
+  * comprobado con `grep`: los 35 casos y los 28 límites de §9 salen una vez cada uno. Suite: 3681 en verde;
+  * los commits citados son los merges a `main` de F1–F4 y del sandbox, como en `docs/process/PROCESO.md`; para
+    A20, A31 y A34, el commit de la corrección;
+  * A05, corregido por F4b, con lo que queda en §9. A09, corregido en la sesión, y A10, corregido para `Bash`. A18,
+    sin el commit de su arreglo parcial: queda «reabierto como A21».
+* **`main` avanzado hasta `v01/limites`** sin reescribir el árbol. **El push, del autor:** `origin/main` en
+  `da3ccd0`.
+
+**Salió mal y se aprendió**
+* **El ESTADO se quedó viejo una noche:** la entrada y el ESTADO del 17 se escribieron con el commit de las ADR, y la
+  tabla llegó después. Lección: se cierran después del último commit de la sesión.
+
+**Siguiente**
+* **La medida en macOS (V4),** del autor, hoy. Mientras mide, el chat no ejecuta la suite: comparten la máquina, y
+  la suite mueve los tiempos.
+* **La sección de límites del README,** la otra mitad de V5, en `v01/readme`. Esa rama va dos commits por detrás de
+  `main`: antes de seguir, se le trae `main`.
+* `v01/limites` ya está en `main`; se puede borrar.
+* Disco: 6,6 GiB libres, desde 9 GiB el 17.
+
 ## 2026-10-17 (tarde)
 
 Sesión del sábado 17, desde las 16:15. Dos decisiones del autor sobre cómo se cuentan los límites y cuándo sale el

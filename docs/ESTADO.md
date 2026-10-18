@@ -5,7 +5,7 @@ del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en 
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
 puerta del 24 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-17, tarde.
+Actualizado: 2026-10-18, mañana.
 
 ## La v0.1
 
@@ -41,22 +41,30 @@ Actualizado: 2026-10-17, tarde.
     de GitHub (V8);
   * la enmienda §4d de `docs/design/PRUEBA_EN_LIMPIO.md`, para medir con la instalación en una orden (`abb0d83`);
   * el primer borrador del README (V6), en la rama `v01/readme`, sin push;
-  * el push de `main` del 16: `origin/main` en `2efa73a`;
   * los límites, por problemas (ADR-026), y el texto para HN y Reddit, el martes 27, con la puerta el 24 de
-    noviembre (ADR-027).
+    noviembre (ADR-027);
+  * la tabla «Resumen» de `docs/adversarial-audit/CASES.md`, de problema a casos y límites de §9 (V5, `da3ccd0`):
+    los 35 casos y los 28 límites, una vez cada uno;
+  * `main` y `origin/main` en `da3ccd0` (push del autor, el 17);
+  * `INSTALL.md` en un solo bloque que se pega desde la raíz del repositorio, sin nada que editar (ADR-028), y la
+    enmienda §4e para repetir la medida. Sin ejecutar el bloque de punta a punta: lo prueba la medida.
 
   Suite en verde (3681). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **La medida en macOS (V4),** del autor, como tarde el domingo 18, con un clon nuevo de `main` desde GitHub y
-     el método de §4d. Hasta entonces no se tocan `INSTALL.md`, `tools/install.py` ni `AGENTS.md`, que la medida
-     lee o instala.
-  2. **Los límites, por problemas (V5, ADR-026):** la tabla «Resumen» de `docs/adversarial-audit/CASES.md`, de
-     problema a casos, y la sección de límites del README, con los ocho problemas y su motivo.
+  1. **La medida en macOS (V4),** del autor, como tarde el domingo 18, con el método de §4e. El intento 4 (18 por la
+     mañana) quedó en ensayo: se copiaron otra vez las rutas del ejemplo de la guía. Antes de repetir: el push de
+     `main`, que lleva la guía nueva, y borrar `~/.venvs/actuarii`. Hasta medir no se tocan `INSTALL.md`,
+     `tools/install.py` ni `AGENTS.md`; el chat no da órdenes, solo el método, y no ejecuta la suite mientras el
+     autor mide, porque comparten la máquina.
+  2. **La sección de límites del README,** la otra mitad de V5 (ADR-026): los ocho problemas, cada uno con su
+     motivo, un ejemplo y lo que cambia en la v0.2, sin los ids de los casos.
   3. **El README (V6),** en `v01/readme` hasta después de la medida: si llegara antes al clon, la medida leería otra
      guía (§1 de la prueba). Le faltan los límites (V5), la cifra de la instalación (V4) y el caso de Traianus: el
-     autor dice cuál es y si sus commits son públicos.
+     autor dice cuál es y si sus commits son públicos. Su instalación usa el bloque de `INSTALL.md` (ADR-028). La
+     rama va por detrás de `main`: antes de seguir, se le trae `main`.
   4. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
-     DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; lo de `INSTALL.md`, después de la medida.
+     DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; `INSTALL.md` ya no trae la exención de
+     `.claude/**`.
 * Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
   de un `git` del instalador que pasa de 300 s.
 
@@ -66,8 +74,8 @@ Actualizado: 2026-10-17, tarde.
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
 | Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, el contrato de la memoria, la enmienda de la prueba en limpio y el borrador del README (hecho) |
-| Sábado 17 y domingo 18 | La medida en macOS (el autor); ADR-026 y ADR-027 (hecho) |
-| Lunes 19 | Los límites, por problemas |
+| Sábado 17 y domingo 18 | La medida en macOS (el autor); ADR-026, ADR-027, la tabla de límites y la guía en un bloque (hecho) |
+| Lunes 19 | La sección de límites del README |
 | Martes 20 a jueves 22 | El README |
 | Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
 | Domingo 25 | Se abre el repositorio |
@@ -75,7 +83,7 @@ Actualizado: 2026-10-17, tarde.
 
 ## Decisiones en vigor
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-027, salvo ADR-012 y
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-028, salvo ADR-012 y
 ADR-023, sustituidas por ADR-022 y ADR-024:
 
 | ADR | Decisión |
@@ -105,6 +113,7 @@ ADR-023, sustituidas por ADR-022 y ADR-024:
 | 025 | El acta en git y las preguntas del instalador, en dos contratos |
 | 026 | Los límites, por problemas: gobernanza en la v0.1 y seguridad en la v0.2 |
 | 027 | El texto para HN y Reddit, el martes 27; la puerta, el martes 24 de noviembre |
+| 028 | La instalación, en un solo bloque que se pega; la orden con pantalla, en la v0.2 |
 
 ## Cómo se trabaja
 

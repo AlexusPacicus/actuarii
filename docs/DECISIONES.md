@@ -402,3 +402,25 @@ y ADR-005 cuenta cuatro semanas desde la publicación.
 ventana, así que no es un reencuadre.
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-17.
+
+## ADR-028 — La instalación, en un solo bloque que se pega; la orden con pantalla, en la v0.2 (2026-10-18, autor)
+
+**Contexto:** en el intento 4 de la prueba en limpio, como en el 2, se copiaron tal cual las rutas del ejemplo de
+`INSTALL.md`. El aviso que las marcaba como de ejemplo estaba en prosa. Además, el paso 1 empezaba en `~/src`, que
+puede no existir. El autor propuso una sola orden, con una pequeña interfaz de instalación.
+**Decisión:**
+* `INSTALL.md` instala con un solo bloque que se pega desde la raíz del repositorio, sin nada que editar:
+  * saca la ruta del repositorio de `git rev-parse`;
+  * clona Actuarii al lado;
+  * crea y activa el entorno fuera del repositorio;
+  * ejecuta el instalador, cuyas preguntas son la interfaz.
+
+  Cada paso va unido al siguiente con `&&`, así que el bloque se para en el primer fallo. El instalador no cambia.
+* La medida en macOS (V4) se repite con la enmienda §4e de `docs/design/PRUEBA_EN_LIMPIO.md`.
+* Una orden única con pantalla propia, sea un plugin de Claude Code o un programa de arranque, es una función nueva:
+  va a la v0.2 (ADR-004). Un `curl … | sh` no se usa: es mala primera impresión para un kit de trazabilidad.
+
+**Consecuencias:** la sección de instalación del README usa el mismo bloque. Cambia la línea «Fuera de la v0.1» del
+ROADMAP (ADR-017).
+**Sustituye a:** —
+**Fuente:** `docs/DEVLOG.md`, 2026-10-18.

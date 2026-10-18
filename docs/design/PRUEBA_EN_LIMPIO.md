@@ -149,6 +149,30 @@ la instalación es ahora una orden (ADR-008, ADR-025). El instalador pregunta qu
      del lanzamiento. No entra en la regla.
 * **No se repite** el caso real de §4b: se hizo el 2026-10-12 (§5), y su resultado es A30.
 
+## 4e. Enmienda (autor, 2026-10-18, antes de repetir la medida de §4d)
+
+Sustituye lo que se le opone de §4d. Motivo: en el intento 4 (§5) se copiaron por segunda vez las rutas del ejemplo
+de la guía. `INSTALL.md` instala ahora con un solo bloque que se pega desde la raíz del destino, sin nada que
+editar, y ese bloque clona Actuarii al lado del destino (ADR-028). No afecta a la parte de Linux (CI).
+
+* **Guía:** `INSTALL.md` en el commit que se prueba. Leerla cuenta.
+* **Punto de partida (no cuenta):**
+  * ningún clon de Actuarii hecho a mano, y ninguna carpeta `actuarii` al lado del destino;
+  * `~/.venvs/actuarii` no existe. Si existe, se borra antes; si no se puede borrar, se anota;
+  * el chat no da ninguna orden: solo este método.
+* **Secuencia cronometrada** (sustituye la de §4d):
+  1. Clon local nuevo de `noticias` en `v3-exp`, commit `1676538`, como en §4b, y una terminal en su raíz.
+  2. El bloque de la guía, pegado tal cual. Dos parciales: al salir la primera pregunta del instalador (el clon de
+     Actuarii y el entorno) y al acabar el instalador. Las respuestas, las de §4d: una línea vacía a qué más
+     gobernar, `y` a instalar `pydantic` y `y` al commit. Una pregunta que no aparece se anota.
+  3. Abrir Claude Code en esa misma terminal, como dice la guía, y aceptar lo que pida: confianza en la carpeta y
+     servidor MCP.
+  4. El texto fijo de §4b: «Crea `AGENTS.md` con una línea: `# Prueba`.»
+  5. Sin texto, como en §4b. **Hito 2, fin del cronómetro.**
+* **El clon de Actuarii cuenta:** es parte del bloque. §2 lo dejaba fuera porque dependía de la red y del acceso a
+  un repositorio privado; queda dentro del primer parcial del paso 2, que se anota aparte.
+* **Hitos, cronómetro, lo que se anota, regla y lo de después:** los de §4d, sin cambios.
+
 ## 5. Resultados
 
 ### Linux (CI), 2026-10-08
@@ -368,3 +392,40 @@ no lo declara como límite.
 * En la 2b se corrige el anuncio de la sesión, para que nombre las rutas gobernadas que no tienen su
   entrada en `denyWrite` (G13; hallazgo 2 de la auditoría informal del 2026-10-10).
 * El mapa de gobierno, una vista de lo gobernado y lo no gobernado, va a la v0.2 (`docs/PLAN.md`).
+
+### macOS (persona), intento 4, 2026-10-18: ensayo, sin cifra
+
+Empezó como la medida de §4d. El autor lo paró en el paso 3, después del primer error con la guía. Claude Code no
+llegó a abrirse.
+
+Destino: clon de `noticias` en `v3-exp` (`1676538`) en `~/Documents/noticias-medida-3`. Actuarii desde GitHub en
+`da3ccd0`, en `~/Documents/actuarii-medida-3`. Entorno nuevo en `~/.venvs/actuarii`, la ruta del ejemplo de la guía.
+Las horas salen de las fechas de los ficheros (hora local, UTC+2):
+
+| Hora | Qué |
+|---|---|
+| 11:02:59 | Clon de `noticias` |
+| 11:03:14 | Clon de Actuarii |
+| 11:03:26 | Entorno creado y activado |
+
+**Desviaciones del protocolo**
+* **El chat dio, antes de medir, las órdenes de los dos clones,** con rutas que no son las del ejemplo de la guía:
+  `~/Documents/actuarii-medida-3` en lugar de `~/src/actuarii`. Es una intervención del chat, como en los intentos
+  1 y 2, aunque menor.
+* **El clon de Actuarii se hizo después del de `noticias`,** dentro del tiempo (15 s).
+
+**Roces**
+1. **Guía, por segunda vez: se copiaron tal cual las órdenes del paso 3,** con las rutas del ejemplo. `cd
+   ~/src/actuarii` falló, y `python3 tools/install.py ~/src/your-repo` se ejecutó en la carpeta de trabajo de
+   `noticias`, donde no hay `tools/install.py`. No se escribió nada. Es el roce 1 del intento 2. Su corrección, el
+   párrafo que dice que las rutas son de ejemplo y la pista sobre «no such directory», está en prosa, y quien copia
+   la orden no la lee. La pista del instalador no llegó a salir: la orden falló antes de llegar a él.
+2. **Guía:** el paso 1 empieza con `cd ~/src`, y en esta máquina `~/src` no existe.
+
+**Lectura (Claude):** un aviso en prosa no impide que se copie la orden. Es una instrucción, no una regla, lo mismo
+que el kit dice de los agentes. Lo que lo impide es que la orden copiada sea correcta o que falle diciendo qué
+cambiar.
+
+**Corregido antes del intento siguiente:** los dos roces, en `INSTALL.md`, con un solo bloque que se pega sin
+editar nada (ADR-028), y el método, en §4e. `~/.venvs/actuarii` quedó creado: antes del intento siguiente se borra
+(§4e).
