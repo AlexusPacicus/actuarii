@@ -5,7 +5,7 @@ del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en 
 cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
 puerta del 24 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-18, mañana.
+Actualizado: 2026-10-18, mediodía.
 
 ## La v0.1
 
@@ -45,23 +45,22 @@ Actualizado: 2026-10-18, mañana.
     noviembre (ADR-027);
   * la tabla «Resumen» de `docs/adversarial-audit/CASES.md`, de problema a casos y límites de §9 (V5, `da3ccd0`):
     los 35 casos y los 28 límites, una vez cada uno;
-  * `main` y `origin/main` en `da3ccd0` (push del autor, el 17);
   * `INSTALL.md` en un solo bloque que se pega desde la raíz del repositorio, sin nada que editar (ADR-028), y la
-    enmienda §4e para repetir la medida. Sin ejecutar el bloque de punta a punta: lo prueba la medida.
+    enmienda §4e;
+  * **la medida en macOS (V4), superada con 223 s:** el intento 5 de `docs/design/PRUEBA_EN_LIMPIO.md` §5, con sus
+    desviaciones anotadas y el hito 1 comprobado por §4c. El bloque funcionó a la primera.
 
   Suite en verde (3681). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **La medida en macOS (V4),** del autor, como tarde el domingo 18, con el método de §4e. El intento 4 (18 por la
-     mañana) quedó en ensayo: se copiaron otra vez las rutas del ejemplo de la guía. Antes de repetir: el push de
-     `main`, que lleva la guía nueva, y borrar `~/.venvs/actuarii`. Hasta medir no se tocan `INSTALL.md`,
-     `tools/install.py` ni `AGENTS.md`; el chat no da órdenes, solo el método, y no ejecuta la suite mientras el
-     autor mide, porque comparten la máquina.
+  1. **El destino, nombrado antes de escribir:** lo decide el autor. El bloque instala en el repositorio donde está
+     la terminal, y el instalador dice dónde solo después de escribir; en el intento 5 fue el repositorio de trabajo
+     del autor. La corrección propuesta es nombrar el destino en la primera pregunta, sin añadir preguntas. Sería un
+     contrato al implementador sobre `tools/install.py`, y ADR-004 lo admite porque responde a un fallo real.
   2. **La sección de límites del README,** la otra mitad de V5 (ADR-026): los ocho problemas, cada uno con su
      motivo, un ejemplo y lo que cambia en la v0.2, sin los ids de los casos.
-  3. **El README (V6),** en `v01/readme` hasta después de la medida: si llegara antes al clon, la medida leería otra
-     guía (§1 de la prueba). Le faltan los límites (V5), la cifra de la instalación (V4) y el caso de Traianus: el
-     autor dice cuál es y si sus commits son públicos. Su instalación usa el bloque de `INSTALL.md` (ADR-028). La
-     rama va por detrás de `main`: antes de seguir, se le trae `main`.
+  3. **El README (V6),** en `v01/readme`. Le faltan los límites (V5) y el caso de Traianus: el autor dice cuál es y
+     si sus commits son públicos. La cifra de la instalación ya está: 223 s, unos 4 minutos (V4). Su instalación
+     usa el bloque de `INSTALL.md` (ADR-028). La rama va por detrás de `main`: antes de seguir, se le trae `main`.
   4. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
      DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; `INSTALL.md` ya no trae la exención de
      `.claude/**`.
@@ -74,7 +73,7 @@ Actualizado: 2026-10-18, mañana.
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
 | Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, el contrato de la memoria, la enmienda de la prueba en limpio y el borrador del README (hecho) |
-| Sábado 17 y domingo 18 | La medida en macOS (el autor); ADR-026, ADR-027, la tabla de límites y la guía en un bloque (hecho) |
+| Sábado 17 y domingo 18 | La medida en macOS, 223 s (el autor); ADR-026, ADR-027, la tabla de límites y la guía en un bloque (hecho) |
 | Lunes 19 | La sección de límites del README |
 | Martes 20 a jueves 22 | El README |
 | Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |

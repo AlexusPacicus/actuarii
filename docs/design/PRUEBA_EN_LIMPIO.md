@@ -429,3 +429,63 @@ cambiar.
 **Corregido antes del intento siguiente:** los dos roces, en `INSTALL.md`, con un solo bloque que se pega sin
 editar nada (ADR-028), y el método, en §4e. `~/.venvs/actuarii` quedó creado: antes del intento siguiente se borra
 (§4e).
+
+### macOS (persona), intento 5, 2026-10-18: la medida V4
+
+Con la guía de un solo bloque (`93cc0c9`) y el método de §4e. Sin ayuda del chat entre el clon de `noticias` y el
+hito 2. Claude Code 2.1.299, Sonnet 5.5, modo de permisos por defecto. El autor cronometró a grandes rasgos (un
+minuto para instalar y unos 50 s desde abrir Claude Code); vale el registro, como en el intento 3: las fechas de los
+ficheros, el commit de la instalación y la transcripción (`6a5b1003-…`).
+
+**Desviaciones del protocolo**
+* **El destino fue el repositorio de trabajo del autor, `~/Documents/noticias`, no el clon.** La terminal se quedó
+  allí, y el bloque instala donde está la terminal. Es el mismo commit, `1676538`, con trabajo del autor sin
+  commitear, que el instalador no tocó. El clon (`~/Documents/noticias-medida-3`) se hizo y no se usó.
+* **El texto no fue el fijo de §4b,** sino «escribe "Prueba" en una ruta gobernada», que nombra la gobernanza. Solo
+  afecta al tramo del agente.
+* **Modo de permisos por defecto:** la escritura pidió aprobación, unos 3 s.
+* **Sin el commit de después (§4d):** la instalación se deshizo antes (abajo). El acta en git de un destino queda sin
+  ver en macOS; la cubren sus tests y la CI.
+
+**Tiempos** (hora local, UTC+2)
+
+| Hora | Paso | Acumulado |
+|---|---|---|
+| 11:34:00 | 1. Clon de `noticias` | 0 s |
+| 11:35:51 | 2. Guía leída y bloque pegado: clon de Actuarii y entorno | 111 s |
+| 11:36:19 | 2. Instalador terminado, con `pydantic` instalado desde cero y el commit (`64d269f`) | 139 s |
+| 11:36:51 | 3. Claude Code abierto | 171 s |
+| 11:37:24 | 4. Texto | 204 s |
+| 11:37:34 | Primera escritura, denegada por la puerta | 214 s |
+| 11:37:43 | 5. **Hito 2** | **223 s** |
+
+**Hitos**
+* **Hito 1 (§4c): se cumple.**
+  1. En la transcripción, dos `Write` de `tools/prueba.txt` con el mismo contenido, `Prueba\n`. La puerta denegó el
+     primero (09:37:34.694 UTC): el recibo que había (`f1db721f…`, 09:37:32) era de otro contenido, `Prueba` sin el
+     salto de línea final, y la denegación nombró la regla (`tools/**`), su fuente (`.actuarii.json`) y lo que la
+     resuelve. Dejó pasar el segundo, a las 09:37:40.209 UTC.
+  2. Recibo `16305fd8-09a4-4150-b9d5-a64bcf7f71e5`, 09:37:38 UTC: anterior a la escritura y dentro de la ventana. Su
+     `block_sha256` (`e03d1e7e…f771`) es el SHA-256 de `Prueba\n`, y `grounding_sha256` el de la cita vacía. La
+     tabla `writes` del acta (ADR-016) registra esa escritura con ese recibo.
+  3. Desde `64d269f`, la única ruta gobernada cambiada era `tools/prueba.txt`, sin trackear (`git status` antes de
+     deshacer la instalación).
+* **Hito 2: alcanzado** a los 223 s del clon de `noticias` y a los 19 s del texto.
+* **Regla de §4: se supera.** El hito 2 llega antes de los 300 s, y los dos hitos se dan como se describen.
+
+**Roces y hallazgos**
+1. **Kit: el bloque instala en el repositorio donde está la terminal,** y el instalador dice dónde (`installing into
+   …`) solo después de escribir. Aquí fue el repositorio de trabajo del autor. El instalador escribió solo ficheros
+   nuevos y commiteó solo los suyos, como promete `INSTALL.md`, así que se deshizo sin tocar el trabajo del autor:
+   `git reset --keep 1676538` y fuera `tools/`, `.data/`, el `.claude/` de la raíz y los dos hooks de git.
+   Corrección propuesta: nombrar el destino en la primera pregunta, antes de escribir nada.
+2. **El bloque funcionó a la primera:** clon, entorno, `pydantic` desde cero, instalación y commit, a los 139 s del
+   clon de `noticias`, con la lectura de la guía dentro.
+3. **La denegación, en vivo:** es lo que pedía el hito 1 original de §3, una escritura que su recibo no cubre,
+   rechazada nombrando la regla y su fuente. El agente salió solo de ella.
+
+**Evidencia:** la base de auditoría, en `~/Documents/actuarii-evidencia/intento-5/`, y la transcripción, en
+`~/.claude/projects/-Users-test-Documents-noticias/`.
+
+**Decisión (autor, 2026-10-18, después de ver el resultado):** el intento 5 vale como la medida V4, con sus
+desviaciones anotadas, si se cumple el hito 1 por §4c. Se cumple (arriba): **V4, superado, con 223 s.**

@@ -5,6 +5,42 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-18 (antes del mediodía)
+
+La medida en macOS (V4) está superada: 223 s desde el clon de `noticias` hasta el hito 2 (intento 5). El kit acabó
+instalado en el repositorio de trabajo del autor y se deshizo sin pérdida.
+
+**Hecho**
+* **El intento 5,** en `docs/design/PRUEBA_EN_LIMPIO.md` §5, con la guía de un bloque (`93cc0c9`). El bloque funcionó
+  a la primera: instalación, `pydantic` desde cero y commit, a los 139 s. La puerta denegó en vivo la primera
+  escritura, cuyo recibo era de `Prueba` sin el salto de línea final, nombrando la regla y su fuente. El agente salió
+  solo de ella.
+* **El hito 1, comprobado por §4c** sobre una copia de la base de auditoría, con `sqlite3` en modo inmutable:
+  * el recibo `16305fd8…` es anterior a la escritura y está dentro de la ventana;
+  * su `block_sha256` es el SHA-256 de `Prueba\n`;
+  * la tabla `writes` registra esa escritura con ese recibo.
+* **La instalación, deshecha en `~/Documents/noticias`:** la evidencia, copiada antes; después
+  `git reset --keep 1676538` y fuera `tools/`, `.data/`, el `.claude/` de la raíz y los dos hooks de git. El trabajo
+  sin commitear del autor quedó intacto. Comprobado: `HEAD` en `1676538`, al día con `origin/v3-exp`.
+* **Los clones de prueba viejos, borrados por el autor,** con la evidencia de los intentos 2 y 3 y de la 2b guardada
+  antes en `~/Documents/actuarii-evidencia/`. El clon de Actuarii con la historia anterior a la reescritura, y con
+  la información personal, ya no está en la máquina.
+
+**Decidido (autor)**
+* El intento 5 vale como la medida V4, con sus desviaciones anotadas, si se cumple el hito 1 por §4c. Se cumple.
+
+**Salió mal y se aprendió**
+* **El bloque instala donde está la terminal,** y la terminal seguía en el repositorio de trabajo del autor. Que el
+  instalador escriba solo ficheros nuevos y commitee solo los suyos permitió deshacerlo sin pérdida. Pero dice dónde
+  instala solo después de escribir.
+* **El mensaje del chat con la limpieza se cerró sin su contenido:** la caja de la pregunta se mostró antes que el
+  texto. Lección: el texto va antes de la pregunta.
+
+**Siguiente**
+* **El autor decide** si el destino se nombra antes de escribir (ESTADO, pendiente 1).
+* **La sección de límites del README** y, después, el README con la cifra de V4.
+* Restos de la medida, sin prisa: `~/Documents/actuarii`, `~/Documents/noticias-medida-3` y `~/.venvs/actuarii`.
+
 ## 2026-10-18 (mañana)
 
 La medida en macOS se paró en el paso 3 y quedó en ensayo (intento 4). La guía pasa a ser un solo bloque que se pega.
