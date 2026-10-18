@@ -424,3 +424,22 @@ puede no existir. El autor propuso una sola orden, con una pequeña interfaz de 
 ROADMAP (ADR-017).
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-18.
+
+## ADR-029 — El instalador nombra el destino en la primera pregunta, antes de escribir (2026-10-18, autor)
+
+**Contexto:** en la medida en macOS (intento 5), el bloque de `INSTALL.md` instaló el kit en el repositorio de trabajo
+del autor: la terminal estaba allí, y el bloque instala donde está la terminal (ADR-028). El instalador dice dónde
+instala (`installing into …`) solo en el informe, después de escribir. Se deshizo sin pérdida, porque el instalador
+solo escribe ficheros nuevos y solo commitea los suyos.
+**Decisión:**
+* En una ejecución que pregunta, la pregunta de qué más gobernar empieza con una línea que nombra el destino y dice
+  que no se escribe nada hasta responder y que Ctrl-C para ahí. No se añade ninguna pregunta.
+* Como las demás preguntas, solo se escribe cuando la entrada estándar es un terminal. Con `--govern`, `--no-input`
+  o `--dry-run` no hay pregunta y nada cambia.
+* Va en un contrato al implementador (`docs/design/DESTINO_NOMBRADO.contrato.json`). ADR-004 lo admite, porque
+  responde a un fallo real.
+
+**Consecuencias:** `INSTALL.md` lo dice en la sección de las preguntas. La medida V4 no se repite: la línea añade una
+lectura, no un paso.
+**Sustituye a:** —
+**Fuente:** `docs/DEVLOG.md`, 2026-10-18.
