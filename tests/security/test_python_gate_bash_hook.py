@@ -84,6 +84,8 @@ PERMITTED = [
     "ruff check .",
     "npm --prefix frontend run typecheck",
     "python3 --version",
+    "python3 tools/audit/x.py -m pytest",
+    "python3 -m pip --version",
     "tools/bin/python3 tools/audit/x.py",
     "/work/repo/tools/bin/python3 tools/audit/x.py",
     "git grep python3",
@@ -145,6 +147,19 @@ DENIED = [
     (PROSE_WRITTEN_TO_FILE, "unverifiable", ""),
     ("echo 'unbalanced", "unverifiable", ""),
     (SHELL_HEREDOC_WITH_APOSTROPHE, "unverifiable", ""),
+    ("python3 -m pytest tests/ -q", "R7", "python3"),
+    ("python -m pytest", "R7", "python"),
+    ("python3.11 -m pytest -q", "R7", "python3.11"),
+    ("tools/bin/python3 -m pytest", "R7", "tools/bin/python3"),
+    ("python3 -B -X dev -m pytest x", "R7", "python3"),
+    ("python3 -mpytest", "R7", "python3"),
+    ("python3 -m py.test", "R7", "python3"),
+    (
+        "cd /x && python3 -m pytest explorations/v3/tests/test_classify_method_family.py -q 2>&1 | tail -25",
+        "R7",
+        "python3",
+    ),
+    ("sh -c 'python3 -m pytest'", "R7", "python3"),
 ]
 
 
@@ -185,6 +200,13 @@ def test_denied_command_exits_2_naming_the_rule_and_the_word(monkeypatch, capsys
     assert err.startswith("[deny_python_escapes]")
     assert "tools/bin" in err and ".actuarii.json" in err and "ask the user" in err
     assert "AGENTS" not in err and "traianus" not in err.lower() and "tools/ or" not in err
+
+
+@pytest.mark.parametrize("command", [command for command, rule, _ in DENIED if rule == "R7"])
+def test_r7_denial_names_pytest_by_its_own_entry_point_as_the_call_that_works(monkeypatch, capsys, command):
+    code, out, err = bash(monkeypatch, capsys, command)
+    assert (code, out) == (2, "")
+    assert "run it by its own entry point instead: pytest, with the same arguments" in err
 
 
 @pytest.mark.parametrize("command, word", [

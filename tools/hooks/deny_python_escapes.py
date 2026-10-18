@@ -13,6 +13,9 @@ R4  a PATH reassignment: a word PATH=... or PATH+=..., or `unset` followed by PA
 R5  `env` followed, before the next separator, by -i, --ignore-environment, a lone -, -P, or
     -u / --unset PATH.
 R6  `command -p`.
+R7  pytest run through an interpreter the shim covers (python3 -m pytest, with interpreter options
+    before -m, -mpytest or py.test). The permission rules deny it anyway; R7 denies it first, so that
+    the denial names the call that works: pytest by its own entry point.
 
 Words come from shlex (POSIX rules; ; & | ( ) < > and newline are separators; # is no comment),
 and each rule is applied twice: to the words, and to the words obtained by splitting every one of
@@ -32,8 +35,9 @@ but the redirections above (dd, cp, a redirect on another line, a group redirect
 closing delimiter), a body scanned for that reason that shlex cannot tokenize (an apostrophe in
 prose: denied as unverifiable, write such a file with the Write tool), R2 on a quoted argument that
 only names an interpreter (a commit message or a grep pattern that mentions ipython, pypy or
-python3.12 is denied: rephrase it), and any file at */tools/bin/<name> (R1 trusts the name of the
-shim). The shim itself trusts the caller's PATH for git.
+python3.12 is denied: rephrase it), R7 likewise on a quoted argument that only mentions python3 -m
+pytest, and any file at */tools/bin/<name> (R1 trusts the name of the shim). The shim itself trusts
+the caller's PATH for git.
 
 Standard library only: an import failure would exit 1, which the harness reads as a broken hook
 rather than a denial; annotations are postponed so a 3.9 system interpreter can import it.
@@ -48,6 +52,7 @@ import sys
 SEPARATORS = frozenset(";&|()<>\n")
 INTERPRETER = re.compile(r"(python|pypy|ipython)[0-9.]*")
 COVERED = frozenset({"python", "python3", "python3.11"})
+PYTEST_MODULES = frozenset({"pytest", "py.test"})
 SHELLS = frozenset({"sh", "bash", "zsh", "dash", "ksh", "ash", "csh", "tcsh", "fish", "eval", "source", ".", "xargs"})
 ENV_RESETS = frozenset({"-i", "--ignore-environment", "-", "-uPATH", "--unset=PATH"})
 QUOTED_HEREDOC = re.compile(r"(?<!<)<<(-?)[ \t]*(?:'([^'\n]*)'|\"([^\"\n]*)\"|\\(\w+))")
@@ -99,6 +104,20 @@ def env_resets_path(args: list[str]) -> bool:
     )
 
 
+def interpreter_module(args: list[str]) -> str | None:
+    at = 0
+    while at < len(args):
+        arg = args[at]
+        if arg == "-m":
+            return args[at + 1] if at + 1 < len(args) else None
+        if arg.startswith("-m"):
+            return arg[2:]
+        if arg == "-c" or not arg.startswith("-"):
+            return None
+        at += 2 if arg in ("-X", "-W") else 1
+    return None
+
+
 def violation(tokens: list[str]) -> str | None:
     for index, word in enumerate(tokens):
         last = word.rsplit("/", 1)[-1]
@@ -109,6 +128,12 @@ def violation(tokens: list[str]) -> str | None:
                 return f"R1 interpreter named by path: {word!r}"
             if "/" not in word and last not in COVERED:
                 return f"R2 interpreter the shim does not cover: {word!r}"
+            module = interpreter_module(rest)
+            if module in PYTEST_MODULES:
+                return (
+                    f"R7 pytest through the interpreter: {word!r} -m {module}; "
+                    "run it by its own entry point instead: pytest, with the same arguments"
+                )
         if last == "pyenv" and rest[:1] == ["exec"]:
             return f"R3 pyenv exec: {word!r}"
         if word.startswith(("PATH=", "PATH+=")) or (word == "unset" and "PATH" in rest):

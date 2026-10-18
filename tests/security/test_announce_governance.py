@@ -46,6 +46,11 @@ def python_line(text: str) -> str:
     return next(line for line in text.splitlines() if line.startswith("  Python"))
 
 
+def line_after_python_line(text: str) -> str:
+    lines = text.splitlines()
+    return lines[lines.index(python_line(text)) + 1]
+
+
 # T1: a valid configuration is announced whole
 
 
@@ -98,6 +103,14 @@ def test_python_runs_from_the_kit_directory_and_the_configured_directories(confi
     assert "committed scripts" in line
     assert "tools/" in line
     assert line.endswith(expected)
+
+
+@pytest.mark.parametrize("content", [pytest.param(VALID, id="valid"), pytest.param("{", id="invalid")])
+def test_the_line_after_the_python_line_says_how_tests_run(config_file, capsys, content):
+    config_file(content)
+    assert line_after_python_line(announce(capsys)) == (
+        "  Tests run through pytest by its own entry point; python3 -m and python3 -c are denied"
+    )
 
 
 def test_the_declared_limit_says_bash_writes_pass_no_gate(config_file, capsys):
