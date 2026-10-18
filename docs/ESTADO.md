@@ -56,20 +56,19 @@ Actualizado: 2026-10-18, tarde.
     desviaciones anotadas y el hito 1 comprobado por §4c. El bloque funcionó a la primera;
   * **el destino, nombrado antes de escribir (ADR-029, `119d569`):** la primera pregunta del instalador empieza con
     el repositorio en que instala y dice que Ctrl-C para ahí, solo en un terminal. Por contrato al implementador,
-    comprobado con `verify_red_green.py`; `INSTALL.md` lo dice.
+    comprobado con `verify_red_green.py`; `INSTALL.md` lo dice;
+  * **la denegación de `pytest` a través del intérprete, que orienta (ADR-031, `f42cd45`):** R7 en el hook de
+    `Bash`, que nombra `pytest` como la orden que vale, y una línea en el anuncio. Por contrato al implementador,
+    comprobado con `verify_red_green.py` y en vivo: llega la denegación del hook, no la genérica. El caso real ya
+    está cerrado: su rama, en GitHub, y su rastro, en la evidencia.
 
-  Suite en verde (3683). El detalle, con sus commits, en el DEVLOG.
+  Suite en verde (3705). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **Cerrar el caso real (el autor):**
-     * subir la rama de `noticias-caso`, porque el README enlaza sus commits;
-     * copiar su rastro a `~/Documents/actuarii-evidencia/caso-real/`.
-  2. **La denegación de `python3 -m pytest`, que oriente:** lo decide el autor. Claude propone que el hook de `Bash`
-     del kit la deniegue él mismo, nombrando `pytest` como la orden que vale, y una línea en el anuncio de la sesión.
-     Sería un contrato al implementador, y ADR-004 lo admite porque responde a un fallo real.
-  3. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
+  1. **Una lectura entera del README** antes del jueves 22 (V6).
+  2. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
      DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; `INSTALL.md` ya no trae la exención de
      `.claude/**`.
-  4. **La comprobación de V8:** `git log -p main` sin los términos personales que fije el autor, cuya lista no se
+  3. **La comprobación de V8:** `git log -p main` sin los términos personales que fije el autor, cuya lista no se
      guarda en el repositorio. Claude propone adelantarla, porque es el único criterio que retrasa la apertura.
 * Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
   de un `git` del instalador que pasa de 300 s.
@@ -80,15 +79,15 @@ Actualizado: 2026-10-18, tarde.
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
 | Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, el contrato de la memoria, la enmienda de la prueba en limpio y el borrador del README (hecho) |
-| Sábado 17 y domingo 18 | La medida en macOS, 223 s (el autor); ADR-026 a ADR-030, los límites, la guía en un bloque, el README en `main` y el caso real (hecho) |
-| Lunes 19 a jueves 22 | La denegación de `pytest`, si el autor la decide, y una lectura entera del README |
+| Sábado 17 y domingo 18 | La medida en macOS, 223 s (el autor); ADR-026 a ADR-031, los límites, la guía en un bloque, el README en `main`, el caso real y la denegación que nombra `pytest` (hecho) |
+| Lunes 19 a jueves 22 | Una lectura entera del README |
 | Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
 | Domingo 25 | Se abre el repositorio |
 | Martes 27 | El texto en HN y Reddit, hacia las 14:00 de Madrid |
 
 ## Decisiones en vigor
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-030, salvo ADR-012 y
+Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-031, salvo ADR-012 y
 ADR-023, sustituidas por ADR-022 y ADR-024:
 
 | ADR | Decisión |
@@ -121,6 +120,7 @@ ADR-023, sustituidas por ADR-022 y ADR-024:
 | 028 | La instalación, en un solo bloque que se pega; la orden con pantalla, en la v0.2 |
 | 029 | El instalador nombra el destino en la primera pregunta, antes de escribir |
 | 030 | El caso real del README, en `noticias` v3: los dos defectos del clasificador |
+| 031 | La denegación de `python3 -m pytest` nombra `pytest` |
 
 ## Cómo se trabaja
 

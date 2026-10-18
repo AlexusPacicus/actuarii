@@ -5,6 +5,40 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-18 (última hora de la tarde)
+
+La denegación de `pytest` a través del intérprete orienta (ADR-031), y el caso real queda cerrado en GitHub.
+
+**Hecho**
+* **El caso, cerrado por el autor:** la rama `v3-exp-clasificador`, en GitHub (AI-Papers-Engine); el rastro, copiado
+  a la evidencia e idéntico, comprobado con `cmp`.
+* **El orden, comprobado antes de decidir:** la documentación de Claude Code (`code.claude.com/docs/en/hooks`, leída
+  con el navegador integrado) dice que las reglas de permisos se evalúan sobre lo que devuelve el hook
+  `PreToolUse`, y que el motivo de su denegación se le muestra al agente.
+* **ADR-031 y su contrato** (`docs/design/PYTEST_NOMBRADO.contrato.json`), en `9b83e01`.
+* **El implementador** (Sonnet, unos 16 min), en `v01/pytest-nombrado` (`f42cd45`):
+  * R7 en `deny_python_escapes.py`, con una función que lee las opciones del intérprete;
+  * la línea del anuncio, como constante compartida por el caso válido y el inválido;
+  * 20 tests que fallan en la base y pasan al final; la suite, con 3705.
+* **Comprobado por el chat:**
+  * el informe es válido;
+  * `verify_red_green.py` sale con 0;
+  * el diff solo toca los cuatro ficheros del contrato, y su acta dice `matches` en los cuatro;
+  * **en vivo:** `python3 -m pytest --version` en esta sesión recibe la denegación del hook, con R7, y no la genérica.
+* **`main` avanzado** hasta `f42cd45`. El README cierra el caso con el arreglo, y §5 lo anota.
+
+**Salió mal y se aprendió**
+* **R7 alcanzó a su propio commit:** el mensaje del contrato mencionaba `python3 -m pytest`, y `git commit -m` se
+  denegó. Es el límite declarado de una mención entre comillas, el mismo que tiene R2. El implementador commiteó con
+  `git commit -F -` y un heredoc. Lección: los mensajes de commit no nombran esa orden; si hace falta nombrarla, se
+  usa `-F` con un heredoc de delimitador entre comillas.
+* **Una propuesta enviada por error queda en el rastro** (`32a57642…`), sin usar en ninguna escritura. El acta del
+  commit no la lista, porque solo lista los recibos de escrituras que llegaron al commit.
+
+**Siguiente**
+* **Una lectura entera del README,** antes del jueves 22.
+* **V7, V9 y la comprobación de V8.**
+
 ## 2026-10-18 (tarde, el caso real hecho)
 
 El caso real del README está hecho, con el plan de §4f: dos commits en `noticias` con su acta, el registro

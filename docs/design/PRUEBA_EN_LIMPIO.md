@@ -599,6 +599,11 @@ en `0ef8fb5`, el test frente al clasificador viejo, 2 fallan por las razones del
 4. **Del arreglo, no del kit:** con los límites de palabra, `diffusions` ya no cuenta como `diffusion`. El agente lo
    avisó.
 
-**Evidencia:** el rastro, en `~/Documents/noticias-caso/.data/`, por copiar a `~/Documents/actuarii-evidencia/`;
-la transcripción, en `~/.claude/projects/-Users-test-Documents-noticias-caso/`; y los dos commits, por subir a
-GitHub.
+**Evidencia:** el rastro, copiado a `~/Documents/actuarii-evidencia/caso-real/` (idéntico, comprobado con `cmp`);
+la transcripción, en `~/.claude/projects/-Users-test-Documents-noticias-caso/`; y los dos commits, en GitHub, en la
+rama `v3-exp-clasificador` de AI-Papers-Engine.
+
+**Corregido después del caso:** el roce 1, por ADR-031 (`f42cd45`). El hook de `Bash` deniega él mismo `pytest` a
+través del intérprete y nombra `pytest` como la orden que vale; el anuncio de la sesión dice cómo se ejecutan los
+tests. Comprobado en vivo el 2026-10-18: la denegación que llega es la del hook, con R7, y no la genérica de Claude
+Code.
