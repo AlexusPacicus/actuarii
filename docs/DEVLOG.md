@@ -5,6 +5,36 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-18 (tarde, el caso real hecho)
+
+El caso real del README está hecho, con el plan de §4f: dos commits en `noticias` con su acta, el registro
+comprobado y un hueco del kit encontrado.
+
+**Hecho**
+* **El caso,** en `~/Documents/noticias-caso`, rama `v3-exp-clasificador`, en 8 min 32 s de sesión. El detalle, en
+  `docs/design/PRUEBA_EN_LIMPIO.md` §5:
+  * el test (`0ef8fb5`) y el arreglo (`69d1c36`) llevan `Actuarii-Record: matches`, con los motivos del agente en
+    español;
+  * la puerta rechazó un `importlib` y un `Edit` sin su recibo, y el agente salió solo de las dos.
+* **Comprobado por el chat:**
+  * el registro, por §4c: tres escrituras, cada una con su recibo, con las citas y los bloques recalculados desde la
+    transcripción con `jq` y `shasum`, y la cadena de `writes` hasta el fichero commiteado;
+  * el rojo y el verde, cada commit reconstruido en el scratchpad y ejecutado con el `pytest` del entorno: 2 fallan
+    y 1 pasa en `0ef8fb5`, y pasan los 3 en `69d1c36`.
+* **La sección del README,** escrita, con los enlaces a los dos commits en GitHub.
+* **No hubo ningún «sí, hazlo».** Por la pantalla parecía que el agente había encontrado `pytest` solo. La
+  transcripción dice que la persona escribió «usa pytest directamente».
+
+**Salió mal y se aprendió**
+* **La denegación de `python3 -m pytest` no orienta.** El agente lo intentó tres veces y no probó `pytest` hasta que
+  la persona se lo dijo. Es un hueco del kit, no del agente.
+* **El chat sacó conclusiones de lo que el autor pegaba de la pantalla:** el «sí, hazlo» no llegó a enviarse.
+  Lección: lo que pasó en una sesión se lee en su transcripción, no en la pantalla.
+
+**Siguiente**
+* **El autor:** subir la rama del caso y copiar su rastro a la evidencia.
+* **El autor decide** si la denegación nombra `pytest` (ESTADO, pendiente 2).
+
 ## 2026-10-18 (tarde, el caso real)
 
 El caso real del README será en `noticias` v3, no en Traianus (ADR-030), con su plan escrito antes de hacerlo.

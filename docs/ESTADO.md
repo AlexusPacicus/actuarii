@@ -41,7 +41,11 @@ Actualizado: 2026-10-18, tarde.
     de GitHub (V8);
   * la enmienda §4d de `docs/design/PRUEBA_EN_LIMPIO.md`, para medir con la instalación en una orden (`abb0d83`);
   * **el README (V6), en `main`,** con los límites en ocho problemas (la otra mitad de V5, `2092f2f`) y la
-    instalación con el bloque y los 223 s. Le falta el caso real (ADR-030);
+    instalación con el bloque y los 223 s;
+  * **el caso real (ADR-030),** hecho el 18 en `noticias` v3, con el plan de §4f: tests (`0ef8fb5`) y arreglo
+    (`69d1c36`), los dos con `Actuarii-Record: matches`, el registro comprobado por §4c y el rojo y el verde
+    ejecutados. Cuatro intervenciones; tres, por la denegación de `python3 -m pytest`, que no dice que `pytest` vale.
+    Anotado en §5, y su sección del README, escrita;
   * los límites, por problemas (ADR-026), y el texto para HN y Reddit, el martes 27, con la puerta el 24 de
     noviembre (ADR-027);
   * la tabla «Resumen» de `docs/adversarial-audit/CASES.md`, de problema a casos y límites de §9 (V5, `da3ccd0`):
@@ -56,14 +60,16 @@ Actualizado: 2026-10-18, tarde.
 
   Suite en verde (3683). El detalle, con sus commits, en el DEVLOG.
 * Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **El caso real del README (V6, ADR-030):** el autor arregla los dos defectos del clasificador de `noticias` v3,
-     con el plan de `docs/design/PRUEBA_EN_LIMPIO.md` §4f, como tarde el miércoles 21. Después, el chat comprueba el
-     registro (§4c), lo anota en §5 y escribe la sección del README con sus commits. Si no llega, es lo primero que
-     se recorta: queda un enlace al DEVLOG.
-  2. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
+  1. **Cerrar el caso real (el autor):**
+     * subir la rama de `noticias-caso`, porque el README enlaza sus commits;
+     * copiar su rastro a `~/Documents/actuarii-evidencia/caso-real/`.
+  2. **La denegación de `python3 -m pytest`, que oriente:** lo decide el autor. Claude propone que el hook de `Bash`
+     del kit la deniegue él mismo, nombrando `pytest` como la orden que vale, y una línea en el anuncio de la sesión.
+     Sería un contrato al implementador, y ADR-004 lo admite porque responde a un fallo real.
+  3. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
      DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; `INSTALL.md` ya no trae la exención de
      `.claude/**`.
-  3. **La comprobación de V8:** `git log -p main` sin los términos personales que fije el autor, cuya lista no se
+  4. **La comprobación de V8:** `git log -p main` sin los términos personales que fije el autor, cuya lista no se
      guarda en el repositorio. Claude propone adelantarla, porque es el único criterio que retrasa la apertura.
 * Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
   de un `git` del instalador que pasa de 300 s.
@@ -74,9 +80,8 @@ Actualizado: 2026-10-18, tarde.
 |---|---|
 | Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
 | Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, el contrato de la memoria, la enmienda de la prueba en limpio y el borrador del README (hecho) |
-| Sábado 17 y domingo 18 | La medida en macOS, 223 s (el autor); ADR-026 a ADR-029, los límites, la guía en un bloque y el README en `main`, con los límites y la instalación (hecho) |
-| Lunes 19 a miércoles 21 | El caso real en `noticias` v3 (el autor, con el plan de §4f) |
-| Jueves 22 | El README: el caso real y una lectura entera |
+| Sábado 17 y domingo 18 | La medida en macOS, 223 s (el autor); ADR-026 a ADR-030, los límites, la guía en un bloque, el README en `main` y el caso real (hecho) |
+| Lunes 19 a jueves 22 | La denegación de `pytest`, si el autor la decide, y una lectura entera del README |
 | Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
 | Domingo 25 | Se abre el repositorio |
 | Martes 27 | El texto en HN y Reddit, hacia las 14:00 de Madrid |

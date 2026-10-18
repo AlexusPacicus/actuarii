@@ -287,10 +287,41 @@ boundary no longer depends on one vendor's hooks and is designed to hold against
 
 ## A real case
 
-> **Draft.** One piece of real work in another project, done with v0.1 as published: fixing two defects of the
-> paper classifier of [AI Papers Engine](https://github.com/AlexusPacicus/AI-Papers-Engine), tests first, with its
-> commits. The case was planned before it was done
-> ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §4f).
+This is one piece of real work in another project, done with v0.1 as published. The case was planned before it was
+done ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §4f); the full record is in §5.
+
+[AI Papers Engine](https://github.com/AlexusPacicus/AI-Papers-Engine) has a lexical classifier of papers by method
+family, and it had two defects:
+* the key `gan` matched inside `organization`;
+* a text with `diffusion transformer` tied between two families and came out as `other`.
+
+On 18 October the kit was installed on a fresh clone with the block above, governing `explorations/v3/**`. Claude
+Code (Sonnet 5.5) got one task: fix both, tests first. It took 8½ minutes, and this is what happened:
+
+* **The agent wrote the tests first.** The validator refused its first proposal, which imported `importlib`; the
+  agent rewrote the import.
+* **The gate denied one `Edit` that had no receipt of its own.** The agent asked for one and went on.
+* **The agent could not run the tests.** The kit denies `python3 -m pytest`, and the denial, Claude Code's generic
+  message, did not say that `pytest` itself is allowed. The agent tried three times and then stopped, and the person
+  told it to use `pytest`. This is a gap in the kit, and this case found it. Counting that, the person stepped in
+  four times.
+* **Two commits, each with its record.**
+  [`0ef8fb5`](https://github.com/AlexusPacicus/AI-Papers-Engine/commit/0ef8fb5) holds the tests: run against the old
+  classifier, the two that check the defects fail for the stated reasons, and the control passes.
+  [`69d1c36`](https://github.com/AlexusPacicus/AI-Papers-Engine/commit/69d1c36) holds the fix, and all three tests
+  pass. Its message ends with:
+
+  ```
+  Actuarii-Record: matches: explorations/v3/scripts/classify_method_family.py
+  Actuarii-Rationale: Corrige dos defectos: las claves se buscan con límites de palabra (gan ya no cuenta dentro de organization) y una clave contenida en otra más larga de otra familia no suma (diffusion dentro de diffusion transformer), lo que evita el empate.
+  Actuarii-Rationale: Importa re, necesario para buscar las claves con límites de palabra.
+  ```
+
+* **Checked afterwards against the audit trail:** three governed writes, each with a receipt issued before it for
+  that exact content, and no governed change without a write.
+
+The reasons are the agent's own, in the language of the task. Nothing checked them, and no person approved them
+(problem 2 above).
 
 ## License
 
