@@ -1,16 +1,16 @@
 ---
 name: preguntar-ante-ambiguedad
-description: Una respuesta ambigua del autor no es una decisión; se pide un sí claro o se propone una condición comprobable
+description: An ambiguous answer from the author is not a decision; ask for a clear yes or propose a condition that can be checked
 metadata:
   type: feedback
 ---
 
-No anotar como decisión del autor lo que no ha decidido. Ante una respuesta ambigua («creo que sí, pero no estoy
-seguro»), se explica más sencillo y se pide un sí claro, o se propone una condición que lo haga comprobable (por
-ejemplo, «aceptado si los tests salen rojos en la base y verdes al final»).
+Do not record as a decision of the author what the author has not decided. Faced with an ambiguous answer ("I think
+so, but I'm not sure"), explain it more simply and ask for a clear yes, or propose a condition that makes it checkable
+(for example, "accepted if the tests are red at the base and green at the end").
 
-**Why:** el 2026-10-08 el chat anotó como decisión del autor una clasificación que no había tomado (`docs/DEVLOG.md`);
-el 2026-10-13 la decisión revisada de A19 se aceptó con la condición de los tests.
+**Why:** on 2026-10-08 the chat recorded as the author's decision a classification the author had not made
+(`docs/DEVLOG.md`); on 2026-10-13 the revised decision on A19 was accepted with the condition of the tests.
 
-**How to apply:** antes de escribir «decidido (autor)» en el DEVLOG, el PLAN o un diseño, comprobar que la respuesta es
-un sí explícito. Relacionado: [[autor]].
+**How to apply:** before writing "decided (author)" in the DEVLOG, the PLAN or a design, check that the answer is an
+explicit yes. Related: [[autor]].

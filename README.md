@@ -280,7 +280,7 @@ rewriting the tree.
 
 ## What comes next
 
-If v0.1 shows a signal, set in advance in [`ROADMAP.md`](docs/ROADMAP.md) (in Spanish), v0.2 runs the whole
+If v0.1 shows a signal, set in advance in [`ROADMAP.md`](docs/ROADMAP.md), v0.2 runs the whole
 agent inside an isolated environment of its own, with the gates and a write broker outside it, so that the
 boundary no longer depends on one vendor's hooks and is designed to hold against an adversarial agent
 ([`ENTORNO_PROPIO.md`](docs/design/ENTORNO_PROPIO.md)).

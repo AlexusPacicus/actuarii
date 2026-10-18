@@ -1,167 +1,173 @@
-# Actuarii — estado
+# Actuarii — status
 
-Lo que una sesión nueva necesita saber, y nada más. Se actualiza al cerrar cada sesión, junto con la entrada
-del `docs/DEVLOG.md`. La historia y el razonamiento de cada decisión están en `docs/PLAN.md`, que se lee
-cuando hace falta y no se carga en cada sesión (autor, 2026-10-14). Los criterios de la v0.1, la señal, la
-puerta del 24 de noviembre y la v0.2 están en `docs/ROADMAP.md`, y las decisiones, en `docs/DECISIONES.md`.
+What a new session needs to know, and nothing more. It is updated when each session closes, together with the entry
+of `docs/DEVLOG.md`. The history and the reasoning behind each decision are in `docs/PLAN.md`, which is read when
+needed and not loaded in every session (author, 2026-10-14). The criteria of v0.1, the signal, the gate of 24
+November and v0.2 are in `docs/ROADMAP.md`; the decisions are in `docs/DECISIONES.md`.
 
-Actualizado: 2026-10-18, tarde.
+The repository's documents are written in English from 2026-10-18 on (ADR-032); older documents are being
+translated. The conversation with the author may be in Spanish.
 
-## La v0.1
+Updated: 2026-10-18, evening.
 
-* **Qué es:** actas de trabajo para agentes de código. La frase del README: «Work records for coding agents.
-  Every action leaves a record that it happened, and why. Built for settings where traceability comes
-  first.»
-* **Qué no es:** una frontera de seguridad frente a un agente adversario. Eso es la v0.2, con su entorno
-  propio (`docs/design/ENTORNO_PROPIO.md`). AGENTS.md §9 declara lo que la v0.1 no cubre.
-* **Publicación:** el repositorio se abre el 25 de octubre, esté como esté, y es privado hasta entonces. El texto
-  para HN y Reddit sale el martes 27 hacia las 14:00 de Madrid (ADR-027).
-* **Señal de éxito, comprometida:** en las cuatro semanas desde el texto, hasta el martes 24 de noviembre, 5
-  personas ajenas que lo instalan o abren una issue, o una conversación de trabajo. Si no llega, se revisa con
-  datos, sin reencuadrar. Cómo se cuenta, en el ROADMAP §3.
+## v0.1
 
-## Dónde estamos
+* **What it is:** work records for coding agents. The README's sentence: "Work records for coding agents. Every
+  action leaves a record that it happened, and why. Built for settings where traceability comes first."
+* **What it is not:** a security boundary against an adversarial agent. That is v0.2, with its own environment
+  (`docs/design/ENTORNO_PROPIO.md`). AGENTS.md §9 declares what v0.1 does not cover.
+* **Publication:** the repository opens on 25 October, ready or not, and is private until then. The text for HN and
+  Reddit goes out on Tuesday 27 at about 14:00 Madrid time (ADR-027).
+* **Committed success signal:** within the four weeks after the text, up to Tuesday 24 November, 5 outside people
+  who install it or open an issue, or one working conversation. If it does not come, it is reviewed with data,
+  without reframing. How it is counted: ROADMAP §3.
 
-* Hechos y verificados:
-  * el motivo (`Rationale`) en cada propuesta;
-  * el perímetro de permisos, sin el comodín `Bash` de `ask` y con la lista ampliada (ADR-022), comprobado con
-    la sonda;
-  * la puerta con los textos largos (ADR-024);
-  * el instalador en una orden (V2): el perímetro, `includeGitInstructions`, la comprobación de `pydantic`, las
-    preguntas (qué más gobernar, `pip` con permiso y el commit), `--no-input` e `INSTALL.md` reescrito;
-  * el acta en git (V3, ADR-016): la puerta guarda lo que deja cada escritura y el `commit-msg` lo compara con el
-    commit; instalado en este repositorio, con su primera acta real en `ba6a120`;
-  * la memoria automática de Claude Code, apagada en este repositorio (D5, ADR-010), con su test; el instalador no
-    la toca en los destinos;
-  * A20, A31 y A34;
+## Where we are
+
+* Done and verified:
+  * the reason (`Rationale`) in every proposal;
+  * the permission perimeter, without the `Bash` wildcard in `ask` and with the wider list (ADR-022), checked with
+    the probe;
+  * the gate and long texts (ADR-024);
+  * the one-command installer (V2): the perimeter, `includeGitInstructions`, the `pydantic` check, the questions
+    (what else to govern, `pip` with permission and the commit), `--no-input`, and `INSTALL.md` rewritten;
+  * the record in git (V3, ADR-016): the gate records what each write leaves and `commit-msg` compares it with the
+    commit; installed in this repository, with its first real record in `ba6a120`;
+  * Claude Code's automatic memory, turned off in this repository (D5, ADR-010), with its test; the installer does
+    not touch it in targets;
+  * A20, A31 and A34;
   * AGENTS.md v2.3.0;
-  * cada ruta gobernada con su `denyWrite`, sin exenciones, comprobado con una sonda;
-  * el ROADMAP, con D1–D7 decididas;
-  * la historia reescrita sin la información personal y con el correo *noreply*, en un repositorio nuevo
-    de GitHub (V8);
-  * la enmienda §4d de `docs/design/PRUEBA_EN_LIMPIO.md`, para medir con la instalación en una orden (`abb0d83`);
-  * **el README (V6), en `main`,** con los límites en ocho problemas (la otra mitad de V5, `2092f2f`) y la
-    instalación con el bloque y los 223 s;
-  * **el caso real (ADR-030),** hecho el 18 en `noticias` v3, con el plan de §4f: tests (`0ef8fb5`) y arreglo
-    (`69d1c36`), los dos con `Actuarii-Record: matches`, el registro comprobado por §4c y el rojo y el verde
-    ejecutados. Cuatro intervenciones; tres, por la denegación de `python3 -m pytest`, que no dice que `pytest` vale.
-    Anotado en §5, y su sección del README, escrita;
-  * los límites, por problemas (ADR-026), y el texto para HN y Reddit, el martes 27, con la puerta el 24 de
-    noviembre (ADR-027);
-  * la tabla «Resumen» de `docs/adversarial-audit/CASES.md`, de problema a casos y límites de §9 (V5, `da3ccd0`):
-    los 35 casos y los 28 límites, una vez cada uno;
-  * `INSTALL.md` en un solo bloque que se pega desde la raíz del repositorio, sin nada que editar (ADR-028), y la
-    enmienda §4e;
-  * **la medida en macOS (V4), superada con 223 s:** el intento 5 de `docs/design/PRUEBA_EN_LIMPIO.md` §5, con sus
-    desviaciones anotadas y el hito 1 comprobado por §4c. El bloque funcionó a la primera;
-  * **el destino, nombrado antes de escribir (ADR-029, `119d569`):** la primera pregunta del instalador empieza con
-    el repositorio en que instala y dice que Ctrl-C para ahí, solo en un terminal. Por contrato al implementador,
-    comprobado con `verify_red_green.py`; `INSTALL.md` lo dice;
-  * **la denegación de `pytest` a través del intérprete, que orienta (ADR-031, `f42cd45`):** R7 en el hook de
-    `Bash`, que nombra `pytest` como la orden que vale, y una línea en el anuncio. Por contrato al implementador,
-    comprobado con `verify_red_green.py` y en vivo: llega la denegación del hook, no la genérica. El caso real ya
-    está cerrado: su rama, en GitHub, y su rastro, en la evidencia.
+  * every governed path with its `denyWrite` entry, no exemptions, checked with a probe;
+  * the ROADMAP, with D1–D7 decided;
+  * the history rewritten without the personal information and with the *noreply* address, in a new GitHub
+    repository (V8);
+  * the README (V6) in `main`, with the limits in eight problems (the other half of V5, `2092f2f`), the installation
+    with the block and the 223 s, and the real case;
+  * the limits by problem (ADR-026), and the text for HN and Reddit on Tuesday 27 with the gate on 24 November
+    (ADR-027);
+  * the "Resumen" table of `docs/adversarial-audit/CASES.md`, from problem to cases and limits of §9 (V5, `da3ccd0`):
+    the 35 cases and the 28 limits, each once;
+  * `INSTALL.md` as one block pasted from the repository's top level, with nothing to edit (ADR-028), and
+    amendment §4e;
+  * **the macOS measurement (V4), passed with 223 s:** attempt 5 of `docs/design/PRUEBA_EN_LIMPIO.md` §5, with its
+    deviations noted and milestone 1 checked by §4c;
+  * **the target named before any write (ADR-029, `119d569`);**
+  * **the real case (ADR-030):** the two defects of the classifier of `noticias` v3, fixed with v0.1 as published
+    (`0ef8fb5` and `69d1c36` in AI-Papers-Engine, both with `Actuarii-Record: matches`), the record checked by §4c
+    and red and green run; its branch on GitHub and its audit trail in the evidence folder;
+  * **the denial of pytest run through the interpreter names `pytest` (ADR-031, `f42cd45`):** rule R7 of the Bash
+    hook and a line in the announcement, checked with `verify_red_green.py` and live.
 
-  Suite en verde (3705). El detalle, con sus commits, en el DEVLOG.
-* Pendiente, en este orden (cada criterio, con su corte, en el ROADMAP):
-  1. **Una lectura entera del README** antes del jueves 22 (V6).
-  2. **Lo publicado no contradice el kit (V7),** y el texto para HN y Reddit (V9). V7 ya tiene su lista en el
-     DEVLOG del 16 por la tarde, con la descripción de `pyproject.toml`; `INSTALL.md` ya no trae la exención de
-     `.claude/**`.
-  3. **La comprobación de V8:** `git log -p main` sin los términos personales que fije el autor, cuya lista no se
-     guarda en el repositorio. Claude propone adelantarla, porque es el único criterio que retrasa la apertura.
-* Pendientes menores, sin fecha (DEVLOG, 2026-10-16): `**` sin `re.DOTALL` en `project_config`; la traza de Python
-  de un `git` del instalador que pasa de 300 s.
+  Suite green (3705). The detail, with its commits, is in the DEVLOG.
+* Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
+  1. **The translation (ADR-032),** in its order: what the README links (`CASES.md`, `PRUEBA_EN_LIMPIO.md`,
+     `COSTE.md`, `ENTORNO_PROPIO.md`, `SANDBOX.md`, `ROADMAP.md`); then `DECISIONES.md`; then the other records.
+     What is not translated by 25 October leaves the tree.
+  2. **Three decisions of the author, before their documents are translated:**
+     * `examples/traianus/`: Claude recommends removing it from the tree. Nothing uses it, it describes a private
+       project from inside and it still says "Blind by construction";
+     * three lines of `PLAN.md` about the author's professional plans: public, or on the V8 list;
+  3. **A full reading of the README** before Thursday 22 (V6).
+  4. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9).
+     The description of `pyproject.toml` still uses the old sentence.
+  5. **The V8 check:** `git log -p main` without the personal terms the author sets, whose list is not kept in the
+     repository. Claude proposes doing it early, because it is the only criterion that delays the opening.
+* Minor, undated (DEVLOG, 2026-10-16): `**` without `re.DOTALL` in `project_config`; the Python traceback of an
+  installer `git` call that takes more than 300 s; the installer copies the kit (Apache-2.0) without the license
+  text.
 
-## Calendario hasta el 27
+## Calendar to the 27th
 
-| Cuándo | Qué |
+| When | What |
 |---|---|
-| Miércoles 14 | El hueco de la memoria, el ROADMAP y la historia reescrita (hecho) |
-| Jueves 15 y viernes 16 | El perímetro sin comodín, la puerta con los textos largos, los dos contratos del instalador, con el acta en git, el contrato de la memoria, la enmienda de la prueba en limpio y el borrador del README (hecho) |
-| Sábado 17 y domingo 18 | La medida en macOS, 223 s (el autor); ADR-026 a ADR-031, los límites, la guía en un bloque, el README en `main`, el caso real y la denegación que nombra `pytest` (hecho) |
-| Lunes 19 a jueves 22 | Una lectura entera del README |
-| Viernes 23 y sábado 24 | Lo publicado frente al kit, y el texto para HN y Reddit |
-| Domingo 25 | Se abre el repositorio |
-| Martes 27 | El texto en HN y Reddit, hacia las 14:00 de Madrid |
+| Wednesday 14 to Sunday 18 | Done: the perimeter, the installer and its record in git, the measurement (223 s), the limits, the README, the real case, ADR-016 to ADR-032 |
+| Monday 19 and Tuesday 20 | Translation, priority 1 (what the README links) and 2 (the decisions) |
+| Wednesday 21 and Thursday 22 | Translation, priority 3; a full reading of the README |
+| Friday 23 and Saturday 24 | V7 on the translated tree, V8, and the text for HN and Reddit |
+| Sunday 25 | The repository opens |
+| Tuesday 27 | The text on HN and Reddit, at about 14:00 Madrid time |
 
-## Decisiones en vigor
+## Decisions in force
 
-Están en `docs/DECISIONES.md`, que solo se amplía. Hoy están en vigor de ADR-001 a ADR-031, salvo ADR-012 y
-ADR-023, sustituidas por ADR-022 y ADR-024:
+They are in `docs/DECISIONES.md`, which only grows. In force today: ADR-001 to ADR-032, except ADR-012 and ADR-023,
+superseded by ADR-022 and ADR-024.
 
-| ADR | Decisión |
+| ADR | Decision |
 |---|---|
-| 001 | Nombre, licencia y relación con Traianus |
-| 002 | Primero el kit; Traianus como memoria de agentes, solo con señal |
-| 003 | Se publica el 25 de octubre, esté como esté |
-| 004 | Lo que no se hace antes del lanzamiento |
-| 005 | La señal de éxito |
-| 006 | Repositorio privado hasta el 25 y un solo DEVLOG |
-| 007 | La distribución de la v0.1: un instalador que copia el kit |
-| 008 | La instalación en una orden, con el entorno fuera del repositorio |
-| 009 | La v0.1 son actas de trabajo; la seguridad, en la v0.2 |
-| 010 | La memoria del agente, bajo código; la automática de Claude Code, apagada |
-| 011 | El motivo, obligatorio, y ningún recibo sin acta |
-| 013 | Qué correcciones de la auditoría entran en la v0.1 |
-| 014 | Los campos de la propuesta, con nombres llanos en la v0.2 |
-| 015 | Un estado corto al abrir cada sesión, en lugar del PLAN |
-| 016 | El acta en git |
-| 017 | El ROADMAP |
-| 018 | El README: su primer límite y su marco |
-| 019 | A33 y A34 no se cuentan a Anthropic |
-| 020 | La historia, sin lo personal y con el correo *noreply* |
-| 021 | Las decisiones van en este registro, que solo se amplía |
-| 022 | El perímetro de permisos, sin comodín y con la lista ampliada |
-| 024 | Solo un nombre demasiado largo deja de ser una ruta |
-| 025 | El acta en git y las preguntas del instalador, en dos contratos |
-| 026 | Los límites, por problemas: gobernanza en la v0.1 y seguridad en la v0.2 |
-| 027 | El texto para HN y Reddit, el martes 27; la puerta, el martes 24 de noviembre |
-| 028 | La instalación, en un solo bloque que se pega; la orden con pantalla, en la v0.2 |
-| 029 | El instalador nombra el destino en la primera pregunta, antes de escribir |
-| 030 | El caso real del README, en `noticias` v3: los dos defectos del clasificador |
-| 031 | La denegación de `python3 -m pytest` nombra `pytest` |
+| 001 | Name, license and relationship with Traianus |
+| 002 | The kit first; Traianus as agent memory, only with a signal |
+| 003 | Published on 25 October, ready or not |
+| 004 | What is not done before the launch |
+| 005 | The success signal |
+| 006 | Private repository until the 25th, and a single DEVLOG |
+| 007 | Distribution of v0.1: an installer that copies the kit |
+| 008 | One-command installation, with the environment outside the repository |
+| 009 | v0.1 is work records; security is v0.2 |
+| 010 | The agent's memory, under code; Claude Code's automatic memory, off |
+| 011 | The reason, mandatory, and no receipt without a record |
+| 013 | Which audit fixes go into v0.1 |
+| 014 | Plain names for the proposal's fields, in v0.2 |
+| 015 | A short status at the start of each session, instead of the PLAN |
+| 016 | The record in git |
+| 017 | The ROADMAP |
+| 018 | The README: its first limit and its frame |
+| 019 | A33 and A34 are not reported to Anthropic |
+| 020 | The history, without personal information and with the *noreply* address |
+| 021 | Decisions go in this register, which only grows |
+| 022 | The permission perimeter, without wildcard and with the wider list |
+| 024 | Only a name that is too long stops being a path |
+| 025 | The record in git and the installer's questions, in two contracts |
+| 026 | Limits by problem: governance in v0.1, security in v0.2 |
+| 027 | The text for HN and Reddit on Tuesday 27; the gate on Tuesday 24 November |
+| 028 | Installation as one pasted block; a command with its own screen in v0.2 |
+| 029 | The installer names the target in its first question, before any write |
+| 030 | The README's real case, in `noticias` v3: the two defects of the classifier |
+| 031 | The denial of `python3 -m pytest` names `pytest` |
+| 032 | The published tree is in English; the history stays as it is |
 
-## Cómo se trabaja
+## How we work
 
-* **El sandbox está activo:** `Bash` no escribe las rutas gobernadas ni sale a la red. Las órdenes de git
-  que reescriben rutas gobernadas (`switch`, `merge`, `restore`) y el `push` las ejecuta el autor con `!`.
-  Si `main` no se ha movido desde una rama, el chat la avanza sin reescribir el árbol (`git branch -f main
-  <rama>` y `git switch main`).
-* **El chat principal no escribe código.** El código y los tests van al subagente `implementer`, con
-  `model: "sonnet"`, mediante un contrato JSON validado con `delegation_contract.py`. Después, el chat:
-  * valida el informe;
-  * pasa él mismo `verify_red_green.py`;
-  * revisa el diff y comprueba a mano que solo toca los ficheros del contrato;
-  * avanza `main`.
-* **Un contrato lista todos los tests que le afectan** (AGENTS 6.4): los que construyen el formato, los que
-  fijan el comportamiento que cambia y los que leen el código como texto.
-* **El servidor MCP del validador ejecuta el código con el que arrancó la sesión.** Un cambio en el
-  validador rige en la sesión siguiente. El esquema de la herramienta que muestra una sesión retomada puede
-  ser una copia vieja: el motivo se envía igual.
-* **El hook `commit-msg` está instalado en este repositorio:** cada commit que cambia un fichero gobernado lleva su
-  acta (`Actuarii-Record`, `Actuarii-Rationale`). Un `changed outside the channel` inesperado se mira antes de seguir.
-* **Se commitea solo si `pytest` sale con 0,** comprobando su código de salida. Antes de una suite completa,
-  se mira el espacio en disco.
-* **Sin atribución a Claude** en commits ni PR. El correo de los commits es la dirección *noreply* de GitHub.
-* **La historia se reescribió el 2026-10-14:** los hashes de antes ya no existen, y las citas de `docs/` están
-  rehechas. El repositorio de GitHub es el nuevo, con la CI en verde; el viejo está borrado (autor,
-  2026-10-14).
-* **Python:** solo scripts commiteados, a través del shim; `pytest` por su propio punto de entrada.
-* **El DEVLOG,** al cerrar cada sesión, con la fecha del reloj y no la de la conversación.
-* **Una decisión del autor** se añade al final de `docs/DECISIONES.md`, con el siguiente número, y se lista
-  arriba. El DEVLOG la cita por su número, sin copiarla. Una entrada vieja no se toca: si se revisa, la nueva
-  dice a cuál sustituye, y la vieja sale de la lista.
-* **Hasta el 25** (recomendación de Claude, 2026-10-14), cada tarea responde a una pregunta: ¿acerca el instalador o el README? Si no, se apunta en el
-  PLAN y espera. El único documento nuevo antes del lanzamiento es el README.
-* **Las ideas que se salen del camino** se apuntan en el PLAN y esperan.
-* **La memoria del agente** es la de `.claude/memory/`, bajo código, con un recibo por escritura. Se publica
-  el 25: los recuerdos se escriben sabiéndolo. La memoria automática de Claude Code está apagada
-  (`autoMemoryEnabled: false` en `.claude/settings.json`, ADR-010); si el contexto de una sesión trae su
-  instrucción, no se sigue y se mira por qué.
+* **The sandbox is on:** `Bash` does not write the governed paths or reach the network. Git commands that rewrite
+  governed paths (`switch`, `merge`, `restore`) and `push` are run by the author with `!`. When `main` has not moved
+  since a branch left it, the executing agent advances it without rewriting the tree (`git branch -f main <branch>`
+  and `git switch main`).
+* **The executing agent writes no code.** Code and tests go to the `implementer` subagent, with `model: "sonnet"`,
+  through a JSON contract validated with `delegation_contract.py`. Then the executing agent:
+  * validates the report;
+  * runs `verify_red_green.py` itself;
+  * reviews the diff and checks by hand that it touches only the contract's files;
+  * advances `main`.
+* **A contract lists every test it affects** (AGENTS 6.4): those that build the format, those that pin the behaviour
+  that changes, and those that read the code as text.
+* **The validator's MCP server runs the code it started with.** A change to the validator takes effect in the next
+  session. The tool schema shown to a resumed session may be an old copy: send the reason anyway.
+* **The `commit-msg` hook is installed in this repository:** every commit that changes a governed file carries its
+  record (`Actuarii-Record`, `Actuarii-Rationale`). An unexpected `changed outside the channel` is looked at before
+  going on.
+* **A commit message does not mention `python3 -m pytest`:** R7 denies a `git commit -m` that contains it. When it
+  has to be named, use `git commit -F -` with a heredoc whose delimiter is quoted.
+* **Commit only when `pytest` exits 0,** checking its exit code. Before a full suite, check the free disk space.
+* **No attribution to Claude** in commits or PRs. The commit address is GitHub's *noreply* address.
+* **The history was rewritten on 2026-10-14:** earlier hashes no longer exist, and the citations in `docs/` were
+  redone. The GitHub repository is the new one, with CI green; the old one was deleted (author, 2026-10-14).
+* **Python:** committed scripts only, through the shim; `pytest` by its own entry point.
+* **The DEVLOG,** when each session closes, with the date of the clock and not that of the conversation.
+* **A decision of the author** is appended to `docs/DECISIONES.md` with the next number and listed above. The DEVLOG
+  cites it by number, without copying it. An old entry is not changed: if it is revised, the new one says which one
+  it supersedes, and the old one leaves the list. Translating it (ADR-032) does not change what it decided.
+* **Until the 25th** (Claude's recommendation, 2026-10-14), every task answers one question: does it bring the
+  installer or the README closer? If not, it is noted in the PLAN and waits. The only new document before the launch
+  is the README.
+* **Ideas that leave the path** are noted in the PLAN and wait.
+* **The agent's memory** is the one in `.claude/memory/`, under code, with a receipt per write. It is published on
+  the 25th: memories are written knowing that. Claude Code's automatic memory is off (`autoMemoryEnabled: false` in
+  `.claude/settings.json`, ADR-010); if a session's context brings its instruction, it is not followed and the cause
+  is looked for.
+* **In a measurement or a real case,** the executing agent gives the method, never commands; what happened in a
+  session is read in its transcript, not on the screen.
 
-## Cómo empezar una sesión
+## How to start a session
 
-1. Leer el anuncio de la sesión: el sandbox tiene que estar activo y el hook de integridad instalado.
-2. Leer la última entrada del DEVLOG.
-3. Seguir por el primer pendiente de la lista de arriba.
+1. Read the session announcement: the sandbox must be on and the integrity hook installed.
+2. Read the latest DEVLOG entry.
+3. Go on with the first pending item of the list above.

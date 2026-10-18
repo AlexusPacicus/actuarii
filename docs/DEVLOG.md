@@ -5,6 +5,41 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-18 (evening)
+
+The first entry in English. The published tree goes into English (ADR-032); the status, the memory and the roadmap
+are translated.
+
+**Done**
+* **The inventory of what gets published:**
+  * the kit, its tests and the reference documents (README, INSTALL, AGENTS, agents and skills) were already in
+    English;
+  * `docs/` (about 6,400 lines) and the memory were in Spanish, and so are the messages of the 329 commits.
+* **Found while making the inventory, and left to the author** (status, pending item 2):
+  * three lines of `PLAN.md` about the author's professional plans;
+  * `examples/traianus/`, which nothing uses and which still says "Blind by construction".
+
+  The tree and the history are both published: taking something out of the tree does not take it out of the
+  history.
+* **ADR-032.**
+* **Translated, edited for a reader from outside:**
+  * `ESTADO.md`, brought up to date at the same time;
+  * the four memory files, each with its receipt; `pocas-peticiones-al-autor.md` now says that ADR-022 removed the
+    bare `"Bash"` it describes;
+  * `ROADMAP.md`, with V7 rewritten and a new V10 for the translation. Dated notes mark what changed since: option
+    (c) in `MEMORY.md`, fixed in `0116031`; the Traianus case, replaced by ADR-030.
+* **The README** no longer marks the ROADMAP as Spanish.
+
+**Decided (author)**
+* **ADR-032:** the published tree in English, by priority, with what is not translated by the 25th leaving the tree;
+  the history stays as it is; the repository's documents are written in English from now on.
+
+**Next**
+* **The author:** review the translated `ROADMAP.md` as the sample of tone and edits, and the three decisions above.
+* **Translation, priority 1:** `CASES.md`, `PRUEBA_EN_LIMPIO.md`, `COSTE.md`, `ENTORNO_PROPIO.md`, `SANDBOX.md`.
+  Then `DECISIONES.md`, then the rest. When it is done, the README's line about Spanish says that the history keeps
+  the original commit messages.
+
 ## 2026-10-18 (última hora de la tarde)
 
 La denegación de `pytest` a través del intérprete orienta (ADR-031), y el caso real queda cerrado en GitHub.

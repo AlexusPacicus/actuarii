@@ -489,3 +489,32 @@ regla `deny`.
 con el commit del arreglo.
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-18.
+
+## ADR-032 — The published tree is in English; the history stays as it is (2026-10-18, author)
+
+**Context:** the repository opens on 25 October. The kit, its tests and the reference documents (README, INSTALL,
+AGENTS, agents and skills) are in English. `docs/`, about 6,400 lines, and the agent's memory are in Spanish, and so
+are the messages of the 329 commits. The author decided that the project cannot be published in Spanish, and that
+the documents need edits for a reader from outside.
+**Decision:**
+* Every document of the published tree is translated into English, and edited for a reader from outside. The work
+  goes in this order, so that it can be cut:
+  1. what the README links: `CASES.md`, `PRUEBA_EN_LIMPIO.md`, `COSTE.md`, `ENTORNO_PROPIO.md`, `SANDBOX.md` and
+     `ROADMAP.md`;
+  2. this register, `DECISIONES.md`;
+  3. the other records: `DEVLOG.md`, `PLAN.md`, `ESTADO.md`, the audit guidelines, `PROCESO.md`, `PRIOR_ART.md`,
+     `ARRANQUE_PUERTAS.md`, `RECIBO_CONTENIDO.md`, the memory and the contracts.
+* What is not translated by 25 October leaves the tree; the history keeps it in Spanish.
+* The git history is not rewritten. Rewriting it would change every hash, including those the README, the clean-room
+  results and the development log cite as evidence. The README says that the project was written in Spanish up to
+  v0.1.
+* From now on the repository's documents are written in English: the development log, the status, new decisions and
+  the memory. The conversation with Claude may stay in Spanish.
+* File names stay as they are: tests, the CI, `CLAUDE.md` and `opencode.jsonc` cite them.
+* A translated record keeps its dates and what it said then. Where it describes something that has since changed, it
+  says so in a dated note that names what replaced it.
+
+**Consequences:** V6 and V7 of the ROADMAP change (ADR-017). Entries of this register written before this one keep
+their meaning once translated; what each one decided does not change.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-18.

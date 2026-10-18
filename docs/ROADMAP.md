@@ -1,236 +1,248 @@
-# Actuarii — hoja de ruta
+# Actuarii — roadmap
 
-Borrador de Claude del 2026-10-14, para que lo corrija el autor antes de commitearlo (decisión del autor,
-2026-10-14). Sirve para dos cosas: cortar el alcance antes del 25 de octubre y que la revisión del 24 de
-noviembre se haga contra algo escrito antes. Las propuestas de Claude en V2–V9 y en §3–§5 las aceptó el autor el
-2026-10-14 (D7); lo que sigue abierto está en §6.
+Drafted by Claude on 2026-10-14, for the author to correct before it was committed (author, 2026-10-14). It serves
+two purposes: to cut the scope before 25 October, and to make the review of 24 November against something written
+in advance. The author accepted Claude's proposals in V2–V9 and in §3–§5 on 2026-10-14 (D7); §6 lists the decisions
+that were open then.
 
-El porqué de cada decisión está en `docs/PLAN.md`; el trabajo de cada día, en `docs/ESTADO.md`. Después del
-commit, un cambio de criterio lo decide el autor y se añade a `docs/DECISIONES.md` con su motivo. El 24 de noviembre este
-documento solo se toca para anotar el resultado.
+The reasons for each decision are in `docs/PLAN.md`, and the work of each day in `docs/ESTADO.md`, which also says
+where each criterion stands. Since it was committed, a change of criterion is decided by the author and added, with
+its reason, to `docs/DECISIONES.md`. On 24 November this document is only touched to record the result.
 
-## 1. Tres fechas
+Translated from Spanish on 2026-10-18 (ADR-032).
 
-| Cuándo | Qué |
+## 1. Three dates
+
+| When | What |
 |---|---|
-| Domingo 25 de octubre | Se publica la v0.1, esté como esté (autor, 2026-10-06): se abre el repositorio |
-| Martes 27 de octubre | El texto para HN y Reddit, hacia las 14:00 de Madrid (ADR-027) |
-| Del 27 de octubre al 24 de noviembre | La ventana de señal (§3) |
-| Martes 24 de noviembre | La puerta: se mira la señal y se decide si empieza la v0.2 (§4) |
+| Sunday 25 October | v0.1 is published, ready or not (author, 2026-10-06): the repository opens |
+| Tuesday 27 October | The text for HN and Reddit, at about 14:00 Madrid time (ADR-027) |
+| 27 October to 24 November | The signal window (§3) |
+| Tuesday 24 November | The gate: the signal is looked at and the start of v0.2 is decided (§4) |
 
-## 2. La v0.1
+## 2. v0.1
 
-**Qué es:** «Work records for coding agents. Every action leaves a record that it happened, and why. Built for
-settings where traceability comes first.» **Qué no es:** una frontera frente a un agente adversario; eso es la
+**What it is:** "Work records for coding agents. Every action leaves a record that it happened, and why. Built for
+settings where traceability comes first." **What it is not:** a boundary against an adversarial agent; that is
 v0.2.
 
-Un criterio que no se cumple el 25 no mueve la fecha. Cada uno dice cómo se comprueba, cuándo se corta y qué
-pasa si no se cumple.
+A criterion that is not met on the 25th does not move the date. Each one says how it is checked, when it is cut and
+what happens if it is not met.
 
-**V1. La suite, en verde.**
-* Comprobación: `pytest` sale con 0 en macOS, y la CI de Linux está en verde, sobre el commit que se publica.
-* Si no se cumple: se publica el último commit de `main` en verde.
+**V1. The suite, green.**
+* Check: `pytest` exits 0 on macOS, and the Linux CI is green, on the commit that is published.
+* If not met: the last green commit of `main` is published.
 
-**V2. La instalación en una orden.**
-* Qué: `tools/install.py` deja el destino como este repositorio:
-  * el validador con el motivo y el perímetro de permisos de AGENTS 7.1;
-  * `includeGitInstructions: false`, sin el que `build --lock` no pone el candado;
-  * un `denyWrite` por cada ruta gobernada;
-  * los hooks `pre-commit` y `commit-msg` (V3);
-  * `pydantic` comprobado en el intérprete con que arrancará el servidor, con permiso antes de instalarlo;
-  * solo pregunta qué rutas gobernar y si hace el commit, y tiene un modo sin preguntas.
+**V2. One-command installation.**
+* What: `tools/install.py` leaves the target like this repository:
+  * the validator with the reason, and the permission perimeter of AGENTS 7.1;
+  * `includeGitInstructions: false`, without which `build --lock` does not set the lock;
+  * a `denyWrite` entry for each governed path;
+  * the `pre-commit` and `commit-msg` hooks (V3);
+  * `pydantic` checked in the interpreter the server will start with, with permission before installing it;
+  * it only asks which paths to govern and whether to commit, and it has a mode without questions.
 
-  `INSTALL.md` se reescribe, con el entorno fuera del repositorio.
-* Comprobación: los tests del instalador y los pasos 1 a 4 de la prueba en limpio en la CI.
-* Corte: viernes 16 por la noche.
-* Si no se cumple: el primer contrato lleva lo que el kit necesita para funcionar en el destino
-  (perímetro, `includeGitInstructions`, `denyWrite` y `pydantic`); el segundo, las preguntas y el
-  `commit-msg`. Lo que no entre queda como paso a mano en `INSTALL.md`, y el README lo dice.
+  `INSTALL.md` is rewritten, with the environment outside the repository.
+* Check: the installer's tests and steps 1 to 4 of the clean-room test in the CI.
+* Cut-off: Friday 16, evening.
+* If not met: the first contract carries what the kit needs to work in the target (perimeter,
+  `includeGitInstructions`, `denyWrite` and `pydantic`); the second, the questions and `commit-msg`. What does not
+  make it stays as a manual step in `INSTALL.md`, and the README says so.
 
-**V3. El acta en git.**
-* Qué: un hook `commit-msg` añade al mensaje de cada commit, como *trailers*, los motivos de los recibos de sus
-  ficheros gobernados, y dice si el contenido del commit coincide con el que dejaron esas escrituras (D1). Solo
-  registra; no bloquea (autor, 2026-10-14).
-* Comprobación: un test hace el commit de un fichero gobernado con recibo y encuentra su motivo en
-  el mensaje; otro, el de un fichero cambiado sin recibo, encuentra que el mensaje lo dice.
-* Corte: viernes 16, con el segundo contrato del instalador.
-* Si no se cumple: la frase del README pierde «that it happened» y dice lo que queda: el motivo de
-  cada escritura gobernada, en la base local.
+**V3. The record in git.**
+* What: a `commit-msg` hook appends to the message of each commit, as trailers, the reasons of the receipts of its
+  governed files, and says whether the content of the commit matches what those writes left (D1). It only records;
+  it does not block (author, 2026-10-14).
+* Check: one test commits a governed file written with a receipt and finds its reason in the message; another
+  commits a file changed without a receipt and finds that the message says so.
+* Cut-off: Friday 16, with the second installer contract.
+* If not met: the README's sentence loses "that it happened" and says what remains: the reason of each governed
+  write, in the local database.
 
-**V4. Instalar en menos de 5 minutos.**
-* Qué: la prueba en limpio de `docs/design/PRUEBA_EN_LIMPIO.md`, en macOS, con el instalador nuevo y su
-  enmienda commiteada antes de medir. La última medida dio 612,8 s (2026-10-12).
-* Comprobación: el hito 2 llega en menos de 300 s (regla de su §4).
-* Corte: domingo 18. La hace el autor.
-* Si no se cumple: el README da la cifra, y el autor decide con los tiempos por paso (regla de su §4).
+**V4. Installing in less than 5 minutes.**
+* What: the clean-room test of `docs/design/PRUEBA_EN_LIMPIO.md`, on macOS, with the new installer and its amendment
+  committed before measuring. The last measurement gave 612.8 s (2026-10-12).
+* Check: milestone 2 comes in less than 300 s (the rule of its §4).
+* Cut-off: Sunday 18. The author does it.
+* If not met: the README gives the figure, and the author decides with the time of each step (the rule of its §4).
 
-**V5. Los límites, completos.**
-* Qué: los límites, por problemas y cada uno con su motivo (ADR-026): cuatro de gobernanza, de la v0.1, y cuatro
-  de seguridad, que pasan a la v0.2.
-  * La tabla «Resumen» de `docs/adversarial-audit/CASES.md` va de problema a casos, con lo corregido y su commit.
-  * La sección de límites del README da los ocho problemas, cada uno con su motivo, un ejemplo y lo que cambia en
-    la v0.2, sin los ids de los casos.
-* Comprobación: cada caso de `CASES.md`, de A01 a A35, y cada límite de AGENTS §9 están en un problema.
-* Corte: lunes 19.
-* Si no se cumple: el README enlaza `CASES.md` y §9 tal como estén.
+**V5. The limits, complete.**
+* What: the limits by problem, each with its reason (ADR-026): four of governance, in v0.1, and four of security,
+  which go to v0.2.
+  * The "Resumen" table of `docs/adversarial-audit/CASES.md` goes from problem to cases, with what was fixed and its
+    commit.
+  * The limits section of the README gives the eight problems, each with its reason, an example and what changes in
+    v0.2, without the ids of the cases.
+* Check: each case of `CASES.md`, A01 to A35, and each limit of AGENTS §9 belongs to one problem.
+* Cut-off: Monday 19.
+* If not met: the README links `CASES.md` and §9 as they are.
 
-**V6. El README en inglés.**
-* Qué, en este orden:
-  * la frase y su primer límite (D3);
-  * el problema (D6) y qué canal decide quién;
-  * los límites (V5);
-  * la instalación;
-  * el coste por escritura gobernada, con su cifra (1875 ms de mediana, `docs/design/COSTE.md`);
-  * lo que cae en la persona (`merge`, `switch`, borrar);
-  * la v0.2 en una frase;
-  * un caso real: los dos defectos del clasificador de `noticias` v3, con sus commits (ADR-030).
-* Comprobación: cada cosa que el README dice que el kit hace cumplir nombra el test que lo
-  comprueba; si no lo tiene, se quita.
-* Corte: jueves 22.
-* Si no se cumple: se recorta en este orden: primero el caso real (queda un enlace al DEVLOG),
-  después la tabla de canales. La frase, los límites y la instalación no se recortan.
+**V6. The README in English.**
+* What, in this order:
+  * the sentence and its first limit (D3);
+  * the problem (D6) and which channel decides who;
+  * the limits (V5);
+  * the installation;
+  * the cost per governed write, with its figure (a median of 1875 ms, `docs/design/COSTE.md`);
+  * what falls to the person (`merge`, `switch`, deleting);
+  * v0.2 in one sentence;
+  * a real case: the two defects of the classifier of `noticias` v3, with their commits (ADR-030).
+* Check: everything the README says the kit enforces names the test that checks it; if it has none, it is removed.
+* Cut-off: Thursday 22.
+* If not met: it is cut in this order: first the real case (a link to the DEVLOG stays), then the table of
+  channels. The sentence, the limits and the installation are not cut.
 
-**V7. Nada de lo publicado contradice el kit.**
-* Qué: fuera de los registros (DEVLOG, PLAN y contratos), ningún documento describe lo que ya no es así:
-  * la exención de `.claude/**` en `docs/design/SANDBOX.md` §6 e `INSTALL.md`;
-  * «Blind by construction» en `examples/traianus/skills/instrument-audit/SKILL.md`;
-  * «5 Radicals» en `docs/` y `examples/`.
-* Comprobación: una lectura de esos documentos, y un `grep` de las dos frases fuera de los registros que sale
-  vacío.
-* Corte: viernes 23.
-* Si no se cumple: se publica, con una issue abierta en el propio repositorio por cada documento.
+**V7. Nothing published contradicts the kit.**
+* What: no document of the published tree describes as current what no longer is. A record describes its own day:
+  where it describes something that has since changed, it says so in a dated note that names what replaced it
+  (ADR-032). Known on 2026-10-18:
+  * the exemption of `.claude/**` in `docs/design/SANDBOX.md` §6;
+  * "Blind by construction" in `examples/traianus/skills/instrument-audit/SKILL.md`, if that folder stays;
+  * "5 Radicals" in `docs/` and `examples/`;
+  * the description of `pyproject.toml`, which predates the sentence of ADR-009.
+* Check: a reading of the translated tree, and a `grep` of those phrases that finds them only next to their note.
+* Cut-off: Friday 23.
+* If not met: it is published, with an issue opened in the repository itself for each document.
 
-**V8. Antes de abrir el repositorio.**
-* Qué:
-  * la información personal que fijó el autor, fuera del árbol y de la historia de `main` (D2). Está en
-    `docs/PLAN.md`, `docs/DEVLOG.md` y `docs/adversarial-audit/PAUTAS.md` desde `de8cabf`, y en
-    `.claude/memory/autor.md`; la lista de términos no se guarda en el repositorio;
-  * en `origin`, solo `main`.
-* Comprobación: `git log -p main` no contiene los términos que fije el autor, y `git ls-remote --heads origin`
-  lista solo `main`.
-* Corte: sábado 24.
-* Si no se cumple: es el único criterio que retrasa abrir el repositorio, porque lo publicado no se
-  recoge. Decide el autor.
+**V8. Before the repository opens.**
+* What:
+  * the personal information the author listed, out of the tree and out of the history of `main` (D2). It was in
+    `docs/PLAN.md`, `docs/DEVLOG.md` and `docs/adversarial-audit/PAUTAS.md` from `de8cabf`, and in
+    `.claude/memory/autor.md`; the list of terms is not kept in the repository;
+  * on `origin`, only `main`.
+* Check: `git log -p main` does not contain the terms the author sets, and `git ls-remote --heads origin` lists only
+  `main`.
+* Cut-off: Saturday 24.
+* If not met: it is the only criterion that delays the opening, because what is published cannot be taken back. The
+  author decides.
 
-**V9. El texto para HN y Reddit.**
-* Qué: un texto técnico corto en inglés, con las reglas de autopromoción de cada sitio revisadas antes. Sale el
-  martes 27 hacia las 14:00 de Madrid, las 9:00 de Nueva York (ADR-027).
-* Corte: sábado 24.
-* Si no se cumple: el repositorio se abre el 25 y el texto sale en la primera semana de la ventana.
+**V9. The text for HN and Reddit.**
+* What: a short technical text in English, with each site's self-promotion rules read first. It goes out on
+  Tuesday 27 at about 14:00 Madrid time, 9:00 in New York (ADR-027).
+* Cut-off: Saturday 24.
+* If not met: the repository opens on the 25th and the text goes out in the first week of the window.
 
-**Fuera de la v0.1 (decidido):**
-* A19, A32, la opción (c) con A33 y A35 pasan a la v0.2, declarados en §9. A21, A23, A24, A25 y A28 quedan
-  declarados sin corregir (autor, 2026-10-14).
-* Nada de Traianus, ninguna mejora de gobernanza que no responda a un fallo real y ninguna función nueva salvo
-  el acta en git (autor, 2026-10-06 y 2026-10-14).
-* Los nombres llanos de los campos, el plugin, la orden única con pantalla propia (ADR-028) y la optimización del
-  coste van a la v0.2.
+**V10. The published tree in English (ADR-032).**
+* What: every document of the tree in English, edited for a reader from outside, in this order: what the README
+  links; `DECISIONES.md`; the other records. The git history stays as it is.
+* Check: no document of the tree is in Spanish, except the agent's reasons quoted as they were given.
+* Cut-off: Saturday 24.
+* If not met: what is not translated leaves the tree; the history keeps it in Spanish.
 
-## 3. La ventana de señal
+**Out of v0.1 (decided):**
+* A19, A32, option (c) with A33, and A35 go to v0.2, declared in §9. A21, A23, A24, A25 and A28 stay declared
+  without a fix (author, 2026-10-14).
+* Nothing of Traianus, no governance improvement that does not answer a real failure, and no new function except the
+  record in git (author, 2026-10-06 and 2026-10-14).
+* The plain names of the fields, the plugin, a single command with its own screen (ADR-028) and the cost
+  optimisation go to v0.2.
 
-**El compromiso (autor, 2026-10-07):** en las cuatro semanas siguientes a la publicación, éxito si al menos 5
-personas ajenas lo instalan o abren una issue, o si nace una conversación de trabajo. Si no llega, se revisa con
-datos, sin reencuadrar. Las cuatro semanas se cuentan desde el texto para HN y Reddit, el martes 27 de octubre
+## 3. The signal window
+
+**The commitment (author, 2026-10-07):** within the four weeks after publication, success if at least 5 outside
+people install it or open an issue, or if one working conversation starts. If it does not come, it is reviewed with
+data, without reframing. The four weeks are counted from the text for HN and Reddit, on Tuesday 27 October
 (ADR-027).
 
-**Cómo se cuenta:**
-* Se cuentan personas, no acciones: quien lo instala y además abre una issue cuenta una vez.
-* **Ajena:** no es el autor ni alguien de su entorno cercano a quien le pidió que lo probara.
-* **Lo instala:** hay algo que se puede enseñar: lo dice en una issue, un comentario o un mensaje, o tiene un
-  repositorio público con `.actuarii.json`. Los clones, las visitas y las estrellas de GitHub no son
-  instalaciones; se anotan como contexto.
-* **Abre una issue:** una issue o un pull request de una cuenta que no es del autor y que no es spam.
-* **Conversación de trabajo:** un intercambio sobre trabajo pagado o sobre una colaboración que nombra Actuarii,
-  con respuesta de las dos partes. Basta una.
-* **Dónde se anota:** GitHub solo guarda 14 días de tráfico. Cada domingo (1, 8, 15 y 22 de noviembre), y el
-  martes 24 al cerrar, va una línea en el DEVLOG con lo que cuenta, enlazado cuando es público, y el tráfico como contexto. De una
-  conversación privada se anota que existe, sin nombres: el DEVLOG es público.
-* **Hasta cuándo:** cuenta lo que llega hasta el martes 24 de noviembre a las 23:59, hora de Madrid (ADR-027).
+**How it is counted:**
+* People are counted, not actions: someone who installs it and also opens an issue counts once.
+* **Outside:** not the author, nor someone close to the author who was asked to try it.
+* **Installs it:** there is something to show: they say so in an issue, a comment or a message, or they have a public
+  repository with `.actuarii.json`. Clones, visits and GitHub stars are not installations; they are noted as
+  context.
+* **Opens an issue:** an issue or a pull request from an account that is not the author's and is not spam.
+* **Working conversation:** an exchange about paid work or a collaboration that names Actuarii, with an answer from
+  both sides. One is enough.
+* **Where it is noted:** GitHub keeps only 14 days of traffic. Each Sunday (1, 8, 15 and 22 November), and on
+  Tuesday 24 at the close, a line in the DEVLOG says what counts, linked when it is public, with the traffic as
+  context. Of a private conversation, only its existence is noted, without names: the DEVLOG is public.
+* **Until when:** what arrives up to Tuesday 24 November at 23:59, Madrid time (ADR-027).
 
-## 4. La puerta del 24 de noviembre
+## 4. The gate of 24 November
 
-Se mira la cuenta del §3, con sus pruebas, y nada más.
+The count of §3 is looked at, with its evidence, and nothing else.
 
-* **Si se cumple:** empieza la v0.2 (§5). La fase 4, Traianus como memoria de agentes, necesita además su
-  criterio de utilidad (`docs/PLAN.md`).
-* **Si no se cumple:**
-  * no empieza la v0.2 ni la fase 4;
-  * el DEVLOG anota qué llegó, con las cifras, y por qué cree el autor que no llegó;
-  * lo que venga después es un plan nuevo, con su propia señal escrita antes, no la continuación de este;
-  * cuatro personas de cinco no cuentan como señal.
+* **If it is met:** v0.2 starts (§5). Phase 4, Traianus as agent memory, also needs its own usefulness criterion
+  (`docs/PLAN.md`).
+* **If it is not met:**
+  * neither v0.2 nor phase 4 starts;
+  * the DEVLOG records what came, with the figures, and why the author thinks the rest did not;
+  * whatever comes next is a new plan, with its own signal written in advance, not a continuation of this one;
+  * four people out of five do not count as a signal.
 
-## 5. La v0.2
+## 5. v0.2
 
-**Qué es:** el entorno aislado propio de `docs/design/ENTORNO_PROPIO.md`: el agente entero dentro, y las
-puertas y un intermediario de escritura fuera. Su motivación es la que la v0.1 dejó de lado: que hace falta un
-middleware para usar agentes de forma segura (autor, 2026-10-13). Empieza solo si se pasa la puerta.
+**What it is:** the isolated environment of `docs/design/ENTORNO_PROPIO.md`: the whole agent inside, and the gates
+and a write broker outside. Its motivation is the one v0.1 set aside: that using agents safely needs a middleware
+(author, 2026-10-13). It starts only if the gate is passed.
 
-**Criterios:**
-* Las garantías E1–E9 (`ENTORNO_PROPIO.md` §3).
-* La batería de su §8: cada caso de las dos auditorías que aplica, y los casos «Internet», sale como se espera,
-  en Claude Code y en OpenCode.
-* El coste: la mediana del tiempo añadido por escritura gobernada, por debajo de 1 s, con el método de
-  `docs/design/COSTE.md` (en la v0.1, 1875 ms).
-* La instalación: de cero en menos de 300 s, con el método de `docs/design/PRUEBA_EN_LIMPIO.md`.
-* Los campos de la propuesta, con nombres llanos (autor, 2026-10-14).
-* La regla de cada medida, commiteada antes de medir.
+**Criteria:**
+* The guarantees E1–E9 (`ENTORNO_PROPIO.md` §3).
+* The battery of its §8: each case of the two audits that applies, and the "Internet" cases, comes out as expected,
+  in Claude Code and in OpenCode.
+* The cost: the median time added per governed write, below 1 s, with the method of `docs/design/COSTE.md` (in v0.1,
+  1875 ms).
+* The installation: from zero in less than 300 s, with the method of `docs/design/PRUEBA_EN_LIMPIO.md`.
+* Plain names for the proposal's fields (author, 2026-10-14).
+* The rule of each measurement, committed before measuring.
 
-**Orden:** las fases v0.2-a a v0.2-e de `ENTORNO_PROPIO.md` §9, con las decisiones de su §10 tomadas antes del
-prototipo.
+**Order:** the phases v0.2-a to v0.2-e of `ENTORNO_PROPIO.md` §9, with the decisions of its §10 taken before the
+prototype.
 
-**Fecha y alcance:** la fecha se fija el 24 de noviembre, con la regla de la v0.1: no se mueve, se
-recorta alcance. De «Ideas para la v0.2» del PLAN entra solo lo que haga falta para un criterio de aquí.
+**Date and scope:** the date is set on 24 November, with the rule of v0.1: it does not move; the scope is cut. Of
+the PLAN's "Ideas for v0.2", only what a criterion here needs goes in.
 
-## 6. Decisiones pendientes
+## 6. Decisions that were open
 
-Cada una lleva la recomendación de Claude y, si ya está tomada, la decisión del autor. Todas están tomadas y
-pasaron a `docs/DECISIONES.md`: D1 es ADR-016; D2, ADR-020; D3 y D6, ADR-018; D4, ADR-019; D5, ADR-010, y D7,
-ADR-017.
+Each one carries Claude's recommendation and, once taken, the author's decision. All were taken and went to
+`docs/DECISIONES.md`: D1 is ADR-016; D2, ADR-020; D3 and D6, ADR-018; D4, ADR-019; D5, ADR-010; and D7, ADR-017.
 
-* **D1. Que el acta registre la escritura, no solo la petición.**
-  * El problema: el rastro guarda hashes, no el texto. Un `commit-msg` solo puede emparejar recibos y commit
-    por fichero y por hora, y entrarían recibos de escrituras que no se hicieron o que se deshicieron. Es lo
-    que criticó la revisión de otro agente.
-  * **Decidido (autor, 2026-10-14):** el acta compara el contenido del commit con el que dejaron las escrituras
-    con recibo y lo dice en el *trailer* («coincide» o «cambió fuera del canal»). El cálculo va dentro de la
-    puerta que ya corre antes de cada escritura, sin proceso nuevo; se descarta un hook `PostToolUse`, que
-    añadiría unos 250 ms por escritura (`COSTE.md` §4).
-  * Consecuencia para el contrato: la puerta deja de abrir la base solo para leer. **Decidido (autor,
-    2026-10-14):** si no puede guardar el resultado esperado, deniega la escritura, como el validador sin acta.
-* **D2. La historia.**
-  * Quitar la información personal de la historia cambia el hash de casi todos los commits desde el 6 de
-    octubre. El DEVLOG, los contratos y el caso de Traianus del README citan hashes.
-  * **Decidido (autor, 2026-10-14):** se quita lo personal, también de la historia; la lista la tiene el autor.
-  * Antes del viernes 16, cuando empieza el README. Con el mapa de commits de `git filter-repo` se rehacen las
-    citas, y se comprueba que cada hash citado existe. GitHub puede seguir sirviendo los commits viejos por su
-    hash: la historia reescrita se sube a un repositorio nuevo y el viejo se borra.
-* **D3. El primer límite del README (A30).** **Decidido (autor, 2026-10-14):** va justo debajo de la frase. Solo
-  deja acta lo que pasa por el canal gobernado; lo que hace `Bash` y lo que va a rutas no gobernadas, no.
-* **D4. Contar A33 y A34 a Anthropic antes de publicar.**
-  * **Decidido (autor, 2026-10-14):** no se cuenta. A34 es comportamiento documentado, y Claude Code ya tiene su
-    interruptor (`omitClaudeMd`, desde la 2.1.271). A33 se sigue de su diseño documentado: el sandbox cubre
-    `Bash`, y las herramientas de ficheros pasan por sus avisos de permiso.
-  * El README los describe con exactitud y con la versión, como límites del kit y no como fallos de Claude
-    Code.
-  * Se reconsidera si una prueba muestra que Claude Code escribe sin preguntar donde dice que pregunta.
-* **D5. La memoria normal de Claude Code en Actuarii.**
-  * Sin la opción (c), la herramienta `Write` sigue llegando a `~/.claude/projects/…/memory/`.
-  * `.claude/memory/MEMORY.md` todavía dice que la opción (c) la deniega.
-  * Claude Code le dice al agente que escriba allí su memoria; lo único que lo impide es una línea de
-    `CLAUDE.md`, es decir, una instrucción y no una regla.
-  * La documentación de Claude Code (code.claude.com/docs/en/memory, leída el 2026-10-14) da dos ajustes de
-    proyecto: `autoMemoryEnabled: false` apaga la memoria automática, y `autoMemoryDirectory` la lleva a otro
-    directorio, con una ruta absoluta o que empiece por `~/`.
-  * Comprobado el 2026-10-14: la memoria normal de Actuarii está vacía desde el 5 de octubre. De 31
-    transcripciones de subagentes, ninguna recibió la instrucción de la memoria automática, y 6 recibieron el
-    índice de `.claude/memory/` a través de `CLAUDE.md`. El revisor ciego no recibe ninguna de las dos
-    (`omitClaudeMd`), aunque en Actuarii no se ha ejecutado nunca.
-  * **Decidido (autor, 2026-10-14):** `autoMemoryEnabled: false` en todo el proyecto, no solo para las
-    revisiones ciegas, que ya están cubiertas. Va en un contrato pequeño, después del instalador, con su test y
-    la corrección de la línea falsa de `.claude/memory/MEMORY.md`. La memoria bajo código se publica el 25, y
-    los recuerdos se escriben sabiéndolo.
-* **D6. El marco del README.**
-  * El párrafo de von Neumann del PLAN está escrito en clave de seguridad.
-  * **Decidido (autor, 2026-10-14):** el marco explica por qué las reglas viven fuera del modelo, y nombra la
-    seguridad frente a un agente adversario como lo que trae la v0.2, no la v0.1.
-* **D7. Las propuestas de Claude en V2–V9 y en §3–§5.** **Aceptadas (autor, 2026-10-14).**
+* **D1. The record registers the write, not only the request.**
+  * The problem: the audit trail keeps hashes, not the text. A `commit-msg` hook could only pair receipts and commit
+    by file and by time, and receipts of writes that were never made, or were undone, would come in. That is what
+    another agent's review criticised.
+  * **Decided (author, 2026-10-14):** the record compares the content of the commit with what the writes with a
+    receipt left, and says so in the trailer ("matches" or "changed outside the channel"). The computation goes
+    inside the gate that already runs before each write, with no new process; a `PostToolUse` hook, which would add
+    about 250 ms per write (`COSTE.md` §4), is ruled out.
+  * Consequence for the contract: the gate no longer opens the database only to read. **Decided (author,
+    2026-10-14):** if it cannot store the expected result, it denies the write, as the validator does without a
+    record.
+* **D2. The history.**
+  * Removing the personal information from the history changes the hash of almost every commit since 6 October. The
+    DEVLOG, the contracts and the Traianus case of the README cite hashes. (That case was replaced by the one in
+    `noticias` v3 on 2026-10-18, ADR-030.)
+  * **Decided (author, 2026-10-14):** the personal information goes, from the history too; the author keeps the
+    list.
+  * Before Friday 16, when the README starts. With the commit map of `git filter-repo` the citations are redone,
+    and every cited hash is checked to exist. GitHub can keep serving old commits by their hash: the rewritten
+    history goes to a new repository and the old one is deleted.
+* **D3. The README's first limit (A30).** **Decided (author, 2026-10-14):** it goes right below the sentence. Only
+  what goes through the governed channel leaves a record; what `Bash` does, and what goes to paths that are not
+  governed, does not.
+* **D4. Reporting A33 and A34 to Anthropic before publishing.**
+  * **Decided (author, 2026-10-14):** they are not reported. A34 is documented behaviour, and Claude Code already
+    has its switch (`omitClaudeMd`, since 2.1.271). A33 follows from its documented design: the sandbox covers
+    `Bash`, and the file tools go through their permission prompts.
+  * The README describes them exactly, with the version, as limits of the kit and not as faults of Claude Code.
+  * To be reconsidered if a test shows Claude Code writing without asking where it says it asks.
+* **D5. Claude Code's ordinary memory in Actuarii.**
+  * Without option (c), the `Write` tool still reaches `~/.claude/projects/…/memory/`.
+  * `.claude/memory/MEMORY.md` still said that option (c) denied it (fixed in `0116031`).
+  * Claude Code tells the agent to write its memory there; the only thing stopping it is a line of `CLAUDE.md`, that
+    is, an instruction and not a rule.
+  * Claude Code's documentation (code.claude.com/docs/en/memory, read on 2026-10-14) gives two project settings:
+    `autoMemoryEnabled: false` turns the automatic memory off, and `autoMemoryDirectory` moves it to another
+    directory, with an absolute path or one that starts with `~/`.
+  * Checked on 2026-10-14: Actuarii's ordinary memory has been empty since 5 October. Of 31 subagent transcripts,
+    none received the instruction of the automatic memory, and 6 received the index of `.claude/memory/` through
+    `CLAUDE.md`. The blind reviewer receives neither (`omitClaudeMd`), though it has never run in Actuarii.
+  * **Decided (author, 2026-10-14):** `autoMemoryEnabled: false` in the whole project, not only for blind reviews,
+    which are already covered. It goes in a small contract, after the installer, with its test and the fix of the
+    false line of `.claude/memory/MEMORY.md`. The memory under code is published on the 25th, and memories are
+    written knowing that.
+* **D6. The README's frame.**
+  * The von Neumann paragraph of the PLAN is written in a security key.
+  * **Decided (author, 2026-10-14):** the frame explains why the rules live outside the model, and names security
+    against an adversarial agent as what v0.2 brings, not v0.1.
+* **D7. Claude's proposals in V2–V9 and in §3–§5.** **Accepted (author, 2026-10-14).**

@@ -1,23 +1,25 @@
 ---
 name: pocas-peticiones-al-autor
-description: Al diseñar un cambio o un contrato, contar los pasos que caen en el autor y buscar el diseño que no los necesite; en Bash, solo órdenes de la lista, sin variables, cd ni bucles
+description: When designing a change or a contract, count the steps that fall to the author and look for the design that does not need them; in Bash, only commands on the list, without variables, cd or loops
 metadata:
   type: feedback
 ---
 
-El sandbox deja a la persona todo lo que toca rutas gobernadas fuera del canal de recibos: `merge`, `switch`,
-`restore`, borrar, reconectar el servidor MCP, volver a copiar el `pre-commit`. Cada uno es una petición al autor.
+The sandbox leaves to the person everything that touches governed paths outside the receipt channel: `merge`,
+`switch`, `restore`, deleting, reconnecting the MCP server, copying the `pre-commit` again. Each one is a request to
+the author.
 
-**Why:** el 2026-10-09 el autor señaló que había demasiadas peticiones para él; el contrato se rediseñó para que la
-conversión la hiciera el instalador, que ya ejecuta la persona (`docs/DEVLOG.md`).
+**Why:** on 2026-10-09 the author pointed out that there were too many requests; the contract was redesigned so that
+the conversion was done by the installer, which the person already runs (`docs/DEVLOG.md`).
 
-**How to apply:** en cada contrato, listar los pasos de la persona y buscar el diseño que los evite. Si `main` no se
-ha movido desde la rama, avanzarlo por fast-forward dentro del sandbox (`git branch -f main <rama>` y
-`git switch main`) en vez de pedir un merge. Relacionado: [[autor]].
+**How to apply:** in every contract, list the person's steps and look for the design that avoids them. If `main` has
+not moved since the branch left it, advance it by fast-forward inside the sandbox (`git branch -f main <branch>` and
+`git switch main`) instead of asking for a merge. Related: [[autor]].
 
-**Bash:** cada llamada que pregunta es una petición. Mientras `ask` tenga el comodín `"Bash"`, preguntan todas: Claude Code
-evalúa deny, luego ask y luego allow, y el comodín tapa la lista de AGENTS 7.1 (documentación de permisos, comprobado el
-2026-10-15). Sin él, de las 352 llamadas del chat principal del 14 habrían preguntado 231: 80 por la forma de la orden
-(variables, `cd`, bucles), 84 por herramientas de lectura fuera de la lista (`cut`, `jq`, `awk`) y 67 porque escribían.
-El autor lo señaló el 2026-10-15. Una orden por llamada, desde la raíz, con rutas literales del proyecto o del
-scratchpad, sin variables, `cd`, bucles ni `$(...)`; los ficheros se leen con `Read`, que no pregunta.
+**Bash:** every call that asks is a request. On 2026-10-15 the author pointed out that every call asked: a bare
+`"Bash"` in `ask` covered the read-only list of AGENTS 7.1, because Claude Code evaluates deny, then ask, then allow
+(permissions documentation, checked on 2026-10-15). Without it, 231 of the 352 calls of the main chat of the 14th
+would still have asked: 80 for the form of the command (variables, `cd`, loops), 84 for read tools outside the list
+and 67 because they wrote. ADR-022 removed the bare `"Bash"` and widened the list. One command per call, from the
+root, with literal paths of the project or the scratchpad, without variables, `cd`, loops or `$(...)`; files are
+read with `Read`, which does not ask.

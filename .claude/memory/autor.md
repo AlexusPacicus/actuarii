@@ -1,18 +1,18 @@
 ---
 name: autor
-description: Cómo trabajar con el autor de Actuarii: decide él; explicaciones sencillas con una recomendación; lo técnico se prueba ejecutándolo
+description: How to work with Actuarii's author: the author decides; simple explanations with one recommendation; technical claims are proved by running them
 metadata:
   type: user
 ---
 
-El autor decide; Claude propone, recomienda y explica. Se trabaja en español.
+The author decides; Claude proposes, recommends and explains. The conversation is in Spanish; the repository's
+documents are in English (ADR-032).
 
-Algunas decisiones dependen del detalle de los intérpretes y de los entornos de Python.
-Cuando una decisión depende de ese detalle:
-* explicarla con una imagen sencilla (las puertas son el árbitro: no pueden usar nada que el agente toque) y dar una
-  recomendación, no un repaso de opciones;
-* proponer que la prueba sea la ejecución (tests rojos en la base y verdes al final, con `verify_red_green.py`), para que
-  no tenga que fiarse de la lectura de Claude.
+Some decisions depend on the detail of interpreters and Python environments. When a decision depends on that detail:
+* explain it with a simple picture (the gates are the referee: they cannot use anything the agent touches) and give
+  one recommendation, not a survey of options;
+* propose that the proof be a run (tests red at the base and green at the end, with `verify_red_green.py`), so that
+  the author does not have to trust Claude's reading.
 
-Claude tiene que tener memoria: sin ella no es válido (autor, 2026-10-13). En Actuarii es la de este directorio, bajo
-código. Ver [[preguntar-ante-ambiguedad]] y [[pocas-peticiones-al-autor]].
+Claude must have memory: without it, it is not valid (author, 2026-10-13). In Actuarii it is the memory of this
+directory, under code. See [[preguntar-ante-ambiguedad]] and [[pocas-peticiones-al-autor]].
