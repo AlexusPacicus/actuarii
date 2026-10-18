@@ -6,6 +6,7 @@ state of the target afterwards: what was copied, what was merged, what was left 
 writes nothing.
 """
 import copy
+import io
 import json
 import os
 import shlex
@@ -19,7 +20,7 @@ import pytest
 
 from tests.security.test_sandbox_settings import STRICT, expected_deny_write, sandbox_problems
 from tools.audit.run_process import run
-from tools.install import pydantic_pin
+from tools.install import ask_paths, pydantic_pin
 
 CLONE = Path(__file__).resolve().parents[2]
 INSTALLER = CLONE / "tools" / "install.py"
@@ -1837,6 +1838,47 @@ def test_with_govern_the_paths_question_is_not_asked(target, home):
     assert done.returncode == 0, done.stderr
     assert done.stderr == ""
     assert configured_extras(target) == ["notes.md"]
+
+
+class Terminal(io.StringIO):
+    def isatty(self):
+        return True
+
+
+def target_line(target):
+    return PREFIX + f"installing into {str(target)}; nothing is written until you answer, and Ctrl-C stops here"
+
+
+def ask_on_a_terminal(monkeypatch, capsys, target, held, stdin):
+    monkeypatch.setattr(sys, "stdin", Terminal(stdin))
+    taken = ask_paths(target, held)
+    return taken, capsys.readouterr().err
+
+
+def test_on_a_terminal_the_paths_question_begins_with_the_target_and_keeps_its_two_lines_after_it(monkeypatch, capsys, target):
+    taken, written = ask_on_a_terminal(monkeypatch, capsys, target, ["notes.md"], "docs/**\n\n")
+    assert taken == ["docs/**"]
+    assert written.splitlines() == [
+        target_line(target),
+        f"{PREFIX}already governed: {', '.join([*MINIMUM, 'notes.md'])}",
+        f"{PREFIX}other paths to govern, one per line, each a file or a directory followed by /**; an empty line ends",
+    ]
+
+
+def test_the_paths_question_is_written_once_however_many_answers_follow_and_a_refused_one_is_explained(monkeypatch, capsys, target):
+    (target / "existing").mkdir()
+    taken, written = ask_on_a_terminal(monkeypatch, capsys, target, [], "../outside\nexisting\ndocs/**\nnotes.md\n\n")
+    assert taken == ["docs/**", "notes.md"]
+    assert written.count(target_line(target) + "\n") == 1
+    lines = written.splitlines()
+    assert len(lines) == 5
+    assert lines[0] == target_line(target)
+    assert lines[1].startswith(f"{PREFIX}already governed: ")
+    assert lines[2].startswith(f"{PREFIX}other paths to govern, ")
+    for line, answer, needle in zip(lines[3:], ("../outside", "existing"), (PARENT, DIRECTORY)):
+        assert line.startswith(PREFIX), line
+        assert repr(answer) in line, line
+        assert needle in line, line
 
 
 # A configuration with extra paths ------------------------------------------------------------------------------------

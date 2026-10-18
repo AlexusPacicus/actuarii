@@ -44,9 +44,10 @@ answers the default). A question is written on stderr only when the standard inp
 same way from a pipe, so that a script or a test can supply them:
 
 * which paths to govern besides the minimum, before the plan is built and so before any write and before conflicts are looked
-  for, unless --govern is given. It names what is already governed and takes one path per line, each a file path or a
-  directory followed by /**; an empty line or the end of input ends it. An answer the entry rules below refuse is explained on
-  stderr, not taken, and reading goes on. Default: no other path;
+  for, unless --govern is given. It names the target, says that nothing is written until it is answered, names what is
+  already governed and takes one path per line, each a file path or a directory followed by /**; an empty line or the
+  end of input ends it. An answer the entry rules below refuse is explained on stderr, not taken, and reading goes on.
+  Default: no other path;
 * after the writes, whether to run `<executable> -m pip install pydantic==<pin>` for the interpreter the check named, when it
   has another pydantic or none and neither its executable nor its prefix lies inside the target; the report gives the result,
   and a new check when pip succeeded. Default: no;
@@ -379,7 +380,8 @@ def confirmed(question: str) -> bool:
 def ask_paths(target: Path, held: list[str]) -> list[str]:
     """The paths the person gives, one per line, until an empty line or the end of input; a refused one is explained and not taken."""
     governed = ", ".join([*EXAMPLE_CONFIG["governed_paths"], *held])
-    question = (f"{PREFIX}already governed: {governed}\n"
+    question = (f"{PREFIX}installing into {target}; nothing is written until you answer, and Ctrl-C stops here\n"
+                f"{PREFIX}already governed: {governed}\n"
                 f"{PREFIX}other paths to govern, one per line, each a file or a directory followed by {DIRECTORY_SUFFIX}; "
                 "an empty line ends\n")
     answers: list[str] = []
