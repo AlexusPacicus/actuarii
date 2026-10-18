@@ -121,21 +121,103 @@ The rows where the model or no one decides are declared limits, not oversights.
 
 ## Limits
 
-> **Draft.** This section becomes the summary table of
-> [`CASES.md`](docs/adversarial-audit/CASES.md), A01 to A35, on Monday 19 (V5). Until then, the full list is
-> [`AGENTS.md` §9](AGENTS.md#9-declared-limits).
+An adversarial audit of the kit recorded 35 cases. Each one is in
+[`CASES.md`](docs/adversarial-audit/CASES.md) (in Spanish), and every limit that remains is declared in
+[`AGENTS.md` §9](AGENTS.md#9-declared-limits). They come down to eight problems:
 
-* **The kit governs paths, not tasks.** In a test on a real repository, asked to write tests for a module whose
-  directory was governed, the agent wrote them in `tests/unit/`, which was not, and said it did so to avoid
-  asking for a receipt ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §5, in Spanish). It broke no
-  rule. What you do not govern leaves no record.
-* **The boundary is borrowed from Claude Code.** The sandbox, the hooks and the permission prompts are Claude
-  Code's. Where they do not reach, the kit does not either: the file tools can write `.git/hooks` and files
-  outside the repository with only Claude Code's own permission prompt in the way, and the gates themselves run
-  outside the sandbox with the `python3` on your `PATH`. These are limits of the kit, not faults of Claude Code.
-* **The agent issues its own receipts.** A receipt proves that a well-formed proposal for that exact change was
-  recorded before the write, not that a person approved it.
-* **The commit trailers are text.** Anyone can write them, and nothing signs them.
+* **Governance (problems 1 to 4).** The record can be incomplete without anyone trying. These are the limits of
+  v0.1.
+* **Security (problems 5 to 8).** An agent that looks for a way out finds one. That is what v0.2 is for, if it
+  comes ([below](#what-comes-next)).
+
+### Governance: the record can be incomplete without anyone trying
+
+1. **The record covers only its channel.** It is made when a file tool writes a governed path, not on the disk.
+   None of these leaves a record:
+   * `Bash`;
+   * the paths you did not govern;
+   * the integrated browser and the connectors.
+
+   A commit made with `--no-verify` gets no record, and one carried over by a rebase keeps its trailers
+   without a new check.
+
+   *Example:* in a test on a real repository, the agent was asked to write tests for a module whose directory
+   was governed. It wrote them in `tests/unit/`, which was not, and said it did so to avoid asking for a receipt
+   ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §5). It broke no rule.
+
+   *In v0.2:* every write to a governed path from inside the environment, `Bash` included, goes through one
+   broker, and deleting or renaming a governed file gets a governed channel. The paths you do not govern stay
+   outside.
+2. **No person approves the receipts or their reasons.** There is no human in the loop. The agent issues its own
+   receipt and writes its own reason. The validator checks the form of the proposal and its quote of the file,
+   not that the reason is true. The red phase of a delegated test and the delegation itself work the same way:
+   the agent that executes checks itself.
+
+   *Example:* in the installation measured on macOS, the agent got its receipt and wrote two seconds later.
+   Claude Code asked the person to approve the write and showed its content. The reason went only to the
+   validator, and no one read it.
+
+   *In v0.2:* the broker writes exactly what it validated, and a delegated implementer can write only the files
+   its contract lists. A person approving each receipt is not planned yet.
+3. **The kit trusts the way you set it up.** Some of what the person sets up changes what the kit does:
+   * a governed path that is a symbolic link is governed by its target;
+   * with git's `core.fileMode` off, the commit check can refuse a valid commit;
+   * without Claude Code's session environment file, the Python shim is not on the `PATH`.
+
+   The session announcement reports the configuration and does not check it.
+
+   *Example:* whenever the sandbox is on, the announcement says that `Bash` cannot write the governed paths. It
+   does not check that each one has its `denyWrite` entry.
+
+   *In v0.2:* the announcement becomes a report generated from the environment's real configuration.
+4. **When the validator goes down, work stops.** Without the validator's server there are no receipts, and every
+   governed write is denied. The kit fails closed, but a malformed request can stop the server until the session
+   restarts.
+
+   *Example:* a tool call whose `arguments` is a list instead of an object ends the server.
+
+   *In v0.2:* the broker rejects a malformed request and keeps running.
+
+### Security: an agent that looks for a way out finds one
+
+5. **The gates start in an environment the agent can reach.** The hooks, the validator and the commit hooks run
+   outside the sandbox, with the `python3`, the `PATH` and the settings of the session. The file tools can write
+   `.git/hooks` and `.git/config`, which the sandbox keeps from `Bash`, and only Claude Code's permission prompt
+   stands in the way. The boundary is borrowed from Claude Code: these are limits of the kit, not faults of
+   Claude Code.
+
+   *Example:* with a virtual environment inside the repository, a `sitecustomize.py` planted in its
+   `site-packages` ran at every call of a gate, outside the sandbox. That is why the install guide keeps the
+   environment outside the repository.
+
+   *In v0.2:* the gates and the broker run outside the environment, installed outside the repository, and load
+   nothing the agent can reach. Nothing inside can write `.git`.
+6. **The checks are text, not a boundary.** The list of forbidden Python primitives, the shell check that keeps
+   Python behind the shim and the list of read-only commands are checks on text, and each has known ways around
+   it. The boundary for what runs is the operating system's sandbox.
+
+   *Example:* `pytest` runs every test file it collects, committed or not, with its own interpreter and outside
+   the shim.
+
+   *In v0.2:* the environment's permissions replace these checks as the boundary.
+7. **Outside the audit database, records can be written.** The sandbox protects the database file, not the rest
+   of `.data/`: the context log, the blind review's lock and the database's journal files. The commit trailers
+   are text: anyone can write them, and nothing signs them.
+
+   *Example:* removing the review lock from `Bash` ends a blind review.
+
+   *In v0.2:* the audit trail and the lock live outside the environment, and a blind review runs in an
+   environment that sees only its package.
+8. **The session has what you have.** The kit runs with your permissions: nothing stops `Bash` or `Read` from
+   reading your credentials.
+
+   *Example:* in this repository's audit, `Bash` could open `~/.ssh` and `~/.config/gh` from inside the sandbox.
+
+   *In v0.2:* your home directory does not exist inside the environment. The network reaches only what the
+   configuration allows, through a proxy outside it.
+
+v0.2 does not solve prompt injection either. The agent still reads content it cannot trust; what changes is that
+it can no longer act outside its environment ([`ENTORNO_PROPIO.md`](docs/design/ENTORNO_PROPIO.md) §6).
 
 ## Install
 
