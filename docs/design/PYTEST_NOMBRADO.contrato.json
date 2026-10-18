@@ -1,0 +1,95 @@
+{
+  "schema_version": "delegation/1",
+  "task_id": "pytest-nombrado",
+  "title": "The Bash hook denies pytest run through the interpreter naming pytest, and the announcement says how tests run",
+  "branch": "v01/pytest-nombrado",
+  "base_commit": "1005cb09aad05721b68017518723496e56f3bfe9",
+  "attribution": null,
+  "context": {
+    "task": "Give tools/hooks/deny_python_escapes.py a rule R7 that denies pytest run through an interpreter the shim covers (python3 -m pytest) with a message that names the call that works, pytest by its own entry point, and give the session announcement of tools/hooks/announce_governance.py one line that says how tests run. The permission rules already deny python3 -m with a generic message; the hook runs before them, so its message is the one the agent reads.",
+    "sources": [
+      {"path": "AGENTS.md", "select": [
+        {"clause": "2.1"}, {"clause": "2.4"}, {"clause": "4.1"}, {"clause": "4.2"}, {"clause": "6.3"}, {"clause": "6.5"},
+        {"clause": "8.1"}, {"clause": "8.2"}, {"clause": "8.4"}]},
+      {"path": "docs/DECISIONES.md", "select": [
+        {"heading": "ADR-031 — La denegación de `python3 -m pytest` nombra `pytest` (2026-10-18, autor)"}]},
+      {"path": "tools/hooks/deny_python_escapes.py", "select": [
+        {"lines": "1-56"}, {"symbol": "until_separator"}, {"symbol": "violation"}, {"symbol": "check"},
+        {"symbol": "deny"}, {"symbol": "main"}]},
+      {"path": "tools/hooks/announce_governance.py", "select": [
+        {"lines": "1-28"}, {"symbol": "_invalid"}, {"symbol": "_valid"}]},
+      {"path": "tests/security/test_python_gate_bash_hook.py", "select": [{"lines": "1-200"}]},
+      {"path": "tests/security/test_announce_governance.py", "select": [{"lines": "1-140"}]},
+      {"path": "tests/unit/test_kit_independence.py", "select": [{"lines": "25-47"}]}
+    ]
+  },
+  "problem": "In a real case on 2026-10-18 the agent ran `python3 -m pytest` three times and never tried `pytest` until the person told it to. The rule is right: the permission rules of .claude/settings.json deny `Bash(python3 -m *)` and allow `Bash(pytest *)`. But that denial is a Claude Code deny rule, shown to the agent as the generic \"Permission to use Bash with command ... has been denied\", and nothing in a target repository says that tests run with pytest by its own entry point. tools/hooks/deny_python_escapes.py, the PreToolUse hook for Bash, has rules R1 to R6 and does not look at -m: it lets `python3 -m pytest` through, and the deny rule refuses it without saying what works. Claude Code's documentation (code.claude.com/docs/en/hooks) says that permission rules are evaluated against the input a PreToolUse hook returns and that the reason of a hook's denial is shown to the agent: the hook acts before the deny rule. The session announcement (tools/hooks/announce_governance.py) says that Python runs only committed scripts, which the agent read as the cause of the denial.",
+  "decisions": [
+    "D1 R7, where. In violation() of tools/hooks/deny_python_escapes.py, inside the branch for a word whose last component matches INTERPRETER, after the R1 and R2 checks have let it through: that is, for a covered name (python, python3, python3.11) written alone, or for the shim named by path (tools/bin/<name>, or a word ending in /tools/bin/<name>). R1 to R6 keep their order and their text.",
+    "D2 R7, what. R7 reads the words that follow the interpreter word up to the next separator (until_separator), as the interpreter's own options, in order: \"-m\" makes the next word the module; a word that starts with \"-m\" and is longer makes the rest of it the module; \"-c\" stops the reading (inline code, not R7); \"-X\" or \"-W\" skips the next word, their value; any other word that starts with \"-\" is an option and the reading goes on; any other word stops the reading (a script or the end of the options; not R7). When the module is \"pytest\" or \"py.test\", R7 returns the reason f\"R7 pytest through the interpreter: {word!r} -m {module}; run it by its own entry point instead: pytest, with the same arguments\". The reading is a small helper function of the module, called from violation().",
+    "D3 R7 applies to both passes of check(), the words and the words split again, as the other rules do, so `sh -c 'python3 -m pytest'` is caught. deny() does not change: the message keeps its prefix and its closing parenthesis.",
+    "D4 The docstring of deny_python_escapes.py: after the R6 line, a line for R7 aligned like its neighbours: \"R7  pytest run through an interpreter the shim covers (python3 -m pytest, with interpreter options before -m, -mpytest or py.test). The permission rules deny it anyway; R7 denies it first, so that the denial names the call that works: pytest by its own entry point.\" In the paragraph of declared limits, after the sentence about R2 on a quoted argument, the words \"R7 likewise on a quoted argument that only mentions python3 -m pytest,\" join that limit, so that it reads as one list item; the rest of the docstring stays.",
+    "D5 The announcement. In tools/hooks/announce_governance.py, both _valid() and _invalid() gain, right after their line that begins \"  Python runs only committed scripts\", the line \"  Tests run through pytest by its own entry point; python3 -m and python3 -c are denied\". The module docstring: the words \"the blind review and where Python may run\" become \"the blind review, where Python may run and how the tests run\", rewrapped like their neighbours. Nothing else in the announcement changes.",
+    "D6 The tests of the hook, in tests/security/test_python_gate_bash_hook.py. DENIED gains these entries, each with rule \"R7\" and the interpreter word: (\"python3 -m pytest tests/ -q\", \"python3\"), (\"python -m pytest\", \"python\"), (\"python3.11 -m pytest -q\", \"python3.11\"), (\"tools/bin/python3 -m pytest\", \"tools/bin/python3\"), (\"python3 -B -X dev -m pytest x\", \"python3\"), (\"python3 -mpytest\", \"python3\"), (\"python3 -m py.test\", \"python3\"), (\"cd /x && python3 -m pytest explorations/v3/tests/test_classify_method_family.py -q 2>&1 | tail -25\", \"python3\"), (\"sh -c 'python3 -m pytest'\", \"python3\"). PERMITTED gains \"python3 tools/audit/x.py -m pytest\" (an argument of a script) and \"python3 -m pip --version\" (R7 is for pytest only; the shim and the permission rules deal with the rest of -m). A new test, after test_denied_command_exits_2_naming_the_rule_and_the_word, checks for each R7 entry that the message contains \"run it by its own entry point instead: pytest, with the same arguments\".",
+    "D7 The tests of the announcement, in tests/security/test_announce_governance.py: a new test checks that, for a valid configuration and for an invalid one, the line that follows the line beginning \"  Python\" is exactly \"  Tests run through pytest by its own entry point; python3 -m and python3 -c are denied\". The existing tests do not change; the new line begins with two spaces and not with \"  Python\", which the helpers announce() and python_line() require.",
+    "D8 The order of the edits, since both hooks are read again on every call, the implementer's own Bash calls included: the tests first (red); then in deny_python_escapes.py the helper function, then its call in violation(), then the docstring; then in announce_governance.py the line in _valid() and in _invalid(), then the docstring. Each edit leaves both hooks importable and working.",
+    "D9 Both hooks still import and run under a Python 3.9 system interpreter with the standard library only (announce_governance.py also with tools.project_config and tools.audit.run_process, as today), with annotations postponed; no syntax newer than 3.9; no new network, process or code-loading primitive. No text of the hooks or of the tests cites a clause of AGENTS.md or an ADR: tests/unit/test_kit_independence.py forbids it.",
+    "D10 The permission rules do not change: no file of .claude/. The deny rule keeps denying whatever the hook does not recognise.",
+    "D11 The validator requires a Rationale in every proposal: include it, even if the schema of validate_proposal shown to you lacks it.",
+    "D12 No new dependency and no file outside files_may_touch: in particular not README.md or docs/, which the executing agent changes after the merge.",
+    "D13 Gates: red-first, each red test seen failing for its stated reason before the change that makes it pass; full-suite, pytest tests/ exits 0 at the commit; verify-red-green, tools/audit/verify_red_green.py exits 0 on the report."
+  ],
+  "behaviours": [
+    {"id": "B1", "statement": "A Bash command that runs pytest through an interpreter the shim covers (python3 -m pytest, python -m pytest, python3.11 -m pytest, the shim by path, with interpreter options before -m, -mpytest, py.test, inside sh -c or after other commands) is denied with exit 2, naming R7 and the interpreter word, and the message says to run pytest by its own entry point with the same arguments."},
+    {"id": "B2", "statement": "pytest by its own entry point, a script whose arguments contain -m pytest, and python3 -m with another module pass this hook as today; R1 to R6 deny what they denied, with the same text."},
+    {"id": "B3", "statement": "The session announcement, for a valid configuration and for an invalid one, has right after its Python line the line \"  Tests run through pytest by its own entry point; python3 -m and python3 -c are denied\"."}
+  ],
+  "tests": [
+    {"id": "T1", "must_catch": "pytest run through a covered interpreter that the hook lets through, or a denial that does not name R7, the interpreter word and pytest by its own entry point as the call that works", "expectation": "red", "reason": "at base the hook has no R7 and exits 0 on every one of these commands, leaving them to the generic deny rule"},
+    {"id": "T2", "must_catch": "an announcement, valid or invalid, without the line on how tests run right after the Python line, or with another text", "expectation": "red", "reason": "at base the announcement has no such line"},
+    {"id": "T3", "must_catch": "R7 taking a script argument or another module for pytest run through the interpreter, a change in R1 to R6, a hook that imports outside the standard library or stops parsing as Python 3.9, or an announcement test that no longer holds", "expectation": "guard", "reason": "these hold at base and must keep holding: the PERMITTED entries (with the two new ones, which pass at base), test_denied_command_exits_2_naming_the_rule_and_the_word for R1 to R6, test_hook_imports_only_the_standard_library, test_hook_postpones_annotations_and_parses_as_python_39 and the existing tests of test_announce_governance.py, unchanged"}
+  ],
+  "files_may_touch": [
+    "tools/hooks/deny_python_escapes.py",
+    "tools/hooks/announce_governance.py",
+    "tests/security/test_python_gate_bash_hook.py",
+    "tests/security/test_announce_governance.py"
+  ],
+  "files_must_not_touch": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "INSTALL.md",
+    "README.md",
+    ".actuarii.json",
+    ".mcp.json",
+    "opencode.jsonc",
+    "pyproject.toml",
+    ".claude/**",
+    ".opencode/**",
+    "docs/**",
+    "examples/**",
+    "tools/hooks/require_boundary_validation.py",
+    "tools/hooks/require_contract_context.py",
+    "tools/hooks/confine_review_reads.py",
+    "tools/hooks/block_config_changes.py",
+    "tools/hooks/session_python_gate.sh",
+    "tools/boundary_validator/**",
+    "tools/audit/**",
+    "tools/git/**",
+    "tools/bin/**",
+    "tools/install.py",
+    "tests/conftest.py",
+    "tests/unit/test_kit_independence.py",
+    "tests/security/test_root_off_sys_path.py",
+    "tests/security/test_hooks_without_shim.py",
+    "tests/security/test_hook_project_dir.py",
+    ".github/**"
+  ],
+  "gates": [
+    "red-first",
+    "full-suite",
+    "verify-red-green"
+  ],
+  "commit_message": "fix(hooks): la denegación de python3 -m pytest nombra pytest, y el anuncio lo dice (ADR-031)",
+  "report_schema": "delegation-report/2"
+}

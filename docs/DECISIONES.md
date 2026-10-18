@@ -465,3 +465,27 @@ encontró dos defectos del clasificador léxico, `explorations/v3/scripts/classi
 copia de trabajo del autor no se usa: tiene el `.env` y notas privadas sin commitear.
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-18.
+
+## ADR-031 — La denegación de `python3 -m pytest` nombra `pytest` (2026-10-18, autor)
+
+**Contexto:** en el caso real (ADR-030), el agente lanzó tres veces `python3 -m pytest` y no probó `pytest` hasta
+que la persona se lo dijo. La regla es correcta: el perímetro deniega `python3 -m` y permite `pytest`. Pero esa
+denegación es una regla `deny` de Claude Code, con su mensaje genérico, y en el destino nada dice que los tests se
+ejecutan con `pytest`. El hook de `Bash` del kit no mira `-m`. La documentación de Claude Code
+(`code.claude.com/docs/en/hooks`, leída el 2026-10-18) dice que las reglas de permisos se evalúan sobre lo que
+devuelve el hook `PreToolUse`, y que el motivo de su denegación se le muestra al agente: el hook actúa antes que la
+regla `deny`.
+**Decisión:**
+* El hook de `Bash` (`tools/hooks/deny_python_escapes.py`) gana una regla, R7. Deniega `pytest` lanzado a través de
+  un intérprete que cubre el shim (`python3 -m pytest`) y nombra la orden que vale: `pytest`, por su propio punto de
+  entrada, con los mismos argumentos.
+* El anuncio de la sesión gana una línea: los tests se ejecutan con `pytest` por su propio punto de entrada, y
+  `python3 -m` y `python3 -c` se deniegan.
+* La regla `deny` del perímetro no cambia: sigue denegando lo que el hook no reconozca.
+* Va en un contrato al implementador (`docs/design/PYTEST_NOMBRADO.contrato.json`). ADR-004 lo admite, porque
+  responde a un fallo real.
+
+**Consecuencias:** el instalador copia el hook y el anuncio nuevos a los destinos. El README cierra el caso real
+con el commit del arreglo.
+**Sustituye a:** —
+**Fuente:** `docs/DEVLOG.md`, 2026-10-18.
