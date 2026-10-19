@@ -66,14 +66,14 @@ Updated: 2026-10-19, afternoon.
     step cite them, and the records keep the names of their day, with a dated note at the head of the register and of
     the DEVLOG;
   * **the selection of the register (ADR-035):** 22 entries stay and 17 leave, with the author, entry by entry; the
-    head names the commit where those that left remain.
+    head names the commit where those that left remain. The register is in English: its head and the 16 entries
+    that were in Spanish, translated without other edits.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
   1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** the author reviews each document with Claude, and
-     each one stays (translated), is condensed, or leaves the tree. The register is selected; next, its head and its
-     16 entries still in Spanish are translated, unedited otherwise (ADR-035). A contract that stays as an example
-     takes the `.contract.json` suffix.
+     each one stays (translated), is condensed, or leaves the tree. The register is done (selected and translated).
+     A contract that stays as an example takes the `.contract.json` suffix.
      ADR-033 carries Claude's proposal as the starting point, not as a decision. `ROADMAP.md` is already translated,
      and is also the sample of tone and edits. When the review reaches it, the author stops to work on v0.2.
      Questions Claude brought for that research:

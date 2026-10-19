@@ -12,6 +12,30 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-19 (evening, the register in English)
+
+The register is translated: its head and the 16 entries that stay and were in Spanish, without other edits (ADR-032,
+ADR-035).
+
+**Done**
+* **The words:** the titles are those of the status table, and the vocabulary is that of ADR-032 on and of the
+  ROADMAP (record, receipt, gate, audit trail, reason, clean-room test, own environment). Paths keep the names of
+  their day; the headings of the PLAN, still in Spanish, are quoted as they are, as ADR-034 does; the decimal comma
+  becomes a point (612.8 s).
+* **The head** gains one line: translated from Spanish on 2026-10-19, up to ADR-031, and translating an entry does
+  not change what it decided.
+* **Checked that only the language changed:**
+  * the code spans, the ids of decisions, cases, criteria and sections, the dates and the figures are the same
+    before and after, except for the decimal point and the line of the head;
+  * the bullets and numbered items are the same, 104;
+  * each of the 22 entries has its five fields, and no line passes 120 characters.
+
+  One slip was found and undone: backticks around `noticias` in the title of ADR-030, which the original does not
+  have.
+
+**Next**
+* **The review of each document (ADR-033),** with the V8 check.
+
 ## 2026-10-19 (late afternoon, the selection)
 
 The register is selected (ADR-035): 22 entries stay and 17 leave, decided with the author entry by entry.

@@ -1,11 +1,13 @@
-# Actuarii — decisiones
+# Actuarii — decisions
 
-Registro de las decisiones del autor. Solo se amplía: una entrada no se edita nunca, y revisar una decisión es
-añadir otra que dice a cuál sustituye. Las que están en vigor se listan en `docs/STATUS.md`. Las decisiones
-técnicas de un contrato se quedan en el contrato. La fecha de cada entrada sale del reloj.
+The register of the author's decisions. It only grows: an entry is never edited, and revising a decision means
+adding another that says which one it supersedes. Those in force are listed in `docs/STATUS.md`. The technical
+decisions of a contract stay in the contract. The date of each entry comes from the clock.
 
-ADR-001 a ADR-020 se escribieron el 2026-10-14 y recogen las decisiones en vigor ese día, tomadas entre el 5 y
-el 14 de octubre. Cada una lleva la fecha en que se tomó y dónde está su razonamiento. Lo anterior no se migra.
+ADR-001 to ADR-020 were written on 2026-10-14 and gather the decisions in force that day, taken between 5 and 14
+October. Each one carries the date it was taken and where its reasoning is. What came before is not migrated.
+
+Translated from Spanish on 2026-10-19, up to ADR-031 (ADR-032): translating an entry does not change what it decided.
 
 **Note (2026-10-19, ADR-035):** files were renamed into English. `docs/DECISIONES.md` is now `docs/DECISIONS.md`;
 `docs/ESTADO.md`, `docs/STATUS.md`; `docs/design/PRUEBA_EN_LIMPIO.md`, `docs/design/CLEAN_ROOM.md`;
@@ -19,264 +21,262 @@ entries keep the names of their day.
 Spanish up to ADR-031, at commit `04107e0`. The numbers do not change, and the gaps stay. Leaving this file does not
 change whether a decision is in force: `docs/STATUS.md` keeps that list. From here on the register only grows again.
 
-## ADR-001 — Nombre, licencia y relación con Traianus (2026-10-05, autor)
+## ADR-001 — Name, license and relationship with Traianus (2026-10-05, author)
 
-**Contexto:** el kit nació gobernando Traianus y se extrae a un repositorio propio.
-**Decisión:** se llama Actuarii, con licencia Apache-2.0, y conserva su historia con `git filter-repo`. Este
-repositorio es el canónico: Traianus guarda una copia vendorizada, y los cambios entran aquí primero y se portan
-a mano.
-**Consecuencias:** cuando Traianus levante la congelación de su `pyproject.toml`, pasa a depender del paquete.
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Decisiones tomadas».
+**Context:** the kit was born governing Traianus and is extracted into a repository of its own.
+**Decision:** it is called Actuarii, under the Apache-2.0 license, and it keeps its history with `git filter-repo`.
+This repository is the canonical one: Traianus keeps a vendored copy, and changes come in here first and are ported
+by hand.
+**Consequences:** when Traianus lifts the freeze on its `pyproject.toml`, it comes to depend on the package.
+**Supersedes:** —
+**Source:** `docs/PLAN.md`, "Decisiones tomadas".
 
-## ADR-005 — La señal de éxito (2026-10-07, autor)
+## ADR-005 — The success signal (2026-10-07, author)
 
-**Contexto:** hace falta saber, con un criterio escrito antes, si el kit le interesa a alguien.
-**Decisión:** cuatro semanas desde la publicación. Éxito si al menos 5 personas ajenas lo instalan o abren una
-issue, o si nace una conversación de trabajo. Si no llega, se revisa con datos, sin reencuadrar. Cómo se cuenta y
-qué pasa el 22 de noviembre está en el ROADMAP, §3 y §4 (ADR-017).
-**Consecuencias:** sin señal no empiezan la v0.2 ni la fase 4.
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Decisiones de la semana 1»; `docs/ROADMAP.md`.
+**Context:** we need to know, with a criterion written in advance, whether the kit interests anyone.
+**Decision:** four weeks from publication. Success if at least 5 outside people install it or open an issue, or if a
+working conversation starts. If it does not come, it is reviewed with data, without reframing. How it is counted,
+and what happens on 22 November, is in the ROADMAP, §3 and §4 (ADR-017).
+**Consequences:** without a signal, neither v0.2 nor phase 4 starts.
+**Supersedes:** —
+**Source:** `docs/PLAN.md`, "Decisiones de la semana 1"; `docs/ROADMAP.md`.
 
-## ADR-007 — La distribución de la v0.1: un instalador que copia el kit (2026-10-08, autor)
+## ADR-007 — Distribution of v0.1: an installer that copies the kit (2026-10-08, author)
 
-**Contexto:** el shim solo ejecuta scripts commiteados del propio repositorio y el kit se gobierna a sí mismo.
-La clave `sandbox` y el `pre-commit` se escriben en el proyecto de todos modos, y un plugin vive fuera del
-repositorio.
-**Decisión:** un instalador escrito con la biblioteca estándar de Python, que importa con un Python 3.9 de
-sistema, copia el kit en `tools/` del destino. Si algo choca, se para, dice qué choca y no escribe nada. El
-plugin queda para la v0.2.
-**Consecuencias:** el validador necesita `pydantic` en el entorno.
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Decisiones de la fase 2».
+**Context:** the shim only runs scripts committed in the repository itself, and the kit governs itself. The
+`sandbox` key and the `pre-commit` are written into the project anyway, and a plugin lives outside the repository.
+**Decision:** an installer written with Python's standard library, which imports under a system Python 3.9, copies
+the kit into the target's `tools/`. If anything conflicts, it stops, says what conflicts and writes nothing. The
+plugin is left for v0.2.
+**Consequences:** the validator needs `pydantic` in the environment.
+**Supersedes:** —
+**Source:** `docs/PLAN.md`, "Decisiones de la fase 2".
 
-## ADR-008 — La instalación en una orden, con el entorno fuera del repositorio (2026-10-12, autor)
+## ADR-008 — One-command installation, with the environment outside the repository (2026-10-12, author)
 
-**Contexto:** la medida en macOS dio 612,8 s, y casi todo ese tiempo fue la persona siguiendo la guía.
-**Decisión:** `tools/install.py` lo hace todo con una orden: comprueba, instala y escribe la configuración.
-* Solo pregunta qué rutas gobernar, además de las mínimas, y si hace el commit.
-* Comprueba `pydantic` en el intérprete con que arrancará el servidor, y pide permiso antes de instalarlo.
-* Tiene un modo sin preguntas.
+**Context:** the measurement on macOS gave 612.8 s, and almost all of that time was the person following the guide.
+**Decision:** `tools/install.py` does everything with one command: it checks, installs and writes the configuration.
+* It only asks which paths to govern, besides the minimum ones, and whether to commit.
+* It checks `pydantic` in the interpreter the server will start with, and asks for permission before installing it.
+* It has a mode without questions.
 
-El entorno de Actuarii vive fuera del repositorio (2026-10-13).
-**Consecuencias:** dos contratos al implementador y una medida nueva (ROADMAP, V2 y V4).
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Instalación en una orden» y «Principios de diseño».
+Actuarii's environment lives outside the repository (2026-10-13).
+**Consequences:** two contracts for the implementer and a new measurement (ROADMAP, V2 and V4).
+**Supersedes:** —
+**Source:** `docs/PLAN.md`, "Instalación en una orden" and "Principios de diseño".
 
-## ADR-009 — La v0.1 son actas de trabajo; la seguridad, en la v0.2 (2026-10-13, autor)
+## ADR-009 — v0.1 is work records; security is v0.2 (2026-10-13, author)
 
-**Contexto:** la auditoría (A19–A35) mostró que una frontera montada sobre Claude Code tiene demasiadas salidas
-frente a un agente adversario.
-**Decisión:** la v0.1 son actas de trabajo para agentes de código: «Work records for coding agents. Every action
-leaves a record that it happened, and why. Built for settings where traceability comes first.» La seguridad
-frente a un agente adversario no es de esta versión: pasa a la v0.2, con un entorno aislado propio
+**Context:** the audit (A19–A35) showed that a boundary built on Claude Code has too many ways out against an
+adversarial agent.
+**Decision:** v0.1 is work records for coding agents: "Work records for coding agents. Every action leaves a record
+that it happened, and why. Built for settings where traceability comes first." Security against an adversarial agent
+is not part of this version: it goes to v0.2, with an isolated environment of its own
 (`docs/design/ENTORNO_PROPIO.md`).
-**Consecuencias:** AGENTS.md §9 declara lo que la v0.1 no cubre. El objetivo anterior, demostrar que hace falta
-un middleware, pasa a ser la motivación de la v0.2.
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Fase 3» e «Ideas para la v0.2»; `docs/DEVLOG.md`, 2026-10-14.
+**Consequences:** AGENTS.md §9 declares what v0.1 does not cover. The earlier goal, showing that a middleware is
+needed, becomes the motivation of v0.2.
+**Supersedes:** —
+**Source:** `docs/PLAN.md`, "Fase 3" and "Ideas para la v0.2"; `docs/DEVLOG.md`, 2026-10-14.
 
-## ADR-010 — La memoria del agente, bajo código; la automática de Claude Code, apagada (2026-10-13, autor)
+## ADR-010 — The agent's memory, under code; Claude Code's automatic memory, off (2026-10-13, author)
 
-**Contexto:** sin memoria, el agente no vale. La memoria automática de Claude Code vive fuera del repositorio,
-sin recibo ni versiones, y la opción (c), que iba a denegarla, pasó a la v0.2.
-**Decisión:** la memoria del agente es la de `.claude/memory/`: un recibo por escritura y git guarda cada
-versión. El 2026-10-14 se decidió apagar la automática en todo el proyecto con `autoMemoryEnabled: false`. Va en
-un contrato pequeño, después del instalador, que corrige también la línea de `MEMORY.md` sobre la opción (c).
-**Consecuencias:** la memoria se publica el 25, y los recuerdos se escriben sabiéndolo. En los proyectos donde se
-instala el kit, la memoria automática no se toca.
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Principios de diseño»; `docs/ROADMAP.md`, D5.
+**Context:** without memory, the agent is not valid. Claude Code's automatic memory lives outside the repository,
+with no receipt and no versions, and option (c), which was going to deny it, went to v0.2.
+**Decision:** the agent's memory is the one in `.claude/memory/`: one receipt per write, and git keeps every version.
+On 2026-10-14 it was decided to turn the automatic memory off in the whole project with `autoMemoryEnabled: false`.
+It goes in a small contract, after the installer, which also fixes the line of `MEMORY.md` about option (c).
+**Consequences:** the memory is published on the 25th, and memories are written knowing that. In the projects where
+the kit is installed, the automatic memory is not touched.
+**Supersedes:** —
+**Source:** `docs/PLAN.md`, "Principios de diseño"; `docs/ROADMAP.md`, D5.
 
-## ADR-011 — El motivo, obligatorio, y ningún recibo sin acta (2026-10-14, autor)
+## ADR-011 — The reason, mandatory, and no receipt without a record (2026-10-14, author)
 
-**Contexto:** para que el «por qué» de las actas sea verdad, tiene que guardarse con cada decisión.
-**Decisión:** `Rationale` es obligatorio en cada propuesta (de 1 a 1000 caracteres) y se guarda con cada
-decisión, también con las denegadas. Si el acta no se puede escribir, no hay recibo. «The proposal schema»
-sustituye a «5 Radicals».
-**Consecuencias:** las bases de auditoría viejas se migran al primer uso.
-**Sustituye a:** —
-**Fuente:** `docs/design/MOTIVO.contrato.json`; `docs/DEVLOG.md`, 2026-10-14.
+**Context:** for the "why" of the records to be true, it has to be kept with each decision.
+**Decision:** `Rationale` is mandatory in every proposal (from 1 to 1000 characters) and is kept with every
+decision, refused ones included. If the record cannot be written, there is no receipt. "The proposal schema"
+replaces "5 Radicals".
+**Consequences:** old audit databases are migrated on first use.
+**Supersedes:** —
+**Source:** `docs/design/MOTIVO.contrato.json`; `docs/DEVLOG.md`, 2026-10-14.
 
-## ADR-014 — Los campos de la propuesta, con nombres llanos en la v0.2 (2026-10-14, autor)
+## ADR-014 — Plain names for the proposal's fields, in v0.2 (2026-10-14, author)
 
-**Contexto:** los nombres del esquema de la propuesta son jerga.
-**Decisión:** `Topological_Grounding` e `Implementation_Block` pasan a nombres llanos (`old_string`, `new_string`
-o `reason`) en la v0.2. Antes del lanzamiento solo se limpia la jerga de las descripciones y del README.
-**Consecuencias:** —
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Ideas para la v0.2».
+**Context:** the names of the proposal's schema are jargon.
+**Decision:** `Topological_Grounding` and `Implementation_Block` take plain names (`old_string`, `new_string` or
+`reason`) in v0.2. Before the launch, only the jargon of the descriptions and of the README is cleaned.
+**Consequences:** —
+**Supersedes:** —
+**Source:** `docs/PLAN.md`, "Ideas para la v0.2".
 
-## ADR-016 — El acta en git (2026-10-14, autor)
+## ADR-016 — The record in git (2026-10-14, author)
 
-**Contexto:** el rastro registra que se pidió escribir, no que se escribió. Guarda hashes y no el texto, y vive
-en una base local que git ignora.
-**Decisión:**
-* Un hook `commit-msg` añade al mensaje de cada commit, como *trailers*, los motivos de los recibos de sus
-  ficheros gobernados.
-* El *trailer* dice si el contenido del commit coincide con el que dejaron las escrituras con recibo. El
-  contenido esperado lo calcula la puerta antes de cada escritura, sin proceso nuevo, y si no puede guardarlo,
-  deniega la escritura.
-* El hook solo registra: no bloquea el commit. Lo instala el instalador.
+**Context:** the audit trail records that a write was requested, not that it was made. It keeps hashes and not the
+text, and it lives in a local database that git ignores.
+**Decision:**
+* A `commit-msg` hook appends to the message of each commit, as trailers, the reasons of the receipts of its
+  governed files.
+* The trailer says whether the content of the commit matches what the writes with a receipt left. The gate computes
+  the expected content before each write, with no new process, and if it cannot store it, it denies the write.
+* The hook only records: it does not block the commit. The installer installs it.
 
-**Consecuencias:** la puerta pasa a escribir en la base, y el segundo contrato del instalador crece. Si no llega a
-tiempo, la frase del README pierde «that it happened» (ROADMAP, V3).
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-14 (tarde); `docs/ROADMAP.md`, D1.
+**Consequences:** the gate now writes to the database, and the installer's second contract grows. If it does not
+arrive in time, the README's sentence loses "that it happened" (ROADMAP, V3).
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-14 (afternoon); `docs/ROADMAP.md`, D1.
 
-## ADR-019 — A33 y A34 no se cuentan a Anthropic (2026-10-14, autor)
+## ADR-019 — A33 and A34 are not reported to Anthropic (2026-10-14, author)
 
-**Contexto:** A33 y A34 tocan comportamiento de Claude Code.
-**Decisión:** no se cuentan.
-* A34 es comportamiento documentado, con su interruptor (`omitClaudeMd`).
-* A33 se sigue del diseño documentado: el sandbox cubre `Bash`, y las herramientas de ficheros pasan por los
-  avisos de permiso.
+**Context:** A33 and A34 concern Claude Code's behaviour.
+**Decision:** they are not reported.
+* A34 is documented behaviour, with its switch (`omitClaudeMd`).
+* A33 follows from the documented design: the sandbox covers `Bash`, and the file tools go through the permission
+  prompts.
 
-El README los describe con su versión, como límites del kit y no como fallos de Claude Code.
-**Consecuencias:** se reconsidera si una prueba muestra que Claude Code escribe sin preguntar donde dice que
-pregunta.
-**Sustituye a:** —
-**Fuente:** `docs/ROADMAP.md`, D4.
+The README describes them with their version, as limits of the kit and not as faults of Claude Code.
+**Consequences:** to be reconsidered if a test shows Claude Code writing without asking where it says it asks.
+**Supersedes:** —
+**Source:** `docs/ROADMAP.md`, D4.
 
-## ADR-021 — Las decisiones van en este registro, que solo se amplía (2026-10-14, autor)
+## ADR-021 — Decisions go in this register, which only grows (2026-10-14, author)
 
-**Contexto:** las decisiones vivían en seis sitios: el PLAN, el DEVLOG, `ESTADO.md`, el ROADMAP,
-`ENTORNO_PROPIO.md` y los contratos. Al revisarlas, se editaban encima.
-**Decisión:**
-* Las decisiones del autor van en `docs/DECISIONES.md`.
-* Una entrada no se edita nunca: revisar una decisión es añadir otra que dice a cuál sustituye.
-* Las que están en vigor se listan en `docs/ESTADO.md`.
-* Las decisiones técnicas de un contrato se quedan en el contrato.
-* El DEVLOG cita las decisiones por su número. El PLAN queda como historia hasta el 14 y solo recibe las ideas
-  que esperan.
+**Context:** decisions lived in six places: the PLAN, the DEVLOG, `ESTADO.md`, the ROADMAP, `ENTORNO_PROPIO.md` and
+the contracts. When they were revised, they were edited over.
+**Decision:**
+* The author's decisions go in `docs/DECISIONES.md`.
+* An entry is never edited: revising a decision means adding another that says which one it supersedes.
+* Those in force are listed in `docs/ESTADO.md`.
+* The technical decisions of a contract stay in the contract.
+* The DEVLOG cites decisions by their number. The PLAN stays as history up to the 14th and only receives the ideas
+  that wait.
 
-**Consecuencias:** lo anterior al 14 no se migra: ADR-001 a ADR-020 recogen lo que estaba en vigor ese día. Que el
-kit haga cumplir el «solo se añade» queda como idea para la v0.2.
-**Sustituye a:** —
-**Fuente:** esta entrada.
+**Consequences:** what came before the 14th is not migrated: ADR-001 to ADR-020 gather what was in force that day.
+Making the kit enforce "only append" stays as an idea for v0.2.
+**Supersedes:** —
+**Source:** this entry.
 
-## ADR-022 — El perímetro de permisos, sin comodín y con la lista ampliada (2026-10-15, autor)
+## ADR-022 — The permission perimeter, without wildcard and with the wider list (2026-10-15, author)
 
-**Contexto:** el autor seguía viendo demasiados permisos manuales. Claude Code evalúa deny, luego ask y luego
-allow, y el `"Bash"` a secas que encabezaba `ask` hacía preguntar todas las llamadas a `Bash`: la lista de
-ADR-012 no aprobaba nada en Claude Code.
-**Decisión:**
-* Sin preguntar, en Claude Code y en OpenCode: `pytest`; las órdenes de lectura de ADR-012 más `cut`, `tr`, `jq`,
-  `cmp` y `date` (sin argumento o con formato `+`); las órdenes de git de lectura más `git merge-base`,
-  `git rev-list` y `git for-each-ref`; y `validate_proposal`.
-* En Claude Code, ninguna regla `ask` o `deny` tapa una `allow`, y lo que pregunta por el resto es el modo
-  `default`, no un comodín. OpenCode mantiene su `"*": "ask"` primero.
-* Las órdenes de git y de `gh` que escriben siguen preguntando. `git branch` también, y las ramas se listan con
+**Context:** the author still saw too many manual permissions. Claude Code evaluates deny, then ask, then allow, and
+the bare `"Bash"` at the head of `ask` made every call to `Bash` ask: the list of ADR-012 approved nothing in Claude
+Code.
+**Decision:**
+* Without asking, in Claude Code and in OpenCode: `pytest`; the read-only commands of ADR-012 plus `cut`, `tr`,
+  `jq`, `cmp` and `date` (with no argument or with a `+` format); the read-only git commands plus `git merge-base`,
+  `git rev-list` and `git for-each-ref`; and `validate_proposal`.
+* In Claude Code, no `ask` or `deny` rule covers an `allow`, and what asks for the rest is the `default` mode, not a
+  wildcard. OpenCode keeps its `"*": "ask"` first.
+* The git and `gh` commands that write still ask. So does `git branch`, and branches are listed with
   `git for-each-ref`.
-* Lo que algunas órdenes de la lista escriben con sus opciones (`sort`, `uniq`, `sed`, y el `--output` de
-  `git diff`, `git log` y `git show`) se declara en §9.
-* Va en un contrato pequeño, antes del primero del instalador, que lleva este perímetro a los destinos.
+* What some commands of the list write through their options (`sort`, `uniq`, `sed`, and the `--output` of
+  `git diff`, `git log` and `git show`) is declared in §9.
+* It goes in a small contract, before the installer's first, which carries this perimeter to the targets.
 
-**Consecuencias:** AGENTS 7.1 reescrito, con un test de que nada tapa una `allow`. En otro modo de permisos, el
-modo decide lo que ninguna regla nombra. `implementer.md` pide una orden por llamada, sin variables, `cd` ni
-bucles. Rige desde la sesión siguiente a su commit.
-**Sustituye a:** ADR-012.
-**Fuente:** `docs/design/PERIMETRO_SIN_COMODIN.contrato.json`; `docs/DEVLOG.md`, 2026-10-15.
+**Consequences:** AGENTS 7.1 is rewritten, with a test that nothing covers an `allow`. In another permission mode,
+the mode decides what no rule names. `implementer.md` asks for one command per call, without variables, `cd` or
+loops. It applies from the session after its commit.
+**Supersedes:** ADR-012.
+**Source:** `docs/design/PERIMETRO_SIN_COMODIN.contrato.json`; `docs/DEVLOG.md`, 2026-10-15.
 
-## ADR-026 — Los límites, por problemas: gobernanza en la v0.1 y seguridad en la v0.2 (2026-10-17, autor)
+## ADR-026 — Limits by problem: governance in v0.1, security in v0.2 (2026-10-17, author)
 
-**Contexto:** V5 pedía una fila por caso de `docs/adversarial-audit/CASES.md`, de A01 a A35. Una lista de casos dice
-lo que se probó, no por qué falla el kit. La auditoría ya separaba dos perfiles: el A, el agente honesto que se
-equivoca, y el B, el que busca la salida. Es la línea de ADR-009 entre la v0.1 y la v0.2.
-**Decisión:**
-* Los límites se cuentan por problemas, cada uno con su motivo. Son ocho.
-* Gobernanza: el acta queda incompleta sin que nadie lo busque (v0.1).
-  1. El acta solo cubre su canal: se hace en la llamada a la herramienta, no en el disco. A01, A08, A29 y A30.
-  2. Ninguna persona aprueba los recibos ni sus motivos: no hay *human in the loop*. El agente se emite su recibo
-     y escribe su motivo, y el validador comprueba la forma y la cita, no que el motivo sea verdad. Con la fase
-     roja y la delegación pasa lo mismo: el agente que ejecuta se comprueba a sí mismo. A02, A03, A04, A12, A15,
-     A16 y A28.
-  3. El kit confía en cómo lo instala la persona: enlaces simbólicos, `core.fileMode` o el `PATH` de la sesión; el
-     anuncio informa y no comprueba. A11, A14, A24 y A26.
-  4. Cuando el validador cae, el trabajo se para: sin servidor no hay recibos, y cada escritura gobernada se
-     deniega. A18 y A21.
-* Seguridad: un agente que busca la salida la encuentra (v0.2).
-  5. Las puertas arrancan en un entorno que el agente alcanza: corren fuera del sandbox, con el Python, el `PATH` y
-     los ajustes del repositorio. A09, A10, A19, A31, A32 y A33.
-  6. Las comprobaciones son texto, no una frontera: listas de prohibidos y heurísticas de shell; la frontera es el
-     sandbox. A05, A06, A07 y A23.
-  7. Fuera de la base de auditoría, los registros se pueden escribir: `.data/`, el candado de la revisión ciega y
-     los *trailers*. A13, A25 y A34.
-  8. La sesión tiene lo que tiene la persona: el kit corre con sus permisos. A35.
-* A17, A20, A22 y A27 no son límites: van al pie de la tabla, con su commit.
-* La tabla «Resumen» de `CASES.md` pasa a ir de problema a casos, con lo corregido y su commit. La sección de
-  límites del README da los ocho problemas, cada uno con su motivo, un ejemplo y lo que cambia en la v0.2, sin los
-  ids de los casos.
-* V5 se comprueba así: cada caso de `CASES.md` y cada límite de AGENTS §9 están en un problema.
-* Poner a una persona en el bucle de los recibos es una función nueva: no entra antes del 25 (ADR-004).
+**Context:** V5 asked for one row per case of `docs/adversarial-audit/CASES.md`, from A01 to A35. A list of cases
+says what was tested, not why the kit fails. The audit already separated two profiles: A, the honest agent that makes
+mistakes, and B, the one that looks for a way out. It is the line of ADR-009 between v0.1 and v0.2.
+**Decision:**
+* Limits are counted by problem, each with its reason. There are eight.
+* Governance: the record is left incomplete without anyone trying (v0.1).
+  1. The record covers only its channel: it is made at the call to the tool, not on the disk. A01, A08, A29 and A30.
+  2. No person approves the receipts or their reasons: there is no human in the loop. The agent issues its own
+     receipt and writes its own reason, and the validator checks the form and the quote, not that the reason is
+     true. The red phase and the delegation work the same way: the agent that executes checks itself. A02, A03, A04,
+     A12, A15, A16 and A28.
+  3. The kit trusts the way the person installs it: symbolic links, `core.fileMode` or the session's `PATH`; the
+     announcement reports and does not check. A11, A14, A24 and A26.
+  4. When the validator goes down, work stops: without the server there are no receipts, and every governed write is
+     denied. A18 and A21.
+* Security: an agent that looks for a way out finds one (v0.2).
+  5. The gates start in an environment the agent can reach: they run outside the sandbox, with the Python, the `PATH`
+     and the settings of the repository. A09, A10, A19, A31, A32 and A33.
+  6. The checks are text, not a boundary: lists of what is forbidden and shell heuristics; the boundary is the
+     sandbox. A05, A06, A07 and A23.
+  7. Outside the audit database, records can be written: `.data/`, the blind review's lock and the trailers. A13, A25
+     and A34.
+  8. The session has what the person has: the kit runs with the person's permissions. A35.
+* A17, A20, A22 and A27 are not limits: they go at the foot of the table, with their commit.
+* The "Resumen" table of `CASES.md` goes from problem to cases, with what was fixed and its commit. The limits
+  section of the README gives the eight problems, each with its reason, an example and what changes in v0.2, without
+  the ids of the cases.
+* V5 is checked this way: each case of `CASES.md` and each limit of AGENTS §9 belongs to a problem.
+* Putting a person in the loop of the receipts is a new function: it does not go in before the 25th (ADR-004).
 
-**Consecuencias:** cambia V5 del ROADMAP (ADR-017). AGENTS §9 no se reordena antes de la medida en macOS (V4),
-porque el instalador lo copia.
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-17.
+**Consequences:** V5 of the ROADMAP changes (ADR-017). AGENTS §9 is not reordered before the macOS measurement (V4),
+because the installer copies it.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-17.
 
-## ADR-027 — El texto para HN y Reddit, el martes 27; la puerta, el martes 24 de noviembre (2026-10-17, autor)
+## ADR-027 — The text for HN and Reddit on Tuesday 27; the gate on Tuesday 24 November (2026-10-17, author)
 
-**Contexto:** el 25 de octubre es domingo. El fin de semana, HN y Reddit tienen menos tráfico, y el público del kit
-lee de lunes a viernes; no se ha medido, porque las sesiones no buscan en la web. ADR-003 fija el 25 para publicar
-y ADR-005 cuenta cuatro semanas desde la publicación.
-**Decisión:**
-* El repositorio se abre el domingo 25, como dice ADR-003.
-* El texto para HN y Reddit (V9) sale el martes 27 hacia las 14:00 de Madrid, las 9:00 de Nueva York: esa semana
-  Europa ya ha cambiado de hora y Estados Unidos no.
-* Las cuatro semanas de la señal (ADR-005) se cuentan desde el texto: cuenta lo que llegue hasta el martes 24 de
-  noviembre a las 23:59, hora de Madrid, y la puerta pasa a ese día.
-* Los dos días no son margen de trabajo: ADR-004 sigue en vigor.
+**Context:** 25 October is a Sunday. At the weekend HN and Reddit have less traffic, and the kit's audience reads
+from Monday to Friday; this has not been measured, because the sessions do not search the web. ADR-003 sets the 25th
+for publication, and ADR-005 counts four weeks from publication.
+**Decision:**
+* The repository opens on Sunday 25, as ADR-003 says.
+* The text for HN and Reddit (V9) goes out on Tuesday 27 at about 14:00 Madrid time, 9:00 in New York: that week
+  Europe has already changed its clocks and the United States has not.
+* The four weeks of the signal (ADR-005) are counted from the text: what arrives up to Tuesday 24 November at 23:59,
+  Madrid time, counts, and the gate moves to that day.
+* The two days are not working margin: ADR-004 is still in force.
 
-**Consecuencias:** cambian §1, §3, §4, §5 y V9 del ROADMAP (ADR-017). Se decide antes de tener datos de la
-ventana, así que no es un reencuadre.
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-17.
+**Consequences:** §1, §3, §4, §5 and V9 of the ROADMAP change (ADR-017). It is decided before there is any data from
+the window, so it is not a reframing.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-17.
 
-## ADR-028 — La instalación, en un solo bloque que se pega; la orden con pantalla, en la v0.2 (2026-10-18, autor)
+## ADR-028 — Installation as one pasted block; a command with its own screen in v0.2 (2026-10-18, author)
 
-**Contexto:** en el intento 4 de la prueba en limpio, como en el 2, se copiaron tal cual las rutas del ejemplo de
-`INSTALL.md`. El aviso que las marcaba como de ejemplo estaba en prosa. Además, el paso 1 empezaba en `~/src`, que
-puede no existir. El autor propuso una sola orden, con una pequeña interfaz de instalación.
-**Decisión:**
-* `INSTALL.md` instala con un solo bloque que se pega desde la raíz del repositorio, sin nada que editar:
-  * saca la ruta del repositorio de `git rev-parse`;
-  * clona Actuarii al lado;
-  * crea y activa el entorno fuera del repositorio;
-  * ejecuta el instalador, cuyas preguntas son la interfaz.
+**Context:** in attempt 4 of the clean-room test, as in attempt 2, the example paths of `INSTALL.md` were copied as
+they were. The warning that marked them as examples was in prose. Besides, step 1 started in `~/src`, which may not
+exist. The author proposed a single command, with a small installation interface.
+**Decision:**
+* `INSTALL.md` installs with a single block pasted from the repository's top level, with nothing to edit:
+  * it takes the repository's path from `git rev-parse`;
+  * it clones Actuarii next to it;
+  * it creates and activates the environment outside the repository;
+  * it runs the installer, whose questions are the interface.
 
-  Cada paso va unido al siguiente con `&&`, así que el bloque se para en el primer fallo. El instalador no cambia.
-* La medida en macOS (V4) se repite con la enmienda §4e de `docs/design/PRUEBA_EN_LIMPIO.md`.
-* Una orden única con pantalla propia, sea un plugin de Claude Code o un programa de arranque, es una función nueva:
-  va a la v0.2 (ADR-004). Un `curl … | sh` no se usa: es mala primera impresión para un kit de trazabilidad.
+  Each step is joined to the next with `&&`, so the block stops at the first failure. The installer does not change.
+* The macOS measurement (V4) is repeated with amendment §4e of `docs/design/PRUEBA_EN_LIMPIO.md`.
+* A single command with its own screen, whether a Claude Code plugin or a bootstrap program, is a new function: it
+  goes to v0.2 (ADR-004). A `curl … | sh` is not used: it is a bad first impression for a traceability kit.
 
-**Consecuencias:** la sección de instalación del README usa el mismo bloque. Cambia la línea «Fuera de la v0.1» del
-ROADMAP (ADR-017).
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-18.
+**Consequences:** the README's installation section uses the same block. The "Out of v0.1" line of the ROADMAP
+changes (ADR-017).
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-18.
 
-## ADR-030 — El caso real del README, en noticias v3: los dos defectos del clasificador (2026-10-18, autor)
+## ADR-030 — The README's real case, in noticias v3: the two defects of the classifier (2026-10-18, author)
 
-**Contexto:** V6 pedía el caso de Traianus, con sus commits. Un caso nuevo en Traianus choca con ADR-004, y el del 5
-de octubre es de antes de la v0.1: no tiene motivos ni acta en git. `noticias` (AI-Papers-Engine) es público, con
-AGPL-3.0, y su rama `v3-exp` tiene trabajo real ajeno al kit. El caso real de la prueba en limpio (2026-10-12)
-encontró dos defectos del clasificador léxico, `explorations/v3/scripts/classify_method_family.py`, y siguen ahí:
-* la familia `gan` se cuenta dentro de palabras como `organization`, porque las claves se buscan como subcadenas;
-* un texto con `diffusion transformer` empata siempre entre `diffusion` y `diffusion_transformer_or_hybrid`, y sale
-  `other`.
+**Context:** V6 asked for the Traianus case, with its commits. A new case in Traianus collides with ADR-004, and the
+one of 5 October predates v0.1: it has no reasons and no record in git. `noticias` (AI-Papers-Engine) is public,
+under AGPL-3.0, and its `v3-exp` branch has real work unrelated to the kit. The real case of the clean-room test
+(2026-10-12) found two defects of the lexical classifier, `explorations/v3/scripts/classify_method_family.py`, and
+they are still there:
+* the `gan` family is counted inside words such as `organization`, because the keys are searched as substrings;
+* a text with `diffusion transformer` always ties between `diffusion` and `diffusion_transformer_or_hybrid`, and
+  comes out as `other`.
 
-**Decisión:**
-* El caso real del README es arreglar esos dos defectos, con los tests primero, con la v0.1 tal como se publica.
-* Se hace en un clon limpio de `origin/v3-exp`, con `explorations/v3/**` gobernado.
-* El plan se escribe antes de hacerlo (`docs/design/PRUEBA_EN_LIMPIO.md` §4f), y el README cuenta lo que pase, salga
-  como salga.
-* El caso de Traianus queda para cuando se abra su repositorio.
+**Decision:**
+* The README's real case is fixing those two defects, tests first, with v0.1 as it is published.
+* It is done in a clean clone of `origin/v3-exp`, with `explorations/v3/**` governed.
+* The plan is written before doing it (`docs/design/PRUEBA_EN_LIMPIO.md` §4f), and the README tells what happens,
+  however it turns out.
+* The Traianus case waits until its repository opens.
 
-**Consecuencias:** cambia V6 del ROADMAP (ADR-017): el caso es este, y sigue siendo lo primero que se recorta. La
-copia de trabajo del autor no se usa: tiene el `.env` y notas privadas sin commitear.
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-18.
+**Consequences:** V6 of the ROADMAP changes (ADR-017): the case is this one, and it is still the first thing to be
+cut. The author's working copy is not used: it has the `.env` and private notes that are not committed.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-18.
 
 ## ADR-032 — The published tree is in English; the history stays as it is (2026-10-18, author)
 
