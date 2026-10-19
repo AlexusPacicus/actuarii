@@ -71,8 +71,7 @@ Updated: 2026-10-19, midday.
        neither goes into v0.1 (ADR-034, which lists their questions);
      * an own environment: what do existing sandboxes already cover, and what would set this one apart?
      * the signal window: which answers from outside would change the plan of v0.2, written before the opening.
-  2. **Three decisions of the author, before their documents are translated:**
-     * whether the README's "Where it comes from" links Traianus or only names it (ADR-036, condition 3);
+  2. **Two decisions of the author, before their documents are translated:**
      * three lines of `PLAN.md` about the author's professional plans: public, or on the V8 list;
   3. **A full reading of the README** before Thursday 22 (V6).
   4. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9),
@@ -96,7 +95,7 @@ Updated: 2026-10-19, midday.
 ## Decisions in force
 
 They are in `docs/DECISIONES.md`, which only grows, except once, at the selection of ADR-035. In force today: ADR-001
-to ADR-036, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
+to ADR-037, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
 by ADR-033, and its point on file names by ADR-035.
 
 | ADR | Decision |
@@ -135,6 +134,7 @@ by ADR-033, and its point on file names by ADR-035.
 | 034 | A person in the loop and signed records open v0.2; neither goes into v0.1 |
 | 035 | File names in English; the register keeps the decisions a reader needs, unedited |
 | 036 | `examples/traianus/` stays, as where the kit comes from |
+| 037 | The README links Traianus |
 
 ## How we work
 

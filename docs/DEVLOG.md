@@ -24,8 +24,8 @@ The review of ADR-033 is planned: file names go into English and the register is
 **Decided (author)**
 * **ADR-035:** English file names, renamed in one batch at the start of the review; the register keeps the
   decisions a reader needs, unedited, selected entry by entry.
-* **ADR-036:** `examples/traianus/` stays, under four conditions; the third, whether the README links Traianus, is
-  still the author's.
+* **ADR-036:** `examples/traianus/` stays, under four conditions.
+* **ADR-037:** the README links Traianus, which closes the third condition of ADR-036.
 
 **Next**
 * **The renaming batch of ADR-035,** from a session opened in Actuarii, with the contract for the CI job and its

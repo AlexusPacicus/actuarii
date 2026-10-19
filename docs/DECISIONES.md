@@ -662,3 +662,13 @@ it can give confidence.
 **Consequences:** the status corrects its claim. Nothing changes in the tests.
 **Supersedes:** —
 **Source:** `docs/DEVLOG.md`, 2026-10-19.
+
+## ADR-037 — The README links Traianus (2026-10-19, author)
+
+**Context:** ADR-036 left to the author, as its third condition, whether "Where it comes from" links Traianus or only
+names it, because Traianus's history has not gone through the cleaning of ADR-020.
+**Decision:** the section links Traianus. Traianus is public, and the link is what lets a reader check where the kit
+comes from.
+**Consequences:** the README stays as it was committed in `9466452`. The third condition of ADR-036 is closed.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-19.
