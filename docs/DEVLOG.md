@@ -12,6 +12,31 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-19 (night, COST.md in English)
+
+`docs/design/COST.md` is in English (ADR-033): 122 lines, from 141.
+
+**Done**
+* **§1 to §5 translated nearly whole,** with their numbering: the rule written before measuring, the results and the
+  design for v0.2 are what the README's 1875 ms rests on. The README cites §5, the ROADMAP §4 and the design of the
+  own environment §5, as before. The local path of the transcripts and their session ids leave.
+* **A dated note in §5:** step 1 of the design, the validator in `permissions.allow`, was done on 2026-10-14
+  (`f5517ae`, ADR-012, kept by ADR-022), for the permission prompts and not for the cost, which has not been measured
+  again. Steps 2 and 3 are not done, as `.claude/settings.json` shows. Claude had first said 2026-10-15 (ADR-022);
+  `git log -S` gave the right date before the note was written.
+* **§6, the comparison with governance by instruction,** is a short note: proposed and not run, and the README claims
+  nothing about saving tokens.
+* **Checked:** the figures of §1 to §5 are the same as before, apart from the ids of the transcripts that left and the
+  dates, ADRs and commits of the two notes; no Spanish is left; no prose line passes 120 characters.
+* **The README** no longer says "in Spanish" next to `COST.md`.
+
+**Decided (author)**
+* **`COST.md`:** §1 to §5 translated nearly whole, and §6 reduced to a note.
+
+**Next**
+* **The review of each document (ADR-033),** with the V8 check: `ISOLATED_ENVIRONMENT.md` and `SANDBOX.md` remain of
+  what the README links.
+
 ## 2026-10-19 (night, CLEAN_ROOM.md condensed)
 
 `docs/design/CLEAN_ROOM.md` is condensed into English (ADR-033): 301 lines, from 609 in Spanish.

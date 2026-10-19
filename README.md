@@ -264,7 +264,7 @@ procedure, in several steps, took 612.8 s ([`CLEAN_ROOM.md`](docs/design/CLEAN_R
 Each governed write adds a median of **1875 ms**: the round trip to the validator (1378 ms) and two hooks of
 about 250 ms each, which are almost all Python start-up. The validator itself answers in 4 ms; most of the
 round trip is the harness. A proposal is about 1.06 times the size of the edit it covers. Measured on 7 October
-2026 over 15 writes ([`COST.md`](docs/design/COST.md), in Spanish); the kit has changed since and has not been
+2026 over 15 writes ([`COST.md`](docs/design/COST.md)); the kit has changed since and has not been
 measured again. v0.1 is not optimised; the design for v0.2 is in `COST.md` §5.
 
 ## What falls to you

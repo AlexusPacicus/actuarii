@@ -1,141 +1,122 @@
-# Coste de una escritura gobernada (método y regla, antes de medir)
+# Cost of a governed write (method and rule, before measuring)
 
-Claude, 2026-10-07, con los umbrales del autor. Este documento se commitea antes de sacar ninguna cifra;
-los resultados se añaden después, en §4, sin tocar §1 a §3.
+Claude, 2026-10-07, with the author's thresholds. This document was committed before any figure was taken, and the
+results were added afterwards, in §4, without touching §1 to §3.
 
-## 1. Qué se mide
+Translated from Spanish on 2026-10-19 (ADR-033), with §6 reduced to a note. The original is in the history: this file
+at `d3c3b41`.
 
-Una escritura gobernada (`Edit`, `MultiEdit`, `Write`) cuesta, además de la escritura:
+## 1. What is measured
 
-1. **Tokens:** la propuesta para `validate_proposal` repite el texto del cambio (en un `Edit`, el
-   `old_string` y el `new_string`; en un `Write`, el fichero entero).
-2. **Tiempo del validador:** la llamada MCP a `validate_proposal`, ida y vuelta.
-3. **Tiempo de los hooks:** los hooks `PreToolUse` de la escritura (`require_boundary_validation.py`
-   y `require_contract_context.py`), un proceso de Python cada uno.
+Besides the write itself, a governed write (`Edit`, `MultiEdit`, `Write`) costs:
 
-## 2. Cómo
+1. **Tokens:** the proposal for `validate_proposal` repeats the text of the change (in an `Edit`, the `old_string` and
+   the `new_string`; in a `Write`, the whole file).
+2. **Validator time:** the MCP call to `validate_proposal`, round trip.
+3. **Hook time:** the write's `PreToolUse` hooks (`require_boundary_validation.py` and `require_contract_context.py`),
+   one Python process each.
 
-* **Tokens y tiempo del validador:** de la transcripción de la sesión del 2026-10-07
-  (`~/.claude/projects/-Users-test-Documents-Actuarii/*.jsonl`), con `jq`:
-  * cada llamada a `validate_proposal` con su entrada y su respuesta;
-  * sobrecoste de un `Edit`: caracteres de la entrada de `validate_proposal` entre caracteres de la
-    entrada del `Edit` al que da el recibo (el siguiente `Edit` sobre el mismo fichero);
-  * tiempo del validador: hora de la respuesta menos hora de la llamada.
-  * Los tokens se estiman como caracteres entre 4: no hay contador exacto, y la razón entre propuesta
-    y `Edit` no depende de esa constante.
-* **Tiempo de los hooks:** cada orden de hook de `.claude/settings.json` que actúa en un `Edit`, 20
-  veces, con una entrada fija: un `Edit` sobre un `.py` gobernado real con su recibo válido (el camino
-  completo: configuración, rastro, cálculo del resultado y `ast`). Se cronometra con `perl` y
-  `Time::HiRes`, dentro del sandbox, como corren en la sesión. Se toma la mediana de cada hook y se
-  suman (cota superior: Claude Code puede lanzarlos en paralelo).
+## 2. How
 
-## 3. Regla de decisión (autor, 2026-10-07)
+* **Tokens and validator time:** from the transcript of the session of 2026-10-07, with `jq`:
+  * each call to `validate_proposal`, with its input and its response;
+  * the overhead of an `Edit`: the characters of the input of `validate_proposal` divided by the characters of the
+    input of the `Edit` it gives the receipt to (the next `Edit` on the same file);
+  * validator time: the time of the response minus the time of the call.
+  * Tokens are estimated as characters divided by 4: there is no exact counter, and the ratio between the proposal and
+    the `Edit` does not depend on that constant.
+* **Hook time:** each hook command of `.claude/settings.json` that acts on an `Edit`, run 20 times with a fixed input:
+  an `Edit` on a real governed `.py` file with its valid receipt (the full path: configuration, audit trail, computing
+  the result and `ast`). Timed with `perl` and `Time::HiRes`, inside the sandbox, as they run in the session. The
+  median of each hook is taken and the medians are added up (an upper bound: Claude Code can launch them in parallel).
 
-* **No se optimiza antes del lanzamiento** si se cumplen las dos:
-  * la mediana del tiempo añadido por escritura (validador + hooks) es menor de **1 s**;
-  * la mediana del sobrecoste en tokens de un `Edit` es menor de **3 veces** su propio tamaño.
-* Si falla alguna, se escribe un diseño de optimización para la v0.2 y el README declara el coste
-  con las cifras; la fecha del 25 de octubre no se mueve.
-* Si lo que se dispara es el coste de los `Write` grandes, la acción es documentar en el README que
-  se prefiera `Edit` (lo que ya dice la skill `boundary-validator`), no cambiar el kit.
+## 3. Decision rule (author, 2026-10-07)
 
-## 4. Resultados (2026-10-07)
+* **Nothing is optimised before the launch** if both hold:
+  * the median time added per write (validator plus hooks) is below **1 s**;
+  * the median token overhead of an `Edit` is below **3 times** its own size.
+* If either fails, an optimisation design is written for v0.2, and the README declares the cost with the figures; the
+  date of 25 October does not move.
+* If what blows up is the cost of large `Write` calls, the action is to document in the README that `Edit` is
+  preferred (which the `boundary-validator` skill already says), not to change the kit.
 
-**Muestra:** 15 escrituras gobernadas de las transcripciones `9210c485` y `87a82f04`, cada una
-emparejada con su recibo por el contenido exacto (el `new_string` o el `content` es el
-`Implementation_Block`), sin duplicados (la sesión retomada repite la historia de la anterior): 13
-`Edit` y 2 `Write`. Las llamadas al validador que fueron sondas, sin escritura detrás, quedan fuera.
+## 4. Results (2026-10-07)
 
-| Medida | Valores (ordenados) | Mediana |
+**Sample:** 15 governed writes from two transcripts, each paired with its receipt by its exact content (the
+`new_string` or the `content` is the `Implementation_Block`), without duplicates (the resumed session repeats the
+history of the previous one): 13 `Edit` and 2 `Write`. Calls to the validator that were probes, with no write behind
+them, are left out.
+
+| Measure | Values (sorted) | Median |
 |---|---|---|
-| Ida y vuelta del validador, ms | 189 204 208 440 446 493 1070 1378 1465 1557 1686 1741 1757 1984 2262 | **1378** |
-| Hook `require_boundary_validation.py`, 20 veces, ms | mín. 245, máx. 354 | **254** |
-| Hook `require_contract_context.py`, 20 veces, ms | mín. 237, máx. 259 | **243** |
-| Sobrecoste en tokens de un `Edit` (caracteres de la propuesta / del `Edit`) | 1.01 1.01 1.02 1.03 1.03 1.05 1.06 1.08 1.09 1.09 1.12 1.21 1.26 | **1.06** |
+| Validator round trip, ms | 189 204 208 440 446 493 1070 1378 1465 1557 1686 1741 1757 1984 2262 | **1378** |
+| Hook `require_boundary_validation.py`, 20 runs, ms | min. 245, max. 354 | **254** |
+| Hook `require_contract_context.py`, 20 runs, ms | min. 237, max. 259 | **243** |
+| Token overhead of an `Edit` (characters of the proposal / of the `Edit`) | 1.01 1.01 1.02 1.03 1.03 1.05 1.06 1.08 1.09 1.09 1.12 1.21 1.26 | **1.06** |
 
-**Aplicación de la regla (§3):**
-* Tiempo añadido por escritura: 1378 + 254 + 243 = **1875 ms**, por encima de 1 s. **No se cumple.**
-* Sobrecoste en tokens de un `Edit`: **1.06 veces**, por debajo de 3. Se cumple. Los dos `Write` de
-  la muestra eran ficheros de una línea (razón 2.0 y 2.1, por los campos fijos de la propuesta).
-* **Decisión, según la regla:** no se optimiza antes del lanzamiento; se escribe un diseño de
-  optimización para la v0.2 y el README declara el coste con estas cifras.
+**Applying the rule (§3):**
+* Time added per write: 1378 + 254 + 243 = **1875 ms**, above 1 s. **Not met.**
+* Token overhead of an `Edit`: **1.06 times**, below 3. Met. The two `Write` calls of the sample were one-line files
+  (ratios 2.0 and 2.1, because of the fixed fields of the proposal).
+* **Decision, by the rule:** nothing is optimised before the launch; an optimisation design is written for v0.2, and
+  the README declares the cost with these figures.
 
-**Desglose, fuera de la regla (no la cambia):**
-* El servidor del validador, ejecutado aparte con 20 peticiones en un proceso: **4 ms** por petición;
-  el arranque del servidor (435 ms) ocurre una vez por sesión. Casi toda la ida y vuelta de 1378 ms
-  no es trabajo del kit sino del harness.
-* La ida y vuelta es bimodal: 6 llamadas por debajo de 500 ms y 9 por encima de 1 s, sin relación con
-  el tamaño de la propuesta (4676 caracteres en 204 ms, 244 en 1741 ms). La sesión estaba en modo
-  automático; una hipótesis, sin comprobar, es que una parte de las llamadas pasa por la revisión
-  del clasificador porque `validate_proposal` no está en `permissions.allow`.
-* Cada hook es casi todo arranque de Python (unos 240 ms de los 250).
-* La escritura misma, con sus hooks, tardó una mediana de 205 ms de llamada a resultado en la
-  transcripción (los hooks pueden ir en paralelo).
+**Breakdown, outside the rule (it does not change it):**
+* The validator's server, run on its own with 20 requests in one process: **4 ms** per request; starting the server
+  (435 ms) happens once per session. Almost all of the 1378 ms round trip is not the kit's work but the harness's.
+* The round trip is bimodal: 6 calls below 500 ms and 9 above 1 s, unrelated to the size of the proposal (4676
+  characters in 204 ms, 244 in 1741 ms). The session was in auto mode; one hypothesis, not checked, is that some calls
+  go through the classifier's review because `validate_proposal` is not in `permissions.allow`.
+* Each hook is almost all Python start-up (about 240 ms of the 250).
+* The write itself, with its hooks, took a median of 205 ms from call to result in the transcript (the hooks can run
+  in parallel).
 
-**Candidatos para el diseño de la v0.2** (sin decidir): poner `validate_proposal` en
-`permissions.allow` y medir de nuevo (si la hipótesis se confirma, es el grueso del coste); unir los
-dos hooks de escritura en un solo proceso (unos 240 ms menos); arrancar Python con menos trabajo
-(`-S`, `-I`) en los hooks.
+**Candidates for the v0.2 design** (not decided): put `validate_proposal` in `permissions.allow` and measure again (if
+the hypothesis holds, it is the bulk of the cost); join the two write hooks in a single process (about 240 ms less);
+start Python with less work (`-S`, `-I`) in the hooks.
 
-## 5. Diseño de optimización para la v0.2
+## 5. Optimisation design for v0.2
 
-**Objetivo:** la mediana del tiempo añadido por escritura gobernada por debajo de 1 s, medida con el
-mismo método (§2) y con la regla comprometida de nuevo antes de medir. Tres pasos, en este orden, y
-cada uno medido por separado para saber cuánto aporta:
+**Goal:** the median time added per governed write below 1 s, measured with the same method (§2) and with the rule
+committed again before measuring. Three steps, in this order, each measured on its own to know how much it brings:
 
-1. **El validador en `permissions.allow`.** Añadir `mcp__boundary-validator__validate_proposal` a la
-   lista de permitidos de `.claude/settings.json` y su equivalente en `opencode.jsonc` (AGENTS 7.1 exige
-   el mismo perímetro). No abre nada: la herramienta solo valida y anota en el rastro, que escribe el
-   servidor. Comprueba la hipótesis del §4: si la ida y vuelta baja a la rama rápida (unos 200 ms), era
-   la revisión del modo automático. Es una línea de configuración y un cambio en los tests del
-   perímetro.
-2. **Un solo proceso para los hooks de escritura.** Hoy `require_boundary_validation.py` y
-   `require_contract_context.py` arrancan cada uno su Python para la misma escritura. Un único hook
-   de entrada que importe los dos y los ejecute en orden, sin cambiar su lógica ni sus mensajes,
-   ahorra un arranque (unos 240 ms). Siguiendo AGENTS 6.5: primero el hook nuevo, probado; después el
-   cambio de `settings.json`; los dos antiguos se quedan como módulos.
-3. **Arranque de Python más ligero en los hooks** (`-I`, `-S`, que el shim ya admite): menos trabajo al
-   arrancar y, con `-I`, sin `PYTHONPATH` ni el directorio del usuario, que además es más seguro.
-   Se mide antes de decidir; si no ahorra nada apreciable, no se hace.
+1. **The validator in `permissions.allow`.** Add `mcp__boundary-validator__validate_proposal` to the allow list of
+   `.claude/settings.json`, and its equivalent to `opencode.jsonc` (AGENTS 7.1 requires the same perimeter). It opens
+   nothing: the tool only validates and notes in the audit trail, which the server writes. It tests the hypothesis of
+   §4: if the round trip drops to the fast branch (about 200 ms), it was auto mode's review. It is one line of
+   configuration and a change in the perimeter's tests.
+2. **One process for the write hooks.** Today `require_boundary_validation.py` and `require_contract_context.py` each
+   start their own Python for the same write. A single entry hook that imports both and runs them in order, without
+   changing their logic or their messages, saves one start-up (about 240 ms). Following AGENTS 6.5: first the new
+   hook, tested; then the change to `settings.json`; the two old ones stay as modules.
+3. **A lighter Python start-up in the hooks** (`-I`, `-S`, which the shim already accepts): less work at start-up and,
+   with `-I`, no `PYTHONPATH` and no user directory, which is also safer. It is measured before deciding; if it saves
+   nothing noticeable, it is not done.
 
-**Alternativa a los pasos 2 y 3 (idea del autor, 2026-10-07): un proceso residente.** Levantar Python
-una vez por sesión, la primera vez que hace falta, y mantenerlo vivo: los hooks pasan a ser clientes
-mínimos (un `sh` que le pasa la entrada y devuelve su decisión), sin arrancar un intérprete en cada
-llamada. Es generalizable: vale para todos los hooks, y para un proyecto que no sea de Python el kit
-deja de costar un arranque de Python por escritura. Lo que hay que resolver antes:
-* **Código viejo en marcha:** como el servidor MCP, el proceso ejecuta el código con el que arrancó;
-  un cambio en una puerta exige reiniciarlo, y hoy los hooks se releen en cada llamada (AGENTS 6.5).
-  Necesita detectar que su código cambió (por hash) y reiniciarse o denegar.
-* **Sin proceso, se deniega:** si no responde, el cliente deniega; nunca se salta la puerta.
-* **Canal privado:** un socket de Unix con permisos solo para el usuario. El sandbox no deja a `Bash`
-  conectarse a sockets de Unix por defecto, así que el agente no puede hablarle ni suplantarlo; sí
-  podría matarlo, y entonces todo se deniega (un bloqueo, no un hueco).
-* **Medirlo** con el mismo método que los pasos 2 y 3 antes de elegir.
+**Note (2026-10-19):** step 1 was done on 2026-10-14 (`f5517ae`), for another reason: the permission perimeter of
+ADR-012, which ADR-022 keeps, allows `validate_proposal` so that it does not ask. The cost has not been measured again
+since. Steps 2 and 3 are not done: the two write hooks still start one Python each, without `-I` or `-S`.
 
-**Estimación** (a comprobar, no a dar por hecha): unos 200 ms de validador y unos 150 ms de hooks,
-por debajo de 500 ms en total. **Fuera de este diseño:** quitar la llamada al validador (el recibo es
-la garantía) o cachear recibos (rompería que el recibo ata un cambio exacto).
+**Alternative to steps 2 and 3 (the author's idea, 2026-10-07): a resident process.** Start Python once per session,
+the first time it is needed, and keep it alive: the hooks become minimal clients (an `sh` that passes it the input and
+returns its decision), without starting an interpreter at every call. It generalises: it works for every hook, and for
+a project that is not in Python the kit stops costing a Python start-up per write. What has to be solved first:
+* **Old code running:** like the MCP server, the process runs the code it started with; a change in a gate requires
+  restarting it, and today the hooks are read again on every call (AGENTS 6.5). It needs to detect that its code
+  changed (by hash) and restart or deny.
+* **No process, deny:** if it does not answer, the client denies; the gate is never skipped.
+* **A private channel:** a Unix socket with permissions for the user only. The sandbox does not let `Bash` connect to
+  Unix sockets by default, so the agent cannot talk to it or impersonate it. It could kill it, and then everything is
+  denied: a block, not a hole.
+* **Measure it** with the same method as steps 2 and 3 before choosing.
 
-## 6. Comparación con otras configuraciones (propuesta del autor, 2026-10-08; sin medir)
+**Estimate** (to be checked, not taken for granted): about 200 ms of validator and about 150 ms of hooks, below 500 ms
+in total. **Outside this design:** removing the call to the validator (the receipt is the guarantee) or caching
+receipts (it would break the receipt binding an exact change).
 
-Idea: medir lo que cuesta gobernar con reglas en código frente a gobernar con instrucciones, sobre la
-misma tarea. No se da por hecho que Actuarii ahorre tokens: los ahorra en instrucciones de gobierno en
-el contexto y en turnos de corrección, y los gasta en propuestas (tokens de salida, los caros), en el
-anuncio de la sesión y en las denegaciones. Puede salir a favor o en contra; el argumento del kit es
-que la regla se cumple, y la comparación mide las dos cosas.
+## 6. Comparison with other configurations (the author's proposal, 2026-10-08)
 
-* **Configuraciones:**
-  * **A, sin gobierno:** el repositorio tal cual.
-  * **B, gobierno por instrucción:** las mismas reglas que impone Actuarii, escritas en `CLAUDE.md`
-    (lo más común; según `docs/prior-art/PRIOR_ART.md`, el plugin de AGT y otros además inyectan
-    contexto al abrir sesión o en cada operación).
-  * **C, Actuarii:** el kit instalado, sin instrucciones de gobierno en el texto.
-* **Tarea:** la del caso real de `docs/design/CLEAN_ROOM.md` §4b, con su texto único, sobre el
-  mismo clon de `noticias`, mismo modelo, sesión nueva cada vez.
-* **Medidas, de la transcripción:** tokens exactos de `usage` (entrada, entrada en caché, salida),
-  no caracteres entre 4; turnos; tiempo; y si cada regla se mantuvo (una escritura en una ruta
-  gobernada sin recibo cuenta como regla rota en B, y en C no puede ocurrir por diseño).
-* **Antes de medir, se commitean:** el texto de `CLAUDE.md` de B, el número de ejecuciones por
-  configuración (una sola es indicativa, no una cifra para el README) y la regla de lectura.
-* **Cuándo:** después de la prueba en limpio. Si no cabe antes del 25 de octubre, va a la v0.2 y el
-  README no afirma nada sobre ahorro.
+A comparison of what it costs to govern with rules in code against governing with instructions in `CLAUDE.md`, on the
+same task, was proposed and not run. It could come out for or against the kit, so the README claims nothing about
+saving tokens. If it is run, it goes to v0.2, with its configurations, its number of runs and its reading rule
+committed before measuring.
