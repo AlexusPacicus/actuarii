@@ -1,5 +1,5 @@
 ---
-name: autor
+name: author
 description: How to work with Actuarii's author: the author decides; simple explanations with one recommendation; technical claims are proved by running them
 metadata:
   type: user
@@ -15,4 +15,4 @@ Some decisions depend on the detail of interpreters and Python environments. Whe
   the author does not have to trust Claude's reading.
 
 Claude must have memory: without it, it is not valid (author, 2026-10-13). In Actuarii it is the memory of this
-directory, under code. See [[preguntar-ante-ambiguedad]] and [[pocas-peticiones-al-autor]].
+directory, under code. See [[ask-when-ambiguous]] and [[few-requests-to-the-author]].

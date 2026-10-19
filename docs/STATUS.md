@@ -3,7 +3,7 @@
 What a new session needs to know, and nothing more. It is updated when each session closes, together with the entry
 of `docs/DEVLOG.md`. The history and the reasoning behind each decision are in `docs/PLAN.md`, which is read when
 needed and not loaded in every session (author, 2026-10-14). The criteria of v0.1, the signal, the gate of 24
-November and v0.2 are in `docs/ROADMAP.md`; the decisions are in `docs/DECISIONES.md`.
+November and v0.2 are in `docs/ROADMAP.md`; the decisions are in `docs/DECISIONS.md`.
 
 The repository's documents are written in English from 2026-10-18 on (ADR-032); older documents are reviewed one by
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
@@ -16,7 +16,7 @@ Updated: 2026-10-19, afternoon.
 * **What it is:** work records for coding agents. The README's sentence: "Work records for coding agents. Every
   action leaves a record that it happened, and why. Built for settings where traceability comes first."
 * **What it is not:** a security boundary against an adversarial agent. That is v0.2, with its own environment
-  (`docs/design/ENTORNO_PROPIO.md`). AGENTS.md §9 declares what v0.1 does not cover.
+  (`docs/design/ISOLATED_ENVIRONMENT.md`). AGENTS.md §9 declares what v0.1 does not cover.
 * **Publication:** the repository opens on 25 October, ready or not, and is private until then. The text for HN and
   Reddit goes out on Tuesday 27 at about 14:00 Madrid time (ADR-027).
 * **Committed success signal:** within the four weeks after the text, up to Tuesday 24 November, 5 outside people
@@ -50,7 +50,7 @@ Updated: 2026-10-19, afternoon.
     the 35 cases and the 28 limits, each once;
   * `INSTALL.md` as one block pasted from the repository's top level, with nothing to edit (ADR-028), and
     amendment §4e;
-  * **the macOS measurement (V4), passed with 223 s:** attempt 5 of `docs/design/PRUEBA_EN_LIMPIO.md` §5, with its
+  * **the macOS measurement (V4), passed with 223 s:** attempt 5 of `docs/design/CLEAN_ROOM.md` §5, with its
     deviations noted and milestone 1 checked by §4c;
   * **the target named before any write (ADR-029, `119d569`);**
   * **the real case (ADR-030):** the two defects of the classifier of `noticias` v3, fixed with v0.1 as published
@@ -60,13 +60,17 @@ Updated: 2026-10-19, afternoon.
     hook and a line in the announcement, checked with `verify_red_green.py` and live;
   * **the two decisions of 2026-10-19 on what was found in the inventory (ADR-038), in the tree:** the three
     passages of `PLAN.md` about the author's professional plans are out, and so is the line of the DEVLOG that names
-    a third party, with the two that repeated the name.
+    a third party, with the two that repeated the name;
+  * **the renaming batch of ADR-035:** the files that stay have English names (`DECISIONS.md`, `STATUS.md`,
+    `CLEAN_ROOM.md`, `COST.md`, `ISOLATED_ENVIRONMENT.md` and the three memory files), the live documents and the CI
+    step cite them, and the records keep the names of their day, with a dated note at the head of the register and of
+    the DEVLOG.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
-  1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** first the renaming batch of ADR-035, from a
-     session opened in Actuarii. Then the author reviews each document with Claude, and each one stays (translated),
-     is condensed, or leaves the tree; this register is not condensed but selected, entry by entry (ADR-035).
+  1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** the author reviews each document with Claude, and
+     each one stays (translated), is condensed, or leaves the tree; this register is not condensed but selected, entry
+     by entry (ADR-035). A contract that stays as an example takes the `.contract.json` suffix.
      ADR-033 carries Claude's proposal as the starting point, not as a decision. `ROADMAP.md` is already translated,
      and is also the sample of tone and edits. When the review reaches it, the author stops to work on v0.2.
      Questions Claude brought for that research:
@@ -99,7 +103,7 @@ Updated: 2026-10-19, afternoon.
 
 ## Decisions in force
 
-They are in `docs/DECISIONES.md`, which only grows, except once, at the selection of ADR-035. In force today: ADR-001
+They are in `docs/DECISIONS.md`, which only grows, except once, at the selection of ADR-035. In force today: ADR-001
 to ADR-039, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
 by ADR-033, its point on file names by ADR-035, and its point on the history, for one rewrite, by ADR-038.
 
@@ -170,7 +174,7 @@ by ADR-033, its point on file names by ADR-035, and its point on the history, fo
   redone. The GitHub repository is the new one, with CI green; the old one was deleted (author, 2026-10-14).
 * **Python:** committed scripts only, through the shim; `pytest` by its own entry point.
 * **The DEVLOG,** when each session closes, with the date of the clock and not that of the conversation.
-* **A decision of the author** is appended to `docs/DECISIONES.md` with the next number and listed above. The DEVLOG
+* **A decision of the author** is appended to `docs/DECISIONS.md` with the next number and listed above. The DEVLOG
   cites it by number, without copying it. An old entry is not changed: if it is revised, the new one says which one
   it supersedes, and the old one leaves the list. Translating it (ADR-032) does not change what it decided.
 * **Until the 25th** (Claude's recommendation, 2026-10-14), every task answers one question: does it bring the

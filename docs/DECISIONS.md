@@ -1,11 +1,18 @@
 # Actuarii — decisiones
 
 Registro de las decisiones del autor. Solo se amplía: una entrada no se edita nunca, y revisar una decisión es
-añadir otra que dice a cuál sustituye. Las que están en vigor se listan en `docs/ESTADO.md`. Las decisiones
+añadir otra que dice a cuál sustituye. Las que están en vigor se listan en `docs/STATUS.md`. Las decisiones
 técnicas de un contrato se quedan en el contrato. La fecha de cada entrada sale del reloj.
 
 ADR-001 a ADR-020 se escribieron el 2026-10-14 y recogen las decisiones en vigor ese día, tomadas entre el 5 y
 el 14 de octubre. Cada una lleva la fecha en que se tomó y dónde está su razonamiento. Lo anterior no se migra.
+
+**Note (2026-10-19, ADR-035):** files were renamed into English. `docs/DECISIONES.md` is now `docs/DECISIONS.md`;
+`docs/ESTADO.md`, `docs/STATUS.md`; `docs/design/PRUEBA_EN_LIMPIO.md`, `docs/design/CLEAN_ROOM.md`;
+`docs/design/COSTE.md`, `docs/design/COST.md`; `docs/design/ENTORNO_PROPIO.md`,
+`docs/design/ISOLATED_ENVIRONMENT.md`; and the memory files `autor.md`, `preguntar-ante-ambiguedad.md` and
+`pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
+entries keep the names of their day.
 
 ## ADR-001 — Nombre, licencia y relación con Traianus (2026-10-05, autor)
 

@@ -1,5 +1,5 @@
 ---
-name: pocas-peticiones-al-autor
+name: few-requests-to-the-author
 description: When designing a change or a contract, count the steps that fall to the author and look for the design that does not need them; in Bash, only commands on the list, without variables, cd or loops
 metadata:
   type: feedback
@@ -14,7 +14,7 @@ the conversion was done by the installer, which the person already runs (`docs/D
 
 **How to apply:** in every contract, list the person's steps and look for the design that avoids them. If `main` has
 not moved since the branch left it, advance it by fast-forward inside the sandbox (`git branch -f main <branch>` and
-`git switch main`) instead of asking for a merge. Related: [[autor]].
+`git switch main`) instead of asking for a merge. Related: [[author]].
 
 **Bash:** every call that asks is a request. On 2026-10-15 the author pointed out that every call asked: a bare
 `"Bash"` in `ask` covered the read-only list of AGENTS 7.1, because Claude Code evaluates deny, then ask, then allow

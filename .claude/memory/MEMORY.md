@@ -11,8 +11,8 @@ Memory under code (author's decision, 2026-10-13):
 
 Each memory has the format of Claude Code's memory: frontmatter with `name`, `description` and `metadata.type`
 (`user`, `feedback`, `project` or `reference`). Nothing is kept that the repository, the DEVLOG or the PLAN already
-records. The memory is written in English (ADR-032); the file names stay as they are, since the links use them.
+records. The memory is written in English (ADR-032), and so are its file names (ADR-035).
 
-- [How the author works](autor.md) — the author decides; simple explanations with one recommendation; technical claims are proved by running them.
-- [Ask when an answer is ambiguous](preguntar-ante-ambiguedad.md) — an ambiguous answer is not a decision of the author.
-- [Few requests to the author](pocas-peticiones-al-autor.md) — count the steps that fall to the author and look for the design that avoids them; in `Bash`, only commands on the list, without variables, `cd` or loops.
+- [How the author works](author.md) — the author decides; simple explanations with one recommendation; technical claims are proved by running them.
+- [Ask when an answer is ambiguous](ask-when-ambiguous.md) — an ambiguous answer is not a decision of the author.
+- [Few requests to the author](few-requests-to-the-author.md) — count the steps that fall to the author and look for the design that avoids them; in `Bash`, only commands on the list, without variables, `cd` or loops.

@@ -143,7 +143,7 @@ An adversarial audit of the kit recorded 35 cases. Each one is in
 
    *Example:* in a test on a real repository, the agent was asked to write tests for a module whose directory
    was governed. It wrote them in `tests/unit/`, which was not, and said it did so to avoid asking for a receipt
-   ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §5). It broke no rule.
+   ([`CLEAN_ROOM.md`](docs/design/CLEAN_ROOM.md) §5). It broke no rule.
 
    *In v0.2:* every write to a governed path from inside the environment, `Bash` included, goes through one
    broker, and deleting or renaming a governed file gets a governed channel. The paths you do not govern stay
@@ -219,7 +219,8 @@ An adversarial audit of the kit recorded 35 cases. Each one is in
    configuration allows, through a proxy outside it.
 
 v0.2 does not solve prompt injection either. The agent still reads content it cannot trust; what changes is that
-it can no longer act outside its environment ([`ENTORNO_PROPIO.md`](docs/design/ENTORNO_PROPIO.md) §6).
+it can no longer act outside its environment
+([`ISOLATED_ENVIRONMENT.md`](docs/design/ISOLATED_ENVIRONMENT.md) §6).
 
 ## Install
 
@@ -256,15 +257,15 @@ without questions and what each file does.
 **How long it takes.** Measured once on macOS, by the author, who knows the kit: **223 s**, about four minutes,
 from a fresh clone of a real repository to the first governed write. That includes reading the guide and
 installing `pydantic` from scratch. The agent's part, from the prompt to the write, took 19 s. The earlier
-procedure, in several steps, took 612.8 s ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §5).
+procedure, in several steps, took 612.8 s ([`CLEAN_ROOM.md`](docs/design/CLEAN_ROOM.md) §5).
 
 ## What it costs
 
 Each governed write adds a median of **1875 ms**: the round trip to the validator (1378 ms) and two hooks of
 about 250 ms each, which are almost all Python start-up. The validator itself answers in 4 ms; most of the
 round trip is the harness. A proposal is about 1.06 times the size of the edit it covers. Measured on 7 October
-2026 over 15 writes ([`COSTE.md`](docs/design/COSTE.md), in Spanish); the kit has changed since and has not been
-measured again. v0.1 is not optimised; the design for v0.2 is in `COSTE.md` §5.
+2026 over 15 writes ([`COST.md`](docs/design/COST.md), in Spanish); the kit has changed since and has not been
+measured again. v0.1 is not optimised; the design for v0.2 is in `COST.md` §5.
 
 ## What falls to you
 
@@ -288,12 +289,12 @@ person sees the agent's reason next to each change and approves or refuses its r
 out of the agent's reach, so that someone else can check them. Then v0.2 runs the whole agent inside an isolated
 environment of its own, with the gates and a write broker outside it, so that the boundary no longer depends on one
 vendor's hooks and is designed to hold against an adversarial agent
-([`ENTORNO_PROPIO.md`](docs/design/ENTORNO_PROPIO.md)).
+([`ISOLATED_ENVIRONMENT.md`](docs/design/ISOLATED_ENVIRONMENT.md)).
 
 ## A real case
 
 This is one piece of real work in another project, done with v0.1 as published. The case was planned before it was
-done ([`PRUEBA_EN_LIMPIO.md`](docs/design/PRUEBA_EN_LIMPIO.md) §4f); the full record is in §5.
+done ([`CLEAN_ROOM.md`](docs/design/CLEAN_ROOM.md) §4f); the full record is in §5.
 
 [AI Papers Engine](https://github.com/AlexusPacicus/AI-Papers-Engine) has a lexical classifier of papers by method
 family, and it had two defects:

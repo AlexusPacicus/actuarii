@@ -5,9 +5,9 @@ two purposes: to cut the scope before 25 October, and to make the review of 24 N
 in advance. The author accepted Claude's proposals in V2–V9 and in §3–§5 on 2026-10-14 (D7); §6 lists the decisions
 that were open then.
 
-The reasons for each decision are in `docs/PLAN.md`, and the work of each day in `docs/ESTADO.md`, which also says
+The reasons for each decision are in `docs/PLAN.md`, and the work of each day in `docs/STATUS.md`, which also says
 where each criterion stands. Since it was committed, a change of criterion is decided by the author and added, with
-its reason, to `docs/DECISIONES.md`. On 24 November this document is only touched to record the result.
+its reason, to `docs/DECISIONS.md`. On 24 November this document is only touched to record the result.
 
 Translated from Spanish on 2026-10-18 (ADR-032).
 
@@ -60,7 +60,7 @@ what happens if it is not met.
   write, in the local database.
 
 **V4. Installing in less than 5 minutes.**
-* What: the clean-room test of `docs/design/PRUEBA_EN_LIMPIO.md`, on macOS, with the new installer and its amendment
+* What: the clean-room test of `docs/design/CLEAN_ROOM.md`, on macOS, with the new installer and its amendment
   committed before measuring. The last measurement gave 612.8 s (2026-10-12).
 * Check: milestone 2 comes in less than 300 s (the rule of its §4).
 * Cut-off: Sunday 18. The author does it.
@@ -83,7 +83,7 @@ what happens if it is not met.
   * the problem (D6) and which channel decides who;
   * the limits (V5);
   * the installation;
-  * the cost per governed write, with its figure (a median of 1875 ms, `docs/design/COSTE.md`);
+  * the cost per governed write, with its figure (a median of 1875 ms, `docs/design/COST.md`);
   * what falls to the person (`merge`, `switch`, deleting);
   * v0.2 in one sentence;
   * a real case: the two defects of the classifier of `noticias` v3, with their commits (ADR-030).
@@ -125,7 +125,7 @@ what happens if it is not met.
 
 **V10. The published tree in English (ADR-032, ADR-035).**
 * What: every document of the tree in English, edited for a reader from outside, in this order: what the README
-  links; `DECISIONES.md`; the other records. Every file that stays has an English name (ADR-035). The git history
+  links; `DECISIONS.md`; the other records. Every file that stays has an English name (ADR-035). The git history
   stays as it is.
 * Check: no document of the tree is in Spanish, except the agent's reasons quoted as they were given, and no file name
   is.
@@ -176,27 +176,27 @@ The count of §3 is looked at, with its evidence, and nothing else.
 ## 5. v0.2
 
 **What it is:** first, a person in the loop and signed records (author, 2026-10-19, ADR-034). Then the isolated
-environment of `docs/design/ENTORNO_PROPIO.md`: the whole agent inside, and the gates and a write broker outside.
-Its motivation is the one v0.1 set aside: that using agents safely needs a middleware (author, 2026-10-13). It
-starts only if the gate is passed.
+environment of `docs/design/ISOLATED_ENVIRONMENT.md`: the whole agent inside, and the gates and a write broker
+outside. Its motivation is the one v0.1 set aside: that using agents safely needs a middleware (author,
+2026-10-13). It starts only if the gate is passed.
 
 **Criteria:**
 * A person in the loop: the person sees the agent's reason next to the change and approves or refuses each receipt,
   and the approval or the refusal goes into the record (ADR-034).
 * Signed records: the record is signed out of the agent's reach, someone other than the author can check it, and a
   forged one is detected (ADR-034).
-* The guarantees E1–E9 (`ENTORNO_PROPIO.md` §3).
+* The guarantees E1–E9 (`ISOLATED_ENVIRONMENT.md` §3).
 * The battery of its §8: each case of the two audits that applies, and the "Internet" cases, comes out as expected,
   in Claude Code and in OpenCode.
-* The cost: the median time added per governed write, below 1 s, with the method of `docs/design/COSTE.md` (in v0.1,
+* The cost: the median time added per governed write, below 1 s, with the method of `docs/design/COST.md` (in v0.1,
   1875 ms).
-* The installation: from zero in less than 300 s, with the method of `docs/design/PRUEBA_EN_LIMPIO.md`.
+* The installation: from zero in less than 300 s, with the method of `docs/design/CLEAN_ROOM.md`.
 * Plain names for the proposal's fields (author, 2026-10-14).
 * The rule of each measurement, committed before measuring.
 
 **Order:** first the person in the loop and the signed records, each with its research and its decisions taken
-before any code (ADR-034); then the phases v0.2-a to v0.2-e of `ENTORNO_PROPIO.md` §9, with the decisions of its §10
-taken before the prototype.
+before any code (ADR-034); then the phases v0.2-a to v0.2-e of `ISOLATED_ENVIRONMENT.md` §9, with the decisions of
+its §10 taken before the prototype.
 
 **Date and scope:** the date is set on 24 November, with the rule of v0.1: it does not move; the scope is cut. Of
 the PLAN's "Ideas for v0.2", only what a criterion here needs goes in.
@@ -204,7 +204,7 @@ the PLAN's "Ideas for v0.2", only what a criterion here needs goes in.
 ## 6. Decisions that were open
 
 Each one carries Claude's recommendation and, once taken, the author's decision. All were taken and went to
-`docs/DECISIONES.md`: D1 is ADR-016; D2, ADR-020; D3 and D6, ADR-018; D4, ADR-019; D5, ADR-010; and D7, ADR-017.
+`docs/DECISIONS.md`: D1 is ADR-016; D2, ADR-020; D3 and D6, ADR-018; D4, ADR-019; D5, ADR-010; and D7, ADR-017.
 
 * **D1. The record registers the write, not only the request.**
   * The problem: the audit trail keeps hashes, not the text. A `commit-msg` hook could only pair receipts and commit
@@ -213,7 +213,7 @@ Each one carries Claude's recommendation and, once taken, the author's decision.
   * **Decided (author, 2026-10-14):** the record compares the content of the commit with what the writes with a
     receipt left, and says so in the trailer ("matches" or "changed outside the channel"). The computation goes
     inside the gate that already runs before each write, with no new process; a `PostToolUse` hook, which would add
-    about 250 ms per write (`COSTE.md` §4), is ruled out.
+    about 250 ms per write (`COST.md` §4), is ruled out.
   * Consequence for the contract: the gate no longer opens the database only to read. **Decided (author,
     2026-10-14):** if it cannot store the expected result, it denies the write, as the validator does without a
     record.

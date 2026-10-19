@@ -123,7 +123,7 @@ dependencia nueva: necesita la aprobación del autor y comprobar su estabilidad 
 
 Un servidor MCP residente, fuera del entorno, que el agente alcanza por un socket de Unix: dentro hay un
 cliente mínimo, de solo lectura, que traduce stdio al socket. Es el «intermediario de escritura por MCP» del
-PLAN y el proceso residente de `docs/design/COSTE.md` §5.
+PLAN y el proceso residente de `docs/design/COST.md` §5.
 
 * **`propose_write`:** recibe la propuesta de 5 Radicales, la valida (esquema, cita, primitivas) y, si pasa,
   **escribe él** el contenido exacto. El recibo deja de ser un paso aparte: lo que se valida es lo que se
@@ -314,8 +314,8 @@ que pasa. Lo esperado:
 
 **Regla de decisión:** el prototipo vale cuando cada caso aplicable sale como se espera, en Claude Code y en
 OpenCode. Además se miden, con su método de siempre:
-* el coste por escritura gobernada (`docs/design/COSTE.md`; hoy, 1875 ms de mediana);
-* la instalación de cero (`docs/design/PRUEBA_EN_LIMPIO.md`).
+* el coste por escritura gobernada (`docs/design/COST.md`; hoy, 1875 ms de mediana);
+* la instalación de cero (`docs/design/CLEAN_ROOM.md`).
 
 Las cifras se comparan con las de la v0.1; la regla de cada medida se commitea antes de medir.
 

@@ -1,5 +1,5 @@
 ---
-name: preguntar-ante-ambiguedad
+name: ask-when-ambiguous
 description: An ambiguous answer from the author is not a decision; ask for a clear yes or propose a condition that can be checked
 metadata:
   type: feedback
@@ -13,4 +13,4 @@ so, but I'm not sure"), explain it more simply and ask for a clear yes, or propo
 (`docs/DEVLOG.md`); on 2026-10-13 the revised decision on A19 was accepted with the condition of the tests.
 
 **How to apply:** before writing "decided (author)" in the DEVLOG, the PLAN or a design, check that the answer is an
-explicit yes. Related: [[autor]].
+explicit yes. Related: [[author]].

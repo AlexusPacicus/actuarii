@@ -5,6 +5,51 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+**Note (2026-10-19, ADR-035):** files were renamed into English. `docs/DECISIONES.md` is now `docs/DECISIONS.md`;
+`docs/ESTADO.md`, `docs/STATUS.md`; `docs/design/PRUEBA_EN_LIMPIO.md`, `docs/design/CLEAN_ROOM.md`;
+`docs/design/COSTE.md`, `docs/design/COST.md`; `docs/design/ENTORNO_PROPIO.md`,
+`docs/design/ISOLATED_ENVIRONMENT.md`; and the memory files `autor.md`, `preguntar-ante-ambiguedad.md` and
+`pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
+entries keep the names of their day.
+
+## 2026-10-19 (afternoon, the renaming)
+
+The renaming batch of ADR-035 is done: the files that stay have English names, and the live documents cite them.
+
+**Done**
+* **The inventory, before any edit:** outside the records, only the name of the CI step and
+  `tests/unit/test_ci_workflow.py`, which pins it, cited an old name in code or tests.
+  `test_config_perimeter.py` checks that every file `CLAUDE.md` imports exists, so `CLAUDE.md`, `opencode.jsonc`
+  and the rename of the status go in one commit.
+* **The CI step, through the implementer:** the contract (`0a43847`) is the first with the `.contract.json` suffix;
+  the commit, `e4536e1`, carries `Actuarii-Record: matches`. The executing agent validated the report, ran
+  `verify_red_green.py` (T1 red at base and green at the end, T2 guard, the full suite green), checked by hand that
+  the diff, two lines, touches only the contract's files, and advanced `main` by fast-forward.
+* **Renamed:**
+  * `DECISIONS.md`, `STATUS.md`, `CLEAN_ROOM.md`, `COST.md` and `ISOLATED_ENVIRONMENT.md`, with `git mv`;
+  * the three memory files, written under their new names with a receipt each, with their `name:` and their links;
+    the author deleted the old ones.
+* **The links:**
+  * the README, the status, the ROADMAP, `CASES.md`, and the cross-references of `COST.md` and
+    `ISOLATED_ENVIRONMENT.md`;
+  * `CLAUDE.md`, `opencode.jsonc` and `MEMORY.md`, with a receipt each;
+  * a dated note at the head of the register and of this DEVLOG that says which name replaced which.
+* **Left as they are, on purpose:**
+  * the records: the entries of the register, the DEVLOG, the PLAN and the contracts;
+  * a case told in `CASES.md`, whose receipts were for the path of their day;
+  * ROADMAP V8, which says where a text was.
+
+  No contract was renamed: ADR-035 renames only the contracts the review keeps as examples.
+
+Suite green (3705). Disk: 5.1 GiB free.
+
+**Decided (author)**
+* **The records keep the names of their day,** with a dated note at the head of the register and of the DEVLOG.
+  It applies the rule of ADR-032 to the file names, so it has no entry of its own.
+
+**Next**
+* **The review of each document (ADR-033),** with the selection of the register and the V8 check.
+
 ## 2026-10-19 (afternoon)
 
 What the inventory of 2026-10-18 left to the author is decided (ADR-038): the author's professional plans leave the

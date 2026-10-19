@@ -130,7 +130,7 @@ que la regla se cumple, y la comparación mide las dos cosas.
     (lo más común; según `docs/prior-art/PRIOR_ART.md`, el plugin de AGT y otros además inyectan
     contexto al abrir sesión o en cada operación).
   * **C, Actuarii:** el kit instalado, sin instrucciones de gobierno en el texto.
-* **Tarea:** la del caso real de `docs/design/PRUEBA_EN_LIMPIO.md` §4b, con su texto único, sobre el
+* **Tarea:** la del caso real de `docs/design/CLEAN_ROOM.md` §4b, con su texto único, sobre el
   mismo clon de `noticias`, mismo modelo, sesión nueva cada vez.
 * **Medidas, de la transcripción:** tokens exactos de `usage` (entrada, entrada en caché, salida),
   no caracteres entre 4; turnos; tiempo; y si cada regla se mantuvo (una escritura en una ruta

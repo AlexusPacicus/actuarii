@@ -16,8 +16,8 @@ Según `docs/adversarial-audit/PAUTAS.md` (aprobadas en `8e2d894`). Primer día:
 
 Los límites se cuentan por problemas, cada uno con su motivo (ADR-026). Los de gobernanza, del perfil A (el agente
 honesto que se equivoca), son de la v0.1. Los de seguridad, del perfil B (el agente que busca la salida), pasan a la
-v0.2, con su entorno propio (`docs/design/ENTORNO_PROPIO.md`). Cada caso está en un problema, y cada límite de
-AGENTS §9 también. Un caso corregido lleva el commit que lo corrigió en `main`; lo que queda de él está en §9.
+v0.2, con su entorno propio (`docs/design/ISOLATED_ENVIRONMENT.md`). Cada caso está en un problema, y cada límite
+de AGENTS §9 también. Un caso corregido lleva el commit que lo corrigió en `main`; lo que queda de él está en §9.
 
 **Gobernanza: el acta queda incompleta sin que nadie lo busque (v0.1)**
 

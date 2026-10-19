@@ -1,5 +1,5 @@
 # Actuarii — Instructions
 
 @AGENTS.md
-@docs/ESTADO.md
+@docs/STATUS.md
 @.claude/memory/MEMORY.md
