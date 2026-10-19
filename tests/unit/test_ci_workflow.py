@@ -28,7 +28,7 @@ jobs:
 CHECKOUT = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1"
 SETUP_PYTHON = "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0"
 PYTEST_PIN = "pytest==9.1.1"
-CLEAN_ROOM_NAME = "Clean-room sequence (docs/design/PRUEBA_EN_LIMPIO.md, section 4)"
+CLEAN_ROOM_NAME = "Clean-room sequence (docs/design/CLEAN_ROOM.md, section 4)"
 CLEAN_ROOM_TESTS = [
     "test_a_fresh_install_copies_every_kit_file_with_its_bytes_and_executable_bit",
     "test_before_the_validator_has_ever_run_the_installed_gate_still_denies",
