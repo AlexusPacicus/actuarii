@@ -81,9 +81,8 @@ Updated: 2026-10-19, afternoon.
      list is not kept in the repository; then one rewrite of the history, which takes out the three lines of ADR-038
      and whatever the check finds. The procedure was prepared on 2026-10-19, outside the repository; on GitHub, the
      rewritten `main` goes to a new repository (ADR-039). Then a new commit redoes the citations of the hashes that
-     changed. Claude proposes doing both before the renaming batch of
-     item 1: the check, because it is the only criterion that delays the opening; the rewrite, so that it runs once
-     and the commits of the review keep their hashes.
+     changed. The check goes with the review of each document (item 1), and the rewrite waits for it, so that it runs
+     once (author, 2026-10-19). Before it runs, Claude measures the figures of the procedure again.
 * Minor, undated (DEVLOG, 2026-10-16): `**` without `re.DOTALL` in `project_config`; the Python traceback of an
   installer `git` call that takes more than 300 s; the installer copies the kit (Apache-2.0) without the license
   text.
@@ -93,8 +92,8 @@ Updated: 2026-10-19, afternoon.
 | When | What |
 |---|---|
 | Wednesday 14 to Sunday 18 | Done: the perimeter, the installer and its record in git, the measurement (223 s), the limits, the README, the real case, ADR-016 to ADR-032 |
-| Monday 19 to Thursday 22 | The review of each document (ADR-033), with v0.2 at the ROADMAP; a full reading of the README |
-| Friday 23 and Saturday 24 | V7 on the translated tree, V8, and the text for HN and Reddit |
+| Monday 19 to Thursday 22 | The review of each document (ADR-033), with the V8 check and v0.2 at the ROADMAP; a full reading of the README |
+| Friday 23 and Saturday 24 | The rewrite of ADR-038 once V8 is done, V7 on the translated tree, and the text for HN and Reddit |
 | Sunday 25 | The repository opens |
 | Tuesday 27 | The text on HN and Reddit, at about 14:00 Madrid time |
 
