@@ -5,6 +5,38 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-19 (afternoon)
+
+What the inventory of 2026-10-18 left to the author is decided (ADR-038): the author's professional plans leave the
+tree, and a line that names a third party leaves the tree and, by a rewrite still to be run, the history of `main`.
+
+**Done**
+* **Checked before editing:**
+  * the three passages of `PLAN.md` are the only ones about the author's professional plans;
+  * across every ref, the third party is named in exactly three distinct lines, all on `main` and none in a commit
+    message: the line of the 2026-10-18 entry (afternoon, the real case), and the two that pointed to it, in the
+    2026-10-18 entry (evening) and in pending item 2 of the status.
+* **Out of the tree:** the three passages and the three lines. What they leave behind is adjusted: the usefulness
+  criterion of `PLAN.md` counts three conditions, the list of the real case ends with a full stop, and the evening
+  entry says "the decisions above". Pending item 2 of the status, now empty, is removed and the list renumbered.
+* **ADR-038,** and the status.
+* **The procedure of the rewrite, prepared and not run,** outside the repository: a backup copy, a fresh clone,
+  `git filter-repo --replace-text` with rules that match the three lines without writing the name, the checks before
+  any push, the citations of rewritten hashes (ten in the tree today) and the two options for GitHub. It waits for
+  the author's confirmation.
+* **Done from a session opened in Actuarii,** with the announcement read: the session in Traianus could not run
+  Actuarii's git hooks, because Traianus's Python shim came first on its `PATH`.
+
+Suite green (3705). Disk: 5.1 GiB free.
+
+**Decided (author)**
+* **ADR-038.**
+
+**Next**
+* **The author:** read the procedure, confirm it or correct it, and choose between a new repository and a force
+  push. Claude proposes the V8 check first, and one rewrite with what it finds, before the renaming batch of ADR-035.
+* **After the rewrite:** the commit that redoes the citations, with each cited hash checked.
+
 ## 2026-10-19 (midday)
 
 The review of ADR-033 is planned: file names go into English and the register is selected, not condensed (ADR-035);
@@ -107,7 +139,7 @@ are translated.
   the history stays as it is; the repository's documents are written in English from now on.
 
 **Next**
-* **The author:** review the translated `ROADMAP.md` as the sample of tone and edits, and the three decisions above.
+* **The author:** review the translated `ROADMAP.md` as the sample of tone and edits, and the decisions above.
   On closing, the author said that "we will be able to shorten"; what and how is to be agreed before translating
   more, and is not recorded as a decision.
 * **Translation, priority 1:** `CASES.md`, `PRUEBA_EN_LIMPIO.md`, `COSTE.md`, `ENTORNO_PROPIO.md`, `SANDBOX.md`.
@@ -185,7 +217,7 @@ El caso real del README será en `noticias` v3, no en Traianus (ADR-030), con su
 **Hecho**
 * **El repaso de `noticias` v3 con el autor:**
   * commiteados, una hipótesis (H1), un protocolo congelado con criterios de éxito y de fracaso, y un experimento 0
-    de 9 papers;
+    de 9 papers.
 
   `origin` es `github.com/AlexusPacicus/AI-Papers-Engine`, público según el autor.
 * **Los dos defectos del clasificador, confirmados al leer `origin/v3-exp`:** la búsqueda por subcadena (`gan`

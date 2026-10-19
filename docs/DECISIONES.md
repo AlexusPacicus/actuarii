@@ -672,3 +672,38 @@ comes from.
 **Consequences:** the README stays as it was committed in `9466452`. The third condition of ADR-036 is closed.
 **Supersedes:** —
 **Source:** `docs/DEVLOG.md`, 2026-10-19.
+
+## ADR-038 — The author's professional plans leave the tree; a line that names a third party leaves the tree and the history (2026-10-19, author)
+
+**Context:** the inventory of 2026-10-18 for ADR-032 found two things for the author to decide before their
+documents are translated. `PLAN.md` has three passages about the author's professional plans. The DEVLOG entry of
+2026-10-18 (afternoon, the real case) has a line that names a third party and a private report, and two later lines,
+in the DEVLOG and in the status, repeat the name. The tree and the history are both published on 25 October, and
+taking something out of the tree does not take it out of the history. ADR-032 says that the history is not
+rewritten, because a rewrite changes the hashes that the tree cites as evidence. ADR-020 already rewrote it once, on
+2026-10-14, to take out personal information, and moved it to a new repository, because GitHub keeps serving old
+commits to whoever asks for their hash.
+**Decision:**
+* The three passages of `PLAN.md` leave the tree; the history keeps them. Phase 4 keeps "after phases 0–3", and the
+  usefulness criterion keeps its other three conditions.
+* The line that names the third party, and the two lines that repeat the name, leave the tree and the history of
+  `main`. One rewrite removes those exact lines from every version of every file, and changes nothing else. The name
+  is not written again in the repository, in a commit message or in the agent's memory: the records speak of a third
+  party named in the DEVLOG of 2026-10-18.
+* Claude prepares the procedure of the rewrite, and the author confirms it before it runs. The author runs the
+  rewrite, the push and every change to the GitHub repository. Before the push, it is checked that:
+  * no version of any ref names the third party;
+  * the number of commits is the same;
+  * every tree is the same as before except for those lines;
+  * the commit map is kept.
+* After the rewrite, a new commit redoes, from the commit map, every citation in the tree of a hash that changed, and
+  each cited hash is checked to exist.
+* On GitHub, the author chooses between a new repository, as in ADR-020, and a force push with the old Actions runs
+  deleted and a request to GitHub to remove the old commits.
+
+**Consequences:** the hashes change from the commit of 2026-10-18 that recorded ADR-030 on, this entry's own commit
+included; the commits before it keep theirs. The tool redoes the hashes cited in commit messages; the new commit
+redoes those of the tree. The rewrite changes no governed file, so the `Actuarii-Record` trailers still describe
+their commits. The V8 check can put the terms it finds into the same rewrite.
+**Supersedes:** ADR-032, in part ("The git history is not rewritten"), for this rewrite only.
+**Source:** `docs/DEVLOG.md`, 2026-10-19.

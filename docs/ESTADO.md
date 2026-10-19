@@ -9,7 +9,7 @@ The repository's documents are written in English from 2026-10-18 on (ADR-032); 
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
 Spanish.
 
-Updated: 2026-10-19, midday.
+Updated: 2026-10-19, afternoon.
 
 ## v0.1
 
@@ -57,7 +57,10 @@ Updated: 2026-10-19, midday.
     (`0ef8fb5` and `69d1c36` in AI-Papers-Engine, both with `Actuarii-Record: matches`), the record checked by §4c
     and red and green run; its branch on GitHub and its audit trail in the evidence folder;
   * **the denial of pytest run through the interpreter names `pytest` (ADR-031, `f42cd45`):** rule R7 of the Bash
-    hook and a line in the announcement, checked with `verify_red_green.py` and live.
+    hook and a line in the announcement, checked with `verify_red_green.py` and live;
+  * **the two decisions of 2026-10-19 on what was found in the inventory (ADR-038), in the tree:** the three
+    passages of `PLAN.md` about the author's professional plans are out, and so is the line of the DEVLOG that names
+    a third party, with the two that repeated the name.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
@@ -71,13 +74,16 @@ Updated: 2026-10-19, midday.
        neither goes into v0.1 (ADR-034, which lists their questions);
      * an own environment: what do existing sandboxes already cover, and what would set this one apart?
      * the signal window: which answers from outside would change the plan of v0.2, written before the opening.
-  2. **Two decisions of the author, before their documents are translated:**
-     * three lines of `PLAN.md` about the author's professional plans: public, or on the V8 list;
-  3. **A full reading of the README** before Thursday 22 (V6).
-  4. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9),
+  2. **A full reading of the README** before Thursday 22 (V6).
+  3. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9),
      which asks the question of ADR-034. The description of `pyproject.toml` still uses the old sentence.
-  5. **The V8 check:** `git log -p main` without the personal terms the author sets, whose list is not kept in the
-     repository. Claude proposes doing it early, because it is the only criterion that delays the opening.
+  4. **The V8 check and the rewrite of ADR-038:** `git log -p main` without the personal terms the author sets, whose
+     list is not kept in the repository; then one rewrite of the history, which takes out the three lines of ADR-038
+     and whatever the check finds. The procedure was prepared on 2026-10-19, outside the repository, and waits for the
+     author's confirmation; on GitHub, the author chooses between a new repository and a force push. Then a new
+     commit redoes the citations of the hashes that changed. Claude proposes doing both before the renaming batch of
+     item 1: the check, because it is the only criterion that delays the opening; the rewrite, so that it runs once
+     and the commits of the review keep their hashes.
 * Minor, undated (DEVLOG, 2026-10-16): `**` without `re.DOTALL` in `project_config`; the Python traceback of an
   installer `git` call that takes more than 300 s; the installer copies the kit (Apache-2.0) without the license
   text.
@@ -95,8 +101,8 @@ Updated: 2026-10-19, midday.
 ## Decisions in force
 
 They are in `docs/DECISIONES.md`, which only grows, except once, at the selection of ADR-035. In force today: ADR-001
-to ADR-037, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
-by ADR-033, and its point on file names by ADR-035.
+to ADR-038, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
+by ADR-033, its point on file names by ADR-035, and its point on the history, for one rewrite, by ADR-038.
 
 | ADR | Decision |
 |---|---|
@@ -135,6 +141,7 @@ by ADR-033, and its point on file names by ADR-035.
 | 035 | File names in English; the register keeps the decisions a reader needs, unedited |
 | 036 | `examples/traianus/` stays, as where the kit comes from |
 | 037 | The README links Traianus |
+| 038 | The author's professional plans leave the tree; a line that names a third party leaves the tree and the history |
 
 ## How we work
 

@@ -244,7 +244,7 @@ diseño, todavía hay margen.
 
 ### Fase 4 — Traianus como memoria de agentes (solo si el kit da señal)
 
-* **Cuándo:** después de las fases 0–3 y con el perfil de freelance en marcha. No retrasa los ingresos.
+* **Cuándo:** después de las fases 0–3.
 * **Regla del autor (2026-10-06):** la investigación de Traianus (WP1, la puerta, la línea física de
   la viscosidad) solo se retoma con una aplicación que demuestre utilidad. Esta es esa aplicación.
 * **Detalle:** en «Como memoria de agentes», más abajo.
@@ -326,15 +326,14 @@ Los *actuarii* levantan las actas; Traianus es el archivo donde quedan.
 
 Lección del producto de matemáticas: allí lo que importaba era la calidad del ranking, que da
 cualquier embedding, y el motor no intervino. La aplicación que justifique retomar Traianus tiene que
-cumplir las cuatro condiciones:
+cumplir las tres condiciones:
 
 1. **Su utilidad viene de las propiedades del motor** (append-only, aprobación humana,
    determinismo), no de buscar bien.
 2. **Tiene un usuario real desde el primer día:** el autor, con sus propios agentes.
 3. **Su utilidad se mide**, con la regla comprometida antes de cualquier dato.
-4. **No retrasa los ingresos.**
 
-La memoria de los agentes del autor cumple las cuatro.
+La memoria de los agentes del autor cumple las tres.
 
 **Datos que genera para la investigación:**
 * Cada aprobación, corrección o rechazo del autor es una **etiqueta**.
@@ -349,9 +348,6 @@ La memoria de los agentes del autor cumple las cuatro.
 * Hipótesis, regla de decisión y tamaño mínimo de muestra, comprometidos antes de empezar a etiquetar.
 * La viscosidad como umbral (línea aparcada en `docs/roadmap/NEXT_RESEARCH.md` de Traianus) entra
   solo después de WP1, porque depende de la base.
-
-**Valor comercial:** «memoria auditable para los agentes de tu equipo» encaja con la oferta de
-freelance de configurar agentes de forma segura.
 
 ## Calendario (acordado 2026-10-06)
 
