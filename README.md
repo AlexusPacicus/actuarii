@@ -294,7 +294,7 @@ vendor's hooks and is designed to hold against an adversarial agent
 ## A real case
 
 This is one piece of real work in another project, done with v0.1 as published. The case was planned before it was
-done ([`CLEAN_ROOM.md`](docs/design/CLEAN_ROOM.md) §4f); the full record is in §5.
+done ([`CLEAN_ROOM.md`](docs/design/CLEAN_ROOM.md) §4f); its record is in §5.
 
 [AI Papers Engine](https://github.com/AlexusPacicus/AI-Papers-Engine) has a lexical classifier of papers by method
 family, and it had two defects:

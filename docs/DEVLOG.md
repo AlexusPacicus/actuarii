@@ -12,6 +12,35 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-19 (night, CLEAN_ROOM.md condensed)
+
+`docs/design/CLEAN_ROOM.md` is condensed into English (ADR-033): 301 lines, from 609 in Spanish.
+
+**Done**
+* **What stays:**
+  * §1 to §4 nearly whole: they are the rule written before measuring;
+  * each amendment, §4b to §4f, with its date, its reason and what it changes; §4f more fully, as the plan written
+    before the README's real case;
+  * §5 by attempt: the tables of attempt 3 (612.8 s) and of the V4 measurement (223 s), the two real cases, and the CI
+    and the three rehearsals in a paragraph each, with what they found and what was fixed.
+
+  Receipt ids, hash prefixes and the paths of the machine leave; the head names `0c5f669`, where the full record is.
+* **The numbering of the sections is kept:** the CI step and its test ("section 4"), the README (§4f, §5), the
+  ROADMAP, COST (§4b) and the status still cite it as they did. The README now says "its record is in §5", since the
+  full one is in the history.
+* **Quotes given in Spanish** (the text of §4f, the agent's words, the person's interventions) are translated only.
+* **One note added:** finding 1 of attempt 5 proposed naming the target before any write; the text says it was done
+  in ADR-029 (`119d569`), as V7 asks of what has changed since.
+* **Checked:** every section another document cites exists; every commit cited comes from the old text, except
+  `0c5f669` and `119d569`; no Spanish is left; no prose line passes 120 characters.
+
+**Decided (author)**
+* **`CLEAN_ROOM.md` is condensed,** with its numbering kept, and the quotes given in Spanish are translated only
+  (Claude had recommended keeping the original next to the translation).
+
+**Next**
+* **The review of each document (ADR-033),** with the V8 check.
+
 ## 2026-10-19 (night, CASES.md condensed)
 
 `docs/adversarial-audit/CASES.md` is condensed into English (ADR-033): 200 lines, from 722 in Spanish.

@@ -69,13 +69,15 @@ Updated: 2026-10-19, afternoon.
     head names the commit where those that left remain. The register is in English: its head and the 16 entries
     that were in Spanish, translated without other edits;
   * **`CASES.md` condensed (ADR-033):** 200 lines in English, from 722 in Spanish. The "Summary" table translated
-    whole, each case in two or three lines, and one reference to the full record in the history.
+    whole, each case in two or three lines, and one reference to the full record in the history;
+  * **`CLEAN_ROOM.md` condensed (ADR-033):** 301 lines in English, from 609 in Spanish, with the numbering of its
+    sections kept, so the CI step, the README and the ROADMAP still cite it as they did.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
   1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** the author reviews each document with Claude, and
-     each one stays (translated), is condensed, or leaves the tree. Done: the register (selected and translated) and
-     `CASES.md` (condensed).
+     each one stays (translated), is condensed, or leaves the tree. Done: the register (selected and translated),
+     `CASES.md` and `CLEAN_ROOM.md` (condensed).
      A contract that stays as an example takes the `.contract.json` suffix.
      ADR-033 carries Claude's proposal as the starting point, not as a decision. `ROADMAP.md` is already translated,
      and is also the sample of tone and edits. When the review reaches it, the author stops to work on v0.2.
