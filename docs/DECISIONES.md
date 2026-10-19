@@ -707,3 +707,17 @@ redoes those of the tree. The rewrite changes no governed file, so the `Actuarii
 their commits. The V8 check can put the terms it finds into the same rewrite.
 **Supersedes:** ADR-032, in part ("The git history is not rewritten"), for this rewrite only.
 **Source:** `docs/DEVLOG.md`, 2026-10-19.
+
+## ADR-039 — The rewrite of ADR-038 goes to a new repository (2026-10-19, author)
+
+**Context:** ADR-038 left to the author how the rewritten history reaches GitHub: a new repository, as in ADR-020, or
+a force push with the old Actions runs deleted and a request to GitHub to remove the old commits. GitHub keeps
+serving an old commit to whoever asks for its hash. After a force push, only GitHub Support can stop that, and from
+outside it can only be checked by asking for an old hash.
+**Decision:** the rewritten `main` goes to a new private repository with the same name, as on 2026-10-14. The old
+repository is renamed, the new one receives only `main`, and the old one is deleted once the CI of the new one is
+green and an old hash answers 404 there.
+**Consequences:** the Actions history and the settings of the old repository are lost. The repository is private
+until the 25th, so it has no star, issue, fork or outside link to lose. The URL of `origin` does not change.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-19.

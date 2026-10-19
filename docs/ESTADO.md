@@ -79,9 +79,9 @@ Updated: 2026-10-19, afternoon.
      which asks the question of ADR-034. The description of `pyproject.toml` still uses the old sentence.
   4. **The V8 check and the rewrite of ADR-038:** `git log -p main` without the personal terms the author sets, whose
      list is not kept in the repository; then one rewrite of the history, which takes out the three lines of ADR-038
-     and whatever the check finds. The procedure was prepared on 2026-10-19, outside the repository, and waits for the
-     author's confirmation; on GitHub, the author chooses between a new repository and a force push. Then a new
-     commit redoes the citations of the hashes that changed. Claude proposes doing both before the renaming batch of
+     and whatever the check finds. The procedure was prepared on 2026-10-19, outside the repository; on GitHub, the
+     rewritten `main` goes to a new repository (ADR-039). Then a new commit redoes the citations of the hashes that
+     changed. Claude proposes doing both before the renaming batch of
      item 1: the check, because it is the only criterion that delays the opening; the rewrite, so that it runs once
      and the commits of the review keep their hashes.
 * Minor, undated (DEVLOG, 2026-10-16): `**` without `re.DOTALL` in `project_config`; the Python traceback of an
@@ -101,7 +101,7 @@ Updated: 2026-10-19, afternoon.
 ## Decisions in force
 
 They are in `docs/DECISIONES.md`, which only grows, except once, at the selection of ADR-035. In force today: ADR-001
-to ADR-038, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
+to ADR-039, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
 by ADR-033, its point on file names by ADR-035, and its point on the history, for one rewrite, by ADR-038.
 
 | ADR | Decision |
@@ -142,6 +142,7 @@ by ADR-033, its point on file names by ADR-035, and its point on the history, fo
 | 036 | `examples/traianus/` stays, as where the kit comes from |
 | 037 | The README links Traianus |
 | 038 | The author's professional plans leave the tree; a line that names a third party leaves the tree and the history |
+| 039 | The rewrite of ADR-038 goes to a new repository |
 
 ## How we work
 

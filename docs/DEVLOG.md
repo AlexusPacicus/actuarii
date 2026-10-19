@@ -31,11 +31,13 @@ Suite green (3705). Disk: 5.1 GiB free.
 
 **Decided (author)**
 * **ADR-038.**
+* **ADR-039:** the rewritten `main` goes to a new repository, as on 2026-10-14.
 
 **Next**
-* **The author:** read the procedure, confirm it or correct it, and choose between a new repository and a force
-  push. Claude proposes the V8 check first, and one rewrite with what it finds, before the renaming batch of ADR-035.
-* **After the rewrite:** the commit that redoes the citations, with each cited hash checked.
+* **The author:** the V8 check, then the procedure from step 0. Claude proposes one rewrite, with what the check finds,
+  before the renaming batch of ADR-035.
+* **After the rewrite:** the commit that redoes the citations, with each cited hash checked; then the push to the new
+  repository.
 
 ## 2026-10-19 (midday)
 
