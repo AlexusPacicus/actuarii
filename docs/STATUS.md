@@ -64,13 +64,16 @@ Updated: 2026-10-19, afternoon.
   * **the renaming batch of ADR-035:** the files that stay have English names (`DECISIONS.md`, `STATUS.md`,
     `CLEAN_ROOM.md`, `COST.md`, `ISOLATED_ENVIRONMENT.md` and the three memory files), the live documents and the CI
     step cite them, and the records keep the names of their day, with a dated note at the head of the register and of
-    the DEVLOG.
+    the DEVLOG;
+  * **the selection of the register (ADR-035):** 22 entries stay and 17 leave, with the author, entry by entry; the
+    head names the commit where those that left remain.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
   1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** the author reviews each document with Claude, and
-     each one stays (translated), is condensed, or leaves the tree; this register is not condensed but selected, entry
-     by entry (ADR-035). A contract that stays as an example takes the `.contract.json` suffix.
+     each one stays (translated), is condensed, or leaves the tree. The register is selected; next, its head and its
+     16 entries still in Spanish are translated, unedited otherwise (ADR-035). A contract that stays as an example
+     takes the `.contract.json` suffix.
      ADR-033 carries Claude's proposal as the starting point, not as a decision. `ROADMAP.md` is already translated,
      and is also the sample of tone and edits. When the review reaches it, the author stops to work on v0.2.
      Questions Claude brought for that research:
@@ -103,7 +106,8 @@ Updated: 2026-10-19, afternoon.
 
 ## Decisions in force
 
-They are in `docs/DECISIONS.md`, which only grows, except once, at the selection of ADR-035. In force today: ADR-001
+Since the selection of 2026-10-19 (ADR-035), `docs/DECISIONS.md` keeps 22 of them and only grows; those that left
+are in the history at `04107e0`, and this list still counts them. In force today: ADR-001
 to ADR-039, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
 by ADR-033, its point on file names by ADR-035, and its point on the history, for one rewrite, by ADR-038.
 

@@ -14,6 +14,11 @@ el 14 de octubre. Cada una lleva la fecha en que se tomó y dónde está su razo
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+**Selection (2026-10-19, ADR-035):** this register keeps the decisions a reader needs, unedited. ADR-002, 003, 004,
+006, 012, 013, 015, 017, 018, 020, 023, 024, 025, 029, 031, 038 and 039 left it; they are in the history, in
+Spanish up to ADR-031, at commit `04107e0`. The numbers do not change, and the gaps stay. Leaving this file does not
+change whether a decision is in force: `docs/STATUS.md` keeps that list. From here on the register only grows again.
+
 ## ADR-001 — Nombre, licencia y relación con Traianus (2026-10-05, autor)
 
 **Contexto:** el kit nació gobernando Traianus y se extrae a un repositorio propio.
@@ -24,35 +29,6 @@ a mano.
 **Sustituye a:** —
 **Fuente:** `docs/PLAN.md`, «Decisiones tomadas».
 
-## ADR-002 — Primero el kit; Traianus como memoria de agentes, solo con señal (2026-10-05, autor)
-
-**Contexto:** hay dos líneas posibles: el kit, que se usa sin Traianus, y Traianus como memoria de agentes.
-**Decisión:** primero el kit. La fase 4, Traianus como memoria de agentes, empieza solo si el kit da señal
-(ADR-005) y se cumple su criterio de utilidad.
-**Consecuencias:** nada de Traianus antes del lanzamiento (ADR-004).
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Decisiones tomadas» y «Fase 4».
-
-## ADR-003 — Se publica el 25 de octubre, esté como esté (2026-10-06, autor)
-
-**Contexto:** tres semanas hasta el lanzamiento y cuatro de ventana para la señal, con horas y créditos
-limitados.
-**Decisión:** la v0.1 se publica el 25 de octubre. Si faltan horas, se recorta alcance y la fecha no se mueve. Lo
-que no esté listo pasa a la v0.2.
-**Consecuencias:** cada criterio de la v0.1 dice qué pasa si no se cumple el 25 (ADR-017).
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Calendario».
-
-## ADR-004 — Lo que no se hace antes del lanzamiento (2026-10-06, autor)
-
-**Contexto:** el riesgo es que el trabajo se vaya a lo que no llega al lanzamiento.
-**Decisión:** antes del 25 no se hace nada de Traianus, ninguna mejora de gobernanza que no responda a un fallo
-real y ninguna función nueva fuera del plan. La única función nueva admitida es el acta en git (ADR-016,
-2026-10-14).
-**Consecuencias:** las ideas que se salen del camino se apuntan en «Ideas para la v0.2» del PLAN y esperan.
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Calendario»; `docs/DEVLOG.md`, 2026-10-14 (tarde).
-
 ## ADR-005 — La señal de éxito (2026-10-07, autor)
 
 **Contexto:** hace falta saber, con un criterio escrito antes, si el kit le interesa a alguien.
@@ -62,15 +38,6 @@ qué pasa el 22 de noviembre está en el ROADMAP, §3 y §4 (ADR-017).
 **Consecuencias:** sin señal no empiezan la v0.2 ni la fase 4.
 **Sustituye a:** —
 **Fuente:** `docs/PLAN.md`, «Decisiones de la semana 1»; `docs/ROADMAP.md`.
-
-## ADR-006 — Repositorio privado hasta el 25 y un solo DEVLOG (2026-10-07, autor)
-
-**Contexto:** antes de publicar hay que decidir dónde vive el trabajo y su registro.
-**Decisión:** el repositorio de GitHub es privado hasta el 25 y público al publicar. Hay una sola bitácora,
-`docs/DEVLOG.md`, sin LEDGER y sin nada en las de Traianus.
-**Consecuencias:** —
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Decisiones de la semana 1».
 
 ## ADR-007 — La distribución de la v0.1: un instalador que copia el kit (2026-10-08, autor)
 
@@ -132,36 +99,6 @@ sustituye a «5 Radicals».
 **Sustituye a:** —
 **Fuente:** `docs/design/MOTIVO.contrato.json`; `docs/DEVLOG.md`, 2026-10-14.
 
-## ADR-012 — El perímetro de permisos (2026-10-14, autor)
-
-**Contexto:** de las llamadas de un implementador, 161 pedían permiso, y la mayoría no decidían nada.
-**Decisión:** en Claude Code y en OpenCode, sin preguntar:
-* `pytest`;
-* una lista cerrada de órdenes de lectura: `ls`, `cat`, `head`, `tail`, `wc`, `grep`, `df`, `echo`, `sed -n`,
-  `sort`, `uniq` y `diff`;
-* `validate_proposal`.
-
-El resto de `Bash` sigue preguntando. Lo que `sort`, `uniq` y `sed` pueden escribir con sus opciones se declara
-en §9, en vez de quitar esas órdenes de la lista.
-**Consecuencias:** AGENTS 7.1, con su test de paridad entre los dos entornos.
-**Sustituye a:** —
-**Fuente:** `docs/design/PERIMETRO.contrato.json`; `docs/DEVLOG.md`, 2026-10-14.
-
-## ADR-013 — Qué correcciones de la auditoría entran en la v0.1 (2026-10-14, autor)
-
-**Contexto:** con la seguridad fuera de la v0.1 (ADR-009), solo hace falta corregir lo que rompe algo a quien
-instala el kit, aunque nadie ataque.
-**Decisión:**
-* se corrigen A20, A31 y A34;
-* A19, A32, la opción (c) con A33 y A35 pasan a la v0.2, declarados en §9;
-* A21, A23, A24, A25 y A28 quedan declarados, sin corregir;
-* la 2b se cierra sin el caso (b).
-
-**Consecuencias:** AGENTS.md v2.2.0. La tabla «Resumen» de `CASES.md` recoge lo corregido y lo declarado
-(ROADMAP, V5).
-**Sustituye a:** —
-**Fuente:** `docs/PLAN.md`, «Ideas para la v0.2»; `docs/DEVLOG.md`, 2026-10-14 (tarde).
-
 ## ADR-014 — Los campos de la propuesta, con nombres llanos en la v0.2 (2026-10-14, autor)
 
 **Contexto:** los nombres del esquema de la propuesta son jerga.
@@ -170,15 +107,6 @@ o `reason`) en la v0.2. Antes del lanzamiento solo se limpia la jerga de las des
 **Consecuencias:** —
 **Sustituye a:** —
 **Fuente:** `docs/PLAN.md`, «Ideas para la v0.2».
-
-## ADR-015 — Un estado corto al abrir cada sesión, en lugar del PLAN (2026-10-14, autor)
-
-**Contexto:** el PLAN crecía y se cargaba entero en cada sesión.
-**Decisión:** `CLAUDE.md` y `opencode.jsonc` cargan `docs/ESTADO.md`, que se pone al día al cerrar cada sesión.
-El PLAN pasa a ser un documento de consulta.
-**Consecuencias:** —
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-14 (tarde).
 
 ## ADR-016 — El acta en git (2026-10-14, autor)
 
@@ -197,33 +125,6 @@ tiempo, la frase del README pierde «that it happened» (ROADMAP, V3).
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-14 (tarde); `docs/ROADMAP.md`, D1.
 
-## ADR-017 — El ROADMAP (2026-10-14, autor)
-
-**Contexto:** hace falta cortar el alcance antes del 25, y que la revisión del 22 de noviembre se haga contra
-algo escrito antes.
-**Decisión:** `docs/ROADMAP.md` fija:
-* los criterios de la v0.1 (V1–V9), cada uno con su comprobación, su corte y lo que pasa si no se cumple el 25;
-* cómo se cuenta la señal;
-* la puerta del 22 de noviembre;
-* los criterios de la v0.2.
-
-Las propuestas de Claude que contiene se aceptaron enteras.
-**Consecuencias:** ningún criterio mueve la fecha. Solo V8, la historia limpia, podía retrasar la apertura del
-repositorio, y ya se cumple.
-**Sustituye a:** —
-**Fuente:** `docs/ROADMAP.md`.
-
-## ADR-018 — El README: su primer límite y su marco (2026-10-14, autor)
-
-**Contexto:** la frase del README prometía más de lo que el kit cumple, y el párrafo del marco estaba escrito en
-clave de seguridad.
-**Decisión:** justo debajo de la frase va el primer límite: solo deja acta lo que pasa por el canal gobernado,
-y lo que hace `Bash` o lo que va a rutas no gobernadas no la deja (A30). El marco explica por qué las reglas
-viven fuera del modelo, y presenta la seguridad frente a un agente adversario como lo que trae la v0.2.
-**Consecuencias:** —
-**Sustituye a:** —
-**Fuente:** `docs/ROADMAP.md`, D3 y D6.
-
 ## ADR-019 — A33 y A34 no se cuentan a Anthropic (2026-10-14, autor)
 
 **Contexto:** A33 y A34 tocan comportamiento de Claude Code.
@@ -237,21 +138,6 @@ El README los describe con su versión, como límites del kit y no como fallos d
 pregunta.
 **Sustituye a:** —
 **Fuente:** `docs/ROADMAP.md`, D4.
-
-## ADR-020 — La historia, sin lo personal y con el correo *noreply* (2026-10-14, autor)
-
-**Contexto:** el repositorio se hace público el 25, y su historia tenía información personal y el correo
-personal del autor.
-**Decisión:**
-* Se quita del árbol y de la historia la información personal que fijó el autor. La lista no se guarda en el
-  repositorio.
-* El correo de los commits pasa a la dirección *noreply* de GitHub, también en la configuración global de git.
-* La historia reescrita va a un repositorio nuevo y el viejo se borra, porque GitHub sigue sirviendo los commits
-  viejos a quien pida su hash.
-
-**Consecuencias:** los hashes anteriores a la reescritura ya no existen; las citas de `docs/` están rehechas.
-**Sustituye a:** —
-**Fuente:** `docs/ROADMAP.md`, D2; `docs/DEVLOG.md`, 2026-10-14 (noche).
 
 ## ADR-021 — Las decisiones van en este registro, que solo se amplía (2026-10-14, autor)
 
@@ -292,68 +178,6 @@ modo decide lo que ninguna regla nombra. `implementer.md` pide una orden por lla
 bucles. Rige desde la sesión siguiente a su commit.
 **Sustituye a:** ADR-012.
 **Fuente:** `docs/design/PERIMETRO_SIN_COMODIN.contrato.json`; `docs/DEVLOG.md`, 2026-10-15.
-
-## ADR-023 — La puerta no toma por ruta un texto que no puede serlo (2026-10-15, autor)
-
-**Contexto:** con una herramienta que no conoce, la puerta revisa cada texto que parece una ruta y le pregunta al
-sistema de ficheros adónde apunta. Si un nombre entre barras pasa de 255 bytes, el sistema responde
-`File name too long`, y la puerta deniega por no poder verificar. En un repositorio con el kit, una herramienta
-con un texto largo en una sola línea, que contenga por ejemplo «y/o», queda bloqueada. Pasó al proponer una sesión
-desde el chat.
-**Decisión:**
-* `ENAMETOOLONG` al resolver un candidato se lee como «no es una ruta»: el sistema dice que ningún fichero puede
-  llamarse así, ni uno que exista ni uno por crear. Los demás errores del sistema siguen denegando.
-* Va en un contrato pequeño, en la sesión siguiente, después de la sonda del perímetro y antes del primer contrato
-  del instalador.
-
-**Consecuencias:** el instalador copia a los destinos la puerta ya corregida.
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-15.
-
-## ADR-024 — Solo un nombre demasiado largo deja de ser una ruta (2026-10-15, autor)
-
-**Contexto:** ADR-023 lee todo `ENAMETOOLONG` como «no es una ruta», pero el sistema da ese error en dos casos:
-* un nombre entre barras más largo de lo que admite el sistema de ficheros: ningún fichero puede llamarse así;
-* una ruta entera de más de 1024 bytes en macOS (4096 en Linux) con cada nombre admisible: el fichero sí puede
-  existir, y una herramienta lo alcanza por una ruta relativa.
-
-En el segundo caso, dejar pasar el texto sería fallar en abierto (AGENTS 8.4). La prosa no llega a él: la puerta se
-para en el primer nombre que no existe, y ese error solo sale con un árbol real de directorios muy profundo.
-
-El límite de un nombre no es una cifra fija. En el macOS del autor, un nombre ASCII de 260 bytes da
-`File name too long` y uno de 86 «€», con 258 bytes, se admite: cuenta caracteres. En Linux, con ext4, cuenta
-bytes. Contar 255 bytes tomaría por demasiado largo un nombre legal en macOS.
-**Decisión:**
-* `ENAMETOOLONG` al resolver un candidato se lee como «no es una ruta» solo si el sistema rechaza también uno de
-  los nombres de la ruta resuelta por sí solo, buscado relativo a la raíz del repositorio, para que la ruta que
-  recibe sea corta. La puerta no cuenta bytes ni caracteres: le pregunta al sistema. Si el sistema admite cada
-  nombre solo, la puerta sigue denegando, como con los demás errores del sistema.
-* Va en el contrato pequeño que preveía ADR-023, antes del primer contrato del instalador.
-
-**Consecuencias:** el instalador copia a los destinos la puerta ya corregida.
-**Sustituye a:** ADR-023.
-**Fuente:** `docs/DEVLOG.md`, 2026-10-15 (tarde).
-
-## ADR-025 — El acta en git y las preguntas del instalador, en dos contratos (2026-10-15, autor)
-
-**Contexto:** el segundo contrato del instalador llevaba las preguntas, el modo sin preguntas, `pip`, el commit, el
-acta en git (ADR-016) e `INSTALL.md`. Era grande, cambiaba la puerta y dejaba abiertas varias elecciones de
-política.
-**Decisión:**
-* Dos contratos: primero el acta en git (`docs/design/ACTA_EN_GIT.contrato.json`), que es lo más arriesgado y cuyo
-  corte quita «that it happened» del README; después las preguntas (`docs/design/INSTALADOR_PREGUNTAS.contrato.json`).
-* Cuando la puerta no puede calcular lo que deja una escritura (`NotebookEdit`, una herramienta que no conoce, un
-  `Edit` sobre un fichero que no es UTF-8 o que no puede aplicar), la deja pasar sin acta, como antes, y el commit
-  dice de ese fichero `changed outside the channel`. El acta se equivoca hacia el lado seguro: solo dice `matches`
-  cuando las escrituras registradas llevan al contenido del commit.
-* La pregunta de qué más gobernar, y `--govern`, solo admiten una ruta o una carpeta seguida de `/**`, porque cada
-  una se traduce exacta a su entrada de `denyWrite`.
-* `INSTALL.md` lo reescribe el chat cuando los dos contratos están en `main`.
-
-**Consecuencias:** AGENTS.md v2.3.0: la cláusula 2.7 y dos límites nuevos en §9. La puerta escribe en la base de
-auditoría. El hook `commit-msg` se instala a mano en este repositorio y con el instalador en los destinos.
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-16.
 
 ## ADR-026 — Los límites, por problemas: gobernanza en la v0.1 y seguridad en la v0.2 (2026-10-17, autor)
 
@@ -432,25 +256,6 @@ ROADMAP (ADR-017).
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-18.
 
-## ADR-029 — El instalador nombra el destino en la primera pregunta, antes de escribir (2026-10-18, autor)
-
-**Contexto:** en la medida en macOS (intento 5), el bloque de `INSTALL.md` instaló el kit en el repositorio de trabajo
-del autor: la terminal estaba allí, y el bloque instala donde está la terminal (ADR-028). El instalador dice dónde
-instala (`installing into …`) solo en el informe, después de escribir. Se deshizo sin pérdida, porque el instalador
-solo escribe ficheros nuevos y solo commitea los suyos.
-**Decisión:**
-* En una ejecución que pregunta, la pregunta de qué más gobernar empieza con una línea que nombra el destino y dice
-  que no se escribe nada hasta responder y que Ctrl-C para ahí. No se añade ninguna pregunta.
-* Como las demás preguntas, solo se escribe cuando la entrada estándar es un terminal. Con `--govern`, `--no-input`
-  o `--dry-run` no hay pregunta y nada cambia.
-* Va en un contrato al implementador (`docs/design/DESTINO_NOMBRADO.contrato.json`). ADR-004 lo admite, porque
-  responde a un fallo real.
-
-**Consecuencias:** `INSTALL.md` lo dice en la sección de las preguntas. La medida V4 no se repite: la línea añade una
-lectura, no un paso.
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-18.
-
 ## ADR-030 — El caso real del README, en noticias v3: los dos defectos del clasificador (2026-10-18, autor)
 
 **Contexto:** V6 pedía el caso de Traianus, con sus commits. Un caso nuevo en Traianus choca con ADR-004, y el del 5
@@ -470,30 +275,6 @@ encontró dos defectos del clasificador léxico, `explorations/v3/scripts/classi
 
 **Consecuencias:** cambia V6 del ROADMAP (ADR-017): el caso es este, y sigue siendo lo primero que se recorta. La
 copia de trabajo del autor no se usa: tiene el `.env` y notas privadas sin commitear.
-**Sustituye a:** —
-**Fuente:** `docs/DEVLOG.md`, 2026-10-18.
-
-## ADR-031 — La denegación de `python3 -m pytest` nombra `pytest` (2026-10-18, autor)
-
-**Contexto:** en el caso real (ADR-030), el agente lanzó tres veces `python3 -m pytest` y no probó `pytest` hasta
-que la persona se lo dijo. La regla es correcta: el perímetro deniega `python3 -m` y permite `pytest`. Pero esa
-denegación es una regla `deny` de Claude Code, con su mensaje genérico, y en el destino nada dice que los tests se
-ejecutan con `pytest`. El hook de `Bash` del kit no mira `-m`. La documentación de Claude Code
-(`code.claude.com/docs/en/hooks`, leída el 2026-10-18) dice que las reglas de permisos se evalúan sobre lo que
-devuelve el hook `PreToolUse`, y que el motivo de su denegación se le muestra al agente: el hook actúa antes que la
-regla `deny`.
-**Decisión:**
-* El hook de `Bash` (`tools/hooks/deny_python_escapes.py`) gana una regla, R7. Deniega `pytest` lanzado a través de
-  un intérprete que cubre el shim (`python3 -m pytest`) y nombra la orden que vale: `pytest`, por su propio punto de
-  entrada, con los mismos argumentos.
-* El anuncio de la sesión gana una línea: los tests se ejecutan con `pytest` por su propio punto de entrada, y
-  `python3 -m` y `python3 -c` se deniegan.
-* La regla `deny` del perímetro no cambia: sigue denegando lo que el hook no reconozca.
-* Va en un contrato al implementador (`docs/design/PYTEST_NOMBRADO.contrato.json`). ADR-004 lo admite, porque
-  responde a un fallo real.
-
-**Consecuencias:** el instalador copia el hook y el anuncio nuevos a los destinos. El README cierra el caso real
-con el commit del arreglo.
 **Sustituye a:** —
 **Fuente:** `docs/DEVLOG.md`, 2026-10-18.
 
@@ -677,54 +458,5 @@ names it, because Traianus's history has not gone through the cleaning of ADR-02
 **Decision:** the section links Traianus. Traianus is public, and the link is what lets a reader check where the kit
 comes from.
 **Consequences:** the README stays as it was committed in `9466452`. The third condition of ADR-036 is closed.
-**Supersedes:** —
-**Source:** `docs/DEVLOG.md`, 2026-10-19.
-
-## ADR-038 — The author's professional plans leave the tree; a line that names a third party leaves the tree and the history (2026-10-19, author)
-
-**Context:** the inventory of 2026-10-18 for ADR-032 found two things for the author to decide before their
-documents are translated. `PLAN.md` has three passages about the author's professional plans. The DEVLOG entry of
-2026-10-18 (afternoon, the real case) has a line that names a third party and a private report, and two later lines,
-in the DEVLOG and in the status, repeat the name. The tree and the history are both published on 25 October, and
-taking something out of the tree does not take it out of the history. ADR-032 says that the history is not
-rewritten, because a rewrite changes the hashes that the tree cites as evidence. ADR-020 already rewrote it once, on
-2026-10-14, to take out personal information, and moved it to a new repository, because GitHub keeps serving old
-commits to whoever asks for their hash.
-**Decision:**
-* The three passages of `PLAN.md` leave the tree; the history keeps them. Phase 4 keeps "after phases 0–3", and the
-  usefulness criterion keeps its other three conditions.
-* The line that names the third party, and the two lines that repeat the name, leave the tree and the history of
-  `main`. One rewrite removes those exact lines from every version of every file, and changes nothing else. The name
-  is not written again in the repository, in a commit message or in the agent's memory: the records speak of a third
-  party named in the DEVLOG of 2026-10-18.
-* Claude prepares the procedure of the rewrite, and the author confirms it before it runs. The author runs the
-  rewrite, the push and every change to the GitHub repository. Before the push, it is checked that:
-  * no version of any ref names the third party;
-  * the number of commits is the same;
-  * every tree is the same as before except for those lines;
-  * the commit map is kept.
-* After the rewrite, a new commit redoes, from the commit map, every citation in the tree of a hash that changed, and
-  each cited hash is checked to exist.
-* On GitHub, the author chooses between a new repository, as in ADR-020, and a force push with the old Actions runs
-  deleted and a request to GitHub to remove the old commits.
-
-**Consequences:** the hashes change from the commit of 2026-10-18 that recorded ADR-030 on, this entry's own commit
-included; the commits before it keep theirs. The tool redoes the hashes cited in commit messages; the new commit
-redoes those of the tree. The rewrite changes no governed file, so the `Actuarii-Record` trailers still describe
-their commits. The V8 check can put the terms it finds into the same rewrite.
-**Supersedes:** ADR-032, in part ("The git history is not rewritten"), for this rewrite only.
-**Source:** `docs/DEVLOG.md`, 2026-10-19.
-
-## ADR-039 — The rewrite of ADR-038 goes to a new repository (2026-10-19, author)
-
-**Context:** ADR-038 left to the author how the rewritten history reaches GitHub: a new repository, as in ADR-020, or
-a force push with the old Actions runs deleted and a request to GitHub to remove the old commits. GitHub keeps
-serving an old commit to whoever asks for its hash. After a force push, only GitHub Support can stop that, and from
-outside it can only be checked by asking for an old hash.
-**Decision:** the rewritten `main` goes to a new private repository with the same name, as on 2026-10-14. The old
-repository is renamed, the new one receives only `main`, and the old one is deleted once the CI of the new one is
-green and an old hash answers 404 there.
-**Consequences:** the Actions history and the settings of the old repository are lost. The repository is private
-until the 25th, so it has no star, issue, fork or outside link to lose. The URL of `origin` does not change.
 **Supersedes:** —
 **Source:** `docs/DEVLOG.md`, 2026-10-19.

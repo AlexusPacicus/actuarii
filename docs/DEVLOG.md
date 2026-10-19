@@ -12,6 +12,37 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-19 (late afternoon, the selection)
+
+The register is selected (ADR-035): 22 entries stay and 17 leave, decided with the author entry by entry.
+
+**Done**
+* **The criterion:** an entry stays if it explains something a reader from outside sees in the kit or in its public
+  calendar, and no document that stays already tells it. It leaves if it is the organisation of the work, or a detail
+  that the code, the tests, the README or the ROADMAP already tell.
+* **Stay:** 001, 005, 007, 008, 009, 010, 011, 014, 016, 019, 021, 022, 026, 027, 028, 030, 032, 033, 034, 035, 036
+  and 037.
+* **Leave:** 002, 003, 004, 006, 012, 013, 015, 017, 018, 020, 023, 024, 025, 029, 031, 038 and 039. They remain in
+  the history at `04107e0`, which the head of the register names, and the status still lists them among the
+  decisions in force.
+* **Where it was close:**
+  * 014 stays: whoever adopts the kit sees the jargon of the schema in every proposal, and the entry says it changes
+    in v0.2;
+  * 019 stays: it is the dated answer to whether A33 and A34 were reported to Anthropic;
+  * 027 stays: it moves the gate that ADR-005 dates on 22 November to the 24th;
+  * 030 stays: it shows that the README's real case was chosen and planned before it was done;
+  * 037 stays: it closes the third condition of ADR-036;
+  * 038 and 039 leave, like 020: they deal with personal information, and the rewrite runs before the repository
+    opens.
+* **A hash to redo:** `04107e0` changes with the rewrite of ADR-038; the commit that redoes the citations covers it.
+
+**Decided (author)**
+* **The selection,** entry by entry: the 12 entries to discuss, Claude's first pass of ADR-035 confirmed, and ADR-037
+  to ADR-039, written after that pass.
+
+**Next**
+* **The translation of the register:** its head and its 16 entries still in Spanish, unedited otherwise.
+
 ## 2026-10-19 (afternoon, the renaming)
 
 The renaming batch of ADR-035 is done: the files that stay have English names, and the live documents cite them.
