@@ -5,8 +5,9 @@ of `docs/DEVLOG.md`. The history and the reasoning behind each decision are in `
 needed and not loaded in every session (author, 2026-10-14). The criteria of v0.1, the signal, the gate of 24
 November and v0.2 are in `docs/ROADMAP.md`; the decisions are in `docs/DECISIONES.md`.
 
-The repository's documents are written in English from 2026-10-18 on (ADR-032); older documents are being
-translated. The conversation with the author may be in Spanish.
+The repository's documents are written in English from 2026-10-18 on (ADR-032); older documents are reviewed one by
+one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
+Spanish.
 
 Updated: 2026-10-18, evening.
 
@@ -60,11 +61,15 @@ Updated: 2026-10-18, evening.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
-  1. **The translation (ADR-032),** in its order: what the README links (`CASES.md`, `PRUEBA_EN_LIMPIO.md`,
-     `COSTE.md`, `ENTORNO_PROPIO.md`, `SANDBOX.md`; `ROADMAP.md` is done); then `DECISIONES.md`; then the other
-     records. What is not translated by 25 October leaves the tree. Before going on: the author reviews the
-     translated `ROADMAP.md` as the sample, and said on closing on 2026-10-18 that "we will be able to shorten".
-     What is shortened, and how, is not decided yet: agree on it first.
+  1. **The shortened tree (ADR-033, with ADR-032):** the author reviews each document with Claude, and each one
+     stays (translated), is condensed, or leaves the tree. ADR-033 carries Claude's proposal as the starting point,
+     not as a decision. `ROADMAP.md` is already translated, and is also the sample of tone and edits. When the review
+     reaches it, the author stops to work on v0.2. Questions Claude brought for that research:
+     * a person in the loop: can Claude Code's permission prompt show the `Rationale` before the receipt (the
+       `PermissionRequest` hook)?
+     * records that cannot be forged: signed commits, or attestations (in-toto, SLSA provenance)?
+     * an own environment: what do existing sandboxes already cover, and what would set this one apart?
+     * the signal window: which answers from outside would change the plan of v0.2, written before the opening.
   2. **Three decisions of the author, before their documents are translated:**
      * `examples/traianus/`: Claude recommends removing it from the tree. Nothing uses it, it describes a private
        project from inside and it still says "Blind by construction";
@@ -83,16 +88,15 @@ Updated: 2026-10-18, evening.
 | When | What |
 |---|---|
 | Wednesday 14 to Sunday 18 | Done: the perimeter, the installer and its record in git, the measurement (223 s), the limits, the README, the real case, ADR-016 to ADR-032 |
-| Monday 19 and Tuesday 20 | Translation, priority 1 (what the README links) and 2 (the decisions) |
-| Wednesday 21 and Thursday 22 | Translation, priority 3; a full reading of the README |
+| Monday 19 to Thursday 22 | The review of each document (ADR-033), with v0.2 at the ROADMAP; a full reading of the README |
 | Friday 23 and Saturday 24 | V7 on the translated tree, V8, and the text for HN and Reddit |
 | Sunday 25 | The repository opens |
 | Tuesday 27 | The text on HN and Reddit, at about 14:00 Madrid time |
 
 ## Decisions in force
 
-They are in `docs/DECISIONES.md`, which only grows. In force today: ADR-001 to ADR-032, except ADR-012 and ADR-023,
-superseded by ADR-022 and ADR-024.
+They are in `docs/DECISIONES.md`, which only grows. In force today: ADR-001 to ADR-033, except ADR-012 and ADR-023,
+superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded by ADR-033.
 
 | ADR | Decision |
 |---|---|
@@ -125,7 +129,8 @@ superseded by ADR-022 and ADR-024.
 | 029 | The installer names the target in its first question, before any write |
 | 030 | The README's real case, in `noticias` v3: the two defects of the classifier |
 | 031 | The denial of `python3 -m pytest` names `pytest` |
-| 032 | The published tree is in English; the history stays as it is |
+| 032 | The published tree is in English; the history stays as it is (its first point, superseded by 033) |
+| 033 | The published tree is shortened, document by document |
 
 ## How we work
 

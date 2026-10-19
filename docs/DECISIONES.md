@@ -518,3 +518,30 @@ the documents need edits for a reader from outside.
 their meaning once translated; what each one decided does not change.
 **Supersedes:** —
 **Source:** `docs/DEVLOG.md`, 2026-10-18.
+
+## ADR-033 — The published tree is shortened, document by document (2026-10-18, author)
+
+**Context:** ADR-032 translates every document of the tree. They are about 6,400 lines of records written for the
+work itself, against a kit of about 30 files. A reader from outside will not read most of them, and translating them
+all competes with the launch. The author agreed that the tree should be shortened.
+**Decision:**
+* The published tree is shortened. The author reviews each document with Claude, and each one either stays
+  (translated), is condensed (translated, keeping what a reader from outside needs), or leaves the tree. The history
+  keeps every one, in Spanish.
+* Claude's proposal is the starting point of that review, not a decision:
+  * stays: the README, `INSTALL.md`, `AGENTS.md` and `ROADMAP.md`;
+  * condensed: the "Resumen" of `CASES.md` with a link to each case, the results of `PRUEBA_EN_LIMPIO.md`, and
+    `COSTE.md`, `ENTORNO_PROPIO.md` and `SANDBOX.md`, reduced to what the README needs;
+  * condensed as a register: the decisions of `DECISIONES.md`, one line of decision and one of reason each;
+  * out of the tree: the DEVLOG, the PLAN, the audit guidelines, `PROCESO.md`, `PRIOR_ART.md`, the contracts and
+    the other designs.
+* What the code, the tests, the CI, `CLAUDE.md` or `opencode.jsonc` need stays wherever the review puts it, or the
+  review says what changes with it.
+* When the review reaches `ROADMAP.md`, the author stops to work on v0.2 and research it; ideas or changes that come
+  out of it go to this register.
+
+**Consequences:** the first point of ADR-032 changes: not every document is translated, only those that stay or are
+condensed. The rest of ADR-032 holds: English from now on, the history as it is, dated notes in the records that
+stay. V10 of the ROADMAP is checked on the shortened tree.
+**Supersedes:** ADR-032, in part (its first point).
+**Source:** `docs/DEVLOG.md`, 2026-10-18.

@@ -5,6 +5,32 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-18 (night)
+
+The published tree is shortened, document by document (ADR-033). The CI passed on the pushes of the day.
+
+**Done**
+* **The CI of Linux, green** on the pushes of the day, R7 included (author). V1 holds on `main`.
+* **Claude's assessment, at the author's request.**
+  * In favour: the kit is honest about what it guarantees and is well built, and the real case is its best evidence.
+  * Against:
+    * a narrow value proposition for the audience it names, which will ask who approved a change and whether the
+      record can be forged;
+    * a cost per write that pushes work to ungoverned paths (A30);
+    * a dependence on one vendor;
+    * a process layer heavier than the product;
+    * no outside demand yet.
+  * Recommended: a much shorter tree, a pitch centred on the record and the verified delegation, and a person in
+    the loop and signed records before the own environment in v0.2.
+* **ADR-033,** and the status updated with the review of each document and the questions for v0.2.
+
+**Decided (author)**
+* **ADR-033:** the tree is shortened. Each document stays, is condensed or leaves the tree, in a review with the
+  author. At the ROADMAP, the author stops to work on v0.2 and research it.
+
+**Next**
+* **The review of each document,** from Monday, starting from the proposal in ADR-033.
+
 ## 2026-10-18 (evening)
 
 The first entry in English. The published tree goes into English (ADR-032); the status, the memory and the roadmap
