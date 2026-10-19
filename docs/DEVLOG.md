@@ -12,6 +12,34 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-19 (night, CASES.md condensed)
+
+`docs/adversarial-audit/CASES.md` is condensed into English (ADR-033): 200 lines, from 722 in Spanish.
+
+**Done**
+* **What stays:**
+  * a short head, with the two rounds and the guidelines approved before each;
+  * the "Summary" table, translated whole, with the names of the README's eight problems;
+  * each case in two or three lines: what was tried, what happened and how it stands.
+
+  The guarantees (G), the batches of fixes in the case lines (F) and the classifications proposed at the time (C)
+  leave: they depend on the audit guidelines, which leave the tree.
+* **The full record,** in Spanish, is in the history: the head names `f322818`, which the rewrite of ADR-038 changes
+  and the commit that redoes the citations covers.
+* **Checked:**
+  * each of the 35 cases has one entry and is in the summary;
+  * each of the 28 limits of AGENTS §9 is in the summary once;
+  * every commit the new text cites comes from the old one, except the reference `f322818`;
+  * no prose line passes 120 characters.
+* **The README** no longer says "(in Spanish)" next to `CASES.md`; **ROADMAP V5** names the table "Summary".
+
+**Decided (author)**
+* **`CASES.md` is condensed,** and it reaches the full record through one reference in its head, not a link per case:
+  anchors to Spanish headings inside a commit would all break with the rewrite.
+
+**Next**
+* **The review of each document (ADR-033),** with the V8 check.
+
 ## 2026-10-19 (evening, the register in English)
 
 The register is translated: its head and the 16 entries that stay and were in Spanish, without other edits (ADR-032,

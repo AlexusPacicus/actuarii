@@ -122,7 +122,7 @@ The rows where the model or no one decides are declared limits, not oversights.
 ## Limits
 
 An adversarial audit of the kit recorded 35 cases. Each one is in
-[`CASES.md`](docs/adversarial-audit/CASES.md) (in Spanish), and every limit that remains is declared in
+[`CASES.md`](docs/adversarial-audit/CASES.md), and every limit that remains is declared in
 [`AGENTS.md` §9](AGENTS.md#9-declared-limits). They come down to eight problems:
 
 * **Governance (problems 1 to 4).** The record can be incomplete without anyone trying. These are the limits of

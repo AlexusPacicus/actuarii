@@ -69,7 +69,7 @@ what happens if it is not met.
 **V5. The limits, complete.**
 * What: the limits by problem, each with its reason (ADR-026): four of governance, in v0.1, and four of security,
   which go to v0.2.
-  * The "Resumen" table of `docs/adversarial-audit/CASES.md` goes from problem to cases, with what was fixed and its
+  * The "Summary" table of `docs/adversarial-audit/CASES.md` goes from problem to cases, with what was fixed and its
     commit.
   * The limits section of the README gives the eight problems, each with its reason, an example and what changes in
     v0.2, without the ids of the cases.
