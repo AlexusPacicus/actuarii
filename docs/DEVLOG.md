@@ -5,6 +5,25 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-19 (morning)
+
+A person in the loop stays out of v0.1 and opens v0.2, with signed records (ADR-034).
+
+**Done**
+* **The author's question:** whether a person in the loop should go into v0.1. Claude advised against it; the four
+  reasons are in the context of ADR-034.
+* **ADR-034;** the "In v0.2" lines of problems 2 and 7 and "What comes next" in the README; ROADMAP §5; the status.
+* **Done from a session opened in Traianus:** Actuarii's session announcement was not read, and only files outside
+  `governed_paths` changed.
+
+**Decided (author)**
+* **ADR-034:** neither a person in the loop nor signed records go into v0.1; both open v0.2, before the own
+  environment, and the text for HN and Reddit asks about them.
+
+**Next**
+* **The review of each document (ADR-033),** as planned for this week.
+* **V9:** the text for HN and Reddit carries the question of ADR-034.
+
 ## 2026-10-18 (night)
 
 The published tree is shortened, document by document (ADR-033). The CI passed on the pushes of the day.

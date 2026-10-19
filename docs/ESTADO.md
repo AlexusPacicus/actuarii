@@ -9,7 +9,7 @@ The repository's documents are written in English from 2026-10-18 on (ADR-032); 
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
 Spanish.
 
-Updated: 2026-10-18, evening.
+Updated: 2026-10-19, morning.
 
 ## v0.1
 
@@ -65,9 +65,8 @@ Updated: 2026-10-18, evening.
      stays (translated), is condensed, or leaves the tree. ADR-033 carries Claude's proposal as the starting point,
      not as a decision. `ROADMAP.md` is already translated, and is also the sample of tone and edits. When the review
      reaches it, the author stops to work on v0.2. Questions Claude brought for that research:
-     * a person in the loop: can Claude Code's permission prompt show the `Rationale` before the receipt (the
-       `PermissionRequest` hook)?
-     * records that cannot be forged: signed commits, or attestations (in-toto, SLSA provenance)?
+     * a person in the loop and records that cannot be forged: they open v0.2, before the own environment, and
+       neither goes into v0.1 (ADR-034, which lists their questions);
      * an own environment: what do existing sandboxes already cover, and what would set this one apart?
      * the signal window: which answers from outside would change the plan of v0.2, written before the opening.
   2. **Three decisions of the author, before their documents are translated:**
@@ -75,8 +74,8 @@ Updated: 2026-10-18, evening.
        project from inside and it still says "Blind by construction";
      * three lines of `PLAN.md` about the author's professional plans: public, or on the V8 list;
   3. **A full reading of the README** before Thursday 22 (V6).
-  4. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9).
-     The description of `pyproject.toml` still uses the old sentence.
+  4. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9),
+     which asks the question of ADR-034. The description of `pyproject.toml` still uses the old sentence.
   5. **The V8 check:** `git log -p main` without the personal terms the author sets, whose list is not kept in the
      repository. Claude proposes doing it early, because it is the only criterion that delays the opening.
 * Minor, undated (DEVLOG, 2026-10-16): `**` without `re.DOTALL` in `project_config`; the Python traceback of an
@@ -95,7 +94,7 @@ Updated: 2026-10-18, evening.
 
 ## Decisions in force
 
-They are in `docs/DECISIONES.md`, which only grows. In force today: ADR-001 to ADR-033, except ADR-012 and ADR-023,
+They are in `docs/DECISIONES.md`, which only grows. In force today: ADR-001 to ADR-034, except ADR-012 and ADR-023,
 superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded by ADR-033.
 
 | ADR | Decision |
@@ -131,6 +130,7 @@ superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded by A
 | 031 | The denial of `python3 -m pytest` names `pytest` |
 | 032 | The published tree is in English; the history stays as it is (its first point, superseded by 033) |
 | 033 | The published tree is shortened, document by document |
+| 034 | A person in the loop and signed records open v0.2; neither goes into v0.1 |
 
 ## How we work
 

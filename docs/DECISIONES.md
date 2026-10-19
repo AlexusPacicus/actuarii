@@ -545,3 +545,54 @@ condensed. The rest of ADR-032 holds: English from now on, the history as it is,
 stay. V10 of the ROADMAP is checked on the shortened tree.
 **Supersedes:** ADR-032, in part (its first point).
 **Source:** `docs/DEVLOG.md`, 2026-10-18.
+
+## ADR-034 — A person in the loop and signed records open v0.2; neither goes into v0.1 (2026-10-19, author)
+
+**Context:** two of the README's limits are the first questions of a reader from the settings it names, where
+traceability comes first. Problem 2: no person approves the receipts or their reasons; the agent issues its own
+receipt and writes its own reason. Problem 7: the commit trailers are text, and nothing signs them. That is, who
+approved this change, and can the record be forged. Claude's assessment of 2026-10-18 recommended both before the
+own environment of v0.2. On 2026-10-19 the author asked whether a person in the loop should go into v0.1. Claude
+advised against it, for four reasons:
+* ADR-004 admits no new function before the 25th except the record in git, and every task left before the opening
+  is on its path;
+* done properly, it needs a contract, the implementer, the check of red and green, a live check and a rewrite of
+  problem 2 in the README, `CASES.md` and AGENTS §9, with V1 green on the commit that is published;
+* half of it weakens the claim. A `PreToolUse` hook can put the reason in Claude Code's permission prompt (the `ask`
+  decision, to be confirmed in the documentation), but it does not learn whether the person accepted, and an
+  approval written where the agent can reach it is one more record that can be forged (problems 5 and 7). The README
+  would gain a limit, not lose one;
+* every governed write would wait for the person, on top of the 1875 ms it already costs, and friction moves work
+  to the paths that are not governed (A30).
+
+**Decision:**
+* A person in the loop does not go into v0.1. ADR-004 holds, and problem 2 stays a declared limit.
+* v0.2 starts with two pieces, before the own environment of `docs/design/ENTORNO_PROPIO.md`:
+  1. **a person in the loop:** the person sees the agent's reason next to the change and approves or refuses each
+     receipt, and the approval or the refusal goes into the record;
+  2. **signed records:** the record is signed out of the agent's reach, so that someone other than the author can
+     check it and a forged one is detected.
+
+  The phases of the environment (v0.2-a to v0.2-e, `ENTORNO_PROPIO.md` §9) come after them.
+* The README says so: the "In v0.2" lines of problems 2 and 7, and "What comes next".
+* The text for HN and Reddit (V9) asks it: whether a person approving each receipt with the agent's reason in front
+  of them, and records that someone else can verify, would change whether the reader uses the kit, and what they
+  would need first. The answers are noted as context for v0.2; they do not change how the signal is counted
+  (ROADMAP §3).
+* The gate of 24 November does not change: v0.2, these two pieces included, starts only if the signal is met.
+
+**Open for the research of v0.2 (Claude's questions, not decided):**
+* whether Claude Code can show the reason before the write and report for certain whether the person approved it:
+  the `PermissionRequest` hook and the `ask` decision of `PreToolUse`, in each permission mode;
+* whether an existing format covers the signature (Agent Receipts, in-toto, SLSA provenance, signed commits), so
+  that Actuarii emits compatible records instead of inventing them (`docs/prior-art/PRIOR_ART.md`, "Lo que la
+  búsqueda aporta al diseño", point 2);
+* whether approving and signing can be one act: a key the agent cannot use without the person;
+* how it fits decision 3 of `ENTORNO_PROPIO.md` §10, which proposes fewer questions inside the environment: the
+  approvals of receipts would be the questions that remain.
+
+**Consequences:** ROADMAP §5 changes its order and gains two criteria. The README's three passages change before V7
+is checked. `ENTORNO_PROPIO.md` keeps its phases, which now come after these two pieces, and is reviewed under
+ADR-033 like the rest.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-19.

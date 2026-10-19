@@ -172,11 +172,16 @@ The count of §3 is looked at, with its evidence, and nothing else.
 
 ## 5. v0.2
 
-**What it is:** the isolated environment of `docs/design/ENTORNO_PROPIO.md`: the whole agent inside, and the gates
-and a write broker outside. Its motivation is the one v0.1 set aside: that using agents safely needs a middleware
-(author, 2026-10-13). It starts only if the gate is passed.
+**What it is:** first, a person in the loop and signed records (author, 2026-10-19, ADR-034). Then the isolated
+environment of `docs/design/ENTORNO_PROPIO.md`: the whole agent inside, and the gates and a write broker outside.
+Its motivation is the one v0.1 set aside: that using agents safely needs a middleware (author, 2026-10-13). It
+starts only if the gate is passed.
 
 **Criteria:**
+* A person in the loop: the person sees the agent's reason next to the change and approves or refuses each receipt,
+  and the approval or the refusal goes into the record (ADR-034).
+* Signed records: the record is signed out of the agent's reach, someone other than the author can check it, and a
+  forged one is detected (ADR-034).
 * The guarantees E1–E9 (`ENTORNO_PROPIO.md` §3).
 * The battery of its §8: each case of the two audits that applies, and the "Internet" cases, comes out as expected,
   in Claude Code and in OpenCode.
@@ -186,8 +191,9 @@ and a write broker outside. Its motivation is the one v0.1 set aside: that using
 * Plain names for the proposal's fields (author, 2026-10-14).
 * The rule of each measurement, committed before measuring.
 
-**Order:** the phases v0.2-a to v0.2-e of `ENTORNO_PROPIO.md` §9, with the decisions of its §10 taken before the
-prototype.
+**Order:** first the person in the loop and the signed records, each with its research and its decisions taken
+before any code (ADR-034); then the phases v0.2-a to v0.2-e of `ENTORNO_PROPIO.md` §9, with the decisions of its §10
+taken before the prototype.
 
 **Date and scope:** the date is set on 24 November, with the rule of v0.1: it does not move; the scope is cut. Of
 the PLAN's "Ideas for v0.2", only what a criterion here needs goes in.

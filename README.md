@@ -157,8 +157,9 @@ An adversarial audit of the kit recorded 35 cases. Each one is in
    Claude Code asked the person to approve the write and showed its content. The reason went only to the
    validator, and no one read it.
 
-   *In v0.2:* the broker writes exactly what it validated, and a delegated implementer can write only the files
-   its contract lists. A person approving each receipt is not planned yet.
+   *In v0.2, first:* a person sees the agent's reason next to the change and approves or refuses each receipt,
+   and the approval goes into the record. Later, the broker writes exactly what it validated, and a delegated
+   implementer can write only the files its contract lists.
 3. **The kit trusts the way you set it up.** Some of what the person sets up changes what the kit does:
    * a governed path that is a symbolic link is governed by its target;
    * with git's `core.fileMode` off, the commit check can refuse a valid commit;
@@ -206,8 +207,9 @@ An adversarial audit of the kit recorded 35 cases. Each one is in
 
    *Example:* removing the review lock from `Bash` ends a blind review.
 
-   *In v0.2:* the audit trail and the lock live outside the environment, and a blind review runs in an
-   environment that sees only its package.
+   *In v0.2, first:* the records are signed out of the agent's reach, so that someone else can check them and a
+   forged one is detected. Later, the audit trail and the lock live outside the environment, and a blind review
+   runs in an environment that sees only its package.
 8. **The session has what you have.** The kit runs with your permissions: nothing stops `Bash` or `Read` from
    reading your credentials.
 
@@ -280,9 +282,12 @@ rewriting the tree.
 
 ## What comes next
 
-If v0.1 shows a signal, set in advance in [`ROADMAP.md`](docs/ROADMAP.md), v0.2 runs the whole
-agent inside an isolated environment of its own, with the gates and a write broker outside it, so that the
-boundary no longer depends on one vendor's hooks and is designed to hold against an adversarial agent
+If v0.1 shows a signal, set in advance in [`ROADMAP.md`](docs/ROADMAP.md), v0.2 starts with the two
+questions a team that needs traceability asks first: who approved this change, and can the record be forged. A
+person sees the agent's reason next to each change and approves or refuses its receipt, and the records are signed
+out of the agent's reach, so that someone else can check them. Then v0.2 runs the whole agent inside an isolated
+environment of its own, with the gates and a write broker outside it, so that the boundary no longer depends on one
+vendor's hooks and is designed to hold against an adversarial agent
 ([`ENTORNO_PROPIO.md`](docs/design/ENTORNO_PROPIO.md)).
 
 ## A real case
