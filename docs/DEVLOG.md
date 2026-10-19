@@ -5,6 +5,33 @@ salió mal y qué se aprendió. Lo que ya cuentan los documentos de diseño se e
 escribe al cerrar cada sesión (decisión del autor, 2026-10-07). Las entradas del 5 y el 6 de octubre se
 reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 
+## 2026-10-19 (midday)
+
+The review of ADR-033 is planned: file names go into English and the register is selected, not condensed (ADR-035);
+`examples/traianus/` stays, with a section in the README (ADR-036).
+
+**Done**
+* **The plan of the review, in the conversation:** the inventory of the tree (about 6,200 lines in Spanish in 16
+  documents, and 17 contracts), what cites each document, the target tree, the rules for condensing and the order.
+  It is not written into the repository: the only new document before the launch is the README.
+* **Found while making the inventory:**
+  * `examples/traianus/` is used: three tests load it. The status said that nothing used it;
+  * the CI job's name cites `PRUEBA_EN_LIMPIO.md` §4, and `tests/unit/test_ci_workflow.py` pins it;
+  * `CLAUDE.md` and `opencode.jsonc` load `docs/ESTADO.md`.
+* **ADR-035 and ADR-036;** the README's "Where it comes from"; "Blind by construction" corrected in the example's
+  review procedure; ROADMAP V7 and V10; the status.
+
+**Decided (author)**
+* **ADR-035:** English file names, renamed in one batch at the start of the review; the register keeps the
+  decisions a reader needs, unedited, selected entry by entry.
+* **ADR-036:** `examples/traianus/` stays, under four conditions; the third, whether the README links Traianus, is
+  still the author's.
+
+**Next**
+* **The renaming batch of ADR-035,** from a session opened in Actuarii, with the contract for the CI job and its
+  test.
+* **The selection of the register,** entry by entry.
+
 ## 2026-10-19 (morning)
 
 A person in the loop stays out of v0.1 and opens v0.2, with signed records (ADR-034).

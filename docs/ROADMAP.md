@@ -97,7 +97,8 @@ what happens if it is not met.
   where it describes something that has since changed, it says so in a dated note that names what replaced it
   (ADR-032). Known on 2026-10-18:
   * the exemption of `.claude/**` in `docs/design/SANDBOX.md` §6;
-  * "Blind by construction" in `examples/traianus/skills/instrument-audit/SKILL.md`, if that folder stays;
+  * "Blind by construction" in `examples/traianus/skills/instrument-audit/SKILL.md` (the folder stays, ADR-036;
+    corrected on 2026-10-19);
   * "5 Radicals" in `docs/` and `examples/`;
   * the description of `pyproject.toml`, which predates the sentence of ADR-009.
 * Check: a reading of the translated tree, and a `grep` of those phrases that finds them only next to their note.
@@ -122,10 +123,12 @@ what happens if it is not met.
 * Cut-off: Saturday 24.
 * If not met: the repository opens on the 25th and the text goes out in the first week of the window.
 
-**V10. The published tree in English (ADR-032).**
+**V10. The published tree in English (ADR-032, ADR-035).**
 * What: every document of the tree in English, edited for a reader from outside, in this order: what the README
-  links; `DECISIONES.md`; the other records. The git history stays as it is.
-* Check: no document of the tree is in Spanish, except the agent's reasons quoted as they were given.
+  links; `DECISIONES.md`; the other records. Every file that stays has an English name (ADR-035). The git history
+  stays as it is.
+* Check: no document of the tree is in Spanish, except the agent's reasons quoted as they were given, and no file name
+  is.
 * Cut-off: Saturday 24.
 * If not met: what is not translated leaves the tree; the history keeps it in Spanish.
 

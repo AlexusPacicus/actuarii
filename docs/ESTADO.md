@@ -9,7 +9,7 @@ The repository's documents are written in English from 2026-10-18 on (ADR-032); 
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
 Spanish.
 
-Updated: 2026-10-19, morning.
+Updated: 2026-10-19, midday.
 
 ## v0.1
 
@@ -61,17 +61,18 @@ Updated: 2026-10-19, morning.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
-  1. **The shortened tree (ADR-033, with ADR-032):** the author reviews each document with Claude, and each one
-     stays (translated), is condensed, or leaves the tree. ADR-033 carries Claude's proposal as the starting point,
-     not as a decision. `ROADMAP.md` is already translated, and is also the sample of tone and edits. When the review
-     reaches it, the author stops to work on v0.2. Questions Claude brought for that research:
+  1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** first the renaming batch of ADR-035, from a
+     session opened in Actuarii. Then the author reviews each document with Claude, and each one stays (translated),
+     is condensed, or leaves the tree; this register is not condensed but selected, entry by entry (ADR-035).
+     ADR-033 carries Claude's proposal as the starting point, not as a decision. `ROADMAP.md` is already translated,
+     and is also the sample of tone and edits. When the review reaches it, the author stops to work on v0.2.
+     Questions Claude brought for that research:
      * a person in the loop and records that cannot be forged: they open v0.2, before the own environment, and
        neither goes into v0.1 (ADR-034, which lists their questions);
      * an own environment: what do existing sandboxes already cover, and what would set this one apart?
      * the signal window: which answers from outside would change the plan of v0.2, written before the opening.
   2. **Three decisions of the author, before their documents are translated:**
-     * `examples/traianus/`: Claude recommends removing it from the tree. Nothing uses it, it describes a private
-       project from inside and it still says "Blind by construction";
+     * whether the README's "Where it comes from" links Traianus or only names it (ADR-036, condition 3);
      * three lines of `PLAN.md` about the author's professional plans: public, or on the V8 list;
   3. **A full reading of the README** before Thursday 22 (V6).
   4. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9),
@@ -94,8 +95,9 @@ Updated: 2026-10-19, morning.
 
 ## Decisions in force
 
-They are in `docs/DECISIONES.md`, which only grows. In force today: ADR-001 to ADR-034, except ADR-012 and ADR-023,
-superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded by ADR-033.
+They are in `docs/DECISIONES.md`, which only grows, except once, at the selection of ADR-035. In force today: ADR-001
+to ADR-036, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
+by ADR-033, and its point on file names by ADR-035.
 
 | ADR | Decision |
 |---|---|
@@ -131,6 +133,8 @@ superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded by A
 | 032 | The published tree is in English; the history stays as it is (its first point, superseded by 033) |
 | 033 | The published tree is shortened, document by document |
 | 034 | A person in the loop and signed records open v0.2; neither goes into v0.1 |
+| 035 | File names in English; the register keeps the decisions a reader needs, unedited |
+| 036 | `examples/traianus/` stays, as where the kit comes from |
 
 ## How we work
 

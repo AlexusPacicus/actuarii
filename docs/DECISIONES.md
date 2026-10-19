@@ -596,3 +596,69 @@ is checked. `ENTORNO_PROPIO.md` keeps its phases, which now come after these two
 ADR-033 like the rest.
 **Supersedes:** —
 **Source:** `docs/DEVLOG.md`, 2026-10-19.
+
+## ADR-035 — File names in English; the register keeps the decisions a reader needs, unedited (2026-10-19, author)
+
+**Context:** ADR-032 kept the file names as they were, because tests, the CI, `CLAUDE.md` and `opencode.jsonc` cite
+them, so a translated document would still carry a Spanish name. ADR-033 proposed condensing this register to one
+line of decision and one of reason per entry, which would rewrite every entry, while ADR-021 says that an entry is
+never edited and that the register only grows. On 2026-10-19, planning the review of ADR-033, the author decided
+both.
+**Decision:**
+* **File names in English.** Every file that stays in the published tree has an English name; a file that leaves the
+  tree keeps its old name in the history. The names:
+  * `docs/DECISIONES.md` becomes `docs/DECISIONS.md`;
+  * `docs/ESTADO.md` becomes `docs/STATUS.md`;
+  * `docs/design/PRUEBA_EN_LIMPIO.md` becomes `docs/design/CLEAN_ROOM.md`;
+  * `docs/design/COSTE.md` becomes `docs/design/COST.md`;
+  * `docs/design/ENTORNO_PROPIO.md` becomes `docs/design/ISOLATED_ENVIRONMENT.md`;
+  * `.claude/memory/autor.md`, `preguntar-ante-ambiguedad.md` and `pocas-peticiones-al-autor.md` become
+    `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`, with their `name:` and their links;
+  * a contract kept as an example changes `.contrato.json` to `.contract.json`.
+* **In one batch, at the start of the review,** so that each condensed document is written under its final name and
+  each link is fixed once. Each part goes through its own channel, from a session opened in Actuarii:
+  * `CLAUDE.md`, `opencode.jsonc` and the memory, with a receipt; the author deletes the old memory files;
+  * the name of the CI job and `tests/unit/test_ci_workflow.py`, which pins it, through a contract for the
+    implementer;
+  * the documents and their links, by the executing agent, with a `grep` of the tree before the commit.
+* **The register keeps the decisions a reader needs, unedited.** No entry is condensed: each one either stays as it
+  is, translated (ADR-032), or leaves this file. Those that leave stay in the history, in Spanish, at the commit
+  before the selection, which the head of the register names. The numbers do not change, and the gaps stay. Leaving
+  the file does not change whether a decision is in force; the status keeps that list. The selection is made with the
+  author, entry by entry, starting from Claude's first pass on the titles, which is not a decision:
+  * stay: 001, 005, 007, 008, 009, 010, 011, 016, 021, 022, 028, 032, 033, 034;
+  * leave: 004, 006, 015, 017, 020 and 025, and 012 and 023, already superseded;
+  * to discuss: 002, 003, 013, 014, 018, 019, 024, 026, 027, 029, 030 and 031.
+
+  This entry and ADR-036 stay. After the selection the register only grows again, as ADR-021 says.
+
+**Consequences:** V10 of the ROADMAP also covers the file names. The history keeps the old names: commit messages,
+and the records that leave the tree, cite them. Selecting before translating saves translating the entries that
+leave.
+**Supersedes:** ADR-032, in part (the file names stay as they are); ADR-021, in part (the register only grows: the
+selection removes entries once).
+**Source:** `docs/DEVLOG.md`, 2026-10-19.
+
+## ADR-036 — `examples/traianus/` stays, as where the kit comes from (2026-10-19, author)
+
+**Context:** the status recommended removing `examples/traianus/` from the tree, because "nothing uses it, it
+describes a private project from inside and it still says 'Blind by construction'". Two of those three claims were
+false. Three tests load the folder (`test_project_config.py`, `test_contract_context_hook.py` and
+`test_agent_docs.py`), and it is the only real configuration that uses the contract registry, the blind review and
+`python_script_dirs`. Traianus is a public repository, and this repository's history starts in it. The author
+proposed keeping the folder as an example of where the kit comes from, with a short section in the README, because
+it can give confidence.
+**Decision:**
+* `examples/traianus/` stays in the tree.
+* The README gets a short section, "Where it comes from", under four conditions:
+  1. it says that Traianus does not run Actuarii: Traianus still runs the gates as they were before the extraction,
+     and the example is its configuration in Actuarii's format;
+  2. "Blind by construction" is corrected in the example's review procedure, which contradicts problem 7 of the
+     README;
+  3. Traianus's history has not gone through the cleaning of ADR-020, so whether the README links Traianus or only
+     names it is the author's decision, before V7 is checked;
+  4. the section goes in the README, the only new document before the launch, and not in a new file of the folder.
+
+**Consequences:** the status corrects its claim. Nothing changes in the tests.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-19.

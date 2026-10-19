@@ -337,6 +337,15 @@ how tests run, too. The fix followed the same steps:
 * a commit whose record says `matches` for each of its four files
   ([`f42cd45`](https://github.com/AlexusPacicus/actuarii/commit/f42cd45)).
 
+## Where it comes from
+
+Actuarii was not designed first and used later. It grew as the governance of
+[Traianus](https://github.com/AlexusPacicus/Traianus), a research project run by one person with coding agents, and
+was extracted from it, with its history, on 5 October 2026. [`examples/traianus/`](examples/traianus/) is that
+project's configuration in Actuarii's format, with the agents and the review procedure it used. It is the only real
+configuration that uses the contract registry and the blind review, and the tests load it. Traianus itself does not
+run Actuarii: it still runs the gates as they were before the extraction.
+
 ## License
 
 Apache-2.0. See [`LICENSE`](LICENSE).
