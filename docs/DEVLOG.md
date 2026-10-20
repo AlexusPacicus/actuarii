@@ -15,6 +15,47 @@ the PLAN.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-20 (midday, R2)
+
+R2 of the research of v0.2: which existing format covers signed records, so that v0.2 emits one instead of inventing
+it (ADR-034). Read on 2026-10-20 through the integrated browser, with the author's approval of each site: the
+repository and the specification of Agent Receipts (github.com/agent-receipts/obsigna, agentreceipts.ai, its receipt
+schema), the in-toto Attestation Framework (spec v1.2), SLSA Provenance v1, the Sigstore overview, gitsign's README,
+git-config on SSH signing, and RFC 9943 (SCITT). Nothing was installed or probed.
+
+**Written before reading:** each candidate against five questions: R2.a, what it signs and whether our record fits;
+R2.b, who verifies it, and how; R2.c, where the key lives, and whether it can stay out of the agent's reach; R2.d, the
+cost of adopting it; R2.e, whether it detects a forged record and a missing one. SCITT was added to the list of
+ADR-034; Agent Receipts was looked up first, since the search of 2026-10-06 only named it.
+
+**Findings** (D documented, I inferred)
+
+| Candidate | R2.a fits | R2.b verifies | R2.c key | R2.d cost | R2.e detects |
+|---|---|---|---|---|---|
+| Agent Receipts 0.5.0 (Obsigna) | Yes, closely: a W3C Verifiable Credential per action, with target, parameters hash, before and after hashes, the human principal and a chain; the reason has no field of its own (D) | Ed25519; how a verifier gets the public key is not specified (D) | An out-of-process daemon holds it, over a Unix socket; HSM or KMS on its trust model (D) | A Python SDK on PyPI, a Go daemon; young: one author, 20 stars (D) | Modification, insertion, deletion and reorder of the chain, formally checked; the end of an open chain only with a terminal receipt; an action never emitted, no (D) |
+| in-toto Attestation v1.2 | Yes, as a predicate of our own about an artifact's digest (D) | Through whatever signs the envelope (D) | The signer's (I) | Mature, wide tooling (I) | One attestation; no chain or order (I) |
+| SLSA Provenance v1 | No: a predicate for builds (D) | — | — | — | — |
+| Sigstore (Fulcio, Rekor) | Blobs and in-toto attestations (D) | Yes, without trusting the author: an identity certificate and an inclusion proof in a public log (D) | No long-lived key: an OIDC login per signing (D), which the agent cannot complete from the sandbox (I) | Network; the public log shows the signer's identity unless an own instance runs (D) | Backdating and forgery (I) |
+| gitsign | The commit, trailers included (D) | `gitsign verify` with identity and log; GitHub does not show it as verified (D) | A browser login per signing, or a cache of about ten minutes (D) | A Go binary, network per commit (D) | As Sigstore (I) |
+| git SSH signing | The commit, trailers included (D) | A file of allowed signers, in the repository or outside it (D) | A key on disk is within the agent's reach; a hardware key that needs a touch is not (I) | None: git and `ssh-keygen` (D) | The commit; not the receipts outside commits (I) |
+| SCITT, RFC 9943 (June 2026) | Signed statements of any content, registered in a transparency service that returns receipts (D) | Through the service's receipts (D) | The issuer's (not read) | A transparency service to run or use (I) | Equivocation, by transparency (D) |
+
+**What it implies (Claude's reading, inferred, not a decision)**
+* For each write, Agent Receipts is the closest existing format: the fields of our receipt map onto it, and its daemon
+  keeps the key out of the agent's process. Adopting the format does not require its daemon. Risks: version 0.5.0 and
+  one author, and its public key distribution is not specified.
+* For each commit, git's SSH signing with a hardware key covers the record of the commit with no new dependency, and
+  the touch of the key could be the person's approval: approving and signing in one act (R3), at the commit (line C3
+  of ROADMAP §3), without a step at each write.
+* Sigstore and SCITT add verification by a third party through a transparency log; they cost network and a public
+  identity, or a service of one's own. They fit later, to publish evidence, not first.
+* For the text of V9: Agent Receipts already signs every tool call of Claude Code, after the fact, through a
+  `PostToolUse` hook. Actuarii decides before the write and records the reason; the text should say how they differ.
+
+**Next**
+* **R3 to R5, after the 25th,** starting from two candidates: the commit signed with a hardware key as the approval,
+  and the receipt of each write in the format of Agent Receipts, signed out of the agent's reach.
+
 ## 2026-10-20 (midday, R1)
 
 R1 of the research of v0.2: whether Claude Code can show the agent's reason before the write and report for certain

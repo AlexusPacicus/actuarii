@@ -93,8 +93,10 @@ Updated: 2026-10-20, morning.
        approved: done from the documentation (DEVLOG, 2026-10-20, midday). It shows the reason, but no hook learns
        the person's answer, and three paths approve without the person; Claude recommends that the validator take the
        approval itself, through a channel out of the agent's reach. The live probe of two modes, after the 25th;
-     * R2, which existing format covers signed records (in-toto, SLSA provenance, Sigstore and `gitsign`, signed
-       commits, Agent Receipts): by Wednesday 21 at night;
+     * R2, which existing format covers signed records: done from the documentation (DEVLOG, 2026-10-20, midday).
+       Agent Receipts fits the receipt of each write; git's SSH signing with a hardware key fits the commit, and its
+       touch could be the approval; Sigstore and SCITT come later. V9 should say how Actuarii differs from Agent
+       Receipts;
      * after the 25th, in the window: R3, whether approving and signing can be one act; R4, how it fits decision 3 of
        `ISOLATED_ENVIRONMENT.md` §10; R5, what existing sandboxes already cover (its §7).
 
