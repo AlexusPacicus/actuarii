@@ -5,8 +5,9 @@ two purposes: to cut the scope before 25 October, and to make the review of 24 N
 in advance. The author accepted Claude's proposals in V2–V9 and in §3–§5 on 2026-10-14 (D7); §6 lists the decisions
 that were open then.
 
-The reasons for each decision are in `docs/PLAN.md`, and the work of each day in `docs/STATUS.md`, which also says
-where each criterion stands. Since it was committed, a change of criterion is decided by the author and added, with
+The reasons for each decision are in `docs/DECISIONS.md`, and those of before 14 October in `docs/PLAN.md`, which
+left the tree and is in the history at `caa9541` (ADR-033). The work of each day is in `docs/STATUS.md`, which also
+says where each criterion stands. Since it was committed, a change of criterion is decided by the author and added, with
 its reason, to `docs/DECISIONS.md`. On 24 November this document is only touched to record the result.
 
 Translated from Spanish on 2026-10-18 (ADR-032).
@@ -166,7 +167,7 @@ data, without reframing. The four weeks are counted from the text for HN and Red
 The count of §3 is looked at, with its evidence, and nothing else.
 
 * **If it is met:** v0.2 starts (§5). Phase 4, Traianus as agent memory, also needs its own usefulness criterion
-  (`docs/PLAN.md`).
+  (`docs/PLAN.md`, in the history at `caa9541`).
 * **If it is not met:**
   * neither v0.2 nor phase 4 starts;
   * the DEVLOG records what came, with the figures, and why the author thinks the rest did not;
@@ -199,7 +200,8 @@ before any code (ADR-034); then the phases v0.2-a to v0.2-e of `ISOLATED_ENVIRON
 its §10 taken before the prototype.
 
 **Date and scope:** the date is set on 24 November, with the rule of v0.1: it does not move; the scope is cut. Of
-the PLAN's "Ideas for v0.2", only what a criterion here needs goes in.
+the ideas noted for v0.2 (the PLAN's "Ideas for v0.2", in the history at `caa9541`, and the DEVLOG since), only what a
+criterion here needs goes in.
 
 ## 6. Decisions that were open
 

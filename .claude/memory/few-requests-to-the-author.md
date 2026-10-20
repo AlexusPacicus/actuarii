@@ -10,7 +10,7 @@ The sandbox leaves to the person everything that touches governed paths outside 
 the author.
 
 **Why:** on 2026-10-09 the author pointed out that there were too many requests; the contract was redesigned so that
-the conversion was done by the installer, which the person already runs (`docs/DEVLOG.md`).
+the conversion was done by the installer, which the person already runs (the DEVLOG of that day, in the history).
 
 **How to apply:** in every contract, list the person's steps and look for the design that avoids them. If `main` has
 not moved since the branch left it, advance it by fast-forward inside the sandbox (`git branch -f main <branch>` and

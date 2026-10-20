@@ -334,7 +334,7 @@ The reasons are the agent's own, in the language of the task. Nothing checked th
 Claude Code's rule, and names the call that works: `pytest`, with the same arguments. The session announcement says
 how tests run, too. The fix followed the same steps:
 * a decision of the author;
-* a contract for the implementer, which wrote the tests first;
+* a [contract](docs/design/PYTEST_NAMED.contract.json) for the implementer, which wrote the tests first;
 * a check in code that the new tests failed before the change and pass after it;
 * a commit whose record says `matches` for each of its four files
   ([`f42cd45`](https://github.com/AlexusPacicus/actuarii/commit/f42cd45)).

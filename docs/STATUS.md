@@ -1,9 +1,9 @@
 # Actuarii — status
 
 What a new session needs to know, and nothing more. It is updated when each session closes, together with the entry
-of `docs/DEVLOG.md`. The history and the reasoning behind each decision are in `docs/PLAN.md`, which is read when
-needed and not loaded in every session (author, 2026-10-14). The criteria of v0.1, the signal, the gate of 24
-November and v0.2 are in `docs/ROADMAP.md`; the decisions are in `docs/DECISIONS.md`.
+of `docs/DEVLOG.md`. The criteria of v0.1, the signal, the gate of 24 November and v0.2 are in `docs/ROADMAP.md`; the
+decisions, with their reasons, are in `docs/DECISIONS.md`. The PLAN, which held the reasoning up to 14 October, and
+the DEVLOG entries before 18 October left the tree; they are in the history at `caa9541` (ADR-033).
 
 The repository's documents are written in English from 2026-10-18 on (ADR-032); older documents are reviewed one by
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
@@ -78,34 +78,35 @@ Updated: 2026-10-20, morning.
     kept, a dated note that ADR-034 puts the person in the loop and signed records first, and Triarii named once;
   * **`SANDBOX.md` condensed (ADR-033):** 203 lines in English, from 243 in Spanish, with its numbering kept and dated
     notes on what changed since: the exemption of `.claude/**` and `.mcp.json` (`92df87a`), the bare `"Bash"` of
-    ADR-022 and who recommends the user-level setting.
+    ADR-022 and who recommends the user-level setting;
+  * **the records (ADR-033):** the DEVLOG trimmed to its entries in English, from 2026-10-18 (evening); the PLAN, the
+    two audit guidelines, `PROCESO.md`, `PRIOR_ART.md`, `ARRANQUE_PUERTAS.md`, `RECIBO_CONTENIDO.md` and sixteen
+    contracts out of the tree, all in the history at `caa9541`; the contract of ADR-031 kept as an example, as
+    `docs/design/PYTEST_NAMED.contract.json`, and linked from the README.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
-  1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** the author reviews each document with Claude, and
-     each one stays (translated), is condensed, or leaves the tree. Done: the register (selected and translated),
-     `CASES.md`, `CLEAN_ROOM.md`, `ISOLATED_ENVIRONMENT.md` and `SANDBOX.md` (condensed) and `COST.md`
-     (translated): every document of `docs/` that the README links.
-     A contract that stays as an example takes the `.contract.json` suffix.
-     ADR-033 carries Claude's proposal as the starting point, not as a decision. `ROADMAP.md` is already translated,
-     and is also the sample of tone and edits. When the review reaches it, the author stops to work on v0.2.
-     Questions Claude brought for that research:
+  1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** done for every document but `ROADMAP.md`, which is
+     already translated. When the review reaches it, the author stops to work on v0.2. Questions Claude brought for
+     that research:
      * a person in the loop and records that cannot be forged: they open v0.2, before the own environment, and
        neither goes into v0.1 (ADR-034, which lists their questions);
      * an own environment: what do existing sandboxes already cover, and what would set this one apart?
      * the signal window: which answers from outside would change the plan of v0.2, written before the opening.
   2. **A full reading of the README** before Thursday 22 (V6).
   3. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9),
-     which asks the question of ADR-034. The description of `pyproject.toml` still uses the old sentence.
+     which asks the question of ADR-034. The description of `pyproject.toml` still uses the old sentence. Four test
+     docstrings still say "5 Radicals", and one of them is in Spanish (`tests/security/test_security.py`): a
+     contract for the implementer.
   4. **The V8 check and the rewrite of ADR-038:** `git log -p main` without the personal terms the author sets, whose
      list is not kept in the repository; then one rewrite of the history, which takes out the three lines of ADR-038
      and whatever the check finds. The procedure was prepared on 2026-10-19, outside the repository; on GitHub, the
      rewritten `main` goes to a new repository (ADR-039). Then a new commit redoes the citations of the hashes that
      changed. The check goes with the review of each document (item 1), and the rewrite waits for it, so that it runs
      once (author, 2026-10-19). Before it runs, Claude measures the figures of the procedure again.
-* Minor, undated (DEVLOG, 2026-10-16): `**` without `re.DOTALL` in `project_config`; the Python traceback of an
-  installer `git` call that takes more than 300 s; the installer copies the kit (Apache-2.0) without the license
-  text.
+* Minor, undated (the DEVLOG of 2026-10-16, in the history): `**` without `re.DOTALL` in `project_config`; the
+  Python traceback of an installer `git` call that takes more than 300 s; the installer copies the kit (Apache-2.0)
+  without the license text.
 
 ## Calendar to the 27th
 
@@ -195,9 +196,10 @@ by ADR-033, its point on file names by ADR-035, and its point on the history, fo
   cites it by number, without copying it. An old entry is not changed: if it is revised, the new one says which one
   it supersedes, and the old one leaves the list. Translating it (ADR-032) does not change what it decided.
 * **Until the 25th** (Claude's recommendation, 2026-10-14), every task answers one question: does it bring the
-  installer or the README closer? If not, it is noted in the PLAN and waits. The only new document before the launch
-  is the README.
-* **Ideas that leave the path** are noted in the PLAN and wait.
+  installer or the README closer? If not, it is noted in the DEVLOG entry of the day and waits. The only new document
+  before the launch is the README.
+* **Ideas that leave the path** are noted in the DEVLOG entry of the day, under "Ideas", and wait; from the 25th, as
+  issues of the repository.
 * **The agent's memory** is the one in `.claude/memory/`, under code, with a receipt per write. It is published on
   the 25th: memories are written knowing that. Claude Code's automatic memory is off (`autoMemoryEnabled: false` in
   `.claude/settings.json`, ADR-010); if a session's context brings its instruction, it is not followed and the cause

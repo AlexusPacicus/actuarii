@@ -21,6 +21,10 @@ entries keep the names of their day.
 Spanish up to ADR-031, at commit `04107e0`. The numbers do not change, and the gaps stay. Leaving this file does not
 change whether a decision is in force: `docs/STATUS.md` keeps that list. From here on the register only grows again.
 
+**Note (2026-10-20, ADR-033):** the PLAN, the DEVLOG entries before 2026-10-18 (evening), and the contracts and
+designs that the entries cite as their source, other than those still in `docs/design/`, left the tree. They are in
+the history at `caa9541`.
+
 ## ADR-001 — Name, license and relationship with Traianus (2026-10-05, author)
 
 **Context:** the kit was born governing Traianus and is extracted into a repository of its own.
