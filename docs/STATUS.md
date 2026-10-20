@@ -9,7 +9,7 @@ The repository's documents are written in English from 2026-10-18 on (ADR-032); 
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
 Spanish.
 
-Updated: 2026-10-19, afternoon.
+Updated: 2026-10-20, morning.
 
 ## v0.1
 
@@ -73,13 +73,15 @@ Updated: 2026-10-19, afternoon.
   * **`CLEAN_ROOM.md` condensed (ADR-033):** 301 lines in English, from 609 in Spanish, with the numbering of its
     sections kept, so the CI step, the README and the ROADMAP still cite it as they did;
   * **`COST.md` in English (ADR-033):** §1 to §5 translated nearly whole, with a dated note that step 1 of the v0.2
-    design was done on 2026-10-14 and not measured again, and §6 reduced to a note.
+    design was done on 2026-10-14 and not measured again, and §6 reduced to a note;
+  * **`ISOLATED_ENVIRONMENT.md` condensed (ADR-033):** 298 lines in English, from 350 in Spanish, with its numbering
+    kept, a dated note that ADR-034 puts the person in the loop and signed records first, and Triarii named once.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
   1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** the author reviews each document with Claude, and
      each one stays (translated), is condensed, or leaves the tree. Done: the register (selected and translated),
-     `CASES.md` and `CLEAN_ROOM.md` (condensed) and `COST.md` (translated).
+     `CASES.md`, `CLEAN_ROOM.md` and `ISOLATED_ENVIRONMENT.md` (condensed) and `COST.md` (translated).
      A contract that stays as an example takes the `.contract.json` suffix.
      ADR-033 carries Claude's proposal as the starting point, not as a decision. `ROADMAP.md` is already translated,
      and is also the sample of tone and edits. When the review reaches it, the author stops to work on v0.2.

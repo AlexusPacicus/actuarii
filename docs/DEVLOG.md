@@ -12,6 +12,32 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-20 (morning, ISOLATED_ENVIRONMENT.md condensed)
+
+`docs/design/ISOLATED_ENVIRONMENT.md` is condensed into English (ADR-033): 298 lines, from 350 in Spanish. Claude had
+estimated about 140; the tables of §3, §4.1, §4.9, §5 and §8 are whole.
+
+**Done**
+* **What stays, with its numbering:** §2, §3 (E1–E9), §6 and §8 nearly whole; the rest in a few lines each, with the
+  diagram; §10 as open decisions, one line each. The README (§6), the ROADMAP (§3, §9, §10) and ADR-034 (decision 3
+  of §10) still cite it as they did.
+* **What V7 asked of it:**
+  * a dated note at the head and in §9: ADR-034 puts a person in the loop and signed records before these phases;
+  * the proposal is called by its current name, not "5 Radicals" (ADR-011);
+  * the line that said the README's von Neumann frame came from Triarii leaves: the README no longer has it.
+* **Triarii,** named once, in §4.9, as the starting point of the internet environment. Its origin, its license and
+  decision 9 of the draft, on relicensing its code, leave the tree; the history keeps them.
+* **Checked:** the diagram's arrows and box edges line up; every section another document cites exists; no Spanish is
+  left, nor "5 Radicals", "von Neumann" or the hackathon; no prose line passes 120 characters.
+
+**Decided (author)**
+* **`ISOLATED_ENVIRONMENT.md` is condensed,** with its numbering kept.
+* **Triarii is named in one sentence,** without its origin or decision 9; the author chose the option offered for a
+  public project.
+
+**Next**
+* **The review of each document (ADR-033),** with the V8 check: `SANDBOX.md` remains of what the README links.
+
 ## 2026-10-19 (night, COST.md in English)
 
 `docs/design/COST.md` is in English (ADR-033): 122 lines, from 141.

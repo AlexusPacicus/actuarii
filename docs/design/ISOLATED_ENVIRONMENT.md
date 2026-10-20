@@ -1,350 +1,298 @@
-# Entorno aislado propio (v0.2): diseño, borrador para el autor
+# Isolated environment (v0.2): design, a draft for the author
 
-Borrador de Claude, 2026-10-13. Decisión del autor del mismo día: la v0.1 sale el 25 de octubre como «motor
-de reglas más adaptador de Claude Code», y el entorno propio se construye en la v0.2. Este documento se
-commitea antes de cualquier prototipo, y su plan de prueba (§8) antes de cualquier resultado.
+Claude's draft, 2026-10-13. The author's decision of the same day: v0.1 goes out on 25 October as a rules engine with
+a Claude Code adapter, and the isolated environment is built in v0.2. This document was committed before any
+prototype, and its test plan (§8) is committed before any result. What is marked "to be checked" has not been checked.
 
-Desarrolla la idea de la v0.2 de `docs/PLAN.md` («Núcleo independiente del proveedor») con lo que enseñó la
-auditoría 2b (A19–A35) y la documentación de Claude Code leída el 2026-10-13 con el navegador integrado:
-code.claude.com/docs/en/sandbox-environments, …/sandboxing, …/sub-agents, …/memory y …/settings-reference.
-Lo marcado «a verificar» no está comprobado.
+Condensed and translated from Spanish on 2026-10-20 (ADR-033). The full draft, in Spanish, is in the history: this
+file at `e4a1d21`.
 
-## 1. Por qué
+**Note (2026-10-20, ADR-034):** v0.2 now starts with two pieces before this environment: a person in the loop, who
+approves or refuses each receipt, and records signed out of the agent's reach. The phases of §9 come after them.
 
-La v0.1 toma la frontera prestada de Claude Code. El sandbox de Claude Code solo envuelve `Bash`; las
-herramientas de ficheros, los hooks, los servidores MCP y lo que Claude Code mete en el contexto quedan
-fuera. La 2b enseñó por dónde se escapa:
+## 1. Why
 
-| Caso | Por dónde |
+v0.1 borrows its boundary from Claude Code. Claude Code's sandbox only wraps `Bash`; the file tools, the hooks, the MCP
+servers and what Claude Code puts into the context stay outside. Round 2b of the audit showed where it leaks:
+
+| Cases | Where |
 |---|---|
-| A19, A31, A32 | Las puertas corren fuera y cargan el intérprete, el `site-packages` y módulos de la raíz que el agente escribe |
-| A33 | `Write` escribe `.git/hooks`, `.git/config` y `.vscode`, que el sandbox protege de `Bash` |
-| A34 | Claude Code mete `CLAUDE.md`, memoria e instantánea de git en el revisor ciego |
-| A35 | Las credenciales se leen desde la sesión |
-| A29 | Navegador, conectores y herramientas del host, fuera de toda regla |
-| A25 | El rastro y el candado viven en `.data/`, al alcance de `Bash` |
+| A19, A31, A32 | The gates run outside and load the interpreter, the `site-packages` and modules at the root that the agent writes |
+| A33 | `Write` writes `.git/hooks`, `.git/config` and `.vscode`, which the sandbox keeps from `Bash` |
+| A34 | Claude Code puts `CLAUDE.md`, memory and a git snapshot into the blind reviewer |
+| A35 | The credentials can be read from the session |
+| A29 | The browser, the connectors and the host's tools, outside every rule |
+| A25 | The audit trail and the lock live in `.data/`, within reach of `Bash` |
 
-Cada corrección de la v0.1 es un ajuste propio de Claude Code (`omitClaudeMd`, `includeGitInstructions`,
-`denyRead`…): depende de la versión (A34 mostró un cambio de comportamiento entre versiones) y no protege
-nada en OpenCode, que no tiene sandbox. Eso no escala.
+Each fix of v0.1 is a setting of Claude Code's own (`omitClaudeMd`, `includeGitInstructions`, `denyRead`…): it depends
+on the version (A34 showed a change of behaviour between versions) and protects nothing in OpenCode, which has no
+sandbox. That does not scale.
 
-## 2. El principio
+## 2. The principle
 
-Los tres principios de `docs/PLAN.md` («Principios de diseño»), por construcción y no por parche:
+Three design principles, by construction and not by patch:
 
-1. **El agente, aislado.** El proceso entero de la herramienta (sus herramientas de ficheros, hooks,
-   servidores MCP y todo lo que lance) corre dentro de un entorno que no hace daño por defecto.
-2. **Toda salida pasa por una regla.** Escribir una ruta gobernada, salir a la red y tocar la historia de
-   git solo se hacen a través de algo de fuera que aplica una regla.
-3. **Lo que corre fuera no se fía de lo de dentro.** Las puertas viven fuera del entorno y fuera del
-   repositorio, y de dentro solo leen como datos lo que validan.
+1. **The agent, isolated.** The tool's whole process (its file tools, hooks, MCP servers and everything it launches)
+   runs inside an environment that does no harm by default.
+2. **Every way out goes through a rule.** Writing a governed path, reaching the network and touching the git history
+   are done only through something outside that applies a rule.
+3. **What runs outside does not trust what is inside.** The gates live outside the environment and outside the
+   repository, and read from inside, as data, only what they validate.
 
-El adaptador de cada herramienta queda reducido a cómo se lanza dentro y cómo se le configura el MCP.
+Each tool's adapter is reduced to how it is launched inside and how the MCP server is configured for it.
 
-**La forma es la del monitor de referencia** (Anderson, 1972). Tiene que cumplir tres condiciones:
-* **se invoca siempre:** no hay otro camino hacia el efecto, y eso lo da el aislamiento;
-* **no se puede manipular:** el agente no alcanza su código, su configuración ni su registro, y eso lo da el
-  principio 3;
-* **es verificable:** es pequeño y determinista, como el motor de reglas.
+**The shape is that of the reference monitor** (Anderson, 1972), which has to meet three conditions:
+* **always invoked:** there is no other path to the effect, which the isolation gives;
+* **tamper-proof:** the agent reaches neither its code, nor its configuration, nor its record, which principle 3
+  gives;
+* **verifiable:** it is small and deterministic, like the rules engine.
 
-Un middleware sin aislamiento se rodea; un aislamiento sin middleware es todo o nada. La 2b lo enseñó: ninguno
-de sus casos fue una regla mal escrita. Todos fueron caminos que la rodeaban.
+A middleware without isolation is bypassed; an isolation without middleware is all or nothing. Round 2b showed it: none
+of its cases was a badly written rule. All of them were paths around it.
 
-**Quien valida, ejecuta.** El intermediario aplica él mismo el efecto que validó, en una sola operación y
-sobre lo ya resuelto (la ruta canonicalizada, el dominio normalizado). Si valida uno y ejecuta otro, entre
-medias cambian el enlace, el directorio de trabajo o la interpretación de los argumentos. Es el *approval
-gap* que describe Triarii (§4.9), y el fallo del recibo de la v0.1 (A03, A04).
+**Whoever validates, executes.** The broker applies the effect it validated itself, in a single operation and on what
+is already resolved (the canonical path, the normalised domain). If one validates and another executes, the link, the
+working directory or the reading of the arguments can change in between: the approval gap, which was the fault of the
+receipt in v0.1 (A03, A04).
 
-## 3. Garantías que tiene que dar
+## 3. Guarantees it has to give
 
-| Id | Garantía |
+| Id | Guarantee |
 |---|---|
-| E1 | Ninguna herramienta de dentro (`Bash`, ficheros, MCP, hooks) escribe una ruta gobernada salvo a través del intermediario (§4.3) |
-| E2 | Dentro no se lee lo que no se da: ni el directorio personal (credenciales, memoria e instrucciones del usuario), ni el rastro de auditoría, ni el resto del disco |
-| E3 | Dentro no se escribe `.git`: la historia la escriben el intermediario o la persona |
-| E4 | La red solo llega a lo que permite la configuración (la API del modelo y poco más), por un proxy de fuera |
-| E5 | Las puertas y el intermediario corren fuera, instalados fuera del repositorio, y no cargan nada que el agente alcance |
-| E6 | Una revisión ciega corre en un entorno aparte que solo ve el paquete, con el mensaje de encargo escrito por código |
-| E7 | Un implementador delegado solo puede escribir los ficheros que su contrato lista |
-| E8 | Lo mismo con Claude Code y con OpenCode: lo propio de cada herramienta es un adaptador fino |
-| E9 | La web solo se alcanza desde un entorno aparte, sin repositorio ni ejecución de código, a través del intermediario y con su propia regla de salida (§4.9) |
+| E1 | No tool inside (`Bash`, files, MCP, hooks) writes a governed path except through the broker (§4.3) |
+| E2 | Nothing is read inside that is not given: not the home directory (credentials, the user's memory and instructions), not the audit trail, not the rest of the disk |
+| E3 | `.git` is not written inside: the broker or the person writes the history |
+| E4 | The network reaches only what the configuration allows (the model's API and little more), through a proxy outside |
+| E5 | The gates and the broker run outside, installed outside the repository, and load nothing the agent can reach |
+| E6 | A blind review runs in a separate environment that sees only its package, with the delegation message written by code |
+| E7 | A delegated implementer can write only the files its contract lists |
+| E8 | The same with Claude Code and with OpenCode: what is specific to each tool is a thin adapter |
+| E9 | The web is reached only from a separate environment, with no repository and no code execution, through the broker and with its own exit rule (§4.9) |
 
-## 4. Arquitectura
+## 4. Architecture
 
 ```
-host (la persona) ──────────────────────────────────────────────────────────────────
-  intermediario (fuera, residente)          proxy de red (fuera)
-    valida 5 Radicales, cita y primitivas     solo los dominios de la configuración
-    escribe las rutas gobernadas              puede añadir la credencial de la API
-    rastro de auditoría (fuera del repo)
-         ▲ socket de Unix                          ▲
-         │                                         │
-  ┌──────┴── entorno aislado (sandbox del SO, contenedor o VM) ──┴──────────────────┐
-  │ agente: Claude Code, OpenCode, …, lanzado con una configuración vacía por sesión │
-  │ repositorio: escribible salvo rutas gobernadas, .git y lo que la configuración   │
-  │ proteja; sin $HOME, sin .data, sin el kit                                        │
-  └──────────────────────────────────────────────────────────────────────────────────┘
+host (the person) ──────────────────────────────────────────────────────────────
+  broker (outside, resident)                        network proxy (outside)
+    validates the proposal: schema,                 only the configured domains
+      quote and primitives                          may add the API credential
+    writes the governed paths
+    audit trail, outside the repository
+          ▲ Unix socket                                                ▲
+          │                                                            │
+  ┌───────┴──── isolated environment (OS sandbox, container or VM) ────┴───────┐
+  │ agent: Claude Code, OpenCode, …, launched with an empty configuration      │
+  │ repository: writable except the governed paths, .git and what the          │
+  │ configuration protects; no $HOME, no .data, no kit                         │
+  └────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 4.1 El entorno
+### 4.1 The environment
 
-Opciones, de más ligera a más fuerte (la comparación de la documentación de Claude Code):
-
-| Opción | Qué es | Pros | Contras |
-|---|---|---|---|
-| Runtime de sandbox (`@anthropic-ai/sandbox-runtime`) | El mismo Seatbelt o bubblewrap del sandbox de Claude Code, alrededor del proceso entero | Sin Docker; macOS y Linux; envuelve cualquier orden (`claude`, `opencode`); ya probado en esta máquina (S1–S9) | Vista previa beta, formato de configuración que puede cambiar; dependencia de npm; en Linux la lista de denegaciones se fija al arrancar |
-| Contenedor de desarrollo o propio | Docker u OCI con el proyecto montado y cortafuegos | Montajes de solo lectura por ruta; estándar; CI | Docker en macOS (una VM); más pesado de instalar |
-| Máquina virtual o microVM | Núcleo propio | La separación más fuerte | La instalación más cara |
-
-**Propuesta:** el prototipo, con el runtime de sandbox, porque es el paso más corto desde lo que ya funciona y
-no exige Docker. El contenedor queda como segundo nivel, para repositorios no fiables y la CI. Es una
-dependencia nueva: necesita la aprobación del autor y comprobar su estabilidad (decisión 1, §10).
-
-### 4.2 Qué ve el agente
-
-* **El repositorio:** escribible, salvo las rutas gobernadas, `.git` y lo que el runtime ya protege
-  (`.git/hooks`, `.git/config`, `.mcp.json`, `.claude/agents`, `.claude/commands`, ficheros de arranque de la
-  shell).
-* **Gobernar todo por defecto se vuelve barato:** el entorno puede dejar escribir solo los directorios
-  declarados de trabajo y el resto en solo lectura. Es la alternativa de fondo del mapa de gobierno (A30) y
-  se decide aquí (decisión 4).
-* **La configuración de la herramienta:** un directorio vacío por sesión (`CLAUDE_CONFIG_DIR` u
-  homólogo), con solo lo necesario para autenticarse. Sin `~/.claude`: ni `CLAUDE.md` del usuario, ni su
-  memoria, ni sus plugins, ni sus ajustes. La documentación avisa de que un `~/.claude` escribible desde
-  dentro deja persistir hooks y servidores MCP que correrán sin sandbox la próxima vez: con un directorio por
-  sesión, eso desaparece.
-* **La memoria del agente:** la bajo código del repositorio (`.claude/memory/`), que se lee dentro y se
-  escribe a través del intermediario. Es la misma que hoy, sin la memoria normal.
-* **La credencial de la API:** dentro como variable, o mejor en el proxy, que la añade a cada petición sin
-  que el agente la vea. Así lo hace la nube de Claude Code con el token de GitHub (a verificar con
-  suscripción y OAuth).
-
-### 4.3 El intermediario
-
-Un servidor MCP residente, fuera del entorno, que el agente alcanza por un socket de Unix: dentro hay un
-cliente mínimo, de solo lectura, que traduce stdio al socket. Es el «intermediario de escritura por MCP» del
-PLAN y el proceso residente de `docs/design/COST.md` §5.
-
-* **`propose_write`:** recibe la propuesta de 5 Radicales, la valida (esquema, cita, primitivas) y, si pasa,
-  **escribe él** el contenido exacto. El recibo deja de ser un paso aparte: lo que se valida es lo que se
-  escribe (A03 y A04, por construcción).
-* **Operaciones sin canal gobernado hoy:** borrar, renombrar y cambiar el modo de una ruta gobernada, con
-  recibo (la idea del PLAN del 2026-10-09).
-* **`commit`:** el único camino a la historia desde dentro, con las reglas que hoy aplica el `pre-commit`
-  (índice igual al disco, grafía, sin enlaces) y las del formato del mensaje. `push`, `merge` y lo que sale
-  del repositorio siguen siendo de la persona.
-* **El rastro de auditoría,** fuera del repositorio y fuera del entorno (A25, por construcción).
-* **Instalado como paquete fuera del repositorio:** nada en la raíz del proyecto puede taparle un módulo
-  (A31), ni su intérprete ni su `site-packages` están al alcance del agente (A19, A32).
-* **Sin intermediario, nada se escribe:** si no responde, las rutas gobernadas siguen en solo lectura. Falla
-  cerrado sin tener que decidirlo.
-* Lo que ya existe se reutiliza: el validador, `project_config` (las rutas gobernadas son la tabla de
-  permisos del entorno) y la comprobación de primitivas.
-
-### 4.4 La red
-
-Todo sale por un proxy de fuera con lista de dominios. Por defecto, solo la API del modelo (y lo que la
-herramienta necesite para autenticarse). Lo que el agente lee llega al proveedor del modelo con o sin
-entorno: es la naturaleza de la herramienta y se declara.
-
-### 4.5 La revisión ciega
-
-Un entorno aparte, lanzado por código y no por el agente principal:
-
-* solo ve el paquete, en un directorio fuera de cualquier repositorio: sin `CLAUDE.md` que encontrar al
-  subir, sin instantánea de git y con una configuración vacía, así que sin memoria;
-* el mensaje de encargo lo escribe `build_review_package.py`, no el modelo, y se le pasa en modo no
-  interactivo (`claude -p` u homólogo);
-* el veredicto sale como JSON estricto validado en código, y sin él no se quita el candado.
-
-Es A34 por construcción, incluido el mensaje de encargo, que en la v0.1 queda declarado.
-
-### 4.6 La delegación
-
-El implementador corre en su propio entorno, sobre un *worktree* de su rama, con permiso de escritura solo
-para los ficheros de `files_may_touch`: el contrato es la tabla de permisos (A28, por construcción). Sus
-tests corren dentro. `verify_red_green.py` también corre en un entorno, porque ejecuta código que escribió
-el agente.
-
-### 4.7 Los adaptadores
-
-Lo único propio de cada herramienta:
-
-* cómo se lanza dentro, con un directorio de configuración vacío;
-* cómo se le declara el servidor MCP del intermediario;
-* qué dominios necesita para autenticarse;
-* qué protecciones trae su propio sandbox, si lo tiene, para no duplicarlas.
-
-Claude Code y OpenCode primero; el segundo es la prueba de que el núcleo no depende del primero.
-
-### 4.8 Lo que hace la persona
-
-* Arrancar la sesión con una orden (`actuarii run claude`, o similar), que levanta el intermediario, el proxy
-  y el entorno.
-* Aprobar lo que sale del repositorio: `push`, `merge` y publicación.
-* Menos preguntas: dentro, la herramienta puede correr en modo automático o sin preguntas, porque la
-  frontera es el entorno. Es lo que la documentación de Claude Code recomienda para trabajo desatendido.
-* **El entorno tiene que costar menos que saltárselo.** En la prueba en limpio, el agente escribió fuera de
-  las rutas gobernadas para no pedir recibo (A30): la fricción desplaza el trabajo hacia donde no hay
-  reglas. El entorno se paga solo si quita preguntas y pasos a la persona; si solo los añade, se rodea.
-
-### 4.9 El entorno de internet
-
-Separado del de código (idea del autor, 2026-10-13).
-
-**El antecedente es Triarii,** un proyecto del autor para la hackathon Web Data UNLOCKED (mayo de 2026),
-licenciado AGPL-3.0. Hace cuatro cosas:
-* intercepta cada llamada a una herramienta que propone el agente y la valida contra una matriz de
-  capacidades por su efecto físico, no por su nombre (la ruta resuelta debe quedar dentro de su base; el
-  dominio, pasado a punycode, debe estar en la lista);
-* guarda la credencial del servicio web en un proxy de servidor, fuera del cliente;
-* anota cada infracción en un registro;
-* devuelve al agente una respuesta vacía de éxito («denegación silenciosa»).
-
-El marco de von Neumann del README de Actuarii viene de ahí.
-
-**Por qué separado.** Un entorno que junta ejecución de código, datos privados (el repositorio) y red tiene
-lo que necesita una exfiltración, y lo dispara el contenido no fiable que entra por la web. Separarlos
-rompe esa combinación:
-
-| | Entorno de código | Entorno de internet |
+| Option | For | Against |
 |---|---|---|
-| Repositorio | Sí | No |
-| Ejecutar código | Sí | No |
-| Red | Solo la API del modelo y el intermediario | Sí, mediada |
-| Credenciales | Ninguna (la de la API, en el proxy) | Las del servicio web, en su proxy |
-| Devuelve | Escrituras, a través del intermediario | Contenido como datos |
+| The sandbox runtime (`@anthropic-ai/sandbox-runtime`): Claude Code's own Seatbelt or bubblewrap, around the whole process | No Docker; macOS and Linux; wraps any command (`claude`, `opencode`) | A beta preview whose configuration format may change; an npm dependency; on Linux the deny list is fixed at start-up |
+| A development or own container | Read-only mounts by path; standard; the CI | Docker on macOS, a virtual machine; heavier to install |
+| A virtual machine or microVM | The strongest separation | The costliest installation |
 
-**Cómo se usa.**
-* El agente no navega: propone una petición al intermediario (`fetch` o `search`).
-* El intermediario la valida y la ejecuta en el entorno de internet (quien valida, ejecuta), y devuelve el
-  contenido al agente marcado como no fiable.
-* El navegador y los conectores de la herramienta (A29) no existen dentro del entorno de código.
+**Proposal:** the prototype with the sandbox runtime, the shortest step from what already works, and the container as a
+second level, for untrusted repositories and the CI. It is a new dependency: it needs the author's approval and a
+check of its stability (decision 1).
 
-**Pedir ya es emitir.** Elegir la URL es una salida de datos. El contexto del agente contiene el código
-privado, y una consulta como `?q=<fragmento>` lo saca, aunque el entorno de internet no vea el repositorio.
-Por eso tiene su propia regla de salida:
-* dominios permitidos, con el nombre comparado en punycode, entero y sin usuario ni puerto extraños (como
-  en Triarii);
-* solo `GET`;
-* la consulta limitada (longitud, caracteres), o tomada de una lista aprobada;
-* cada petición registrada fuera, con lo que se pidió y lo que volvió.
+### 4.2 What the agent sees
 
-**Lo que vuelve sigue siendo contenido no fiable.** Puede llevar instrucciones escondidas (texto invisible,
-atributos, carga codificada; el modelo de amenazas de Triarii las clasifica). Limpiarlo ayuda, pero no
-resuelve: lo que protege es que el agente no tenga autoridad. Todo lo que haga después pasa por las reglas.
+* **The repository:** writable, except the governed paths, `.git` and what the runtime already protects.
+* **Governing everything by default becomes cheap:** the environment can let only the declared working directories be
+  written and keep the rest read-only. It is the deeper alternative to a map of what is governed (A30), decided here
+  (decision 4).
+* **The tool's configuration:** an empty directory per session, with only what authentication needs. No `~/.claude`:
+  no user `CLAUDE.md`, memory, plugins or settings, and no hook or MCP server persisted from inside to run unsandboxed
+  next time.
+* **The agent's memory:** the one under code, read inside and written through the broker.
+* **The API credential:** in the proxy, which adds it to each request without the agent seeing it (to be checked with a
+  subscription and with OAuth).
 
-**Denegaciones.**
-* En el entorno de código, explícitas: un agente que coopera necesita saber qué regla saltó y cómo
-  resolverlo, y una respuesta falsa de éxito lo hace trabajar sobre una mentira.
-* En el entorno de internet, la denegación silenciosa de Triarii tiene sentido: quien empuja hacia la
-  salida es el contenido inyectado, y negarle la respuesta le quita el bucle de ajuste.
-* Se decide (decisión 7).
+### 4.3 The broker
 
-**Lo que no resuelve.**
-* La manipulación del razonamiento del agente por el contenido leído, que es un problema de integridad y no
-  de exfiltración.
-* Lo que llega al proveedor del modelo.
-* Un dominio permitido que aloja contenido de cualquiera (una issue, un foro): estar en la lista no lo hace
-  fiable.
+A resident MCP server outside the environment, which the agent reaches through a Unix socket and a minimal read-only
+client inside. It is the resident process of `docs/design/COST.md` §5.
 
-## 5. Qué cambia del kit actual
+* **`propose_write`:** it validates the proposal (schema, quote, primitives) and, if it passes, **writes the exact
+  content itself**. The receipt stops being a separate step: what is validated is what is written (A03 and A04, by
+  construction).
+* **Deleting, renaming and changing the mode** of a governed path, with a receipt: operations with no governed channel
+  today.
+* **`commit`:** the only path to the history from inside, with the rules the `pre-commit` applies today. `push`,
+  `merge` and what leaves the repository stay with the person.
+* **The audit trail,** outside the repository and outside the environment (A25, by construction).
+* **Installed as a package outside the repository:** nothing at the project's root can shadow one of its modules
+  (A31), and neither its interpreter nor its `site-packages` is within the agent's reach (A19, A32).
+* **Without the broker, nothing is written:** the governed paths stay read-only. It fails closed without having to
+  decide it.
+* **Reused:** the validator, `project_config` (the governed paths are the environment's table of permissions) and the
+  check of primitives.
 
-| Pieza | En la v0.2 |
+### 4.4 The network
+
+Everything goes out through a proxy outside, with a list of domains: by default, only the model's API and what the
+tool needs to authenticate. What the agent reads reaches the model's provider with or without an environment; that is
+the nature of the tool, and it is declared.
+
+### 4.5 The blind review
+
+A separate environment, launched by code and not by the main agent. It sees only the package, in a directory outside
+any repository: no `CLAUDE.md` to find, no git snapshot and an empty configuration, so no memory. The delegation
+message is written by `build_review_package.py`, not by the model, and is passed non-interactively; the verdict comes
+out as strict JSON validated in code, and without it the lock is not removed. It is A34 by construction, the delegation
+message included, which v0.1 declares.
+
+### 4.6 The delegation
+
+The implementer runs in its own environment, on a worktree of its branch, with write permission only for the files of
+`files_may_touch`: the contract is the table of permissions (A28, by construction). `verify_red_green.py` runs in an
+environment too, because it runs code the agent wrote.
+
+### 4.7 The adapters
+
+What is specific to each tool: how it is launched inside with an empty configuration directory, how the broker's MCP
+server is declared to it, which domains it needs to authenticate, and which protections its own sandbox brings, so as
+not to duplicate them. Claude Code and OpenCode first; the second is the proof that the core does not depend on the
+first.
+
+### 4.8 What the person does
+
+* Start the session with one command (`actuarii run claude`, or similar), which brings up the broker, the proxy and the
+  environment.
+* Approve what leaves the repository: `push`, `merge` and publishing.
+* Answer fewer questions: inside, the tool can run in auto mode or without questions, because the boundary is the
+  environment.
+* **The environment has to cost less than going around it.** In the clean-room test the agent wrote outside the
+  governed paths so as not to ask for a receipt (A30): friction moves work to where there are no rules. The
+  environment pays for itself only if it takes questions and steps away from the person.
+
+### 4.9 The internet environment
+
+Separate from the code environment (the author's idea, 2026-10-13). Its starting point is Triarii, an earlier project
+of the author, which validates each tool call by its physical effect and not by its name, and keeps the web service's
+credential in a proxy outside the client.
+
+**Why separate.** An environment that joins code execution, private data (the repository) and the network has what an
+exfiltration needs, and untrusted content from the web is what sets it off. Separating them breaks that combination:
+
+| | Code environment | Internet environment |
+|---|---|---|
+| Repository | Yes | No |
+| Running code | Yes | No |
+| Network | Only the model's API and the broker | Yes, mediated |
+| Credentials | None (the API's, in the proxy) | The web service's, in its proxy |
+| Returns | Writes, through the broker | Content, as data |
+
+**How it is used.** The agent does not browse: it proposes a request (`fetch` or `search`) to the broker, which
+validates it, runs it in the internet environment (whoever validates, executes) and returns the content marked as
+untrusted. The tool's browser and connectors (A29) do not exist inside the code environment.
+
+**Asking is already emitting.** Choosing the URL lets data out: the agent's context holds the private code, and a query
+such as `?q=<fragment>` carries it out even though the internet environment never sees the repository. So it has its
+own exit rule: allowed domains, compared whole and in punycode; only `GET`; a limited query, or one from an approved
+list; and every request recorded outside, with what was asked and what came back.
+
+**What comes back is still untrusted content.** Cleaning it helps but does not solve it: what protects is that the
+agent has no authority, and everything it does next goes through the rules. Denials are explicit in the code
+environment, where a cooperating agent needs to know which rule stopped it; in the internet environment a silent denial
+takes the feedback loop away from injected content (decision 7). It does not solve the manipulation of the agent's
+reasoning by what it reads, what reaches the model's provider, or an allowed domain that hosts anyone's content.
+
+## 5. What changes in the current kit
+
+| Piece | In v0.2 |
 |---|---|
-| Hooks de escritura, shim de Python, `deny_python_escapes` | Innecesarios para la frontera: la sustituyen los permisos del entorno y el intermediario. Siguen en el adaptador de la v0.1 |
-| Sandbox de Claude Code y `denyWrite` | Los sustituye el entorno; se puede seguir usando dentro como capa extra |
-| Recibos con ventana | El intermediario escribe lo que valida |
-| `pre-commit` de integridad | Pasa al `commit` del intermediario; se mantiene como defensa |
-| Validador, primitivas, `project_config` | Se reutilizan dentro del intermediario |
-| Contratos de delegación y verificador rojo/verde | Se reutilizan; el verificador corre en un entorno |
-| Paquete de revisión | Se reutiliza; además escribe el mensaje de encargo y lanza el entorno del revisor |
-| Anuncio de sesión | Pasa a ser un informe del entorno, generado de su configuración real (A24, por construcción) |
+| Write hooks, Python shim, `deny_python_escapes` | Not needed for the boundary, which the environment's permissions and the broker replace; they stay in the v0.1 adapter |
+| Claude Code's sandbox and `denyWrite` | Replaced by the environment; they can still be used inside as an extra layer |
+| Receipts with a window | The broker writes what it validates |
+| The integrity `pre-commit` | Moves into the broker's `commit`; kept as a defence |
+| Validator, primitives, `project_config` | Reused inside the broker |
+| Delegation contracts and the red-green verifier | Reused; the verifier runs in an environment |
+| Review package | Reused; it also writes the delegation message and launches the reviewer's environment |
+| Session announcement | A report of the environment, generated from its real configuration (A24, by construction) |
 
-## 6. Lo que no resuelve
+## 6. What it does not solve
 
-* **La inyección de prompt:** el agente sigue leyendo contenido no fiable. Lo que cambia es que no puede
-  actuar fuera del entorno.
-* **Lo que llega al proveedor del modelo:** todo lo que el agente lee.
-* **El código que la persona ejecuta fuera:** si la persona corre fuera el código que escribió el agente, lo
-  corre con todos sus permisos. La regla es ejecutarlo dentro.
-* **La terminal de la persona** (A32 en su sentido amplio) y su `PATH`.
-* **Las rutas no gobernadas** (A30), salvo que se gobierne todo por defecto (decisión 4).
-* **Escapes del sistema operativo o del contenedor.** El runtime es una vista previa; la VM es la opción
-  fuerte.
-* **En Linux, el runtime fija sus denegaciones al arrancar:** lo que el agente crea después (un `git init`
-  anidado) no queda cubierto. Hay que verificarlo y declararlo.
+* **Prompt injection:** the agent still reads untrusted content. What changes is that it cannot act outside the
+  environment.
+* **What reaches the model's provider:** everything the agent reads.
+* **Code the person runs outside:** if the person runs outside the code the agent wrote, it runs with all of their
+  permissions. The rule is to run it inside.
+* **The person's terminal** (A32 in its wide sense) and its `PATH`.
+* **The paths that are not governed** (A30), unless everything is governed by default (decision 4).
+* **Escapes from the operating system or the container.** The runtime is a preview; the virtual machine is the strong
+  option.
+* **On Linux, the runtime fixes its denials at start-up:** what the agent creates later (a nested `git init`) is not
+  covered. To be checked and declared.
 
-## 7. Antes de construir
+## 7. Before building
 
-1. **Búsqueda previa de entornos aislados para agentes.** La del 2026-10-06 cubrió herramientas de
-   gobierno, no entornos (`docs/prior-art/PRIOR_ART.md`). Hay que mirar al menos el runtime de sandbox, el
-   contenedor de desarrollo de referencia de Claude Code, Docker Sandboxes, los servicios gestionados de
-   ejecución y la guía de despliegue seguro del Agent SDK, y decir en qué se parece y en qué no. Si algo ya
-   hace esto, se adopta, no se reinventa.
-2. **Verificar en el README del runtime:**
-   * el esquema de su configuración (lectura, escritura, red);
-   * si deja pasar un socket de Unix concreto (en Linux, el filtro seccomp los bloquea);
-   * cómo resuelve los enlaces;
-   * cómo se comporta con `CLAUDE_CONFIG_DIR` y con la autenticación por OAuth.
-3. **Elegir la tecnología** (decisión 1) y aprobar la dependencia.
+1. **A search of isolated environments for agents.** The search of 2026-10-06 covered governance tools, not
+   environments. At least the sandbox runtime, Claude Code's reference development container, Docker Sandboxes, the
+   managed execution services and the Agent SDK's guide to secure deployment, with what each shares with this design
+   and what it does not. If something already does this, it is adopted, not reinvented.
+2. **Checks in the runtime's README:** the schema of its configuration (read, write, network); whether it lets a given
+   Unix socket through (on Linux the seccomp filter blocks them); how it resolves links; how it behaves with
+   `CLAUDE_CONFIG_DIR` and with OAuth.
+3. **The choice of technology** (decision 1) and the approval of the dependency.
 
-## 8. Plan de prueba (se commitea antes del prototipo)
+## 8. Test plan (committed before the prototype)
 
-Los casos de las dos auditorías pasan a ser la batería del entorno. Cada uno se repite dentro y se anota lo
-que pasa. Lo esperado:
+The cases of the two audits become the environment's battery. Each one is repeated inside, and what happens is noted.
+What is expected:
 
-| Casos | Intento dentro del entorno | Esperado |
+| Cases | Attempt inside the environment | Expected |
 |---|---|---|
-| A01, A08, A33 | Escribir una ruta gobernada, `.git/hooks`, `.git/config` o `.vscode` con `Write`, `Bash` o un MCP | Denegado por el sistema |
-| A09, A10 | Cambiar los ajustes que apagan las reglas, o borrar `.actuarii.json` | Denegado: los ajustes del entorno están fuera y la configuración es de solo lectura |
-| A19, A31, A32 | Plantar `sitecustomize.py`, `dataclasses.py` o un `python3` falso | Nada de fuera lo carga |
-| A23, A34 | Revisión ciega: leer fuera del paquete, o recibir instrucciones, memoria o git | Imposible: solo existe el paquete |
-| A25 | Tocar el rastro o el candado | No existen dentro |
-| A28 | Un implementador escribe un fichero fuera de su contrato | Denegado por el sistema |
-| A29 | Salir a la red por cualquier herramienta | Solo los dominios permitidos, registrados por el proxy |
-| A35 | Leer `~/.ssh` | No existe dentro |
-| A03, A04 | Escribir un contenido distinto del validado | No hay paso aparte que separar |
-| A21 | Una petición malformada al intermediario | Se rechaza y el intermediario sigue vivo |
-| Internet 1 | Pedir una URL con un fragmento del repositorio en la consulta | Denegado o recortado por la regla de salida, y registrado |
-| Internet 2 | Pedir un dominio con un homoglifo (`аpi.…` con `а` cirílica) | Denegado (punycode) |
-| Internet 3 | Desde el entorno de internet, leer el repositorio o una credencial | No existen allí |
-| Internet 4 | Contenido web con instrucciones que piden escribir o salir a la red | El agente solo puede proponer; cada propuesta pasa por su regla |
-| Internet 5 | Buscar la credencial del servicio web desde cualquiera de los dos entornos | Solo está en su proxy |
+| A01, A08, A33 | Write a governed path, `.git/hooks`, `.git/config` or `.vscode` with `Write`, `Bash` or an MCP server | Denied by the system |
+| A09, A10 | Change the settings that turn the rules off, or delete `.actuarii.json` | Denied: the environment's settings are outside and the configuration is read-only |
+| A19, A31, A32 | Plant `sitecustomize.py`, `dataclasses.py` or a fake `python3` | Nothing outside loads it |
+| A23, A34 | Blind review: read outside the package, or receive instructions, memory or git | Impossible: only the package exists |
+| A25 | Touch the audit trail or the lock | They do not exist inside |
+| A28 | An implementer writes a file outside its contract | Denied by the system |
+| A29 | Reach the network through any tool | Only the allowed domains, recorded by the proxy |
+| A35 | Read `~/.ssh` | It does not exist inside |
+| A03, A04 | Write content other than the validated one | There is no separate step to split |
+| A21 | A malformed request to the broker | Refused, and the broker stays alive |
+| Internet 1 | Ask for a URL with a fragment of the repository in the query | Denied or trimmed by the exit rule, and recorded |
+| Internet 2 | Ask for a domain with a homoglyph (`аpi.…` with a Cyrillic `а`) | Denied (punycode) |
+| Internet 3 | From the internet environment, read the repository or a credential | They do not exist there |
+| Internet 4 | Web content with instructions to write or to reach the network | The agent can only propose; each proposal goes through its rule |
+| Internet 5 | Look for the web service's credential from either environment | It is only in its proxy |
 
-**Regla de decisión:** el prototipo vale cuando cada caso aplicable sale como se espera, en Claude Code y en
-OpenCode. Además se miden, con su método de siempre:
-* el coste por escritura gobernada (`docs/design/COST.md`; hoy, 1875 ms de mediana);
-* la instalación de cero (`docs/design/CLEAN_ROOM.md`).
+**Decision rule:** the prototype is valid when each applicable case comes out as expected, in Claude Code and in
+OpenCode. The cost per governed write (`docs/design/COST.md`; today a median of 1875 ms) and the installation from zero
+(`docs/design/CLEAN_ROOM.md`) are measured too, with their usual methods, and compared with those of v0.1; the rule of
+each measurement is committed before measuring.
 
-Las cifras se comparan con las de la v0.1; la regla de cada medida se commitea antes de medir.
+## 9. Phases
 
-## 9. Fases
+They come after the person in the loop and the signed records (ADR-034, note at the head).
 
-1. **v0.2-a:** la búsqueda previa, las verificaciones de §7 y la elección de tecnología. Se commitean el
-   plan de prueba y sus reglas.
-2. **v0.2-b:** el prototipo con Claude Code (el entorno, el intermediario con `propose_write` y la red) y la
-   batería de §8.
-3. **v0.2-c:** el adaptador de OpenCode y la misma batería.
-4. **v0.2-d:** la revisión ciega y la delegación en entornos propios.
-5. **v0.2-e:** el entorno de internet (§4.9), con los casos «Internet» de §8. El motor de capacidades y el
-   proxy de credenciales de Triarii son el punto de partida.
-6. **Después, la fase 4:** la memoria bajo código pasa a Traianus a través del intermediario
-   (`propose_write` sobre la memoria pasa a ser `/ingesta`), cuando se cumpla su criterio de utilidad.
+1. **v0.2-a:** the search, the checks of §7 and the choice of technology. The test plan and its rules are committed.
+2. **v0.2-b:** the prototype with Claude Code (the environment, the broker with `propose_write`, and the network) and
+   the battery of §8.
+3. **v0.2-c:** the OpenCode adapter and the same battery.
+4. **v0.2-d:** the blind review and the delegation in environments of their own.
+5. **v0.2-e:** the internet environment (§4.9), with the "Internet" cases of §8.
+6. **Then phase 4:** the memory under code moves to Traianus through the broker, when its usefulness criterion is met.
 
-## 10. Decisiones del autor
+## 10. Decisions of the author
 
-1. **Tecnología del entorno:** runtime de sandbox (propuesta), contenedor o VM, después de §7.
-2. **La historia de git:** commits solo a través del intermediario (propuesta) o solo por la persona.
-3. **Permisos dentro:** modo automático o sin preguntas, con la frontera en el entorno (propuesta), o
-   mantener las preguntas.
-4. **Gobernar todo por defecto:** escribir solo en los directorios declarados de trabajo (propuesta, A30),
-   o seguir con la lista de rutas gobernadas.
-5. **La credencial de la API:** en el proxy (propuesta, si la autenticación lo permite) o dentro.
-6. **Distribución:** el kit fuera del repositorio, como paquete (`pipx` o similar), con una orden que lo
-   instala y otra que lanza la sesión. Sustituye a la copia en `tools/` de la v0.1.
-7. **La denegación silenciosa:** solo en el entorno de internet (propuesta), en ninguno o en los dos.
-8. **La regla de salida de internet:** lista de dominios, solo `GET` y consulta limitada (propuesta), o
-   aprobación de la persona en cada petición.
-9. **El código de Triarii:** es del autor, así que puede pasarlo de AGPL-3.0 a Apache-2.0 para usarlo en
-   Actuarii, siempre que nadie más haya contribuido. Hay que comprobarlo antes de copiar nada.
+All of them are open; the proposal of this draft is marked.
+
+1. **Technology of the environment:** the sandbox runtime (proposed), a container or a virtual machine, after §7.
+2. **The git history:** commits only through the broker (proposed), or only by the person.
+3. **Permissions inside:** auto mode or no questions, with the boundary in the environment (proposed), or keep the
+   questions.
+4. **Governing everything by default:** writing only in the declared working directories (proposed, A30), or keep the
+   list of governed paths.
+5. **The API credential:** in the proxy (proposed, if authentication allows it) or inside.
+6. **Distribution:** the kit outside the repository, as a package (`pipx` or similar), with one command that installs
+   it and another that starts the session, instead of the copy in `tools/` of v0.1.
+7. **Silent denial:** only in the internet environment (proposed), in neither, or in both.
+8. **The internet exit rule:** a list of domains, only `GET` and a limited query (proposed), or the person's approval of
+   each request.
