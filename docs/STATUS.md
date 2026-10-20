@@ -90,8 +90,9 @@ Updated: 2026-10-20, morning.
      (author, 2026-10-20), with findings in the DEVLOG entry of the day and decisions in the register:
      * R0, which answers from outside would change the plan of v0.2: done, in ROADMAP §3 (ADR-040);
      * R1, whether Claude Code can show the reason before the write and report for certain whether the person
-       approved (the `PermissionRequest` hook and the `ask` decision of `PreToolUse`, in each permission mode): from
-       the documentation, by Wednesday 21 at night; the live probe after the 25th;
+       approved: done from the documentation (DEVLOG, 2026-10-20, midday). It shows the reason, but no hook learns
+       the person's answer, and three paths approve without the person; Claude recommends that the validator take the
+       approval itself, through a channel out of the agent's reach. The live probe of two modes, after the 25th;
      * R2, which existing format covers signed records (in-toto, SLSA provenance, Sigstore and `gitsign`, signed
        commits, Agent Receipts): by Wednesday 21 at night;
      * after the 25th, in the window: R3, whether approving and signing can be one act; R4, how it fits decision 3 of

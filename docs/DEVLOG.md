@@ -15,6 +15,49 @@ the PLAN.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-20 (midday, R1)
+
+R1 of the research of v0.2: whether Claude Code can show the agent's reason before the write and report for certain
+whether the person approved it. Read on 2026-10-20 through the integrated browser, with the author's approval of each
+site: the hooks reference (code.claude.com/docs/en/hooks), the permissions page (…/permissions) and the Agent SDK's
+permissions (…/agent-sdk/permissions). Nothing was probed.
+
+**Written before reading:** four questions, each answered "documented yes", "documented no" or "not documented":
+R1.a, can a hook put the reason before the person; R1.b, can the kit learn for certain what the person answered,
+told apart from an approval by a rule, a mode or the classifier; R1.c, does it hold in each permission mode; R1.d, can
+the agent forge the approval or go around it.
+
+**Findings**
+* **R1.a, documented yes.** With `ask`, the `permissionDecisionReason` of a `PreToolUse` hook is shown to the person
+  in the permission prompt, with a label of where the hook comes from. In auto mode the classifier can deny such a
+  call but not approve it silently (hooks, "PreToolUse decision control").
+* **R1.b, documented no.** No hook receives the person's answer. `PermissionRequest` runs before the prompt and can
+  decide in the person's place; `PermissionDenied` fires only in auto mode, not when the person denies a prompt by
+  hand; `PostToolUseFailure` does not fire for a permission denial (hooks, those three sections). Inferred: the kit
+  can only deduce that someone allowed the call, from `PostToolUse` on the same call.
+* **R1.c, documented for four modes.** `default` and `plan` prompt; auto mode prompts for a hook's `ask`; `dontAsk`
+  denies what would prompt. Not documented: what `acceptEdits` and `bypassPermissions` do with a hook's `ask`. An
+  `ask` rule in the settings prompts even in `bypassPermissions` (Agent SDK permissions, "How permissions are
+  evaluated").
+* **R1.d, documented yes, by three paths:** a `PermissionRequest` hook from any settings file or plugin; a mod that
+  handles `tool.check`, unless managed settings or a Team or Enterprise login are in place (permissions, "Precedence
+  among rules, hooks, and mods"); and the Agent SDK host's `canUseTool` callback. Where the person's answer is kept
+  (the transcript?) is not documented; the agent can write outside the repository with permission (A33).
+
+**What it implies (Claude's reading, inferred, not a decision)**
+* Claude Code's permission prompt shows the reason but cannot be the approval: the kit never learns who answered, and
+  three paths approve without the person.
+* A certain approval has to be taken by the kit, out of the agent's reach: (a) a host of its own on the Agent SDK,
+  whose `canUseTool` is the answer, close to the own environment; or (b) the validator issues no receipt until the
+  person approves through a channel the agent cannot reach, such as a command in the person's terminal, outside the
+  session and the sandbox. (b) depends on no hook of Claude Code and is the natural place to sign (R3); it adds a
+  step for the person at each write, the friction of C1 and A30.
+* Claude recommends (b) as the starting point of R3. To be probed live after the 25th: a hook's `ask` in
+  `acceptEdits` and `bypassPermissions`, and where the transcript records the answer.
+
+**Next**
+* **R2,** the formats for signed records, by Wednesday 21 at night.
+
 ## 2026-10-20 (midday, the research of v0.2 and R0)
 
 The review reaches the ROADMAP, where the author stops to research v0.2 (ADR-033). The research is planned, and its
