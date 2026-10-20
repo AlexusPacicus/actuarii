@@ -12,6 +12,35 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-20 (morning, SANDBOX.md condensed)
+
+`docs/design/SANDBOX.md` is condensed into English (ADR-033): 203 lines, from 243 in Spanish. With it, every document
+of `docs/` that the README links is in English.
+
+**Done**
+* **What stays, with its numbering:** §1 to §3 nearly whole, the test plan (§7) and its results (§8), with the finding
+  of S8; §4, §5 and §9 shorter; §6 with the configuration as it was proposed and applied (`546730b`). The README
+  (§8), the docstrings of three tests (§6, §9) and ROADMAP V7 (§6) still cite it as they did, so no contract was
+  needed. The internal labels of the fixes (F1, F4c, F5) leave.
+* **Dated notes for what changed since (V7):**
+  * §6: the exemption of `.claude/**` and `.mcp.json` from `denyWrite` ended on 2026-10-14 (`92df87a`); this is the
+    item V7 named;
+  * §8: the bare `"Bash"` in `ask` that S5 mentions was removed by ADR-022 on 2026-10-15;
+  * §5: the user-level `allowUnsandboxedCommands: false` is recommended by `INSTALL.md`, not by the README, and the
+    installer warns when it is missing.
+* **Checked:** every section another document cites exists; the 22 rows of S1 to S9 are there; the figures of §8 are
+  the same, apart from the label "F4c, v0.2" and the dates of the note; no Spanish is left; no prose line passes 120
+  characters.
+
+**Decided (author)**
+* **`SANDBOX.md` is condensed,** with its numbering kept.
+
+**Next**
+* **The README's line on Spanish** (line 14) says the design records are in Spanish, which is no longer true of those
+  it links. Claude proposes the new wording to the author.
+* **The review of each document (ADR-033),** with the V8 check: the records that do not stay, and `ROADMAP.md`, where
+  the author stops to work on v0.2.
+
 ## 2026-10-20 (morning, ISOLATED_ENVIRONMENT.md condensed)
 
 `docs/design/ISOLATED_ENVIRONMENT.md` is condensed into English (ADR-033): 298 lines, from 350 in Spanish. Claude had

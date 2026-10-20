@@ -1,131 +1,99 @@
-# El sandbox de Claude Code como capa baja (investigación, borrador para el autor)
+# Claude Code's sandbox as the lower layer (research, a draft for the author)
 
-Borrador de Claude, 2026-10-07. Responde a la investigación acordada tras F4b (`docs/PLAN.md`): la lista
-de primitivas sobre `ast` frena al agente honesto, pero no es una frontera; la frontera está donde se
-ejecuta el código. Fuente: la documentación oficial, «Configure the sandboxed Bash tool»
-(code.claude.com/docs/en/sandboxing), leída el 2026-10-07. Versión instalada: Claude Code 2.1.291. Lo que
-sigue es lo que la documentación dice; nada está probado todavía en esta máquina (§7).
+Claude's draft, 2026-10-07. It answers the research agreed once the check of primitives moved to `ast`: that list
+stops the honest agent, but it is not a boundary; the boundary is where the code runs. Source: the official
+documentation, "Configure the sandboxed Bash tool" (code.claude.com/docs/en/sandboxing), read on 2026-10-07, with
+Claude Code 2.1.291 installed. §1 to §6 say what the documentation says; §8 is what was then tested on this machine.
 
-## 1. Las dos preguntas
+Condensed and translated from Spanish on 2026-10-20 (ADR-033). The full draft, in Spanish, is in the history: this
+file at `28e0f09`.
 
-**¿Corta la red de `Bash` y de lo que lanza?** Sí, según la documentación. El sistema operativo
-(Seatbelt en macOS, un espacio de red aparte con bubblewrap en Linux) deja a cada orden de `Bash`, y a
-cada proceso que lance, sin ruta directa a la red. Solo puede salir por un proxy local que comprueba el
-nombre del host contra una lista de dominios permitidos que empieza vacía. Lo que no es TCP (UDP, QUIC,
-ICMP) no sale. Esto cubre el caso que importa: código escrito por el agente y ejecutado después por
-`pytest` o por un script desde `Bash` corre dentro del sandbox, lo haya escrito como lo haya escrito
-(`getattr`, `sys.modules`, `pickle`, un `.sh`).
+## 1. The two questions
 
-**¿Puede impedir que `Bash` escriba en las rutas gobernadas?** Sí, según la documentación.
-`sandbox.filesystem.denyWrite` niega la escritura a nivel del sistema operativo a las órdenes de `Bash`
-y a sus procesos hijos, dentro del directorio de trabajo. Además, el sandbox ya protege por su cuenta
-`.claude/` (ajustes, skills, agents, hooks), `.mcp.json`, los ficheros de arranque de la shell y los
-hooks y la configuración de `.git`, sin excepción posible.
+**Does it cut the network of `Bash` and of what it launches?** Yes, according to the documentation. The operating
+system (Seatbelt on macOS, a separate network namespace with bubblewrap on Linux) leaves each `Bash` command, and each
+process it launches, with no direct route to the network. It can only go out through a local proxy that checks the
+host name against a list of allowed domains, which starts empty. What is not TCP (UDP, QUIC, ICMP) does not go out.
+This covers the case that matters: code the agent wrote and then ran with `pytest` or a script from `Bash` runs inside
+the sandbox, however it was written (`getattr`, `sys.modules`, `pickle`, a `.sh`).
 
-## 2. Lo que el sandbox no cubre
+**Can it keep `Bash` from writing the governed paths?** Yes, according to the documentation.
+`sandbox.filesystem.denyWrite` denies writing, at the level of the operating system, to `Bash` commands and their
+child processes, inside the working directory. The sandbox also protects on its own `.claude/` (settings, skills,
+agents, hooks), `.mcp.json`, the shell's start-up files, and `.git`'s hooks and configuration, with no exception
+possible.
 
-* **Las herramientas de ficheros** (`Read`, `Edit`, `Write`): siguen las reglas de permisos, no el
-  sandbox. Las cubren las puertas del kit (recibo, cita literal, primitivas en la puerta).
-* **Los hooks y los servidores MCP**: corren fuera, con todo el acceso del usuario. Son el código del
-  kit, gobernado.
-* **Las órdenes que teclea la persona** con `!`: fuera del sandbox. Es la persona.
-* **La lectura**: por defecto se puede leer casi toda la máquina, credenciales incluidas, salvo que se
-  configure `denyRead` o `credentials`.
-* **Windows nativo y OpenCode**: no hay sandbox. El perímetro de `.claude/settings.json` y el de
-  `opencode.jsonc` dejarían de ser iguales (AGENTS 7.1): habría que declararlo.
+## 2. What the sandbox does not cover
 
-## 3. Las salidas que hay que cerrar
+* **The file tools** (`Read`, `Edit`, `Write`): they follow the permission rules, not the sandbox. The kit's gates
+  cover them (receipt, literal quote, primitives in the gate).
+* **The hooks and the MCP servers:** they run outside, with all of the user's access. They are the kit's code,
+  governed.
+* **The commands the person types** with `!`: outside the sandbox. It is the person.
+* **Reading:** by default almost the whole machine can be read, credentials included, unless `denyRead` or
+  `credentials` is configured.
+* **Native Windows and OpenCode:** there is no sandbox. The perimeters of `.claude/settings.json` and of
+  `opencode.jsonc` would stop being the same (AGENTS 7.1), which has to be declared.
 
-* **El reintento sin sandbox** (`dangerouslyDisableSandbox`): Claude puede pedir repetir una orden
-  fuera. Se cierra con `allowUnsandboxedCommands: false`.
-* **El arranque sin sandbox:** si falta una dependencia o la plataforma no lo admite, Claude Code
-  ejecuta las órdenes sin sandbox, sin avisar. Se cierra con `failIfUnavailable: true`.
-* **La aprobación automática:** con el sandbox activo, las órdenes de `Bash` se aprueban solas por
-  defecto (`autoAllowBashIfSandboxed`), lo que cambiaría el perímetro actual (toda orden que no sea de
-  solo lectura se pregunta). Se mantiene con `autoAllowBashIfSandboxed: false`, que un repositorio sí
-  puede fijar.
-* **`excludedCommands`:** cada patrón saca órdenes del sandbox. El kit no debe traer ninguno.
-* **Dónde vale cada clave:** la documentación dice que un `false` de `allowUnsandboxedCommands` en los
-  ajustes del usuario, en `--settings` o en los gestionados se mantiene aunque el proyecto ponga `true`,
-  y que solo esos tres orígenes hacen el sandbox «admin-required». No deja claro si un `false` puesto
-  solo en `.claude/settings.json` basta. Hay que probarlo (§7, S4).
+## 3. The ways out to close
 
-## 4. Qué cambiaría en el kit
+* **The retry without the sandbox** (`dangerouslyDisableSandbox`): Claude can ask to repeat a command outside. Closed
+  with `allowUnsandboxedCommands: false`.
+* **Starting without the sandbox:** if a dependency is missing or the platform does not support it, Claude Code runs
+  commands without the sandbox, without warning. Closed with `failIfUnavailable: true`.
+* **Automatic approval:** with the sandbox on, `Bash` commands are approved on their own by default
+  (`autoAllowBashIfSandboxed`), which would change the permission perimeter. Kept with
+  `autoAllowBashIfSandboxed: false`, which a repository can set.
+* **`excludedCommands`:** each pattern takes commands out of the sandbox. The kit must not bring any.
+* **Where each key holds:** the documentation says that a `false` for `allowUnsandboxedCommands` in the user's
+  settings, in `--settings` or in the managed settings holds even if the project sets `true`. It does not say whether a
+  `false` in `.claude/settings.json` alone is enough; that is tested (§7, S4).
 
-* **Configuración propuesta** en `.claude/settings.json`, en resumen (la versión exacta, con las rutas
-  en la forma `./` que fija la referencia, está en §6):
+## 4. What would change in the kit
 
-  ```json
-  "sandbox": {
-    "enabled": true,
-    "failIfUnavailable": true,
-    "allowUnsandboxedCommands": false,
-    "autoAllowBashIfSandboxed": false,
-    "filesystem": {
-      "denyWrite": ["AGENTS.md", "CLAUDE.md", "tests", "tools", "opencode.jsonc", "pyproject.toml",
-                    ".actuarii.json", ".data/boundary_validator_audit.db"]
-    }
-  }
-  ```
+* **The `sandbox` key** in `.claude/settings.json` (§6), with a `denyWrite` that repeats the governed paths of
+  `.actuarii.json`: either the installer generates it, or a test checks that the two match.
+* **Two declared limits close,** if the tests confirm it: writes to governed paths through `Bash`, and, in part,
+  forged logs. With the validator's database in `denyWrite`, `Bash` can no longer write receipts. The rest of `.data/`
+  cannot be denied, because the agent runs from `Bash` the scripts that write the context log and the review lock;
+  those stay forgeable, and it is declared.
+* **The shell heuristics become warnings:** with the network and the governed writes cut by the system, a way around
+  the shim no longer reaches anything that matters. The `Bash` hook and the list of primitives stay as early
+  warnings; the boundary is the sandbox.
+* **The cost for daily work:** `git switch`, `git merge`, `git restore` and `git checkout` write in governed paths, so
+  they fail inside the sandbox. Either the person runs them (`!`), or an `excludedCommands` pattern sends them out of
+  the sandbox to the usual permission flow. The author decides (§9).
+* **A path the sandbox does not close:** git writes only to `.git/objects` and to the index when it creates commits.
+  With `git hash-object -w`, `git update-index` and `git commit`, an agent can put content for a governed path into
+  the history without writing the file, and a later `git merge` or `git checkout` by the person brings it into the
+  tree. It is declared.
+* **The blind review does not change** (author, 2026-10-07): the sandbox's `denyRead` affects only `Bash`, and the
+  blind reviewer has only `Read`, `Grep` and `Glob`, which the kit's hook confines.
 
-* **Cierra dos límites declarados** (AGENTS §9), si las pruebas lo confirman:
-  * «Writes through `Bash`»: las rutas gobernadas dejan de poder escribirse desde `Bash`.
-  * «Forged logs», en parte: con la base del validador en `denyWrite`, `Bash` ya no puede escribir
-    recibos. El servidor MCP, que corre fuera del sandbox, sigue escribiendo. No se puede negar `.data`
-    entero: el agente ejecuta desde `Bash` `context_pack.py`, que anota en `.data/context_pack.log` los
-    recibos de contexto, y `build_review_package.py`, que pone y quita `.data/review_lock.json`. Esos
-    dos siguen siendo falsificables, y se declara.
-* **Una sola fuente de verdad:** `denyWrite` repite `governed_paths` de `.actuarii.json`. O el
-  instalador la genera, o un test comprueba que coinciden. Las dos cosas son baratas.
-* **F5 probablemente sobra.** El hook de `Bash` contra los rodeos del shim es una heurística sobre el
-  texto. Con la red y las escrituras gobernadas cortadas por el sistema, un rodeo del shim ya no da
-  acceso a nada que importe. F5 se reduce a declarar la heurística. Lo mismo con la lista de primitivas:
-  sigue como aviso temprano, y la frontera es el sandbox.
-* **El coste para el trabajo diario:** `git switch`, `git merge`, `git restore` y `git checkout` escriben
-  en `tools/` y `tests/`, así que fallarían dentro del sandbox. Las opciones son que esas órdenes las
-  haga la persona (`!`) o un patrón en `excludedCommands`, que las saca del sandbox y las manda al flujo
-  de permisos normal (con pregunta). Lo primero es más estricto; lo segundo, más cómodo. Decide el
-  autor.
-* **Un camino que el sandbox no cierra:** git escribe solo en `.git/objects` y en el índice al crear
-  commits. Con `git hash-object -w`, `git update-index` y `git commit`, un agente puede meter en la
-  historia un contenido de una ruta gobernada sin escribir el fichero, y un `git merge` o `git checkout`
-  posterior (hecho por la persona) lo trae al árbol. Es lo que cubriría el verificador en el commit
-  (F4c, v0.2). Se declara.
+## 5. What the settings reference fixes (code.claude.com/docs/en/settings-reference, 2026-10-07)
 
-* **La revisión ciega no cambia (autor, 2026-10-07).** `denyRead` del sandbox solo afecta a `Bash`, y
-  el revisor ciego solo tiene `Read`, `Grep` y `Glob`, que confina `confine_review_reads.py`. Las reglas
-  `Read(...)` de permisos sí alcanzan a esas herramientas, pero son fijas y de toda la sesión: cegarían
-  también al agente que ejecuta, y F1 impide cambiarlas a mitad de sesión. **Idea para la v0.2:** si un
-  revisor necesita `Bash` (por ejemplo, para ejecutar el instrumento que revisa), se lanza como otro
-  proceso, `claude --settings '…'` en el directorio del paquete, con el sandbox activo y `denyRead`
-  sobre todo lo que queda fuera del paquete. Hoy no responde a un fallo real.
+* **Paths:** in the project's settings, `./path` or a path without a prefix resolves from the project's root; `/path`
+  is absolute.
+* **Scope:** `enabled`, `failIfUnavailable`, `allowUnsandboxedCommands`, `autoAllowBashIfSandboxed` and
+  `filesystem.denyWrite` can be set in the project's `.claude/settings.json`.
+* **Precedence:** `.claude/settings.local.json` is above `.claude/settings.json`, so a local file could turn the
+  sandbox off. Not during the session: the `ConfigChange` hook blocks changes of settings, the sandbox protects
+  `.claude/` from `Bash`, and `.claude/**` is governed for `Edit` and `Write`. Before the session opens, it could (A10,
+  declared).
+* **The reinforcement the project cannot give:** an `allowUnsandboxedCommands: false` in `~/.claude/settings.json`
+  holds even if the project or the local file sets `true` (since 2.1.285). It is a change to the user's own
+  configuration, made by the person.
+* **Lists add up:** `denyWrite` combines across files.
 
-## 5. Lo que fija la referencia de ajustes (code.claude.com/docs/en/settings-reference, 2026-10-07)
+**Note (2026-10-20):** the draft said the README would recommend that reinforcement. It is `INSTALL.md` that
+recommends it, and the installer warns when it is missing.
 
-* **Rutas:** en los ajustes del proyecto, `./ruta` o una ruta sin prefijo se resuelven desde la raíz del
-  proyecto; `/ruta` es absoluta. Se escribe `./tests` y no `/tests`.
-* **Ámbito:** `enabled`, `failIfUnavailable`, `allowUnsandboxedCommands`, `autoAllowBashIfSandboxed` y
-  `filesystem.denyWrite` se pueden poner en el `.claude/settings.json` del proyecto. Las tres primeras
-  tienen «límites en los ajustes del proyecto y locales».
-* **Precedencia:** `.claude/settings.local.json` va por encima de `.claude/settings.json`, así que un
-  fichero local podría poner `enabled: false` o `allowUnsandboxedCommands: true`. Durante la sesión no se
-  puede: F1 bloquea los cambios de ajustes, el sandbox protege `.claude/` de `Bash` y `.claude/**` está
-  gobernado para `Edit` y `Write`. Antes de abrirla, sí (A10, ya declarado).
-* **El refuerzo que el proyecto no puede dar:** un `allowUnsandboxedCommands: false` en
-  `~/.claude/settings.json` se mantiene aunque el proyecto o el fichero local pongan `true` (desde la
-  2.1.285; aquí hay 2.1.291). El README lo recomienda y el instalador avisa si falta. Es un cambio en la
-  configuración del usuario, fuera del repositorio: lo hace la persona.
-* **Las listas se suman:** `denyWrite` se combina entre ficheros. Las reglas `Edit(...)` de deny se
-  añaden a `denyWrite`, y las de allow, a `allowWrite`.
+## 6. The change proposed for `.claude/settings.json`
 
-## 6. Cambio propuesto en `.claude/settings.json` (sin aplicar)
-
-Se añade la clave `sandbox` al final del objeto raíz, después de `"enableAllProjectMcpServers": true`.
-El resto del fichero no cambia. El perímetro de permisos tampoco: `autoAllowBashIfSandboxed: false`
-mantiene la pregunta en cada orden de `Bash` que no está en `allow`.
+The `sandbox` key, added at the end of the root object. The permission perimeter does not change:
+`autoAllowBashIfSandboxed: false` keeps the question for every `Bash` command that is not in `allow`.
 
 ```json
-  "enableAllProjectMcpServers": true,
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": true,
@@ -146,98 +114,90 @@ mantiene la pregunta en cada orden de `Bash` que no está en `allow`.
   }
 ```
 
-**Cómo se aplica:** la edición pasa por la puerta (un recibo de `validate_proposal` con el `old_string`
-y el `new_string` exactos). F1 hace que no se aplique en la sesión en curso, así que después hay que
-abrir una sesión nueva y ejecutar §7 en ella. Si algo sale mal, se vuelve a la versión anterior con el
-mismo procedimiento, o la persona lo hace a mano.
+The edit goes through the gate, with its receipt, and applies from a new session. Afterwards, if §7 passes: a test
+that `denyWrite` covers every governed path of `.actuarii.json`, except `.claude/**` and `.mcp.json`, which the
+sandbox protects on its own; AGENTS §9 with the limits that close and those that remain; and the decision on
+`git switch` and `git merge`. Applied on 2026-10-07 (`546730b`).
 
-**Después, si §7 sale bien** (por contrato, test primero): un test que compruebe que `denyWrite` cubre
-cada entrada de `governed_paths` de `.actuarii.json` (salvo `.claude/**` y `.mcp.json`, que el sandbox
-protege solo); `AGENTS.md` §9 con los límites que se cierran y los que quedan; y la decisión sobre los
-`git switch` y `git merge`.
+**Note (2026-10-20):** the exemption of `.claude/**` and `.mcp.json` ended on 2026-10-14 (`92df87a`). Every governed
+path has its `denyWrite` entry, with no exemption, and the test checks it.
 
-## 7. Plan de prueba (se commitea antes de ejecutarlo)
+## 7. Test plan (committed before running it)
 
-Con la configuración del §6 en `.claude/settings.json` (pasa por la puerta y, por F1, se aplica al
-abrir una sesión nueva). Cada caso dice lo que se espera; lo que salga distinto se anota tal cual.
+With the configuration of §6 in `.claude/settings.json`, applied in a new session. Each case says what is expected;
+what comes out differently is noted as it is.
 
-| Caso | Orden (la lanza Claude, no la persona) | Se espera |
+| Case | Command (Claude runs it, not the person) | Expected |
 |---|---|---|
-| S1 red | `curl --noproxy '*' https://example.com` | falla: no resuelve el host |
-| S1b red | un script commiteado de `tools/` que abre un socket a un host no permitido | falla |
-| S2 escritura | `touch tests/zz_probe` y `touch tools/zz_probe` | `Operation not permitted` |
-| S2b escritura | `touch docs/zz_probe` | funciona (no gobernado); se borra después |
-| S3 rastro | escribir en `.data/boundary_validator_audit.db` (p. ej. `touch`) | `Operation not permitted`; `context_pack.py` sigue anotando su log |
-| S4 reintento | Claude pide repetir S2 con `dangerouslyDisableSandbox` | se ignora: sigue en el sandbox |
-| S5 aprobación | una orden que escribe en `docs/` | pregunta, como hoy |
-| S6 kit | los hooks (Edit gobernado sin recibo), el servidor MCP y el anuncio de sesión | funcionan como hoy |
-| S7 suite | `pytest tests` dentro del sandbox | verde, mismo número de tests |
-| S8 git | `git commit` en una rama; `git switch` a otra que cambia `tools/` | el commit funciona; el `switch` falla |
-| S9 sin sandbox | (no se puede provocar en macOS sin tocar el sistema) | se deja como declarado |
+| S1 network | `curl --noproxy '*' https://example.com` | Fails: the host does not resolve |
+| S1b network | A committed script of `tools/` that opens a socket to a host that is not allowed | Fails |
+| S2 write | `touch tests/zz_probe` and `touch tools/zz_probe` | `Operation not permitted` |
+| S2b write | `touch docs/zz_probe` | Works (not governed); removed afterwards |
+| S3 audit trail | Write to `.data/boundary_validator_audit.db` (for example, `touch`) | `Operation not permitted`; `context_pack.py` still writes its log |
+| S4 retry | Claude asks to repeat S2 with `dangerouslyDisableSandbox` | Ignored: still in the sandbox |
+| S5 approval | A command that writes in `docs/` | Asks, as today |
+| S6 kit | The hooks (a governed `Edit` without a receipt), the MCP server and the session announcement | Work as today |
+| S7 suite | `pytest tests` inside the sandbox | Green, with the same number of tests |
+| S8 git | `git commit` on a branch; `git switch` to another that changes `tools/` | The commit works; the `switch` fails |
+| S9 no sandbox | (cannot be provoked on macOS without touching the system) | Left as declared |
 
-**Regla de decisión:** si S1, S2, S3 y S4 salen como se espera, la v0.1 se apoya en el sandbox para la
-red, los procesos y las escrituras por `Bash`, y F5 queda en declarar la heurística. Si S4 falla solo
-con los ajustes del proyecto, el README pide al usuario poner `allowUnsandboxedCommands: false` en sus
-ajustes de usuario, y el instalador lo comprueba. Si S1 o S2 fallan, se declara y va a la v0.2.
+**Decision rule:** if S1, S2, S3 and S4 come out as expected, v0.1 relies on the sandbox for the network, the
+processes and the writes through `Bash`, and the shell heuristics are declared. If S4 fails with the project's
+settings alone, the user is asked to set `allowUnsandboxedCommands: false` in their own settings, and the installer
+checks it. If S1 or S2 fails, it is declared and goes to v0.2.
 
-## 8. Resultados (2026-10-07, sesión nueva con el §6 en el árbol de trabajo, sin commitear)
+## 8. Results (2026-10-07, a new session with §6 in the working tree, not committed)
 
-Claude Code 2.1.291, macOS. Cada orden la lanzó Claude desde `Bash`, dentro del sandbox.
+Claude Code 2.1.291, macOS. Claude ran each command from `Bash`, inside the sandbox.
 
-| Caso | Resultado | ¿Como se esperaba? |
+| Case | Result | As expected? |
 |---|---|---|
-| S1 red | `curl --noproxy '*' https://example.com`: `Could not resolve host` (salida 6) | sí |
-| S1b red | sustituido (no hay un script commiteado que abra un socket): `nc -z example.com 443` no resuelve el nombre, y `nc -z 1.1.1.1 443`, TCP directo a una IP, falla (salida 1) | sí |
-| S2 escritura | `touch` en `tests/`, `tools/`, `AGENTS.md` y `.actuarii.json`: `Operation not permitted` | sí |
-| S2b escritura | `touch docs/zz_probe`: funciona; se movió al temporal del sandbox | sí |
-| S3 rastro | `touch .data/boundary_validator_audit.db`: `Operation not permitted`. `context_pack.py` sigue anotando su log (313 → 314 líneas) | sí |
-| S4 reintento | `touch tests/zz_probe` con `dangerouslyDisableSandbox: true`: `Operation not permitted`; el parámetro se ignora con los ajustes del proyecto solos | sí |
-| S5 aprobación | en modo automático, `touch docs/zz_probe` pidió permiso al autor (lo confirmó y rechazó la segunda vez): la regla `ask` de `Bash` a secas sigue en vigor porque `autoAllowBashIfSandboxed` es `false` | sí |
-| S6 kit | `Write` en `tests/` sin recibo: denegado por la puerta, nombrando su regla. El servidor MCP, fuera del sandbox, sigue emitiendo recibos | sí |
-| S7 suite | 2716 en verde y 1 fallo, el mismo que fuera del sandbox: `test_registration_changes_nothing_else_in_settings` fija las claves de `settings.json` y no conoce `sandbox` | sí (el fallo es del cambio, no del sandbox) |
-| S8 git | rama y commit vacío: funcionan. `git checkout 76db044 -- tools/boundary_validator/validator.py`: `unable to unlink old … Operation not permitted` | sí, con un hallazgo |
-| S9 sin sandbox | no se provocó | declarado |
+| S1 network | `curl --noproxy '*' https://example.com`: `Could not resolve host` (exit 6) | Yes |
+| S1b network | Replaced, since no committed script opens a socket: `nc -z example.com 443` does not resolve the name, and `nc -z 1.1.1.1 443`, direct TCP to an IP, fails (exit 1) | Yes |
+| S2 write | `touch` in `tests/`, `tools/`, `AGENTS.md` and `.actuarii.json`: `Operation not permitted` | Yes |
+| S2b write | `touch docs/zz_probe`: works; moved to the sandbox's temporary directory | Yes |
+| S3 audit trail | `touch .data/boundary_validator_audit.db`: `Operation not permitted`. `context_pack.py` still writes its log (313 → 314 lines) | Yes |
+| S4 retry | `touch tests/zz_probe` with `dangerouslyDisableSandbox: true`: `Operation not permitted`; the parameter is ignored with the project's settings alone | Yes |
+| S5 approval | In auto mode, `touch docs/zz_probe` asked the author for permission: the bare `Bash` rule in `ask` still applies, because `autoAllowBashIfSandboxed` is `false` | Yes |
+| S6 kit | `Write` in `tests/` without a receipt: denied by the gate, naming its rule. The MCP server, outside the sandbox, still issues receipts | Yes |
+| S7 suite | 2716 green and 1 failure, the same as outside the sandbox: a test pins the keys of `settings.json` and does not know `sandbox` | Yes (the failure is the change's, not the sandbox's) |
+| S8 git | A branch and an empty commit work. `git checkout 76db044 -- tools/boundary_validator/validator.py`: `unable to unlink old … Operation not permitted` | Yes, with a finding |
+| S9 no sandbox | Not provoked | Declared |
 
-**Hallazgo de S8, no previsto:** el `git checkout <commit> -- <ruta>` que falló **ya había escrito el
-índice**. El fichero en disco seguía igual que `HEAD`, pero la versión antigua quedó preparada (`MM` en
-`git status`), y el siguiente `git commit` la habría guardado sin pasar por la puerta. Se deshizo con
-`git restore --staged`, que solo escribe en `.git`. Es un caso concreto del camino ya declarado en §4:
-el índice y `.git/objects` quedan fuera del sandbox y de la puerta. La persona aprueba el `git commit`
-(está en `ask`), pero el mensaje del commit no le enseña lo que hay en el índice. Lo cerraría el
-verificador en el commit (F4c, v0.2); hasta entonces, se declara y el README recomienda mirar
-`git diff --cached` antes de aprobar un commit.
+**Note (2026-10-20):** ADR-022 removed the bare `"Bash"` from `ask` on 2026-10-15, the rule S5 mentions. Since then,
+what asks for a `Bash` command outside the allowed list is the `default` permission mode.
 
-**Otro efecto:** `.git/config` está protegido, así que las órdenes de git que escriben configuración
-(`git branch -D` al limpiar la sección de la rama, `git remote`, `git config`) avisan o fallan dentro
-del sandbox. `git branch -D` borró la rama igualmente.
+**The finding of S8, not foreseen:** the `git checkout <commit> -- <path>` that failed **had already written the
+index**. The file on disk was still the same as at `HEAD`, but the old version was staged, and the next `git commit`
+would have stored it without going through the gate. It was undone with `git restore --staged`, which only writes in
+`.git`. It is a concrete case of the path declared in §4: the index and `.git/objects` stay outside the sandbox and
+the gate. The person approves the `git commit`, but the commit message does not show what is in the index.
 
-**Decisión según la regla:** S1, S2, S3 y S4 salen como se esperaba, así que la v0.1 se apoya en el
-sandbox para la red, los procesos y las escrituras por `Bash`, y F5 queda en declarar la heurística.
-`allowUnsandboxedCommands: false` basta en los ajustes del proyecto (S4); el refuerzo en los ajustes
-del usuario sigue siendo recomendable, por el fichero local (§5).
+**Another effect:** `.git/config` is protected, so the git commands that write configuration (`git branch -D` when it
+cleans the branch's section, `git remote`, `git config`) warn or fail inside the sandbox. `git branch -D` deleted the
+branch anyway.
 
-## 9. Decisiones del autor (2026-10-07)
+**Decision, by the rule:** S1, S2, S3 and S4 come out as expected, so v0.1 relies on the sandbox for the network, the
+processes and the writes through `Bash`, and the shell heuristics are declared. `allowUnsandboxedCommands: false` is
+enough in the project's settings (S4); the reinforcement in the user's settings is still advisable, because of the
+local file (§5).
 
-* **`git switch`, `git merge` y demás órdenes que escriben rutas gobernadas:** opción (a), las hace la
-  persona con `!`, fuera del sandbox. Ningún `excludedCommands`. Fusionar es el momento en que una
-  persona debe mirar.
-* **Integridad del commit, en la v0.1:** un hook de git `pre-commit` comprueba que cada ruta gobernada
-  del índice coincide con el fichero en disco (blob y modo). Con el sandbox, el disco de una ruta
-  gobernada solo lo escriben la puerta o la persona, así que lo que se commitea pasó por una de las dos.
-  Cierra el hallazgo de S8 y el truco de `git hash-object` + `git update-index`. Vive en `.git/hooks`,
-  que el sandbox protege; lo instala la persona. Se declaran `--no-verify` y las órdenes internas de
-  git (`commit-tree`, `update-ref`), que se saltan los hooks y que el perímetro ya pregunta.
-* **Formato del mensaje** (prefijo de una lista cerrada, tipo frente a rutas, plantilla, sin
-  atribución): a la v0.2.
-* **S5:** confirmado por el autor: en modo automático también pregunta.
-* **Integridad del commit, hecha (2026-10-07, `6828cac` y `19b2896`):** `tools/git/commit_integrity.py`,
-  lanzado por `tools/git/pre-commit`, que la persona copia a `.git/hooks/pre-commit` y hace ejecutable.
-  Rechaza el commit si una ruta gobernada del índice no coincide con el disco (contenido con los filtros
-  de git, y modo), y si cualquier ruta del índice se escribe distinto que en el disco: en revisión se vio
-  que `TESTS/x.py` con un contenido falso pasaba junto a `tests/x.py`, porque la regla `tests/**` casa
-  por grafía. El anuncio de la sesión dice si el sandbox está activo y si el hook está instalado.
-  **Límites que se declaran:** `git commit --no-verify` y las órdenes internas de git (`commit-tree`,
-  `update-ref`) se saltan los hooks, y `git merge` no ejecuta `pre-commit`; la persona aprueba todas
-  esas órdenes. Con `core.fileMode false` la comprobación del modo puede rechazar commits legítimos. Un
-  nombre guardado en disco en otra forma Unicode que la del índice se rechaza. Un fichero gobernado se
-  commitea entero (`git add -p` se rechaza).
+## 9. Decisions of the author (2026-10-07)
+
+* **`git switch`, `git merge` and the other commands that write governed paths:** the person runs them with `!`,
+  outside the sandbox. No `excludedCommands`. Merging is the moment a person should look.
+* **Commit integrity, in v0.1:** a git `pre-commit` hook checks that every governed path in the index matches the file
+  on disk (blob and mode). With the sandbox, the disk of a governed path is written only by the gate or by the person,
+  so what is committed went through one of the two. It closes the finding of S8 and the trick of `git hash-object`
+  with `git update-index`.
+* **The format of the commit message:** to v0.2.
+* **S5:** confirmed by the author: in auto mode it asks too.
+* **Commit integrity, done (2026-10-07, `6828cac` and `19b2896`):** `tools/git/commit_integrity.py`, run by
+  `tools/git/pre-commit`, installed as `.git/hooks/pre-commit`. It refuses a commit when a governed path in the index
+  differs from the disk (the content, with git's filters, and the mode), and when any path in the index is spelled
+  otherwise than on disk: in review, `TESTS/x.py` with false content was seen to pass next to `tests/x.py`, because
+  the rule `tests/**` matches by spelling. The session announcement says whether the sandbox is on and whether the
+  hook is installed. **Declared limits:** `git commit --no-verify` and git's internal commands (`commit-tree`,
+  `update-ref`) skip the hooks, and `git merge` does not run the `pre-commit`; the person approves all those commands.
+  With `core.fileMode` off, the check of the mode can refuse a valid commit. A name stored on disk in another Unicode
+  form than in the index is refused. A governed file is committed whole.
