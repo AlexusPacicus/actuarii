@@ -1,4 +1,4 @@
-"""The CI workflow of phase 2, read as text: no YAML library, so no new dependency."""
+"""The CI workflow, read as text: no YAML library, so no new dependency."""
 import re
 import tomllib
 from pathlib import Path

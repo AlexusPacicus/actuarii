@@ -3,10 +3,7 @@ This file verifies MUST/MUST NOT requirements from the SPEC (RFC 2119).
 Dual Boundary Pattern (SEC-M-08..12): canonical path containment (`..`
 traversal / symlinks resolved), `\x00` sanitization, expanded network-token
 denylist, UTF-8 binary subsequence grounding over `read_bytes()`, and silent
-denial (no target path / OS details leaked). RED phase: every test asserts
-the NEW behavior that the current validator does NOT yet implement; the
-validator (`tools/boundary_validator/validator.py`) is intentionally untouched here
-and will be refactored in Phase 4.
+denial (no target path / OS details leaked).
 Normative: the proposal schema, SEC-M-08..12
 Coverage: SEC-M-08, SEC-M-09, SEC-M-10, SEC-M-11, SEC-M-12"""
 import json

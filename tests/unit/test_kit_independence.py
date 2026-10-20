@@ -65,3 +65,11 @@ def test_no_tools_or_tests_file_uses_the_old_name_of_the_proposal_fields():
 def test_no_module_docstring_of_tools_or_tests_says_by_construction():
     docstrings = {p: (ast.get_docstring(ast.parse(_text(p))) or "").lower() for p in MODULES}
     assert [str(p.relative_to(ROOT)) for p, doc in docstrings.items() if "by construction" in doc] == []
+
+
+NUMBERED_PHASE = re.compile(r"\b(phase|fase) \d", re.IGNORECASE)
+
+
+def test_no_module_docstring_of_tools_or_tests_names_a_numbered_phase():
+    docstrings = {p: ast.get_docstring(ast.parse(_text(p))) or "" for p in MODULES}
+    assert [str(p.relative_to(ROOT)) for p, doc in docstrings.items() if NUMBERED_PHASE.search(doc)] == []

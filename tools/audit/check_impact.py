@@ -1,4 +1,4 @@
-"""Active impact scanner for refactorings (OSS Readiness Fase 0).
+"""Active impact scanner for refactorings.
 
 Before moving a file, run:
 
