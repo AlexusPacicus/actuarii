@@ -15,6 +15,28 @@ the PLAN.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-20 (afternoon, the README read in full)
+
+V6's full reading of the README is done, with the author, section by section.
+
+**Done**
+* **V6's check:** each of the 24 tests the README names exists, is in the file it links, and passes (89 cases with
+  their parameters). Each claim of what the kit enforces names its test.
+* **The sections:** all of them stand as they are, but for two additions the author decided:
+  * "What comes next" says that the order of v0.2 is not fixed, that the answers that would change it are written in
+    ROADMAP §3, and asks readers to say so in an issue;
+  * a new section, "How it differs", names Agent Receipts (R2): it signs a receipt for every tool call after it runs,
+    with a key held outside the agent; Actuarii decides before the write, records the reason, and says at each commit
+    whether the governed files match. It promises no format for v0.2, since R3 is not decided.
+* **Left for the rewrite:** the hashes the README cites (`ba6a120`, `f42cd45`) change with it; the commit that redoes
+  the citations covers them.
+
+**Decided (author)**
+* **The two additions** above.
+
+**Next**
+* **V7,** nothing published contradicts the kit, on the shortened tree; then V9, the text for HN and Reddit.
+
 ## 2026-10-20 (afternoon, the V8 check)
 
 The first half of V8 is checked: the history of `main` against the personal terms the author set. The list is not

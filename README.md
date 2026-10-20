@@ -292,6 +292,9 @@ environment of its own, with the gates and a write broker outside it, so that th
 vendor's hooks and is designed to hold against an adversarial agent
 ([`ISOLATED_ENVIRONMENT.md`](docs/design/ISOLATED_ENVIRONMENT.md)).
 
+That order is not fixed: the answers that would change it are written down in advance, in
+[ROADMAP §3](docs/ROADMAP.md#3-the-signal-window). If one of them is yours, say so in an issue.
+
 ## A real case
 
 This is one piece of real work in another project, done with v0.1 as published. The case was planned before it was
@@ -338,6 +341,14 @@ how tests run, too. The fix followed the same steps:
 * a check in code that the new tests failed before the change and pass after it;
 * a commit whose record says `matches` for each of its four files
   ([`f42cd45`](https://github.com/AlexusPacicus/actuarii/commit/f42cd45)).
+
+## How it differs
+
+Other tools record what agents do. [Agent Receipts](https://agentreceipts.ai) signs a receipt for every tool call
+after it runs, with a key held outside the agent. Actuarii works earlier and on less: a write to a governed path
+happens only if a receipt for that exact change exists, the agent's reason is recorded with it, and each commit says
+whether its governed files match what was recorded. Its records are not signed yet (problem 7); that is where v0.2
+starts.
 
 ## Where it comes from
 

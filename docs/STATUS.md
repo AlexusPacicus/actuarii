@@ -102,7 +102,8 @@ Updated: 2026-10-20, morning.
 
      The web only through the integrated browser, with the author's approval of each site; nothing is probed or
      installed in Actuarii.
-  2. **A full reading of the README** before Thursday 22 (V6).
+  2. **The full reading of the README (V6):** done on 2026-10-20 (DEVLOG). Each of its 24 named tests exists, is in
+     the file it links and passes; "What comes next" points to ROADMAP §3, and "How it differs" names Agent Receipts.
   3. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9),
      which asks the question of ADR-034. The description of `pyproject.toml` still uses the old sentence. Four test
      docstrings still say "5 Radicals", and one of them is in Spanish (`tests/security/test_security.py`): a
