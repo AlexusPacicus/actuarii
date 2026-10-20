@@ -162,6 +162,26 @@ data, without reframing. The four weeks are counted from the text for HN and Red
   context. Of a private conversation, only its existence is noted, without names: the DEVLOG is public.
 * **Until when:** what arrives up to Tuesday 24 November at 23:59, Madrid time (ADR-027).
 
+**What would change the plan of v0.2 (author, 2026-10-20, written before the opening).** The answers from outside
+are counted as the signal is, but apart from it: they do not change whether the signal is met, only the order of v0.2
+if it starts (§5).
+* **An answer counts for a line** only if it says so in its own words, with its link. Claude proposes the line; the
+  author decides.
+* **A line changes the plan** when at least two outside people say it independently, or when a working conversation
+  sets it as its condition.
+* **The lines that reach it** are applied in the order of their count; a tie is decided by the author, with the data.
+* **Nothing else changes the plan:** other requests go to issues and to the cut of scope of 24 November.
+* **Where it is noted:** each Sunday's line in the DEVLOG also says which answer counted for which line.
+
+| Line | What people say | What changes in v0.2 |
+|---|---|---|
+| C1 | The cost of using it stops them: the time per governed write, or the questions it asks | The cost design of `docs/design/COST.md` §5 goes first, before the person in the loop, which adds questions of its own |
+| C2 | They do not use Claude Code, or would use the kit with another tool | The adapter for the tool asked for most goes first (E8 of `docs/design/ISOLATED_ENVIRONMENT.md`), and the person in the loop is designed for both |
+| C3 | Approving each write is too fine; they would approve at the commit or at the pull request | The person in the loop approves the record of the commit, not each receipt |
+| C4 | They would use it only as a security boundary against the agent | The isolated environment goes before the person in the loop and the signed records |
+| C5 | An existing tool or format already does part of it: records, signatures or sandboxed agents | That part is adopted or made compatible, not built; the comparison of formats made before the opening is checked against what they name |
+| C6 | Installing it stops them: copying the kit into the repository, Python and `pydantic`, choosing the paths | The distribution of decision 6 of `docs/design/ISOLATED_ENVIRONMENT.md` §10, a package outside the repository with one command to start, goes first |
+
 ## 4. The gate of 24 November
 
 The count of §3 is looked at, with its evidence, and nothing else.
@@ -197,7 +217,7 @@ outside. Its motivation is the one v0.1 set aside: that using agents safely need
 
 **Order:** first the person in the loop and the signed records, each with its research and its decisions taken
 before any code (ADR-034); then the phases v0.2-a to v0.2-e of `ISOLATED_ENVIRONMENT.md` §9, with the decisions of
-its §10 taken before the prototype.
+its §10 taken before the prototype. Only the list of §3 can change this order.
 
 **Date and scope:** the date is set on 24 November, with the rule of v0.1: it does not move; the scope is cut. Of
 the ideas noted for v0.2 (the PLAN's "Ideas for v0.2", in the history at `caa9541`, and the DEVLOG since), only what a

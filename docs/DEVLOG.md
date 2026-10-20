@@ -15,6 +15,34 @@ the PLAN.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-20 (midday, the research of v0.2 and R0)
+
+The review reaches the ROADMAP, where the author stops to research v0.2 (ADR-033). The research is planned, and its
+first piece, R0, is committed.
+
+**Done**
+* **The plan of the research,** with a time box that leaves Thursday 22 for the reading of the README:
+  * R0, which answers from outside would change the plan of v0.2: today;
+  * R1, what Claude Code can show and report about a person's approval, from its documentation, and R2, which
+    existing format covers signed records: by Wednesday 21 at night;
+  * R3 to R5: after the 25th, in the window.
+
+  Findings go in the DEVLOG entry of the day, with their source, their date and whether they are documented, probed
+  or inferred; decisions go in the register; no new document before the 25th.
+* **R0, in ROADMAP §3:** six lines, each with what people would say and what it changes in v0.2 (the cost first,
+  another tool first, approval at the commit, the environment first, adopting what exists, the distribution first).
+  A line changes the plan at two outside people, or one working conversation that sets it as its condition. §5 says
+  that only that list can change the order of v0.2.
+* **ADR-040,** because the ROADMAP and the status ask that a decision of the author on the ROADMAP go to the register
+  with its reason. It points to §3 and does not repeat the list.
+
+**Decided (author)**
+* **The plan of the research:** R0 to R2 before the 25th, R3 to R5 after it.
+* **R0 in ROADMAP §3,** with the threshold of two outside people (ADR-040).
+
+**Next**
+* **R1 and R2,** by Wednesday 21 at night, through the integrated browser with the author's approval of each site.
+
 ## 2026-10-20 (morning, the records)
 
 The records ADR-033 proposed to take out of the tree are selected with the author: every document of `docs/` but the

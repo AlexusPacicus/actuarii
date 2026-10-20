@@ -464,3 +464,16 @@ comes from.
 **Consequences:** the README stays as it was committed in `9466452`. The third condition of ADR-036 is closed.
 **Supersedes:** —
 **Source:** `docs/DEVLOG.md`, 2026-10-19.
+
+## ADR-040 — What would change the plan of v0.2, written before the opening (2026-10-20, author)
+
+**Context:** ADR-033 stops the review at the ROADMAP to research v0.2. One of the questions Claude brought was which
+answers from outside would change the plan of v0.2. Written after the answers arrive, it would be a reframing; written
+before the opening, it is a commitment, like the signal (ADR-005).
+**Decision:** the list of six lines in ROADMAP §3, with its rule. An answer counts for a line only in its own words; a
+line changes the plan when two outside people say it independently, or a working conversation sets it as its
+condition; the lines that reach it apply in the order of their count. Only that list can change the order of §5.
+**Consequences:** §3 and §5 of the ROADMAP change. The answers change neither how the signal is counted nor the gate
+(§4). The Sunday lines of the DEVLOG also say which answer counted for which line.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-20.

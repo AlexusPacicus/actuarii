@@ -86,13 +86,19 @@ Updated: 2026-10-20, morning.
 
   Suite green (3705). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
-  1. **The shortened tree (ADR-033, with ADR-032 and ADR-035):** done for every document but `ROADMAP.md`, which is
-     already translated. When the review reaches it, the author stops to work on v0.2. Questions Claude brought for
-     that research:
-     * a person in the loop and records that cannot be forged: they open v0.2, before the own environment, and
-       neither goes into v0.1 (ADR-034, which lists their questions);
-     * an own environment: what do existing sandboxes already cover, and what would set this one apart?
-     * the signal window: which answers from outside would change the plan of v0.2, written before the opening.
+  1. **The research of v0.2, at the ROADMAP (ADR-033):** the review of every other document is done. The plan
+     (author, 2026-10-20), with findings in the DEVLOG entry of the day and decisions in the register:
+     * R0, which answers from outside would change the plan of v0.2: done, in ROADMAP §3 (ADR-040);
+     * R1, whether Claude Code can show the reason before the write and report for certain whether the person
+       approved (the `PermissionRequest` hook and the `ask` decision of `PreToolUse`, in each permission mode): from
+       the documentation, by Wednesday 21 at night; the live probe after the 25th;
+     * R2, which existing format covers signed records (in-toto, SLSA provenance, Sigstore and `gitsign`, signed
+       commits, Agent Receipts): by Wednesday 21 at night;
+     * after the 25th, in the window: R3, whether approving and signing can be one act; R4, how it fits decision 3 of
+       `ISOLATED_ENVIRONMENT.md` §10; R5, what existing sandboxes already cover (its §7).
+
+     The web only through the integrated browser, with the author's approval of each site; nothing is probed or
+     installed in Actuarii.
   2. **A full reading of the README** before Thursday 22 (V6).
   3. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9),
      which asks the question of ADR-034. The description of `pyproject.toml` still uses the old sentence. Four test
@@ -120,9 +126,9 @@ Updated: 2026-10-20, morning.
 
 ## Decisions in force
 
-Since the selection of 2026-10-19 (ADR-035), `docs/DECISIONS.md` keeps 22 of them and only grows; those that left
-are in the history at `04107e0`, and this list still counts them. In force today: ADR-001
-to ADR-039, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
+Since the selection of 2026-10-19 (ADR-035), `docs/DECISIONS.md` keeps the 22 that stayed and only grows; those that
+left are in the history at `04107e0`, and this list still counts them. In force today: ADR-001
+to ADR-040, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
 by ADR-033, its point on file names by ADR-035, and its point on the history, for one rewrite, by ADR-038.
 
 | ADR | Decision |
@@ -164,6 +170,7 @@ by ADR-033, its point on file names by ADR-035, and its point on the history, fo
 | 037 | The README links Traianus |
 | 038 | The author's professional plans leave the tree; a line that names a third party leaves the tree and the history |
 | 039 | The rewrite of ADR-038 goes to a new repository |
+| 040 | What would change the plan of v0.2, written before the opening |
 
 ## How we work
 
