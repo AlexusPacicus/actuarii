@@ -12,6 +12,16 @@ reconstruyeron el 7 a partir de `git log` y de `docs/PLAN.md`.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-20 (morning, the README's line on Spanish)
+
+**Done**
+* **The README's line on the language** says what is true today: the documents it links are in English; the
+  development log, some other records and most commit messages before 18 October are in Spanish.
+
+**Decided (author)**
+* **The wording that is exact today,** to be replaced when the review of ADR-033 ends by the one ADR-032 foresees:
+  the tree in English, and the history keeping the earlier records and commit messages in Spanish.
+
 ## 2026-10-20 (morning, SANDBOX.md condensed)
 
 `docs/design/SANDBOX.md` is condensed into English (ADR-033): 203 lines, from 243 in Spanish. With it, every document

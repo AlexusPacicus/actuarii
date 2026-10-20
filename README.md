@@ -10,8 +10,9 @@ paths you did not govern, leaves none. An agent can move its work there, and we 
 
 Actuarii v0.1 is not a security boundary against an adversarial agent. That is what v0.2 is for.
 
-It works with [Claude Code](https://claude.com/claude-code) on macOS and Linux. The design records and the
-development log are in Spanish; this README, the installation guide and the agent rules are in English.
+It works with [Claude Code](https://claude.com/claude-code) on macOS and Linux. The documents this README links
+are in English; the development log, some other records of the work and most commit messages before 18 October
+are in Spanish.
 
 ## Why the rules live outside the model
 
