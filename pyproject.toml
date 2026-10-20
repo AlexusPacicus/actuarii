@@ -1,7 +1,7 @@
 [project]
 name = "actuarii"
 version = "0.1.0"
-description = "Governance kit for coding agents: rules enforced in code, with receipts, for Claude Code."
+description = "Work records for coding agents: every action leaves a record that it happened, and why."
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Alexis Zapico Fernández" }]

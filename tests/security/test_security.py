@@ -1,5 +1,5 @@
 """
-Boundary-Validator gateway (Zero-Trust gate over 5-Radicals proposals).
+Boundary-Validator gateway (Zero-Trust gate over proposals).
 """
 import json
 from pathlib import Path
@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_boundary_validator_gate():
-    """Validación Zero-Trust de propuestas (5 Radicales)."""
+    """Zero-Trust validation of proposals."""
     valid_prop = json.dumps({
         "Intent_Class": "FIX",
         "Target_File": str(ROOT / "tools" / "boundary_validator" / "validator.py"),

@@ -233,7 +233,7 @@ def validate_proposal(proposal_json_str: str, target_file_path: str = "") -> dic
 
         grounding = proposal.get("Topological_Grounding", "")
 
-        # Strict 5-Radicals conformance (SEC-M-14..18): every radical is
+        # Strict conformance to the proposal schema (SEC-M-14..18): every field is
         # required; unknown enums and extra fields fail closed.
         try:
             model = AgentMutationProposal.model_validate(proposal)

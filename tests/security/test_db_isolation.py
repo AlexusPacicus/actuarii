@@ -61,7 +61,7 @@ def test_unknown_intent_class_cannot_skip_grounding():
 
 
 def test_extra_fields_rejected_strict_schema():
-    """extra="forbid": payloads outside the 5 Radicals are quarantined."""
+    """extra="forbid": payloads outside the proposal schema are quarantined."""
     from tools.boundary_validator.validator import validate_proposal
 
     decision = validate_proposal(json.dumps({

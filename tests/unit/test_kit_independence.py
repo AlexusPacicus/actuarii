@@ -52,3 +52,16 @@ def test_the_clause_pattern_matches_the_citation_forms():
     forms = [f"{name} 2.1", f"{name}.md 6.2", f"{name}.md §5", f"{name}.md SS6.2", f"{name}\n2.5", f"{name} 6"]
     assert [form for form in forms if CLAUSE_CITATION.search(form) is None] == []
     assert CLAUSE_CITATION.search(f"{name}.md, the constitution") is None
+
+
+OLD_NAME = "radi" + "cal"
+OLD_NAME_EXEMPT = ROOT / "tests" / "security" / "test_rationale.py"
+
+
+def test_no_tools_or_tests_file_uses_the_old_name_of_the_proposal_fields():
+    assert [str(p.relative_to(ROOT)) for p in MODULES if p != OLD_NAME_EXEMPT and OLD_NAME in _text(p).lower()] == []
+
+
+def test_no_module_docstring_of_tools_or_tests_says_by_construction():
+    docstrings = {p: (ast.get_docstring(ast.parse(_text(p))) or "").lower() for p in MODULES}
+    assert [str(p.relative_to(ROOT)) for p, doc in docstrings.items() if "by construction" in doc] == []

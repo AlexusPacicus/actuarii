@@ -28,7 +28,7 @@ def test_project_table_carries_the_v010_metadata():
     assert project["name"] == "actuarii"
     assert project["version"] == "0.1.0"
     assert project["description"] == (
-        "Governance kit for coding agents: rules enforced in code, with receipts, for Claude Code."
+        "Work records for coding agents: every action leaves a record that it happened, and why."
     )
     assert project["license"] == "Apache-2.0"
     assert project["license-files"] == ["LICENSE", "NOTICE"]

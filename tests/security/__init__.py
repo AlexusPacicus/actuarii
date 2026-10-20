@@ -1,1 +1,1 @@
-"""Paquete de tests de la compuerta de seguridad Zero-Trust (Fase 5)."""
+"""Tests of the Zero-Trust security gate."""

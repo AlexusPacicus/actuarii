@@ -16,8 +16,8 @@ from tools.boundary_validator.validator import handle_request, validate_proposal
 INTENTS = ["FIX", "REFACTOR", "TEST", "DOC", "SPEC", "AUDIT"]
 MUTATING = ["FIX", "REFACTOR", "AUDIT"]
 FREE = ["TEST", "DOC", "SPEC"]
-RADICALS = {"Intent_Class", "Target_File", "Topological_Grounding", "Implementation_Block", "Safety_Abort",
-            "Rationale"}
+FIELDS = {"Intent_Class", "Target_File", "Topological_Grounding", "Implementation_Block", "Safety_Abort",
+          "Rationale"}
 CONTENT = "alpha beta gamma\n"
 
 
@@ -204,8 +204,8 @@ def test_the_published_schema_declares_the_proposal_as_the_strict_object():
     proposal = schema["properties"]["proposal"]
     assert proposal["type"] == "object"
     assert proposal["additionalProperties"] is False
-    assert set(proposal["properties"]) == RADICALS
-    assert set(proposal["required"]) == RADICALS
+    assert set(proposal["properties"]) == FIELDS
+    assert set(proposal["required"]) == FIELDS
 
 
 def test_the_published_schema_requires_a_target_file_string():

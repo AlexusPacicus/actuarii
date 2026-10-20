@@ -7,7 +7,7 @@ denial (no target path / OS details leaked). RED phase: every test asserts
 the NEW behavior that the current validator does NOT yet implement; the
 validator (`tools/boundary_validator/validator.py`) is intentionally untouched here
 and will be refactored in Phase 4.
-Normative: the 5 Radicals, SEC-M-08..12
+Normative: the proposal schema, SEC-M-08..12
 Coverage: SEC-M-08, SEC-M-09, SEC-M-10, SEC-M-11, SEC-M-12"""
 import json
 import os

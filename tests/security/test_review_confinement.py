@@ -1,7 +1,8 @@
 """Review confinement hook (tools/hooks/confine_review_reads.py).
 
 While a review lock names a package directory, Read, Grep and Glob may only reach paths inside
-it; without a lock the hook is inert. Blindness then holds by construction, not by instruction.
+it; without a lock the hook is inert. The confinement is then enforced by code, not by instruction;
+what the harness gives the reviewer before any read is a declared limit.
 """
 
 import ast
