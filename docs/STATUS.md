@@ -9,7 +9,7 @@ The repository's documents are written in English from 2026-10-18 on (ADR-032); 
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
 Spanish.
 
-Updated: 2026-10-20, morning.
+Updated: 2026-10-20, late afternoon.
 
 ## v0.1
 
@@ -82,9 +82,12 @@ Updated: 2026-10-20, morning.
   * **the records (ADR-033):** the DEVLOG trimmed to its entries in English, from 2026-10-18 (evening); the PLAN, the
     two audit guidelines, `PROCESO.md`, `PRIOR_ART.md`, `ARRANQUE_PUERTAS.md`, `RECIBO_CONTENIDO.md` and sixteen
     contracts out of the tree, all in the history at `caa9541`; the contract of ADR-031 kept as an example, as
-    `docs/design/PYTEST_NAMED.contract.json`, and linked from the README.
+    `docs/design/PYTEST_NAMED.contract.json`, and linked from the README;
+  * **V7 (`c5843a2`, `8452f90`):** the description of `pyproject.toml` is the README's sentence; the old name of the
+    proposal's fields, "by construction" and the numbered phases of the old plan are out of `tools/` and `tests/`,
+    each kept out by a test.
 
-  Suite green (3705). The detail, with its commits, is in the DEVLOG.
+  Suite green (3708). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
   1. **The research of v0.2, at the ROADMAP (ADR-033):** the review of every other document is done. The plan
      (author, 2026-10-20), with findings in the DEVLOG entry of the day and decisions in the register:
@@ -104,10 +107,8 @@ Updated: 2026-10-20, morning.
      installed in Actuarii.
   2. **The full reading of the README (V6):** done on 2026-10-20 (DEVLOG). Each of its 24 named tests exists, is in
      the file it links and passes; "What comes next" points to ROADMAP §3, and "How it differs" names Agent Receipts.
-  3. **Nothing published contradicts the kit (V7),** on the translated tree, and the text for HN and Reddit (V9),
-     which asks the question of ADR-034. The description of `pyproject.toml` still uses the old sentence. Four test
-     docstrings still say "5 Radicals", and one of them is in Spanish (`tests/security/test_security.py`): a
-     contract for the implementer.
+  3. **Nothing published contradicts the kit (V7):** done on 2026-10-20 (DEVLOG), in two contracts. Still to do: the
+     text for HN and Reddit (V9), which asks the question of ADR-034.
   4. **The rewrite of ADR-038, with what the V8 check found:** the check of the history is done (DEVLOG, 2026-10-20,
      afternoon): two commit messages of 2026-08-02 and some paths with a folder's name join the three lines of
      ADR-038, so the rewrite starts on 2026-08-02; `origin` lists only `main`. Still to do: Claude measures the

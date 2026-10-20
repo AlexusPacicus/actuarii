@@ -15,6 +15,48 @@ the PLAN.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+## 2026-10-20 (late afternoon, V7)
+
+V7 is done: nothing published says something the kit no longer does. The sweep found nothing new in `docs/`, beyond
+the three notes added when each document was condensed; all of what it found was in governed files, so it went to
+the implementer in two contracts.
+
+**Done**
+* **The first contract (`c5843a2`):**
+  * the description of `pyproject.toml` is now the README's sentence, and `test_packaging.py` pins it;
+  * the old name of the proposal's fields is gone from `tools/` and `tests/`: a comment of the validator, docstrings
+    in four test modules and a constant, now `FIELDS`;
+  * the docstring of `test_review_confinement.py` said that the reviewer's blindness holds by construction, which
+    contradicts the README's problem 7; it now says that the confinement is enforced by code and that what the
+    harness gives the reviewer before any read is a declared limit;
+  * two docstrings in Spanish, translated (`test_security.py` and `tests/security/__init__.py`);
+  * two new tests keep them out: the old name, from every file of `tools/` and `tests/` but the test that guards it;
+    "by construction", from their module docstrings.
+* **The second contract (`8452f90`):** three module docstrings named numbered phases of the old plan. One said that
+  the validator did not yet implement what its tests assert, which it has done for weeks; the one of
+  `tools/audit/check_impact.py` was in Spanish, and the installer copies that file into every target. A new test
+  keeps numbered phases out of the module docstrings.
+* **The check of each contract:** the report validated, `verify_red_green.py` run by Claude (each red test fails at
+  the base and passes at the end, each guard passes at both, and the full suite passes at the end), and the diff
+  reviewed by hand: it touches only the files of the contract, each with `Actuarii-Record: matches`.
+* **Left out on purpose:** a docstring that cites `PROCESO.md`, its source of the day; the file name
+  `test_tridenguard_dual_boundary.py`, old but not wrong; and a string in Spanish in `test_db_isolation.py`, which is
+  test data.
+* **The two contracts stay out of the tree,** as the sixteen that left with ADR-033; their commits carry what they
+  decided.
+
+**Ideas** (after the 25th; both are new functions, and ADR-004 keeps them out before the launch)
+* **Red for the stated reason** (AGENTS.md §9): the verifier proves only that a red test does not pass at the base.
+  The report could carry the signature of the expected failure, an exception type or a piece of the assertion
+  message, and the verifier would look for it in pytest's output at the base.
+* **The verifier compares the diff with the contract** (A28): `git diff --name-only` from the base to the final
+  commit, checked against `files_may_touch` and `files_must_not_touch`. Today the executing agent checks it by hand.
+
+Both answer the README's problem 2: the agent that executes checks itself.
+
+**Next**
+* **V9,** the text for HN and Reddit, with the question of ADR-034.
+
 ## 2026-10-20 (afternoon, the README read in full)
 
 V6's full reading of the README is done, with the author, section by section.
