@@ -16,7 +16,7 @@ Updated: 2026-10-23, afternoon.
 * **What it is:** work records for coding agents. The README's sentence: "Work records for coding agents. Every
   action leaves a record that it happened, and why. Built for settings where traceability comes first."
 * **What it is not:** a security boundary against an adversarial agent. That is v0.2, with its own environment
-  (`docs/design/ISOLATED_ENVIRONMENT.md`). AGENTS.md §9 declares what v0.1 does not cover.
+  (`ISOLATED_ENVIRONMENT.md`, in the history at `dcfd3b5`, ADR-041). AGENTS.md §9 declares what v0.1 does not cover.
 * **Publication:** the repository opens on 25 October, ready or not, and is private until then. The text for HN and
   Reddit goes out on Tuesday 27 at about 14:00 Madrid time (ADR-027).
 * **Committed success signal:** within the four weeks after the text, up to Tuesday 24 November, 5 outside people
@@ -76,6 +76,7 @@ Updated: 2026-10-23, afternoon.
     design was done on 2026-10-14 and not measured again, and §6 reduced to a note;
   * **`ISOLATED_ENVIRONMENT.md` condensed (ADR-033):** 298 lines in English, from 350 in Spanish, with its numbering
     kept, a dated note that ADR-034 puts the person in the loop and signed records first, and Triarii named once;
+    out of the tree since 2026-10-23 (ADR-041), in the history at `dcfd3b5`;
   * **`SANDBOX.md` condensed (ADR-033):** 203 lines in English, from 243 in Spanish, with its numbering kept and dated
     notes on what changed since: the exemption of `.claude/**` and `.mcp.json` (`b8b912a`), the bare `"Bash"` of
     ADR-022 and who recommends the user-level setting;
@@ -134,7 +135,7 @@ Updated: 2026-10-23, afternoon.
 
 Since the selection of 2026-10-19 (ADR-035), `docs/DECISIONS.md` keeps the 22 that stayed and only grows; those that
 left are in the history at `c2cd12f`, and this list still counts them. In force today: ADR-001
-to ADR-040, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
+to ADR-041, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
 by ADR-033, its point on file names by ADR-035, and its point on the history, for one rewrite, by ADR-038.
 
 | ADR | Decision |
@@ -177,6 +178,7 @@ by ADR-033, its point on file names by ADR-035, and its point on the history, fo
 | 038 | The author's professional plans leave the tree; a line that names a third party leaves the tree and the history |
 | 039 | The rewrite of ADR-038 goes to a new repository |
 | 040 | What would change the plan of v0.2, written before the opening |
+| 041 | The design of v0.2 leaves the tree |
 
 ## How we work
 

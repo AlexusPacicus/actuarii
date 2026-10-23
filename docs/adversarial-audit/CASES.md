@@ -13,8 +13,8 @@ the documentation or marked as inferred.
 
 Each case belongs to one of eight problems (ADR-026). Those of governance come from profile A, the honest agent that
 makes mistakes, and are the limits of v0.1. Those of security come from profile B, the agent that looks for a way
-out, and go to v0.2, with its own environment (`docs/design/ISOLATED_ENVIRONMENT.md`). A fixed case carries the
-commit that fixed it on `main`; what remains of it is declared in AGENTS §9.
+out, and go to v0.2, with its own environment (`ISOLATED_ENVIRONMENT.md`, in the history at `dcfd3b5`). A fixed
+case carries the commit that fixed it on `main`; what remains of it is declared in AGENTS §9.
 
 Condensed and translated from Spanish on 2026-10-19 (ADR-033). The full record of each case, in Spanish, with its
 method, its evidence and the classification proposed at the time, is in the history: this file at `1fe043d`.

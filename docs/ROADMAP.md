@@ -176,11 +176,11 @@ if it starts (§5).
 | Line | What people say | What changes in v0.2 |
 |---|---|---|
 | C1 | The cost of using it stops them: the time per governed write, or the questions it asks | The cost design of `docs/design/COST.md` §5 goes first, before the person in the loop, which adds questions of its own |
-| C2 | They do not use Claude Code, or would use the kit with another tool | The adapter for the tool asked for most goes first (E8 of `docs/design/ISOLATED_ENVIRONMENT.md`), and the person in the loop is designed for both |
+| C2 | They do not use Claude Code, or would use the kit with another tool | The adapter for the tool asked for most goes first (E8 of `ISOLATED_ENVIRONMENT.md`, in the history at `dcfd3b5`), and the person in the loop is designed for both |
 | C3 | Approving each write is too fine; they would approve at the commit or at the pull request | The person in the loop approves the record of the commit, not each receipt |
 | C4 | They would use it only as a security boundary against the agent | The isolated environment goes before the person in the loop and the signed records |
 | C5 | An existing tool or format already does part of it: records, signatures or sandboxed agents | That part is adopted or made compatible, not built; the comparison of formats made before the opening is checked against what they name |
-| C6 | Installing it stops them: copying the kit into the repository, Python and `pydantic`, choosing the paths | The distribution of decision 6 of `docs/design/ISOLATED_ENVIRONMENT.md` §10, a package outside the repository with one command to start, goes first |
+| C6 | Installing it stops them: copying the kit into the repository, Python and `pydantic`, choosing the paths | The distribution of decision 6 of `ISOLATED_ENVIRONMENT.md` §10 (in the history at `dcfd3b5`), a package outside the repository with one command to start, goes first |
 
 ## 4. The gate of 24 November
 
@@ -197,9 +197,9 @@ The count of §3 is looked at, with its evidence, and nothing else.
 ## 5. v0.2
 
 **What it is:** first, a person in the loop and signed records (author, 2026-10-19, ADR-034). Then the isolated
-environment of `docs/design/ISOLATED_ENVIRONMENT.md`: the whole agent inside, and the gates and a write broker
-outside. Its motivation is the one v0.1 set aside: that using agents safely needs a middleware (author,
-2026-10-13). It starts only if the gate is passed.
+environment of `ISOLATED_ENVIRONMENT.md` (in the history at `dcfd3b5`, ADR-041): the whole agent inside, and the
+gates and a write broker outside. Its motivation is the one v0.1 set aside: that using agents safely needs a
+middleware (author, 2026-10-13). It starts only if the gate is passed.
 
 **Criteria:**
 * A person in the loop: the person sees the agent's reason next to the change and approves or refuses each receipt,

@@ -477,3 +477,17 @@ condition; the lines that reach it apply in the order of their count. Only that 
 (§4). The Sunday lines of the DEVLOG also say which answer counted for which line.
 **Supersedes:** —
 **Source:** `docs/DEVLOG.md`, 2026-10-20.
+
+## ADR-041 — The design of v0.2 leaves the tree (2026-10-23, author)
+
+**Context:** ADR-033 condensed `docs/design/ISOLATED_ENVIRONMENT.md` to 298 lines and kept it. Two days before the
+opening, the author found the tree heavy with design. Of the design documents, it is the only one that is not
+evidence of what v0.1 does: it describes an environment that does not exist and starts only if the signal of ROADMAP
+§3 is met. `CLEAN_ROOM.md`, `COST.md`, `SANDBOX.md` and `CASES.md` back what the README claims, and the CI and the
+tests cite two of them. Only documents cite the design of v0.2.
+**Decision:** `docs/design/ISOLATED_ENVIRONMENT.md` leaves the tree. It stays in the history, at `dcfd3b5`.
+**Consequences:** the README links the file at that commit; the ROADMAP, the status and `CASES.md` name it in the
+history; this register and the DEVLOG keep the name of their day. The criteria and the order of v0.2 in ROADMAP §5 do
+not change. Nothing changes in the code or the tests.
+**Supersedes:** —
+**Source:** `docs/DEVLOG.md`, 2026-10-23.

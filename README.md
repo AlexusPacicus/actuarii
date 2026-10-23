@@ -221,7 +221,8 @@ An adversarial audit of the kit recorded 35 cases. Each one is in
 
 v0.2 does not solve prompt injection either. The agent still reads content it cannot trust; what changes is that
 it can no longer act outside its environment
-([`ISOLATED_ENVIRONMENT.md`](docs/design/ISOLATED_ENVIRONMENT.md) §6).
+([`ISOLATED_ENVIRONMENT.md`](https://github.com/AlexusPacicus/actuarii/blob/dcfd3b5f381411c8180467e5159452dcd9d3c8b5/docs/design/ISOLATED_ENVIRONMENT.md)
+§6, in the history).
 
 ## Install
 
@@ -290,7 +291,8 @@ person sees the agent's reason next to each change and approves or refuses its r
 out of the agent's reach, so that someone else can check them. Then v0.2 runs the whole agent inside an isolated
 environment of its own, with the gates and a write broker outside it, so that the boundary no longer depends on one
 vendor's hooks and is designed to hold against an adversarial agent
-([`ISOLATED_ENVIRONMENT.md`](docs/design/ISOLATED_ENVIRONMENT.md)).
+([`ISOLATED_ENVIRONMENT.md`](https://github.com/AlexusPacicus/actuarii/blob/dcfd3b5f381411c8180467e5159452dcd9d3c8b5/docs/design/ISOLATED_ENVIRONMENT.md),
+in the history).
 
 That order is not fixed: the answers that would change it are written down in advance, in
 [ROADMAP §3](docs/ROADMAP.md#3-the-signal-window). If one of them is yours, say so in an issue.
