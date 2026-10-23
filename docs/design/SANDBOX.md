@@ -6,7 +6,7 @@ documentation, "Configure the sandboxed Bash tool" (code.claude.com/docs/en/sand
 Claude Code 2.1.291 installed. §1 to §6 say what the documentation says; §8 is what was then tested on this machine.
 
 Condensed and translated from Spanish on 2026-10-20 (ADR-033). The full draft, in Spanish, is in the history: this
-file at `28e0f09`.
+file at `750c61f`.
 
 ## 1. The two questions
 
@@ -117,9 +117,9 @@ The `sandbox` key, added at the end of the root object. The permission perimeter
 The edit goes through the gate, with its receipt, and applies from a new session. Afterwards, if §7 passes: a test
 that `denyWrite` covers every governed path of `.actuarii.json`, except `.claude/**` and `.mcp.json`, which the
 sandbox protects on its own; AGENTS §9 with the limits that close and those that remain; and the decision on
-`git switch` and `git merge`. Applied on 2026-10-07 (`546730b`).
+`git switch` and `git merge`. Applied on 2026-10-07 (`582cd65`).
 
-**Note (2026-10-20):** the exemption of `.claude/**` and `.mcp.json` ended on 2026-10-14 (`92df87a`). Every governed
+**Note (2026-10-20):** the exemption of `.claude/**` and `.mcp.json` ended on 2026-10-14 (`b8b912a`). Every governed
 path has its `denyWrite` entry, with no exemption, and the test checks it.
 
 ## 7. Test plan (committed before running it)
@@ -161,7 +161,7 @@ Claude Code 2.1.291, macOS. Claude ran each command from `Bash`, inside the sand
 | S5 approval | In auto mode, `touch docs/zz_probe` asked the author for permission: the bare `Bash` rule in `ask` still applies, because `autoAllowBashIfSandboxed` is `false` | Yes |
 | S6 kit | `Write` in `tests/` without a receipt: denied by the gate, naming its rule. The MCP server, outside the sandbox, still issues receipts | Yes |
 | S7 suite | 2716 green and 1 failure, the same as outside the sandbox: a test pins the keys of `settings.json` and does not know `sandbox` | Yes (the failure is the change's, not the sandbox's) |
-| S8 git | A branch and an empty commit work. `git checkout 76db044 -- tools/boundary_validator/validator.py`: `unable to unlink old … Operation not permitted` | Yes, with a finding |
+| S8 git | A branch and an empty commit work. `git checkout 5764f2f -- tools/boundary_validator/validator.py`: `unable to unlink old … Operation not permitted` | Yes, with a finding |
 | S9 no sandbox | Not provoked | Declared |
 
 **Note (2026-10-20):** ADR-022 removed the bare `"Bash"` from `ask` on 2026-10-15, the rule S5 mentions. Since then,
@@ -192,7 +192,7 @@ local file (§5).
   with `git update-index`.
 * **The format of the commit message:** to v0.2.
 * **S5:** confirmed by the author: in auto mode it asks too.
-* **Commit integrity, done (2026-10-07, `6828cac` and `19b2896`):** `tools/git/commit_integrity.py`, run by
+* **Commit integrity, done (2026-10-07, `9b8c29c` and `8f5eb0b`):** `tools/git/commit_integrity.py`, run by
   `tools/git/pre-commit`, installed as `.git/hooks/pre-commit`. It refuses a commit when a governed path in the index
   differs from the disk (the content, with git's filters, and the mode), and when any path in the index is spelled
   otherwise than on disk: in review, `TESTS/x.py` with false content was seen to pass next to `tests/x.py`, because

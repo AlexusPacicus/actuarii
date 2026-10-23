@@ -5,7 +5,7 @@ wrong and what was learnt. What the design documents already tell is linked, not
 session closes (the author's decision, 2026-10-07).
 
 **Selection (2026-10-20, ADR-033):** the entries before 2026-10-18 (evening), in Spanish, left this file. They are in
-the history: this file at `caa9541`. Those of 5 and 6 October among them were rebuilt on the 7th from `git log` and
+the history: this file at `64292e1`. Those of 5 and 6 October among them were rebuilt on the 7th from `git log` and
 the PLAN.
 
 **Note (2026-10-19, ADR-035):** files were renamed into English. `docs/DECISIONES.md` is now `docs/DECISIONS.md`;
@@ -15,6 +15,65 @@ the PLAN.
 `pocas-peticiones-al-autor.md`, `author.md`, `ask-when-ambiguous.md` and `few-requests-to-the-author.md`. The
 entries keep the names of their day.
 
+**Note (2026-10-23, ADR-038):** the history of `main` was rewritten from 2026-08-02 on. The hashes the entries cite
+are those of the new history, each replaced from the rewrite's commit map.
+
+## 2026-10-23 (the rewrite of ADR-038)
+
+The history of `main` is rewritten, with the three lines of ADR-038 and what the V8 check found, and the rewritten
+`main` is in a new repository (ADR-039). This entry also covers the sessions of 21 and 22 October, which wrote none.
+
+**Done**
+* **The figures of the procedure, measured again** on the last commit of the old `main`: 358 commits, 356 of which
+  change hash, from 2026-08-02 on; the 46 merges kept; 2 commit messages rewritten; the three lines of ADR-038 and the
+  paths with the folder's name, in versions of 6 files, all in `docs/`; no governed file changed; the final tree
+  identical. The citations to redo grew from ten to 46 hashes in 11 files, because the rewrite now starts on
+  2026-08-02 and the condensed documents cite "the history, at commit X".
+* **Three findings of the measurement:**
+  * no citation is in a governed path, so the commit that redoes them needs no receipt;
+  * 12 hexadecimal words in the tree are not commits of this repository and stay as they are: the two GitHub Actions
+    SHAs, six commits of `noticias` and AI-Papers-Engine, and four pieces of test data;
+  * one citation was already dead: `54c7f8c`, in a docstring of `tests/security/test_contract_context_hook.py`, is in
+    neither this history nor the copy of 2026-10-14. It is probably `4af76a9` (2026-09-24, "wire the python gate").
+    The file is governed, so it goes apart.
+* **The rewrite, run by the author** in their own terminal, outside the session: steps 0 to 5 on 2026-10-21, the
+  checks on 22 and 23 October, the push on the 23rd. A full mirror as backup; a fresh clone of `main` alone, without
+  tags; `git filter-repo` with rules generated from two private files, so that neither the name nor the term was typed
+  in a session or written in the repository.
+* **The checks before the push,** all as expected: 358 commits; the name and the term found 0 times in the tree, the
+  messages and the diffs; the final tree identical to the old one; the commits whose tree changes, only in `docs/`; the
+  two subjects rewritten (`e62110b`, `b60733d`). Checked by Claude, reading only: the first two commits keep their
+  hash, the 45 `Actuarii-Record` trailers are still in the messages, and the 7 commits that messages cite are in the
+  new `main`.
+* **ADR-039:** the old repository renamed, and a new private one with the same name that received only `main`; its CI
+  green (author). The working copy is a fresh clone of it, with `.data/` copied over and both git hooks installed with
+  mode 755.
+* **The citations redone:** each of the 46 hashes cited in the 11 files, replaced by its new hash at the same length:
+  97 occurrences, each checked against the commit map. No old hash is left, and every hash cited in the tree is a
+  commit of this history, but the 12 words and `54c7f8c` above.
+
+Suite green (3708). Disk: 4.7 GiB free.
+
+**What went wrong**
+* **The comparison with the old history brought its tags.** Its `git fetch` from the backup had no `--no-tags`, and git
+  fetched the backup's 9 tags, which point to old commits, one with the term in its name. A push of `main` would not
+  have taken them, but the clone could still reach the old history. The author deleted them, expired the reflog and
+  pruned before the push; the clone kept only `refs/heads/main`. The procedure now says `--no-tags`.
+* **The git hooks lose their mode in a copy:** git stores them as `100644`, and without a `chmod` git ignores them, so
+  no commit of the new clone would be checked or get its record. Found before the clone, and the procedure now sets
+  755.
+
+**Decided (author)**
+* **This entry goes in the commit of the citations** (2026-10-22), so that `main` would not move between the measurement
+  and the rewrite.
+
+**Next**
+* **The author:** pushes this commit; checks that an old hash answers 404 in the new repository; once this commit is
+  green there, deletes the old repository, before the 25th; and removes `origin` from the two older local clones that
+  still point to the same URL, since a push from them would upload the old history.
+* **The dead citation `54c7f8c`:** a small contract to the implementer, if the author decides it.
+* **V9,** the text for HN and Reddit, with the question of ADR-034.
+
 ## 2026-10-20 (late afternoon, V7)
 
 V7 is done: nothing published says something the kit no longer does. The sweep found nothing new in `docs/`, beyond
@@ -22,7 +81,7 @@ the three notes added when each document was condensed; all of what it found was
 the implementer in two contracts.
 
 **Done**
-* **The first contract (`c5843a2`):**
+* **The first contract (`bde6a7a`):**
   * the description of `pyproject.toml` is now the README's sentence, and `test_packaging.py` pins it;
   * the old name of the proposal's fields is gone from `tools/` and `tests/`: a comment of the validator, docstrings
     in four test modules and a constant, now `FIELDS`;
@@ -32,7 +91,7 @@ the implementer in two contracts.
   * two docstrings in Spanish, translated (`test_security.py` and `tests/security/__init__.py`);
   * two new tests keep them out: the old name, from every file of `tools/` and `tests/` but the test that guards it;
     "by construction", from their module docstrings.
-* **The second contract (`8452f90`):** three module docstrings named numbered phases of the old plan. One said that
+* **The second contract (`0c5a315`):** three module docstrings named numbered phases of the old plan. One said that
   the validator did not yet implement what its tests assert, which it has done for weeks; the one of
   `tools/audit/check_impact.py` was in Spanish, and the installer copies that file into every target. A new test
   keeps numbered phases out of the module docstrings.
@@ -70,7 +129,7 @@ V6's full reading of the README is done, with the author, section by section.
   * a new section, "How it differs", names Agent Receipts (R2): it signs a receipt for every tool call after it runs,
     with a key held outside the agent; Actuarii decides before the write, records the reason, and says at each commit
     whether the governed files match. It promises no format for v0.2, since R3 is not decided.
-* **Left for the rewrite:** the hashes the README cites (`ba6a120`, `f42cd45`) change with it; the commit that redoes
+* **Left for the rewrite:** the hashes the README cites (`57dbc72`, `3e3e50f`) change with it; the commit that redoes
   the citations covers them.
 
 **Decided (author)**
@@ -91,7 +150,7 @@ written here or anywhere in the repository.
 * **The result:**
   * three terms appear nowhere;
   * two appear only in their ordinary technical sense: false positives;
-  * one is real in two places: two commit messages of 2026-08-02, inherited from Traianus (`2687048` and `9fee612`),
+  * one is real in two places: two commit messages of 2026-08-02, inherited from Traianus (`e62110b` and `b60733d`),
     which name the author's professional plans; and paths in documents that left the tree, which carry the name of a
     folder of the author's machine. Neither is in the tree of `main`.
 * **An uncommitted DEVLOG entry,** written today, named the same term; it now speaks of NLnet's calls without it.
@@ -104,7 +163,7 @@ written here or anywhere in the repository.
   folder's name, matched as a whole word. It now starts on 2026-08-02, so almost every hash changes, and the commit
   that redoes the citations grows; Claude measures the procedure's figures again before it runs.
 
-* **The second half of V8, run by the author:** `git ls-remote --heads origin` lists only `main`, at `e92f3a4`, the
+* **The second half of V8, run by the author:** `git ls-remote --heads origin` lists only `main`, at `3a8e865`, the
   last push.
 
 **Next**
@@ -264,10 +323,10 @@ ROADMAP is now reviewed.
 
 **Done**
 * **The DEVLOG,** trimmed to its entries in English, from 2026-10-18 (evening): 396 lines kept of 1868. Its head is
-  translated, and says that the earlier entries are in the history at `caa9541`. It stays because the ROADMAP (§3,
+  translated, and says that the earlier entries are in the history at `64292e1`. It stays because the ROADMAP (§3,
   §4), the status and the memory rely on it as the live log. The head says "one entry per session", which is what the
   log has become; the original said "per day".
-* **Out of the tree, in the history at `caa9541`:** the PLAN, the two audit guidelines, `PROCESO.md`, `PRIOR_ART.md`,
+* **Out of the tree, in the history at `64292e1`:** the PLAN, the two audit guidelines, `PROCESO.md`, `PRIOR_ART.md`,
   `ARRANQUE_PUERTAS.md`, `RECIBO_CONTENIDO.md` and sixteen contracts. `docs/process/` and `docs/prior-art/` are gone.
 * **One contract kept as an example:** that of ADR-031, renamed `docs/design/PYTEST_NAMED.contract.json` with its
   content unchanged, its commit message in Spanish as it was given. The README links it where it tells that fix.
@@ -311,11 +370,11 @@ of `docs/` that the README links is in English.
 
 **Done**
 * **What stays, with its numbering:** §1 to §3 nearly whole, the test plan (§7) and its results (§8), with the finding
-  of S8; §4, §5 and §9 shorter; §6 with the configuration as it was proposed and applied (`546730b`). The README
+  of S8; §4, §5 and §9 shorter; §6 with the configuration as it was proposed and applied (`582cd65`). The README
   (§8), the docstrings of three tests (§6, §9) and ROADMAP V7 (§6) still cite it as they did, so no contract was
   needed. The internal labels of the fixes (F1, F4c, F5) leave.
 * **Dated notes for what changed since (V7):**
-  * §6: the exemption of `.claude/**` and `.mcp.json` from `denyWrite` ended on 2026-10-14 (`92df87a`); this is the
+  * §6: the exemption of `.claude/**` and `.mcp.json` from `denyWrite` ended on 2026-10-14 (`b8b912a`); this is the
     item V7 named;
   * §8: the bare `"Bash"` in `ask` that S5 mentions was removed by ADR-022 on 2026-10-15;
   * §5: the user-level `allowUnsandboxedCommands: false` is recommended by `INSTALL.md`, not by the README, and the
@@ -368,7 +427,7 @@ estimated about 140; the tables of §3, §4.1, §4.9, §5 and §8 are whole.
   design for v0.2 are what the README's 1875 ms rests on. The README cites §5, the ROADMAP §4 and the design of the
   own environment §5, as before. The local path of the transcripts and their session ids leave.
 * **A dated note in §5:** step 1 of the design, the validator in `permissions.allow`, was done on 2026-10-14
-  (`f5517ae`, ADR-012, kept by ADR-022), for the permission prompts and not for the cost, which has not been measured
+  (`cdc07f4`, ADR-012, kept by ADR-022), for the permission prompts and not for the cost, which has not been measured
   again. Steps 2 and 3 are not done, as `.claude/settings.json` shows. Claude had first said 2026-10-15 (ADR-022);
   `git log -S` gave the right date before the note was written.
 * **§6, the comparison with governance by instruction,** is a short note: proposed and not run, and the README claims
@@ -396,15 +455,15 @@ estimated about 140; the tables of §3, §4.1, §4.9, §5 and §8 are whole.
   * §5 by attempt: the tables of attempt 3 (612.8 s) and of the V4 measurement (223 s), the two real cases, and the CI
     and the three rehearsals in a paragraph each, with what they found and what was fixed.
 
-  Receipt ids, hash prefixes and the paths of the machine leave; the head names `0c5f669`, where the full record is.
+  Receipt ids, hash prefixes and the paths of the machine leave; the head names `ac706a1`, where the full record is.
 * **The numbering of the sections is kept:** the CI step and its test ("section 4"), the README (§4f, §5), the
   ROADMAP, COST (§4b) and the status still cite it as they did. The README now says "its record is in §5", since the
   full one is in the history.
 * **Quotes given in Spanish** (the text of §4f, the agent's words, the person's interventions) are translated only.
 * **One note added:** finding 1 of attempt 5 proposed naming the target before any write; the text says it was done
-  in ADR-029 (`119d569`), as V7 asks of what has changed since.
+  in ADR-029 (`c979cea`), as V7 asks of what has changed since.
 * **Checked:** every section another document cites exists; every commit cited comes from the old text, except
-  `0c5f669` and `119d569`; no Spanish is left; no prose line passes 120 characters.
+  `ac706a1` and `c979cea`; no Spanish is left; no prose line passes 120 characters.
 
 **Decided (author)**
 * **`CLEAN_ROOM.md` is condensed,** with its numbering kept, and the quotes given in Spanish are translated only
@@ -425,12 +484,12 @@ estimated about 140; the tables of §3, §4.1, §4.9, §5 and §8 are whole.
 
   The guarantees (G), the batches of fixes in the case lines (F) and the classifications proposed at the time (C)
   leave: they depend on the audit guidelines, which leave the tree.
-* **The full record,** in Spanish, is in the history: the head names `f322818`, which the rewrite of ADR-038 changes
+* **The full record,** in Spanish, is in the history: the head names `1fe043d`, which the rewrite of ADR-038 changes
   and the commit that redoes the citations covers.
 * **Checked:**
   * each of the 35 cases has one entry and is in the summary;
   * each of the 28 limits of AGENTS §9 is in the summary once;
-  * every commit the new text cites comes from the old one, except the reference `f322818`;
+  * every commit the new text cites comes from the old one, except the reference `1fe043d`;
   * no prose line passes 120 characters.
 * **The README** no longer says "(in Spanish)" next to `CASES.md`; **ROADMAP V5** names the table "Summary".
 
@@ -476,7 +535,7 @@ The register is selected (ADR-035): 22 entries stay and 17 leave, decided with t
 * **Stay:** 001, 005, 007, 008, 009, 010, 011, 014, 016, 019, 021, 022, 026, 027, 028, 030, 032, 033, 034, 035, 036
   and 037.
 * **Leave:** 002, 003, 004, 006, 012, 013, 015, 017, 018, 020, 023, 024, 025, 029, 031, 038 and 039. They remain in
-  the history at `04107e0`, which the head of the register names, and the status still lists them among the
+  the history at `c2cd12f`, which the head of the register names, and the status still lists them among the
   decisions in force.
 * **Where it was close:**
   * 014 stays: whoever adopts the kit sees the jargon of the schema in every proposal, and the entry says it changes
@@ -487,7 +546,7 @@ The register is selected (ADR-035): 22 entries stay and 17 leave, decided with t
   * 037 stays: it closes the third condition of ADR-036;
   * 038 and 039 leave, like 020: they deal with personal information, and the rewrite runs before the repository
     opens.
-* **A hash to redo:** `04107e0` changes with the rewrite of ADR-038; the commit that redoes the citations covers it.
+* **A hash to redo:** `c2cd12f` changes with the rewrite of ADR-038; the commit that redoes the citations covers it.
 
 **Decided (author)**
 * **The selection,** entry by entry: the 12 entries to discuss, Claude's first pass of ADR-035 confirmed, and ADR-037
@@ -505,8 +564,8 @@ The renaming batch of ADR-035 is done: the files that stay have English names, a
   `tests/unit/test_ci_workflow.py`, which pins it, cited an old name in code or tests.
   `test_config_perimeter.py` checks that every file `CLAUDE.md` imports exists, so `CLAUDE.md`, `opencode.jsonc`
   and the rename of the status go in one commit.
-* **The CI step, through the implementer:** the contract (`0a43847`) is the first with the `.contract.json` suffix;
-  the commit, `e4536e1`, carries `Actuarii-Record: matches`. The executing agent validated the report, ran
+* **The CI step, through the implementer:** the contract (`9667dc4`) is the first with the `.contract.json` suffix;
+  the commit, `61b3322`, carries `Actuarii-Record: matches`. The executing agent validated the report, ran
   `verify_red_green.py` (T1 red at base and green at the end, T2 guard, the full suite green), checked by hand that
   the diff, two lines, touches only the contract's files, and advanced `main` by fast-forward.
 * **Renamed:**
@@ -662,7 +721,7 @@ are translated.
   * the four memory files, each with its receipt; `pocas-peticiones-al-autor.md` now says that ADR-022 removed the
     bare `"Bash"` it describes;
   * `ROADMAP.md`, with V7 rewritten and a new V10 for the translation. Dated notes mark what changed since: option
-    (c) in `MEMORY.md`, fixed in `0116031`; the Traianus case, replaced by ADR-030.
+    (c) in `MEMORY.md`, fixed in `87d9e88`; the Traianus case, replaced by ADR-030.
 * **The README** no longer marks the ROADMAP as Spanish.
 
 **Decided (author)**

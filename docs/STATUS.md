@@ -3,13 +3,13 @@
 What a new session needs to know, and nothing more. It is updated when each session closes, together with the entry
 of `docs/DEVLOG.md`. The criteria of v0.1, the signal, the gate of 24 November and v0.2 are in `docs/ROADMAP.md`; the
 decisions, with their reasons, are in `docs/DECISIONS.md`. The PLAN, which held the reasoning up to 14 October, and
-the DEVLOG entries before 18 October left the tree; they are in the history at `caa9541` (ADR-033).
+the DEVLOG entries before 18 October left the tree; they are in the history at `64292e1` (ADR-033).
 
 The repository's documents are written in English from 2026-10-18 on (ADR-032); older documents are reviewed one by
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
 Spanish.
 
-Updated: 2026-10-20, late afternoon.
+Updated: 2026-10-23, afternoon.
 
 ## v0.1
 
@@ -33,7 +33,7 @@ Updated: 2026-10-20, late afternoon.
   * the one-command installer (V2): the perimeter, `includeGitInstructions`, the `pydantic` check, the questions
     (what else to govern, `pip` with permission and the commit), `--no-input`, and `INSTALL.md` rewritten;
   * the record in git (V3, ADR-016): the gate records what each write leaves and `commit-msg` compares it with the
-    commit; installed in this repository, with its first real record in `ba6a120`;
+    commit; installed in this repository, with its first real record in `57dbc72`;
   * Claude Code's automatic memory, turned off in this repository (D5, ADR-010), with its test; the installer does
     not touch it in targets;
   * A20, A31 and A34;
@@ -42,21 +42,21 @@ Updated: 2026-10-20, late afternoon.
   * the ROADMAP, with D1–D7 decided;
   * the history rewritten without the personal information and with the *noreply* address, in a new GitHub
     repository (V8);
-  * the README (V6) in `main`, with the limits in eight problems (the other half of V5, `2092f2f`), the installation
+  * the README (V6) in `main`, with the limits in eight problems (the other half of V5, `8119cb0`), the installation
     with the block and the 223 s, and the real case;
   * the limits by problem (ADR-026), and the text for HN and Reddit on Tuesday 27 with the gate on 24 November
     (ADR-027);
-  * the "Resumen" table of `docs/adversarial-audit/CASES.md`, from problem to cases and limits of §9 (V5, `da3ccd0`):
+  * the "Resumen" table of `docs/adversarial-audit/CASES.md`, from problem to cases and limits of §9 (V5, `a8458c1`):
     the 35 cases and the 28 limits, each once;
   * `INSTALL.md` as one block pasted from the repository's top level, with nothing to edit (ADR-028), and
     amendment §4e;
   * **the macOS measurement (V4), passed with 223 s:** attempt 5 of `docs/design/CLEAN_ROOM.md` §5, with its
     deviations noted and milestone 1 checked by §4c;
-  * **the target named before any write (ADR-029, `119d569`);**
+  * **the target named before any write (ADR-029, `c979cea`);**
   * **the real case (ADR-030):** the two defects of the classifier of `noticias` v3, fixed with v0.1 as published
     (`0ef8fb5` and `69d1c36` in AI-Papers-Engine, both with `Actuarii-Record: matches`), the record checked by §4c
     and red and green run; its branch on GitHub and its audit trail in the evidence folder;
-  * **the denial of pytest run through the interpreter names `pytest` (ADR-031, `f42cd45`):** rule R7 of the Bash
+  * **the denial of pytest run through the interpreter names `pytest` (ADR-031, `3e3e50f`):** rule R7 of the Bash
     hook and a line in the announcement, checked with `verify_red_green.py` and live;
   * **the two decisions of 2026-10-19 on what was found in the inventory (ADR-038), in the tree:** the three
     passages of `PLAN.md` about the author's professional plans are out, and so is the line of the DEVLOG that names
@@ -77,15 +77,18 @@ Updated: 2026-10-20, late afternoon.
   * **`ISOLATED_ENVIRONMENT.md` condensed (ADR-033):** 298 lines in English, from 350 in Spanish, with its numbering
     kept, a dated note that ADR-034 puts the person in the loop and signed records first, and Triarii named once;
   * **`SANDBOX.md` condensed (ADR-033):** 203 lines in English, from 243 in Spanish, with its numbering kept and dated
-    notes on what changed since: the exemption of `.claude/**` and `.mcp.json` (`92df87a`), the bare `"Bash"` of
+    notes on what changed since: the exemption of `.claude/**` and `.mcp.json` (`b8b912a`), the bare `"Bash"` of
     ADR-022 and who recommends the user-level setting;
   * **the records (ADR-033):** the DEVLOG trimmed to its entries in English, from 2026-10-18 (evening); the PLAN, the
     two audit guidelines, `PROCESO.md`, `PRIOR_ART.md`, `ARRANQUE_PUERTAS.md`, `RECIBO_CONTENIDO.md` and sixteen
-    contracts out of the tree, all in the history at `caa9541`; the contract of ADR-031 kept as an example, as
+    contracts out of the tree, all in the history at `64292e1`; the contract of ADR-031 kept as an example, as
     `docs/design/PYTEST_NAMED.contract.json`, and linked from the README;
-  * **V7 (`c5843a2`, `8452f90`):** the description of `pyproject.toml` is the README's sentence; the old name of the
+  * **V7 (`bde6a7a`, `0c5a315`):** the description of `pyproject.toml` is the README's sentence; the old name of the
     proposal's fields, "by construction" and the numbered phases of the old plan are out of `tools/` and `tests/`,
-    each kept out by a test.
+    each kept out by a test;
+  * **the rewrite of ADR-038 (ADR-039):** the history of `main` without the three lines of ADR-038 and what the V8
+    check found, run by the author and checked before the push; the new repository, with CI green; the citations of
+    the rewritten hashes redone in the tree, 97 of 46 hashes.
 
   Suite green (3708). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
@@ -109,11 +112,10 @@ Updated: 2026-10-20, late afternoon.
      the file it links and passes; "What comes next" points to ROADMAP §3, and "How it differs" names Agent Receipts.
   3. **Nothing published contradicts the kit (V7):** done on 2026-10-20 (DEVLOG), in two contracts. Still to do: the
      text for HN and Reddit (V9), which asks the question of ADR-034.
-  4. **The rewrite of ADR-038, with what the V8 check found:** the check of the history is done (DEVLOG, 2026-10-20,
-     afternoon): two commit messages of 2026-08-02 and some paths with a folder's name join the three lines of
-     ADR-038, so the rewrite starts on 2026-08-02; `origin` lists only `main`. Still to do: Claude measures the
-     figures of the procedure again (prepared on 2026-10-19, outside the repository); the author runs the rewrite; on GitHub, the rewritten `main` goes to a new repository (ADR-039); then a new commit
-     redoes the citations of the hashes that changed.
+  4. **The rewrite of ADR-038:** done (DEVLOG, 2026-10-23), but for the author's steps: push the commit of the
+     citations; check that an old hash answers 404 in the new repository; once that commit is green there, delete the
+     old repository, before the 25th; and remove `origin` from the two older local clones that point to the same URL.
+     The dead citation `54c7f8c` waits for the author: a small contract to the implementer.
 * Minor, undated (the DEVLOG of 2026-10-16, in the history): `**` without `re.DOTALL` in `project_config`; the
   Python traceback of an installer `git` call that takes more than 300 s; the installer copies the kit (Apache-2.0)
   without the license text.
@@ -131,7 +133,7 @@ Updated: 2026-10-20, late afternoon.
 ## Decisions in force
 
 Since the selection of 2026-10-19 (ADR-035), `docs/DECISIONS.md` keeps the 22 that stayed and only grows; those that
-left are in the history at `04107e0`, and this list still counts them. In force today: ADR-001
+left are in the history at `c2cd12f`, and this list still counts them. In force today: ADR-001
 to ADR-040, except ADR-012 and ADR-023, superseded by ADR-022 and ADR-024; the first point of ADR-032 is superseded
 by ADR-033, its point on file names by ADR-035, and its point on the history, for one rewrite, by ADR-038.
 
@@ -199,8 +201,10 @@ by ADR-033, its point on file names by ADR-035, and its point on the history, fo
   has to be named, use `git commit -F -` with a heredoc whose delimiter is quoted.
 * **Commit only when `pytest` exits 0,** checking its exit code. Before a full suite, check the free disk space.
 * **No attribution to Claude** in commits or PRs. The commit address is GitHub's *noreply* address.
-* **The history was rewritten on 2026-10-14:** earlier hashes no longer exist, and the citations in `docs/` were
-  redone. The GitHub repository is the new one, with CI green; the old one was deleted (author, 2026-10-14).
+* **The history was rewritten on 2026-10-14, and again for ADR-038** (run on 2026-10-21, pushed on 2026-10-23):
+  earlier hashes no longer exist, and the citations in the tree were redone each time. The GitHub repository is the
+  new one of ADR-039, with CI green; the old one, renamed, is deleted by the author once the commit of the citations
+  is green there.
 * **Python:** committed scripts only, through the shim; `pytest` by its own entry point.
 * **The DEVLOG,** when each session closes, with the date of the clock and not that of the conversation.
 * **A decision of the author** is appended to `docs/DECISIONS.md` with the next number and listed above. The DEVLOG

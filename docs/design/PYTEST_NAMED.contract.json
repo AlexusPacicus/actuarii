@@ -3,7 +3,7 @@
   "task_id": "pytest-nombrado",
   "title": "The Bash hook denies pytest run through the interpreter naming pytest, and the announcement says how tests run",
   "branch": "v01/pytest-nombrado",
-  "base_commit": "1005cb09aad05721b68017518723496e56f3bfe9",
+  "base_commit": "04084012c3c2871c1ecba690a735ab9196903e4e",
   "attribution": null,
   "context": {
     "task": "Give tools/hooks/deny_python_escapes.py a rule R7 that denies pytest run through an interpreter the shim covers (python3 -m pytest) with a message that names the call that works, pytest by its own entry point, and give the session announcement of tools/hooks/announce_governance.py one line that says how tests run. The permission rules already deny python3 -m with a generic message; the hook runs before them, so its message is the one the agent reads.",

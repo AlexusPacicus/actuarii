@@ -5,7 +5,7 @@ a Claude Code adapter, and the isolated environment is built in v0.2. This docum
 prototype, and its test plan (§8) is committed before any result. What is marked "to be checked" has not been checked.
 
 Condensed and translated from Spanish on 2026-10-20 (ADR-033). The full draft, in Spanish, is in the history: this
-file at `e4a1d21`.
+file at `34aa5c0`.
 
 **Note (2026-10-20, ADR-034):** v0.2 now starts with two pieces before this environment: a person in the loop, who
 approves or refuses each receipt, and records signed out of the agent's reach. The phases of §9 come after them.

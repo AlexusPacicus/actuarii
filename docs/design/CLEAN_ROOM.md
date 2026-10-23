@@ -5,7 +5,7 @@ measurement, and the results were added afterwards in §5, without touching §1 
 committed before the measurement it governs.
 
 Condensed and translated from Spanish on 2026-10-19 (ADR-033). The full record, in Spanish, with every receipt, hash
-and time, is in the history: this file at `0c5f669`.
+and time, is in the history: this file at `ac706a1`.
 
 ## 1. What is measured
 
@@ -151,7 +151,7 @@ beforehand so that what is told is not chosen afterwards.
 
 ### Linux (CI), 2026-10-08
 
-The first run of the `CI` workflow on GitHub Actions, at `a9709e5`, on `ubuntu-24.04` with Python 3.11. The criterion
+The first run of the `CI` workflow on GitHub Actions, at `ee76c61`, on `ubuntu-24.04` with Python 3.11. The criterion
 of §4, that the sequence passes: **passed.** The sequence took 2 s and the whole job 59 s. The 14 tests skipped on
 Linux are those that need a case-insensitive file system. The sequence runs on every push to `main` since.
 
@@ -161,7 +161,7 @@ Not valid as a measurement: the chat stepped in several times, and the steps wer
 observed: the agent asked for its receipt before writing, so there was no denial, which led to §4c. Milestone 2 came
 about 17 s after the text. The attempt found a **fault of the kit:** the installed `pre-commit` refused the kit's own
 symbolic links, so a freshly installed kit could not be committed with its own hook. Fixed before the next
-measurement (`3c9faf7`), with the frictions of the guide (`0f3118a`).
+measurement (`8ab9223`), with the frictions of the guide (`16db420`).
 
 ### macOS, attempt 2, 2026-10-12: second rehearsal, no figure
 
@@ -218,7 +218,7 @@ whoever copies a command does not read it. Fixed with the single block of ADR-02
 
 ### macOS, attempt 5, 2026-10-18: the V4 measurement
 
-The one-block guide (`93cc0c9`) and the method of §4e, with no help from the chat. Claude Code 2.1.299, Sonnet 5.5,
+The one-block guide (`ef1eae0`) and the method of §4e, with no help from the chat. Claude Code 2.1.299, Sonnet 5.5,
 default permission mode. The times come from the record, as in attempt 3.
 
 Deviations:
@@ -250,7 +250,7 @@ Deviations:
 Findings:
 1. **Kit: the block installs in the repository where the terminal is,** and the installer said where only after
    writing. It wrote only new files and committed only its own, so it was undone without touching the author's work.
-   The proposed fix, naming the target in the first question, before any write, was made in ADR-029 (`119d569`).
+   The proposed fix, naming the target in the first question, before any write, was made in ADR-029 (`c979cea`).
 2. **The block worked the first time:** clone, environment, `pydantic` from scratch, installation and commit in 139 s,
    reading the guide included.
 3. **The denial, live:** it is what the original milestone 1 of §3 asked for, and the agent got out of it on its own.
@@ -261,7 +261,7 @@ deviations noted, if milestone 1 holds by §4c. It holds: **V4 passed, with 223 
 ### macOS, the real case of §4f, 2026-10-18
 
 With the plan of §4f, on a fresh clone of `origin/v3-exp` (`1676538`), branch `v3-exp-clasificador`. The kit was
-installed with the block from Actuarii at `00f1ed2` and committed by the installer (`0fb14fb`), with
+installed with the block from Actuarii at `ef0af48` and committed by the installer (`0fb14fb`), with
 `explorations/v3/**` governed. Claude Code 2.1.302, Sonnet 5.5; the permission mode started as `default` and changed to
 `acceptEdits` during the session.
 
@@ -293,7 +293,7 @@ installed with the block from Actuarii at `00f1ed2` and committed by the install
 Findings:
 1. **Kit: the denial of `python3 -m pytest` did not guide the agent.** The rule is right, but the denial was Claude
    Code's generic message, and nothing in the target said that tests run with `pytest`. Fixed after the case by
-   ADR-031 (`f42cd45`) and checked live: the `Bash` hook denies it first, naming `pytest`.
+   ADR-031 (`3e3e50f`) and checked live: the `Bash` hook denies it first, naming `pytest`.
 2. **The gate worked live twice:** it refused an `importlib` in a governed Python file and denied an `Edit` without its
    receipt. The agent got out of both on its own.
 3. **The reasons are in the language of the task, Spanish, and no one approved them:** problem 2 of the limits.

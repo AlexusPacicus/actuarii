@@ -41,7 +41,7 @@ Actuarii-Record: changed outside the channel: AGENTS.md
 `Actuarii-Rationale` lines are the reasons the agent gave for them. `changed outside the channel` means that
 something else changed the file: you, an editor, a tool the gate does not see. The full trail (every proposal,
 decision, refusal and reason) stays in a local database under `.data/`, which git ignores; the trailers are what
-travels with the repository. This repository is developed under its own rules: since `ba6a120`, every commit
+travels with the repository. This repository is developed under its own rules: since `57dbc72`, every commit
 that changes a governed file carries its record.
 
 ### Which channel decides who
@@ -340,7 +340,7 @@ how tests run, too. The fix followed the same steps:
 * a [contract](docs/design/PYTEST_NAMED.contract.json) for the implementer, which wrote the tests first;
 * a check in code that the new tests failed before the change and pass after it;
 * a commit whose record says `matches` for each of its four files
-  ([`f42cd45`](https://github.com/AlexusPacicus/actuarii/commit/f42cd45)).
+  ([`3e3e50f`](https://github.com/AlexusPacicus/actuarii/commit/3e3e50f)).
 
 ## How it differs
 

@@ -4,7 +4,7 @@ Claude, 2026-10-07, with the author's thresholds. This document was committed be
 results were added afterwards, in §4, without touching §1 to §3.
 
 Translated from Spanish on 2026-10-19 (ADR-033), with §6 reduced to a note. The original is in the history: this file
-at `d3c3b41`.
+at `1f04e9a`.
 
 ## 1. What is measured
 
@@ -93,7 +93,7 @@ committed again before measuring. Three steps, in this order, each measured on i
    with `-I`, no `PYTHONPATH` and no user directory, which is also safer. It is measured before deciding; if it saves
    nothing noticeable, it is not done.
 
-**Note (2026-10-19):** step 1 was done on 2026-10-14 (`f5517ae`), for another reason: the permission perimeter of
+**Note (2026-10-19):** step 1 was done on 2026-10-14 (`cdc07f4`), for another reason: the permission perimeter of
 ADR-012, which ADR-022 keeps, allows `validate_proposal` so that it does not ask. The cost has not been measured again
 since. Steps 2 and 3 are not done: the two write hooks still start one Python each, without `-I` or `-S`.
 
