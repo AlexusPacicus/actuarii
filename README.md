@@ -16,10 +16,15 @@ are in Spanish.
 
 ## Why the rules live outside the model
 
-A coding agent reads instructions and data through the same channel, its context, and it cannot reliably tell
-them apart. A file it opens, a test output or a web page can change what it does next. A record that the agent
-keeps, or a rule that the agent is asked to follow, is only as good as the agent's reading of its context at
-that moment.
+The premise of this kit is that a language model does not grasp the meaning of what it reads. It works on tokens,
+and a rule written in its prompt only shifts the probability of what it produces next: it makes compliance more
+likely, never certain. A prompt conditions the model; it enforces nothing.
+
+Instructions and data reach the model through the same channel, its context, and the architecture enforces no
+hierarchy between them: whatever priority a rule gets, it gets from learned weights, not from a boundary. A file it
+opens, a test output or a web page conditions what it does next, just as the rule does. A record that the agent
+keeps, or a rule that the agent is asked to follow, is only as good as the agent's reading of its context at that
+moment.
 
 Actuarii does not try to keep the agent from being convinced. It takes the decision away from it. The agent
 proposes a change and gives its reason; code outside the model checks the proposal and records the decision;
