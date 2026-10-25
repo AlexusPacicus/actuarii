@@ -92,12 +92,15 @@ Updated: 2026-10-25, afternoon.
     the rewritten hashes redone in the tree, 97 of 46 hashes;
   * **ADR-041 (`32891fd`):** the design of v0.2 out of the tree, in the history at `dcfd3b5`;
   * **the README's premise (`5871f14`):** "Why the rules live outside the model" opens with the author's premise, that
-    a language model does not grasp the meaning of what it reads and a rule in its prompt enforces nothing.
+    a language model does not grasp the meaning of what it reads and a rule in its prompt enforces nothing;
+  * **the license in the kit (`61f2c50`):** `tools/` carries byte copies of `LICENSE` and `NOTICE`, so every
+    installation gets them;
+  * **the opening (ADR-003):** the repository is public since 2026-10-25, with its issues and discussions enabled.
 
-  Suite green (3708). The detail, with its commits, is in the DEVLOG.
+  Suite green (3712). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
-  1. **The opening, today (ADR-003):** the author checks that an old hash answers 404 in the new repository and that
-     its issues are enabled, deletes `actuarii-old`, and makes the repository public.
+  1. **The opening (ADR-003):** done on 2026-10-25 (DEVLOG). Still to do, the author: delete `actuarii-old`, and give
+     the repository a description and topics in its "About" box.
   2. **The research of v0.2, at the ROADMAP (ADR-033):** the review of every other document is done. The plan
      (author, 2026-10-20), with findings in the DEVLOG entry of the day and decisions in the register:
      * R0, which answers from outside would change the plan of v0.2: done, in ROADMAP §3 (ADR-040);
@@ -123,8 +126,7 @@ Updated: 2026-10-25, afternoon.
      the four older local copies have no `origin`; its last steps are those of the opening, above. The dead citation
      `54c7f8c` waits for the author: a small contract to the implementer.
 * Minor, undated (the DEVLOG of 2026-10-16, in the history): `**` without `re.DOTALL` in `project_config`; the
-  Python traceback of an installer `git` call that takes more than 300 s; the installer copies the kit (Apache-2.0)
-  without the license text.
+  Python traceback of an installer `git` call that takes more than 300 s.
 
 ## Calendar to the 27th
 

@@ -18,6 +18,47 @@ entries keep the names of their day.
 **Note (2026-10-23, ADR-038):** the history of `main` was rewritten from 2026-08-02 on. The hashes the entries cite
 are those of the new history, each replaced from the rewrite's commit map.
 
+## 2026-10-25 (afternoon, the opening and the license in the kit)
+
+**Done**
+* **The opening (ADR-003),** by the author: an old hash (`f42cd45`) answers 404 in the new repository; issues and
+  discussions are enabled; the repository is public.
+* **Checked from outside,** through the integrated browser with the author's approval of the site, without signing
+  in:
+  * the README renders, and its 29 links to GitHub answer. Seven first got 429, GitHub's limit for anonymous
+    requests, and answered when asked again;
+  * its anchors, and those of AGENTS §9 and ROADMAP §3, exist;
+  * the design of v0.2 opens at `dcfd3b5`, and `3e3e50f` opens its commit;
+  * GitHub detects the Apache-2.0 license, and the issues page opens;
+  * the five CI runs of the new repository are green, from `1eb3dfe` to `7b51a7e`.
+
+  The two links outside GitHub were not checked. The "About" box had no description and no topics.
+* **The license in the kit (`61f2c50`):** the installer copied `tools/` without `LICENSE` and `NOTICE`, which sit at
+  the root, so a target that published its repository redistributed the kit without either (Apache-2.0, §4a and
+  §4d). `tools/` now carries byte copies of both, and every installation gets them; the installer does not change.
+  A contract to the implementer, with two red tests and three guards. Claude validated the report, ran
+  `verify_red_green.py` (both red tests fail at the base and pass at the commit, the guards pass at both, the full
+  suite passes), checked by hand that the commit touches only the contract's four files, each with
+  `Actuarii-Record: matches`, and advanced `main`.
+* **`INSTALL.md`** says that `tools/` carries the kit's license and notice.
+* **"How it differs"** opens with what Actuarii does; Agent Receipts stays after it, as the contrast.
+
+Suite green (3712). Disk: 4.3 GiB free.
+
+**Decided (author)**
+* **The fix of the license,** today, now that the repository is public.
+* **The README** gets no line that presents the project's records; "How it differs" opens with Actuarii.
+
+**What went wrong**
+* **The contract asked for lines 1-57 of a file of 56.** `context_pack.py` refused the range; the implementer served
+  1-56 and said so in its report. A range is checked against its file before the contract goes out.
+
+**Next**
+* **The author:** delete `actuarii-old`; give the repository a description and topics in its "About" box.
+* **V9,** on Tuesday 27.
+* **Discussions** are not in the count of ROADMAP §3: an issue or a pull request counts as an issue; a post in
+  Discussions counts only where it says that someone installed the kit, and otherwise as context.
+
 ## 2026-10-25 (ADR-041, the README's premise and V9)
 
 This entry covers the sessions of 23, 24 and 25 October that came after the entry of the rewrite. The repository opens

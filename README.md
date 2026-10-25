@@ -351,11 +351,12 @@ how tests run, too. The fix followed the same steps:
 
 ## How it differs
 
-Other tools record what agents do. [Agent Receipts](https://agentreceipts.ai) signs a receipt for every tool call
-after it runs, with a key held outside the agent. Actuarii works earlier and on less: a write to a governed path
-happens only if a receipt for that exact change exists, the agent's reason is recorded with it, and each commit says
-whether its governed files match what was recorded. Its records are not signed yet (problem 7); that is where v0.2
-starts.
+Actuarii works before the write, and on less than every tool call: a write to a governed path happens only if a
+receipt for that exact change exists, the agent's reason is recorded with it, and each commit says whether its
+governed files match what was recorded. Its records are not signed yet (problem 7); that is where v0.2 starts.
+
+Other tools record what agents do after the fact. [Agent Receipts](https://agentreceipts.ai) signs a receipt for
+every tool call after it runs, with a key held outside the agent.
 
 ## Where it comes from
 

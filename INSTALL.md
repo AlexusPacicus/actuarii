@@ -78,7 +78,7 @@ when they apply. An answer is `y` or `yes`; anything else, or just Enter, is no.
 
 ## What it writes
 
-* `tools/`: the hooks, the validator, the Python shim and the audit tools;
+* `tools/`: the hooks, the validator, the Python shim and the audit tools, with the kit's `LICENSE` and `NOTICE`;
 * `.claude/agents/` and `.claude/skills/`: the implementer and blind-reviewer subagents and their skills;
 * `.actuarii.json`: the configuration, with the paths you chose;
 * `.claude/settings.json`: the permission perimeter, the hooks, `includeGitInstructions: false` and a
