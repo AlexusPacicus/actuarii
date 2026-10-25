@@ -25,6 +25,10 @@ change whether a decision is in force: `docs/STATUS.md` keeps that list. From he
 designs that the entries cite as their source, other than those still in `docs/design/`, left the tree. They are in
 the history at `64292e1`.
 
+**Note (2026-10-25, ADR-038):** after the rewrite of the history, commit `dcfd3b5` replaced the three hashes this
+register cited with those of the new history, from the rewrite's commit map: the two in the notes above and the one
+in ADR-037. The old hashes no longer exist. The text of each decision did not change.
+
 ## ADR-001 — Name, license and relationship with Traianus (2026-10-05, author)
 
 **Context:** the kit was born governing Traianus and is extracted into a repository of its own.

@@ -9,7 +9,7 @@ The repository's documents are written in English from 2026-10-18 on (ADR-032); 
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
 Spanish.
 
-Updated: 2026-10-23, afternoon.
+Updated: 2026-10-25, afternoon.
 
 ## v0.1
 
@@ -89,11 +89,16 @@ Updated: 2026-10-23, afternoon.
     each kept out by a test;
   * **the rewrite of ADR-038 (ADR-039):** the history of `main` without the three lines of ADR-038 and what the V8
     check found, run by the author and checked before the push; the new repository, with CI green; the citations of
-    the rewritten hashes redone in the tree, 97 of 46 hashes.
+    the rewritten hashes redone in the tree, 97 of 46 hashes;
+  * **ADR-041 (`32891fd`):** the design of v0.2 out of the tree, in the history at `dcfd3b5`;
+  * **the README's premise (`5871f14`):** "Why the rules live outside the model" opens with the author's premise, that
+    a language model does not grasp the meaning of what it reads and a rule in its prompt enforces nothing.
 
   Suite green (3708). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
-  1. **The research of v0.2, at the ROADMAP (ADR-033):** the review of every other document is done. The plan
+  1. **The opening, today (ADR-003):** the author checks that an old hash answers 404 in the new repository and that
+     its issues are enabled, deletes `actuarii-old`, and makes the repository public.
+  2. **The research of v0.2, at the ROADMAP (ADR-033):** the review of every other document is done. The plan
      (author, 2026-10-20), with findings in the DEVLOG entry of the day and decisions in the register:
      * R0, which answers from outside would change the plan of v0.2: done, in ROADMAP §3 (ADR-040);
      * R1, whether Claude Code can show the reason before the write and report for certain whether the person
@@ -109,14 +114,14 @@ Updated: 2026-10-23, afternoon.
 
      The web only through the integrated browser, with the author's approval of each site; nothing is probed or
      installed in Actuarii.
-  2. **The full reading of the README (V6):** done on 2026-10-20 (DEVLOG). Each of its 24 named tests exists, is in
+  3. **The full reading of the README (V6):** done on 2026-10-20 (DEVLOG). Each of its 24 named tests exists, is in
      the file it links and passes; "What comes next" points to ROADMAP §3, and "How it differs" names Agent Receipts.
-  3. **Nothing published contradicts the kit (V7):** done on 2026-10-20 (DEVLOG), in two contracts. Still to do: the
-     text for HN and Reddit (V9), which asks the question of ADR-034.
-  4. **The rewrite of ADR-038:** done (DEVLOG, 2026-10-23), but for the author's steps: push the commit of the
-     citations; check that an old hash answers 404 in the new repository; once that commit is green there, delete the
-     old repository, before the 25th; and remove `origin` from the two older local clones that point to the same URL.
-     The dead citation `54c7f8c` waits for the author: a small contract to the implementer.
+  4. **Nothing published contradicts the kit (V7):** done on 2026-10-20 (DEVLOG), in two contracts. Still to do: V9,
+     the text for Show HN and r/ClaudeAI, which asks the question of ADR-034. The author writes it, and Claude audits
+     its facts and its structure (DEVLOG, 2026-10-25); it goes out on Tuesday 27.
+  5. **The rewrite of ADR-038:** done (DEVLOG, 2026-10-23 and 2026-10-25). The commit of the citations is pushed, and
+     the four older local copies have no `origin`; its last steps are those of the opening, above. The dead citation
+     `54c7f8c` waits for the author: a small contract to the implementer.
 * Minor, undated (the DEVLOG of 2026-10-16, in the history): `**` without `re.DOTALL` in `project_config`; the
   Python traceback of an installer `git` call that takes more than 300 s; the installer copies the kit (Apache-2.0)
   without the license text.

@@ -18,6 +18,88 @@ entries keep the names of their day.
 **Note (2026-10-23, ADR-038):** the history of `main` was rewritten from 2026-08-02 on. The hashes the entries cite
 are those of the new history, each replaced from the rewrite's commit map.
 
+## 2026-10-25 (ADR-041, the README's premise and V9)
+
+This entry covers the sessions of 23, 24 and 25 October that came after the entry of the rewrite. The repository opens
+today.
+
+**Done**
+* **The commit of the citations, checked by Claude,** reading only: no hash of the old history is left in the tree;
+  every hash the tree cites is a commit of the new history, but the 12 words and `54c7f8c` of the entry below; and
+  `dcfd3b5` touches only `docs/` and the README. The author pushed it.
+* **The old local copies, without `origin`** (the author, 2026-10-23, each checked by Claude): three point to the
+  GitHub URL, not two: `~/Documents/actuarii`, the clone of the real case at `00f1ed2`;
+  `Actuarii-antes-de-reescribir`; and the old working copy, now `~/actuarii-rewrite/Actuarii-pre-reescritura`. A fourth, the backup mirror, pointed to
+  the working copy itself: a `git push` from it would have overwritten the new history with the old one. None has a
+  remote now, and the mirror keeps its 13 branches and 10 tags.
+* **A note at the head of the register:** `dcfd3b5` replaced three hashes in it, one of them inside ADR-037. The
+  register only grows, so the note says so.
+* **ADR-041 (`32891fd`):** the design of v0.2 left the tree. The README links it at `dcfd3b5`, and the ROADMAP, the
+  status and `CASES.md` name it in the history. Of the design documents, it was the only one that is not evidence of
+  what v0.1 does.
+* **The README's premise (`5871f14`):** "Why the rules live outside the model" opens with the author's premise, that
+  a language model does not grasp the meaning of what it reads: a rule in its prompt shifts the probability of what it
+  produces and enforces nothing, and the architecture enforces no hierarchy between instructions and data. The rest of
+  the section is as it was. A shorter README, drafted with another tool, was weighed first; Claude found in it claims
+  the kit contradicts ("immutable", v0.2 as "upcoming"), an install block that would not run, and the loss of sections
+  the register decided, and advised against it.
+* **V9, the rules of the sites,** read on 2026-10-23 through the integrated browser, with the author's approval of
+  the site: the Show HN guidelines, the HN guidelines, and the moderator's tips that Show HN links. Documented there:
+  * a Show HN is something people can try without signing up; its title starts with "Show HN"; its text gives the
+    backstory, a clear statement of what it is and what is different, in factual language without marketing;
+  * the text is written by hand: no generated or AI-edited text in posts or comments and, since an edit of the tips
+    on 2026-03-28, no LLM for any part of it, not even to edit it;
+  * no asking friends to vote or comment, and a username that is not the project's.
+
+  The integrated browser cannot open reddit.com (safety restrictions); the author reads the rules of r/ClaudeAI.
+* **V9, the text:** the author writes it, in their own words. Claude gave a sheet of facts with their sources, in
+  Spanish and as bare points, audits each claim against the kit and helps with the structure, and writes no wording.
+  The drafts are kept outside the repository. Of its eight blocks, five are drafted; one is in Spanish, to be
+  translated by the author; two and the title are pending, and the one on how it works is to be shortened.
+* **V9's cut-off,** Saturday 24, passed with the text unfinished. The ROADMAP's fallback applies: the repository
+  opens today, and the text goes out in the first week, aimed at Tuesday 27 as ADR-027 sets.
+
+Suite green (3708). Disk: 6.2 GiB free.
+
+**Decided (author)**
+* **ADR-041.**
+* **The README's premise,** stated as the premise of the kit, not as a fact the tests check.
+* **V9:** Show HN and r/ClaudeAI; the author writes it, and Claude audits facts and structure; the question of
+  ADR-034 comes right after the limits; approving a specification upfront is asked as an option, not announced as a
+  plan, so that the text keeps its own rule of no complexity ahead of evidence.
+* **These corrections go in this entry** (2026-10-23), not in the entry they correct.
+
+**Corrections to the entry of 2026-10-23**
+* "Neither the name nor the term was typed in a session or written in the repository": neither was written in the
+  repository, but both are in the conversation of a session, where the author pasted the terminal's output. That
+  transcript stays on the author's machine.
+* "Steps 0 to 5 on 2026-10-21, the checks on 22 and 23 October": the times of the files the rewrite left, and the
+  terminal's restore marker, show steps 0 to 6 on the 21st, steps 1 to 5 between 12:38 and 12:40. On the 23rd came the
+  removal of the tags, at 12:20, and the push.
+* "The two older local clones": four copies, as above.
+
+**What went wrong**
+* **The procedure Claude wrote** listed two old clones and said that the name would not be typed in a session; the
+  entry of the 23rd took both from it. A record is now written from the files and the transcript, not from the plan.
+* **Claude called a paragraph of the author's "generated",** on the evidence of the citation markers it carried. It
+  was the author's. Markers are reported as markers, which a post must drop, not as evidence of who wrote a text.
+
+**Ideas** (after the opening)
+* **Which design documents stay** (Claude's proposal): with GitHub's traffic, which keeps 14 days, see which
+  documents readers open, and take out what nobody opens.
+* **Approval at the specification** (the author): the kit already serves a contract to the agent (AGENTS §3) and
+  checks red and green (§6); what is missing is a person approving the specification and a check that the result
+  conforms. V9 asks it; if answers come, a line of ROADMAP §3 is the author's to decide.
+* **The license in the installer:** it copies `tools/` without `LICENSE` and `NOTICE`, and Apache-2.0 asks a
+  redistributor for both (§4a and §4d). The minor item of 2026-10-16, and the first fix Claude recommends after the
+  opening.
+
+**Next**
+* **The author, today:** check that an old hash answers 404 in the new repository and that its issues are enabled;
+  delete `actuarii-old`; make the repository public.
+* **V9:** the blocks still pending, the rules of r/ClaudeAI, and the text on Tuesday 27 at about 14:00 Madrid time.
+* **The dead citation `54c7f8c`:** waits for the author.
+
 ## 2026-10-23 (the rewrite of ADR-038)
 
 The history of `main` is rewritten, with the three lines of ADR-038 and what the V8 check found, and the rewritten
