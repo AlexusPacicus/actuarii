@@ -181,6 +181,13 @@ def test_a_fresh_install_copies_every_kit_file_with_its_bytes_and_executable_bit
         assert is_executable(copy_) == is_executable(source), path
 
 
+def test_a_fresh_install_leaves_the_license_and_the_notice_of_the_kit_in_the_target(target, home):
+    done = install(target, home)
+    assert done.returncode == 0, done.stderr
+    for name in ("LICENSE", "NOTICE"):
+        assert (target / "tools" / name).read_bytes() == (CLONE / name).read_bytes(), name
+
+
 def test_the_installed_interpreter_names_of_the_shim_are_executable_copies_of_it(installed):
     shim = installed / "tools" / "bin" / "python3"
     for name in ("python", "python3.11"):

@@ -51,6 +51,11 @@ def test_license_is_the_official_apache_text_and_notice_names_the_holder():
     assert (ROOT / "NOTICE").read_text(encoding="utf-8").splitlines()[:2] == NOTICE_HEAD
 
 
+def test_the_kit_tree_carries_the_license_and_the_notice_byte_for_byte():
+    for name in ("LICENSE", "NOTICE"):
+        assert (ROOT / "tools" / name).read_bytes() == (ROOT / name).read_bytes(), name
+
+
 def test_installer_pin_is_the_pydantic_dependency_of_pyproject():
     (dependency,) = PYPROJECT["project"]["dependencies"]
     assert dependency == "pydantic==" + install.pydantic_pin()
