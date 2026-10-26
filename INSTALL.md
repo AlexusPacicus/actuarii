@@ -161,6 +161,31 @@ REPO=$(git rev-parse --show-toplevel) &&
 python3 "$(dirname "$REPO")/actuarii/tools/install.py" --no-input --govern 'src/**' --install-pydantic --commit "$REPO"
 ```
 
+## Removing it
+
+There is no uninstall command yet. Do this from the top level of your repository, in your own terminal and
+outside a Claude Code session: inside one, the sandbox and the gate refuse these very changes.
+
+1. Remove the two git hooks first. The `pre-commit` hook runs `tools/git/commit_integrity.py`, so once
+   `tools/` is gone it would refuse every commit:
+
+   ```bash
+   rm "$(git rev-parse --git-path hooks/pre-commit)" "$(git rev-parse --git-path hooks/commit-msg)"
+   ```
+
+2. If the installer's work was committed as `Install Actuarii`, revert that commit. It takes out the kit's
+   files and `.actuarii.json`, and gives `.claude/settings.json`, `.mcp.json` and `.gitignore` back as
+   they were. If later commits changed the same files, git asks you to resolve the conflicts:
+
+   ```bash
+   git revert --no-edit "$(git log --format=%H --grep='^Install Actuarii$' -1)"
+   ```
+
+   If it was never committed, `git status` shows what the installer added and what it changed: delete
+   what it added, and give back what it changed with `git restore`.
+3. What git does not track stays where it is: the audit trail in `.data/`, which you may keep as a record
+   or delete, the environment in `~/.venvs/actuarii`, and the clone of Actuarii next to your repository.
+
 ## Limits
 
 What the kit does not cover is declared in Actuarii's [`AGENTS.md`](AGENTS.md), section 9.
