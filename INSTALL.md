@@ -29,7 +29,8 @@ It runs in order and stops at the first step that fails:
 
 1. `REPO` is your repository. Outside a git repository the block stops here, before anything is written.
 2. Actuarii is cloned next to your repository, never inside it, as a folder named `actuarii`. If that
-   folder already exists, the clone fails and the block stops.
+   folder already exists, the clone fails and the block stops. That is what happens with a second repository
+   in the same folder: install it with the clone you have, as [below](#other-ways-to-run-the-installer).
 3. The Python environment for the session is created outside your repository, in `~/.venvs/actuarii`,
    and activated in this terminal.
 4. The installer runs and asks at most three questions (below). The first one names the repository it installs into,
@@ -136,6 +137,14 @@ means that something else changed the file: you, an editor, a tool the gate does
 
 From the top level of your repository, with the environment active. The installer copies the working
 tree of the Actuarii clone, so keep that clone clean: a stray file under its `tools/` would be copied too.
+
+To install into another repository in the same folder, with the clone and the environment you already have; it
+asks the same questions as the block:
+
+```bash
+REPO=$(git rev-parse --show-toplevel) &&
+python3 "$(dirname "$REPO")/actuarii/tools/install.py" "$REPO"
+```
 
 To see what it would do without writing anything; it asks nothing and ends with
 `dry run: nothing was written`:

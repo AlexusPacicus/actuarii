@@ -10,9 +10,14 @@ paths you did not govern, leaves none. An agent can move its work there, and we 
 
 Actuarii v0.1 is not a security boundary against an adversarial agent. That is what v0.2 is for.
 
-It works with [Claude Code](https://claude.com/claude-code) on macOS and Linux. The documents this README links
-are in English; the development log, some other records of the work and most commit messages before 18 October
-are in Spanish.
+**How it works.** You choose which paths to govern. Before the agent writes one of them, it sends the exact change
+and its reason to a validator, which runs outside the model and records both. A hook lets the write through only if
+a receipt for that exact change exists. Each commit then says, for each governed file it changes, whether its
+content matches the recorded writes, and carries their reasons.
+
+It works with [Claude Code](https://claude.com/claude-code) on macOS and Linux. The repository is in English. What
+was written before 18 October, the earlier development log, other records and most commit messages, is in Spanish,
+in the git history.
 
 ## Why the rules live outside the model
 
@@ -46,8 +51,9 @@ Actuarii-Record: changed outside the channel: AGENTS.md
 `Actuarii-Rationale` lines are the reasons the agent gave for them. `changed outside the channel` means that
 something else changed the file: you, an editor, a tool the gate does not see. The full trail (every proposal,
 decision, refusal and reason) stays in a local database under `.data/`, which git ignores; the trailers are what
-travels with the repository. This repository is developed under its own rules: since `57dbc72`, every commit
-that changes a governed file carries its record.
+travels with the repository. This repository is developed under its own rules: since
+[`57dbc72`](https://github.com/AlexusPacicus/actuarii/commit/57dbc72), every commit that changes a governed file
+carries its record.
 
 ### Which channel decides who
 
@@ -154,8 +160,8 @@ An adversarial audit of the kit recorded 35 cases. Each one is in
    *In v0.2:* every write to a governed path from inside the environment, `Bash` included, goes through one
    broker, and deleting or renaming a governed file gets a governed channel. The paths you do not govern stay
    outside.
-2. **No person approves the receipts or their reasons.** There is no human in the loop. The agent issues its own
-   receipt and writes its own reason. The validator checks the form of the proposal and its quote of the file,
+2. **No person approves the receipts or their reasons.** The kit puts no person in the loop. The agent issues its
+   own receipt and writes its own reason. The validator checks the form of the proposal and its quote of the file,
    not that the reason is true. The red phase of a delegated test and the delegation itself work the same way:
    the agent that executes checks itself.
 
@@ -284,9 +290,6 @@ falls to you, because the sandbox blocks it and no receipt can allow it:
 * `git push`;
 * the permission prompts of Claude Code, as your permission mode decides: for `Bash` commands outside the
   read-only list, and for the file tools outside the repository.
-
-When `main` has not moved since a branch left it, the agent can fast-forward `main` to the branch without
-rewriting the tree.
 
 ## What comes next
 
