@@ -9,7 +9,7 @@ The repository's documents are written in English from 2026-10-18 on (ADR-032); 
 one, and stay translated, are condensed or leave the tree (ADR-033). The conversation with the author may be in
 Spanish.
 
-Updated: 2026-10-25, afternoon.
+Updated: 2026-10-26, afternoon.
 
 ## v0.1
 
@@ -95,12 +95,17 @@ Updated: 2026-10-25, afternoon.
     a language model does not grasp the meaning of what it reads and a rule in its prompt enforces nothing;
   * **the license in the kit (`61f2c50`):** `tools/` carries byte copies of `LICENSE` and `NOTICE`, so every
     installation gets them;
-  * **the opening (ADR-003):** the repository is public since 2026-10-25, with its issues and discussions enabled.
+  * **the opening (ADR-003):** the repository is public since 2026-10-25, with its issues and discussions enabled;
+  * **how to remove the kit (`c4e58d8`):** `INSTALL.md` gives the steps, the git hooks first, checked by running them
+    on two throwaway repositories;
+  * **the text of V9:** written by the author, its facts and its structure audited by Claude, and kept outside the
+    repository, ready for Tuesday 27.
 
   Suite green (3712). The detail, with its commits, is in the DEVLOG.
 * Pending, in this order (each criterion, with its cut-off, in the ROADMAP):
-  1. **The opening (ADR-003):** done on 2026-10-25 (DEVLOG). Still to do, the author: delete `actuarii-old`, and give
-     the repository a description and topics in its "About" box.
+  1. **The text on Show HN, Tuesday 27 at about 14:00 Madrid time (ADR-027):** the author posts it, after giving the
+     repository a description and topics in its "About" box and reading the rules of r/ClaudeAI. From then on, each
+     Sunday's line of the signal (ROADMAP §3), the first on 1 November.
   2. **The research of v0.2, at the ROADMAP (ADR-033):** the review of every other document is done. The plan
      (author, 2026-10-20), with findings in the DEVLOG entry of the day and decisions in the register:
      * R0, which answers from outside would change the plan of v0.2: done, in ROADMAP §3 (ADR-040);
@@ -119,14 +124,14 @@ Updated: 2026-10-25, afternoon.
      installed in Actuarii.
   3. **The full reading of the README (V6):** done on 2026-10-20 (DEVLOG). Each of its 24 named tests exists, is in
      the file it links and passes; "What comes next" points to ROADMAP §3, and "How it differs" names Agent Receipts.
-  4. **Nothing published contradicts the kit (V7):** done on 2026-10-20 (DEVLOG), in two contracts. Still to do: V9,
-     the text for Show HN and r/ClaudeAI, which asks the question of ADR-034. The author writes it, and Claude audits
-     its facts and its structure (DEVLOG, 2026-10-25); it goes out on Tuesday 27.
-  5. **The rewrite of ADR-038:** done (DEVLOG, 2026-10-23 and 2026-10-25). The commit of the citations is pushed, and
-     the four older local copies have no `origin`; its last steps are those of the opening, above. The dead citation
+  4. **Nothing published contradicts the kit (V7):** done on 2026-10-20 (DEVLOG), in two contracts. V9, its text, is
+     the first item of this list.
+  5. **The rewrite of ADR-038:** done (DEVLOG, 2026-10-23, 2026-10-25 and 2026-10-26): the commit of the citations is
+     pushed, the four older local copies have no `origin`, and the old repository is deleted. The dead citation
      `54c7f8c` waits for the author: a small contract to the implementer.
-* Minor, undated (the DEVLOG of 2026-10-16, in the history): `**` without `re.DOTALL` in `project_config`; the
-  Python traceback of an installer `git` call that takes more than 300 s.
+* Minor, undated: `**` without `re.DOTALL` in `project_config`; the Python traceback of an installer `git` call that
+  takes more than 300 s (both in the DEVLOG of 2026-10-16, in the history); no uninstall command, so `INSTALL.md`
+  gives the steps by hand (DEVLOG, 2026-10-26).
 
 ## Calendar to the 27th
 

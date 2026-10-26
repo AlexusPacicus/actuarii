@@ -18,6 +18,64 @@ entries keep the names of their day.
 **Note (2026-10-23, ADR-038):** the history of `main` was rewritten from 2026-08-02 on. The hashes the entries cite
 are those of the new history, each replaced from the rewrite's commit map.
 
+## 2026-10-26 (how to remove the kit, and the text of V9)
+
+This entry also covers the evening of the 25th, after the entry below.
+
+**Done**
+* **The old repository, deleted** by the author on 2026-10-25. The rewrite of ADR-038 is closed: no step of it is
+  left.
+* **How to remove the kit (`c4e58d8`):** there is no uninstall command, and no guide said how to take the kit out. A
+  trap came with it: the `pre-commit` hook runs `tools/git/commit_integrity.py`, so whoever deleted `tools/` and kept
+  the hook would see every commit refused. `INSTALL.md` now has "Removing it": the two git hooks first; then a revert
+  of the `Install Actuarii` commit, or `git status` and `git restore` when it was never committed; and what git does
+  not track (`.data/`, the environment, the clone). Outside a Claude Code session, where the sandbox and the gate refuse
+  these changes.
+* **The steps, checked by running them,** on two throwaway repositories in the scratchpad, through a shell script the
+  author approved, since it was not committed and used `rm`:
+  * with the install committed: a commit with the hooks and without `tools/` is refused; after the steps, no file
+    differs from the base commit, no hook is left, and a new commit passes;
+  * with the install never committed: `git status` shows the changed files and the added ones apart; after restoring
+    the first and deleting the second, the repository is as it was.
+
+  The commit of the install, in the first case, was made with `--no-verify`: inside a session the shim refuses the
+  commit hooks while they are not in `HEAD`, as `INSTALL.md` says. It changes nothing in the removal.
+* **The text of V9,** finished and kept outside the repository; it goes out on Tuesday 27. The author wrote each block
+  and translated it; Claude audited each claim against the kit and the structure, and assembled the text with
+  formatting only (one line per paragraph, a blank line between paragraphs, quotes around two values, no backticks),
+  plus three typos the author asked to fix. Eight blocks, 529 words. What the audit changed, among other things:
+  * "immutable" left the text; the trailers are text and nothing signs them;
+  * the kit is said to be for Claude Code and for coding agents;
+  * the commit's record is said to cover the governed files that the commit changes, not all of them;
+  * what the kit prevents is said exactly: a write to a governed path without a receipt for that exact change;
+  * the 4 minutes of the installation are said to be the author's own measurement;
+  * the text says there is no uninstall command, and points to `INSTALL.md`.
+
+Suite green (3712). Disk: 2.8 GiB free.
+
+**Decided (author)**
+* **"Removing it" in `INSTALL.md`,** checked by running it.
+* **The text of V9:** the order of its blocks (what it is, why, the argument, how it works, how it differs, what it is
+  not, the question, how to try it); no heading in its body; the specification asked as an option, not announced; the
+  title, "Show HN: Actuarii – Work records and write governance for AI coding agents"; the author translates and
+  Claude only formats.
+
+**What went wrong**
+* **Claude called "the setup I use for Traianus" half true,** because Traianus does not run Actuarii. It was exact:
+  Traianus runs that setup, the gates as they were before the extraction, and the sentence says that Actuarii comes
+  from it. Claude withdrew it.
+
+**Ideas**
+* **An uninstall command,** `install.py --uninstall` (Claude's proposal): the installer knows what it writes, so it
+  can take it out. A new function, with its contract and its tests; Claude proposes it as the first issue of the
+  repository, for the author to open or not.
+
+**Next**
+* **The author, before Tuesday 27 at about 14:00 Madrid time:** a description and topics in the repository's "About"
+  box; the rules of r/ClaudeAI; then the post on Show HN.
+* **Sunday 1 November:** the first line of the signal (ROADMAP §3).
+* **Disk:** 2.8 GiB free, the least of these days; it is checked again before the next full suite or verifier run.
+
 ## 2026-10-25 (afternoon, the opening and the license in the kit)
 
 **Done**
