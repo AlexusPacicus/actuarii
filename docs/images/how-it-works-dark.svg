@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="350" viewBox="0 0 860 350" role="img" aria-labelledby="title desc">
+  <title id="title">How Actuarii governs a write</title>
+  <desc id="desc">The agent sends a proposal with the exact change and its reason to a validator outside the model, which records it in the audit trail and returns a receipt or a refusal. When the agent writes, a write gate outside the model checks the audit trail for a receipt for that exact change, records what the write leaves, and lets the write reach the governed file only with a receipt; without one it denies it. At each commit, the audit trail becomes trailers in the commit message.</desc>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; }
+    .t { font-size: 14px; font-weight: 600; fill: #e6edf3; }
+    .s { font-size: 12px; fill: #9198a1; }
+    .z { font-size: 12px; font-weight: 600; fill: #9198a1; }
+    .d { font-size: 12px; fill: #f85149; }
+    .box { fill: #151b23; stroke: #656c76; stroke-width: 1; }
+    .zone { fill: none; stroke: #656c76; stroke-width: 1; stroke-dasharray: 5 4; }
+    .a { fill: none; stroke: #9198a1; stroke-width: 1.25; }
+    .back { stroke-dasharray: 4 3; }
+    .no { stroke: #f85149; }
+    .head { fill: #9198a1; }
+    .headno { fill: #f85149; }
+  </style>
+  <defs>
+    <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0 0L10 5L0 10z"/></marker>
+    <marker id="mno" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="headno" d="M0 0L10 5L0 10z"/></marker>
+  </defs>
+
+  <rect class="zone" x="330" y="20" width="280" height="320" rx="10"/>
+  <text class="z" x="346" y="40">Code, outside the model</text>
+  <rect class="zone" x="670" y="140" width="170" height="200" rx="10"/>
+  <text class="z" x="686" y="160">Your repository</text>
+
+  <rect class="box" x="20" y="50" width="150" height="270" rx="6"/>
+  <text class="t" x="95" y="181" text-anchor="middle">Agent</text>
+  <text class="s" x="95" y="199" text-anchor="middle">the model</text>
+
+  <rect class="box" x="360" y="60" width="220" height="50" rx="6"/>
+  <text class="t" x="470" y="81" text-anchor="middle">Validator</text>
+  <text class="s" x="470" y="99" text-anchor="middle">checks the proposal</text>
+
+  <rect class="box" x="360" y="170" width="220" height="50" rx="6"/>
+  <text class="t" x="470" y="191" text-anchor="middle">Audit trail</text>
+  <text class="s" x="470" y="209" text-anchor="middle">proposals, reasons, writes</text>
+
+  <rect class="box" x="360" y="270" width="220" height="50" rx="6"/>
+  <text class="t" x="470" y="291" text-anchor="middle">Write gate</text>
+  <text class="s" x="470" y="309" text-anchor="middle">a hook before each write</text>
+
+  <rect class="box" x="685" y="170" width="140" height="50" rx="6"/>
+  <text class="t" x="755" y="191" text-anchor="middle">Commit message</text>
+  <text class="s" x="755" y="209" text-anchor="middle">with trailers</text>
+
+  <rect class="box" x="685" y="270" width="140" height="50" rx="6"/>
+  <text class="t" x="755" y="291" text-anchor="middle">Governed file</text>
+  <text class="s" x="755" y="309" text-anchor="middle">a path you chose</text>
+
+  <text class="s" x="250" y="52" text-anchor="middle">proposal: exact change</text>
+  <text class="s" x="250" y="66" text-anchor="middle">and its reason</text>
+  <line class="a" x1="170" y1="76" x2="359" y2="76" marker-end="url(#m)"/>
+  <line class="a back" x1="360" y1="96" x2="171" y2="96" marker-end="url(#m)"/>
+  <text class="s" x="250" y="113" text-anchor="middle">receipt, or refusal</text>
+
+  <text class="s" x="250" y="274" text-anchor="middle">Edit or Write</text>
+  <line class="a" x1="170" y1="284" x2="359" y2="284" marker-end="url(#m)"/>
+  <line class="a no" x1="360" y1="304" x2="171" y2="304" marker-end="url(#mno)"/>
+  <text class="d" x="250" y="321" text-anchor="middle">denied without a receipt</text>
+
+  <line class="a" x1="470" y1="110" x2="470" y2="169" marker-end="url(#m)"/>
+  <text class="s" x="480" y="144">records it</text>
+  <line class="a" x1="470" y1="270" x2="470" y2="221" marker-end="url(#m)"/>
+  <text class="s" x="480" y="241">checks the receipt,</text>
+  <text class="s" x="480" y="255">records the write</text>
+
+  <text class="s" x="640" y="187" text-anchor="middle">trailers</text>
+  <line class="a" x1="580" y1="195" x2="684" y2="195" marker-end="url(#m)"/>
+  <text class="s" x="640" y="287" text-anchor="middle">write</text>
+  <line class="a" x1="580" y1="295" x2="684" y2="295" marker-end="url(#m)"/>
+</svg>

@@ -3,17 +3,18 @@
 **Work records for coding agents. Every action leaves a record that it happened, and why. Built for settings
 where traceability comes first.**
 
-**The first limit.** Only what goes through the governed channel leaves a record, and that channel is, above
-all, the writes to the paths you chose to govern. What the agent does through `Bash`, and what it writes to
-paths you did not govern, leaves none. An agent can move its work there, and we have seen one do it
-([below](#limits)).
+**What it records.** Records are made only when the agent writes to the paths you choose to govern. What the agent
+does through `Bash`, and what it writes to paths you did not govern, leaves none. In a test run, an agent was seen
+moving its work out of the governed paths ([below](#limits)).
 
 Actuarii v0.1 is not a security boundary against an adversarial agent. That is what v0.2 is for.
 
-**How it works.** You choose which paths to govern. Before the agent writes one of them, it sends the exact change
-and its reason to a validator, which runs outside the model and records both. A hook lets the write through only if
-a receipt for that exact change exists. Each commit then says, for each governed file it changes, whether its
-content matches the recorded writes, and carries their reasons.
+**How it works.** One governed write, from the proposal to the commit:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/how-it-works-dark.svg">
+  <img src="docs/images/how-it-works-light.svg" alt="The agent sends the exact change and its reason to a validator outside the model, which records it in the audit trail and returns a receipt or a refusal. When the agent writes, a write gate outside the model checks the audit trail for a receipt for that exact change and records what the write leaves; it lets the write reach the governed file only with a receipt, and denies it without one. At each commit, the record goes into the commit message as trailers.">
+</picture>
 
 It works with [Claude Code](https://claude.com/claude-code) on macOS and Linux. The repository is in English. What
 was written before 18 October, the earlier development log, other records and most commit messages, is in Spanish,
@@ -46,6 +47,13 @@ Actuarii-Record: matches: src/app.py
 Actuarii-Rationale: Why the change was made, as the agent gave it in its proposal.
 Actuarii-Record: changed outside the channel: AGENTS.md
 ```
+
+How the commit hook decides, for one file:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/record-dark.svg">
+  <img src="docs/images/record-light.svg" alt="Top: two writes recorded by the gate lead from the content at HEAD (a) to the committed content (c), so the commit hook writes matches, with the reason of each write. Bottom: the file was changed by hand after the first write, so the recorded writes do not reach the committed content (d), and the hook writes changed outside the channel.">
+</picture>
 
 `matches` means that the writes the gate allowed lead from the file at `HEAD` to what the commit holds, and the
 `Actuarii-Rationale` lines are the reasons the agent gave for them. `changed outside the channel` means that
