@@ -7,7 +7,7 @@ where traceability comes first.**
 does through `Bash`, and what it writes to paths you did not govern, leaves none. In a test run, an agent was seen
 moving its work out of the governed paths ([below](#limits)).
 
-Actuarii v0.1 is not a security boundary against an adversarial agent. That is what v0.2 is for.
+Actuarii v0.1 is not a security boundary against an adversarial agent. That is what v0.2 is for, if it comes.
 
 **How it works.** One governed write, from the proposal to the commit:
 
