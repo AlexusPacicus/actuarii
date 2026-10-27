@@ -3,7 +3,7 @@
 **Work records for coding agents. Every action leaves a record that it happened, and why. Built for settings
 where traceability comes first.**
 
-**What it records.** Records are made only when the agent writes to the paths you choose to govern. What the agent
+**What it records.** Not every action: records are made only for the paths you choose to govern. What the agent
 does through `Bash`, and what it writes to paths you did not govern, leaves none. In a test run, an agent was seen
 moving its work out of the governed paths ([below](#limits)).
 
@@ -44,6 +44,8 @@ proposes a change and gives its reason; code outside the model checks the propos
 the write goes through only if a receipt for that exact change exists. Whatever convinced the agent, the record
 says what was written and why the agent said it was writing it. The reason is recorded, not verified: nothing
 checks that it is true.
+
+## What it does
 
 ### What a record looks like
 
@@ -282,7 +284,7 @@ The installer asks at most three questions:
 Then start Claude Code in the same terminal, with `claude`. [`INSTALL.md`](INSTALL.md) has the details, the mode
 without questions and what each file does.
 
-**How long it takes.** Measured once on macOS, by the author, who knows the kit: **223 s**, about four minutes,
+**How long it takes.** I measured it once on macOS, knowing the kit: **223 s**, about four minutes,
 from a fresh clone of a real repository to the first governed write. That includes reading the guide and
 installing `pydantic` from scratch. The agent's part, from the prompt to the write, took 19 s. The earlier
 procedure, in several steps, took 612.8 s ([`CLEAN_ROOM.md`](docs/design/CLEAN_ROOM.md) §5).
@@ -322,8 +324,8 @@ That order is not fixed: the answers that would change it are written down in ad
 
 ## A real case
 
-This is one piece of real work in another project, done with v0.1 as published. The case was planned before it was
-done ([`CLEAN_ROOM.md`](docs/design/CLEAN_ROOM.md) §4f); its record is in §5.
+This is one piece of real work in another project, done with the kit a week before it was published. The case was
+planned before it was done ([`CLEAN_ROOM.md`](docs/design/CLEAN_ROOM.md) §4f); its record is in §5.
 
 [AI Papers Engine](https://github.com/AlexusPacicus/AI-Papers-Engine) has a lexical classifier of papers by method
 family, and it had two defects:
@@ -361,7 +363,7 @@ The reasons are the agent's own, in the language of the task. Nothing checked th
 **The gap, closed through the same channel.** The kit's Bash hook now denies `python3 -m pytest` itself, before
 Claude Code's rule, and names the call that works: `pytest`, with the same arguments. The session announcement says
 how tests run, too. The fix followed the same steps:
-* a decision of the author;
+* my decision;
 * a [contract](docs/design/PYTEST_NAMED.contract.json) for the implementer, which wrote the tests first;
 * a check in code that the new tests failed before the change and pass after it;
 * a commit whose record says `matches` for each of its four files
@@ -369,9 +371,9 @@ how tests run, too. The fix followed the same steps:
 
 ## How it differs
 
-Actuarii works before the write, and on less than every tool call: a write to a governed path happens only if a
-receipt for that exact change exists, the agent's reason is recorded with it, and each commit says whether its
-governed files match what was recorded. Its records are not signed yet (problem 7); that is where v0.2 starts.
+Actuarii acts before the write, and only on writes to governed paths: each one happens only if a receipt for that
+exact change exists, the agent's reason is recorded with it, and each commit says whether its governed files match
+what was recorded. Its records are not signed yet (problem 7); that is where v0.2 starts.
 
 Other tools record what agents do after the fact. [Agent Receipts](https://agentreceipts.ai) signs a receipt for
 every tool call after it runs, with a key held outside the agent.
@@ -379,7 +381,7 @@ every tool call after it runs, with a key held outside the agent.
 ## Where it comes from
 
 Actuarii was not designed first and used later. It grew as the governance of
-[Traianus](https://github.com/AlexusPacicus/Traianus), a research project run by one person with coding agents, and
+[Traianus](https://github.com/AlexusPacicus/Traianus), a research project I run alone with coding agents, and
 was extracted from it, with its history, on 5 October 2026. [`examples/traianus/`](examples/traianus/) is that
 project's configuration in Actuarii's format, with the agents and the review procedure it used. It is the only real
 configuration that uses the contract registry and the blind review, and the tests load it. Traianus itself does not
