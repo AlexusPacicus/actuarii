@@ -18,6 +18,91 @@ entries keep the names of their day.
 **Note (2026-10-23, ADR-038):** the history of `main` was rewritten from 2026-08-02 on. The hashes the entries cite
 are those of the new history, each replaced from the rewrite's commit map.
 
+## 2026-10-27 (the README in the author's words, and two diagrams)
+
+This entry also covers the evening of the 26th, after the entry below.
+
+**Done**
+* **The review of the README and the main documents (`eddb630`),** six fixes before the post:
+  * "How it works", a short paragraph on the first screen, which showed what the kit does only from its line 29;
+  * the language note, exact: the DEVLOG in the tree is in English since ADR-033;
+  * "There is no human in the loop" became "The kit puts no person in the loop": three lines below, its own example
+    has Claude Code ask the person to approve the write;
+  * `57dbc72` linked, since GitHub does not link a bare hash in a file;
+  * the line on fast-forwarding `main`, a detail of this repository's work, out of "What falls to you";
+  * `INSTALL.md` says what to do in a second repository of the same folder, where the clone fails, and "Other ways to
+    run the installer" gets the plain install command, which it lacked.
+
+  Checked first: the 24 tests the README names exist in the files it links; its anchors and the hashes it cites
+  exist; its figures match `COST.md` and `CLEAN_ROOM.md`. No test reads the README.
+* **The opening in the author's words, and two diagrams (`48ef2c3`):**
+  * the first limit, titled "What it records", with the author's sentences: records are made only for the governed
+    paths, and an agent was seen moving its work out of them. "Paths", not "channels": the agent of `CLEAN_ROOM.md`
+    §5 used the file tools on a path that was not governed;
+  * "How it works" became a diagram of one governed write: the agent on one side; the validator, the audit trail and
+    the write gate in "Code, outside the model"; the governed file and the commit message in the repository. The only
+    red arrow is the denial without a receipt. A Mermaid sequence was drafted first and dropped: its boundary was a
+    pale box among nine arrows of equal weight, and it did not draw the denial;
+  * a second diagram, in "What a record looks like", shows how the commit hook decides for one file: the recorded
+    writes chain the SHA-256 of the content from `HEAD` to what is committed, or they do not reach it;
+  * both drawn by hand in SVG, in `docs/images/`, each in a light and a dark version shown with `<picture>`, as GitHub
+    documents; the two versions differ only in their colours. Each label was checked against
+    `require_boundary_validation.py`, `hook_gate.py` and `commit_record.py`. Seen in the integrated browser: both light
+    versions, and the dark record diagram on GitHub's dark background. The dark opening diagram was not seen rendered.
+* **"Why the rules live outside the model" in the author's words (`e9c015c`):**
+  * the premise in the first person, framed by Peter Gärdenfors's three levels of representation (*Conceptual
+    Spaces*, 2000), and said as the author's reading, not as a claim of Gärdenfors about language models;
+  * a sentence that keeps the rest from depending on the premise;
+  * the model as tokens turned into vectors, a rule among the vectors of every file and web page in its context, with a
+    weight that was learned, not enforced;
+  * the author's two sentences, translated literally: tokens only narrow the probabilistic space of answers, and the
+    brake against the coin.
+
+  The third paragraph is as it was.
+* **The README read in full again (`09d866e`):**
+  * "Not every action:" opens "What it records", which the sentence above it contradicted; "for the paths" replaces
+    "when the agent writes to the paths", since a governed file changed by hand also gets its trailer;
+  * the author's voice in the first person where the README spoke of "the author";
+  * the real case said "done with v0.1 as published", but ADR-031 came after it: now "a week before it was published";
+  * "How it differs" without "on less than every tool call";
+  * "What it does" heads the example record, the table of channels and what the kit enforces, which hung from the
+    section on why.
+
+Suite green (3712) before each commit. Disk: 1.0 GiB free.
+
+**Decided (author)**
+* **The README in the author's words** where it says who and why. What is checked against the kit (what it enforces,
+  with its tests, the limits, the installation, the figures and the real case) stays as it is.
+* **The first limit** titled "What it records" and opened by "Not every action:". The README's sentence stays: it is
+  also the description in `pyproject.toml`.
+* **Two diagrams drawn by hand in SVG,** instead of the paragraph and of Mermaid.
+* **The premise with Gärdenfors;** "mostly text", since Claude is also trained on images; no count of dimensions, which
+  depends on the model; the brake without "however loaded".
+
+**What went wrong**
+* **Claude paraphrased two of the author's sentences** instead of translating them, and lost "the probabilistic space
+  of answers" and "directly". The author saw it, and the literal translation went in.
+* **Claude wrote "thousands of dimensions",** which depends on the model and is not public for Claude. The author
+  caught it, and the number left.
+* **Claude said that "Other ways to run the installer" already covered a second repository.** It lacked the plain
+  install command, which was added with the fix.
+* **The disk went from 2.9 GiB to 1.0 GiB free** during the session; the cause was not looked for.
+
+**Ideas**
+* "How it differs" with one sentence per kind of tool, sandboxes and tracing.
+* "That is what v0.2 is for", at the top of the README, against "if it comes" in the limits.
+* From the review of the 26th: a `v0.1.0` tag and a `CITATION.cff`; Python versions other than 3.11 in the CI, or the
+  README saying 3.11 exactly; a pinned discussion where people who tried the kit can say so.
+* Checking that the external links resolve, AI Papers Engine and its commits, through the integrated browser with the
+  author's approval.
+
+**Next**
+* **The author, before 14:00:** push the five commits from `eddb630` to the commit of this entry; look at the README on
+  GitHub in the light and the dark theme, where the diagrams are rendered for the first time; the "About" box and the
+  rules of r/ClaudeAI; then the post on Show HN.
+* **Sunday 1 November:** the first line of the signal (ROADMAP §3).
+* **Disk:** 1.0 GiB free; what fills it is looked for before the next full suite.
+
 ## 2026-10-26 (how to remove the kit, and the text of V9)
 
 This entry also covers the evening of the 25th, after the entry below.
