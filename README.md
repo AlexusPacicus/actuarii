@@ -16,23 +16,17 @@ Actuarii v0.1 is not a security boundary against an adversarial agent. That is w
   <img src="docs/images/how-it-works-light.svg" alt="The agent sends the exact change and its reason to a validator outside the model, which records it in the audit trail and returns a receipt or a refusal. When the agent writes, a write gate outside the model checks the audit trail for a receipt for that exact change and records what the write leaves; it lets the write reach the governed file only with a receipt, and denies it without one. At each commit, the record goes into the commit message as trailers.">
 </picture>
 
-It works with [Claude Code](https://claude.com/claude-code) on macOS and Linux. The repository is in English. What
-was written before 18 October, the earlier development log, other records and most commit messages, is in Spanish,
-in the git history.
+It works with [Claude Code](https://claude.com/claude-code) on macOS and Linux, and each governed write adds a
+median of 1875 ms ([what it costs](#what-it-costs)). The repository is in English. What was written before 18
+October, the earlier development log, other records and most commit messages, is in Spanish, in the git history.
 
 ## Why the rules live outside the model
 
-My premise is that a language model does not grasp the meaning of what it reads. Peter Gärdenfors
-(*Conceptual Spaces*, 2000) describes three levels of representation, symbolic, conceptual and subconceptual; at
-the conceptual one, we relate meanings by their distance in spaces whose dimensions are grounded in perception and
-action. A model also relates by distance, but its dimensions come from how tokens appear together in what it was
-trained on, mostly text.
-
-Whether or not you share that premise, the rest holds. The model does not read words. It reads tokens, pieces of
-text from a fixed vocabulary, and turns each one into a vector; from there on, it computes with vectors, projecting
-them onto directions, and what comes out is a probability for each token that could come next. A rule in its prompt
-becomes vectors too, among those of every file, test output and web page in its context. What sets it apart, its
-place and the tokens around it, only changes how much weight it gets, and that weight was learned, not enforced.
+The model does not read words. It reads tokens, pieces of text from a fixed vocabulary, and turns each one into a
+vector; from there on, it computes with vectors, projecting them onto directions, and what comes out is a
+probability for each token that could come next. A rule in its prompt becomes vectors too, among those of every
+file, test output and web page in its context. What sets it apart, its place and the tokens around it, only changes
+how much weight it gets, and that weight was learned, not enforced.
 
 Adding tokens only narrows the model's probabilistic space of answers; it is not a way to impose instructions. A
 record that the agent keeps, or a rule that the agent is asked to follow, is only as good as the agent's reading of
@@ -44,6 +38,12 @@ proposes a change and gives its reason; code outside the model checks the propos
 the write goes through only if a receipt for that exact change exists. Whatever convinced the agent, the record
 says what was written and why the agent said it was writing it. The reason is recorded, not verified: nothing
 checks that it is true.
+
+My premise is that a language model does not grasp the meaning of what it reads. Peter Gärdenfors
+(*Conceptual Spaces*, 2000) describes three levels of representation, symbolic, conceptual and subconceptual; at
+the conceptual one, we relate meanings by their distance in spaces whose dimensions are grounded in perception and
+action. A model also relates by distance, but its dimensions come from how tokens appear together in what it was
+trained on, mostly text. Whether or not you share that premise, everything above holds.
 
 ## What it does
 
