@@ -1,0 +1,27 @@
+name: I tried it
+description: It worked, it failed, or the installation stopped you.
+title: "Tried it: "
+body:
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: What happened
+      options:
+        - It worked
+        - It failed
+        - The installation stopped me
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What you did and what you saw
+      description: The steps, the output or the error. The Actuarii-Record trailers of a commit help, if you have one.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version and Claude Code version.
+      placeholder: macOS 15, Python 3.11.9, Claude Code 2.1.271

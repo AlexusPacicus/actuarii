@@ -1,0 +1,14 @@
+name: Another coding agent
+description: The coding agent you would use Actuarii with, if it is not Claude Code.
+body:
+  - type: input
+    id: agent
+    attributes:
+      label: Which coding agent
+    validations:
+      required: true
+  - type: textarea
+    id: use
+    attributes:
+      label: What you would govern with it
+      description: The paths, or the kind of work.

@@ -1,0 +1,26 @@
+name: Bug
+description: Something does not do what the README or AGENTS.md says.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before reporting a way around a rule, check the declared limits in [AGENTS.md §9](https://github.com/AlexusPacicus/actuarii/blob/main/AGENTS.md#9-declared-limits): v0.1 is not a security boundary, and what it does not cover is listed there. A way around that is not listed is worth an issue.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to repeat
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What you expected, and what happened
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version and Claude Code version.
+      placeholder: macOS 15, Python 3.11.9, Claude Code 2.1.271
